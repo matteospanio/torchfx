@@ -13,3 +13,7 @@ SpecScale = tp.Literal["mel", "lin", "log"]
 FilterType = tp.Literal["low", "high"]
 FilterOrderScale = tp.Literal["db", "linear"]
 Device = tp.Literal["cpu", "cuda"]
+WindowType = tp.Literal[
+    "hann", "hamming", "blackman", "kaiser", "boxcar", "bartlett",
+    "flattop", "parzen", "bohman", "nuttall", "barthann"
+]

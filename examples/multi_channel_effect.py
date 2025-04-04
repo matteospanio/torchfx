@@ -1,25 +1,32 @@
 from torch import nn
 import torchaudio.transforms as T
 from torchfx.wave import Wave
-from torchfx.filter.iir import HighPass, LowPass
+from torchfx.filter import HiButterworth, LoButterworth
 
 
 class MultiChannelEffect(nn.Module):
-    def __init__(self, num_channels: int):
+    ch: list[nn.Module]
+
+    def __init__(self, num_channels: int) -> None:
         super().__init__()
         self.num_channels = num_channels
+        self.ch = []
+        self.ch.append(nn.Sequential(
+            HiButterworth(1000),
+            LoButterworth(2000),
+        ))
+        self.ch.append(nn.Sequential(
+            HiButterworth(2000),
+            LoButterworth(4000),
+            T.Vol(0.5),
+        ))
 
     def forward(self, x: Wave) -> Wave:
+        signal = x.ys
+        fs = x.fs
         for ch in range(self.num_channels):
-            x[ch] = x[ch] | self.high_pass | self.low_pass
-        return x
-
-    def ch1(self, x: Wave) -> Wave:
-        x = x | HighPass(1000) | LowPass(2000)
-        return x
-
-    def ch2(self, x: Wave) -> Wave:
-        x = x | HighPass(2000) | LowPass(4000) | T.Vol(0.5)
+            tmp = Wave(signal[ch], fs)
+            tmp = tmp | self.ch[ch]
         return x
 
 
@@ -28,4 +35,4 @@ if __name__ == "__main__":
     wave.to("cuda")
 
     fx = MultiChannelEffect(num_channels=2)
-    result = fx(wave)
+    result = wave | fx
