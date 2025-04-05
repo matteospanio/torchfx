@@ -158,7 +158,7 @@ class Wave:
 
     def __len__(self) -> int:
         """Return the length, in samples, of the wave."""
-        return len(self.ys)
+        return self.ys.shape[1]
 
     def channels(self) -> int:
         """Return the number of channels of the wave."""
@@ -184,6 +184,34 @@ class Wave:
 
         """
         return Wave(self.ys[index], self.fs)
+
+    def set_channel(self, index: int, value: "Tensor | Wave") -> None:
+        """Set a specific channel of the wave.
+
+        Parameters
+        ----------
+        index : int
+            The index of the channel to set.
+        value : Tensor
+            The value to set the channel to.
+
+        Examples
+        --------
+        >>> wave = Wave.from_file("path/to/file.wav")
+        >>> wave.set_channel(0, torch.ones(1000))
+
+        """
+        if len(value) != len(self.ys[index]):
+            raise ValueError(
+                f"Expected value of length {len(self.ys[index])}, but got {len(value)}"
+            )
+        if index >= self.channels():
+            raise IndexError(f"Index {index} out of bounds for {self.channels()} channels")
+
+        if isinstance(value, Tensor):
+            self.ys[index] = value
+        elif isinstance(value, Wave):
+            self.ys[index] = value.ys[0]
 
     def duration(self, unit: tp.Literal["sec", "ms"]) -> float:
         """Return the length of the wave in seconds or milliseconds.
