@@ -47,23 +47,22 @@ class FIR(AbstractFilter):
         else:
             raise ValueError("Input must be of shape [T], [C, T], or [B, C, T]")
 
-        B, C, T = x.shape
+        BATCHES, CHANNELS, TIME = x.shape
 
         # Expand kernel to match number of channels
-        kernel_exp = kernel.expand(C, 1, -1)  # [C, 1, K] # type: ignore
-
-        # Reshape input to [B * C, 1, T] to apply grouped conv
-        x_reshaped = x.reshape(B * C, 1, T)
+        kernel_exp = kernel.expand(CHANNELS, 1, -1)  # [C, 1, K] # type: ignore
 
         # Pad input to maintain original length, pad right side
         pad = kernel.shape[-1] - 1  # type: ignore
-        x_padded = nn.functional.pad(x_reshaped, (pad, 0))  # pad right only
+        x_padded = nn.functional.pad(x, (pad, 0))  # pad right only # type: ignore
 
         # Apply convolution with groups = C (same kernel per channel, repeated for batch)
-        y = nn.functional.conv1d(x_padded, kernel_exp.repeat(B, 1, 1), groups=C)
+        y = nn.functional.conv1d(
+            x_padded, kernel_exp.repeat(BATCHES, 1, 1), groups=CHANNELS
+        )
 
         # Reshape back to [B, C, T]
-        y = y.view(B, C, T)
+        y = y.view(BATCHES, CHANNELS, TIME)
 
         # Reduce to original shape if input wasn't batched
         if len(original_shape) == 1:
