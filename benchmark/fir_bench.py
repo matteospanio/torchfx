@@ -35,44 +35,47 @@ def scipy_fir(signal, bs):
 
 
 def fir_bench():
-    for i in range(1, 8):
-        signal = create_audio(SAMPLE_RATE, 60, i)
+    times = [1]
+    for i in range(60, 601, 60):
+        times.append(i)
 
-        wave = Wave(signal, SAMPLE_RATE)
-        fchain = nn.ModuleList(
-            [
+    for t in times:
+        for i in range(1, 13):
+            signal = create_audio(SAMPLE_RATE, t, i)
+
+            wave = Wave(signal, SAMPLE_RATE)
+            fchain = nn.Sequential(
                 DesignableFIR(num_taps=101, cutoff=1000, fs=SAMPLE_RATE),
                 DesignableFIR(num_taps=102, cutoff=5000, fs=SAMPLE_RATE),
                 DesignableFIR(num_taps=103, cutoff=1500, fs=SAMPLE_RATE),
                 DesignableFIR(num_taps=104, cutoff=1800, fs=SAMPLE_RATE),
                 DesignableFIR(num_taps=105, cutoff=1850, fs=SAMPLE_RATE),
-            ]
-        )
+            )
 
-        for f in fchain:
-            f.compute_coefficients()
+            for f in fchain:
+                f.compute_coefficients()
 
-        wave.to("cuda")
-        fchain.to("cuda")
-        gpu_fir_time = timeit.timeit(lambda: gpu_fir(wave, fchain), number=100)
+            wave.to("cuda")
+            fchain.to("cuda")
+            gpu_fir_time = timeit.timeit(lambda: gpu_fir(wave, fchain), number=50)
 
-        wave.to("cpu")
-        fchain.to("cpu")
-        cpu_fir_time = timeit.timeit(lambda: cpu_fir(wave, SAMPLE_RATE), number=100)
+            wave.to("cpu")
+            fchain.to("cpu")
+            cpu_fir_time = timeit.timeit(lambda: cpu_fir(wave, fchain), number=50)
 
-        b1 = firwin(101, 1000, fs=SAMPLE_RATE)
-        b2 = firwin(102, 5000, fs=SAMPLE_RATE)
-        b3 = firwin(103, 1500, fs=SAMPLE_RATE)
-        b4 = firwin(104, 1800, fs=SAMPLE_RATE)
-        b5 = firwin(105, 1850, fs=SAMPLE_RATE)
+            b1 = firwin(101, 1000, fs=SAMPLE_RATE)
+            b2 = firwin(102, 5000, fs=SAMPLE_RATE)
+            b3 = firwin(103, 1500, fs=SAMPLE_RATE)
+            b4 = firwin(104, 1800, fs=SAMPLE_RATE)
+            b5 = firwin(105, 1850, fs=SAMPLE_RATE)
 
-        scipy_fir_time = timeit.timeit(
-            lambda: scipy_fir(signal, [b1, b2, b3, b4, b5]), number=100
-        )
-        print(f"Channels:\t{i}")
-        print(
-            f"GPU:\t{gpu_fir_time:.6f}s, CPU:\t{cpu_fir_time:.6f}s, SciPy:\t{scipy_fir_time:.6f}s",
-        )
+            scipy_fir_time = timeit.timeit(
+                lambda: scipy_fir(signal, [b1, b2, b3, b4, b5]), number=50
+            )
+            print(f"Times: {t}\tChannels:{i}")
+            print(
+                f"GPU: {gpu_fir_time:.6f}s\tCPU: {cpu_fir_time:.6f}s\tSciPy: {scipy_fir_time:.6f}s",
+            )
 
 
 if __name__ == "__main__":
