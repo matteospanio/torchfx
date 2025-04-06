@@ -37,10 +37,8 @@ class MultiChannelEffect(FX):
         if self.fs is None:
             raise ValueError("Sampling frequency (fs) must be set.")
 
-        x_stacked = torch.stack(
-            [self.ch[i](x[i]) for i in range(self.num_channels)], dim=0
-        )
-        return x_stacked
+        x = [self.ch[i](x[i]) for i in range(self.num_channels)]
+        return x
 
 
 if __name__ == "__main__":
