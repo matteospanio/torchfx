@@ -2,21 +2,23 @@ import torch
 from torch import nn, Tensor
 import torchaudio.transforms as T
 import torchaudio
-from torchfx.wave import Wave
+from torchfx import FX, Wave
 from torchfx.filter import HiButterworth, LoButterworth
 
 
-class MultiChannelEffect(nn.Module):
-    ch: list[nn.Module]
+class MultiChannelEffect(FX):
+    ch: nn.ModuleList
 
-    def __init__(self, num_channels: int, fs: int) -> None:
+    def __init__(self, num_channels: int, fs: int | None = None) -> None:
         super().__init__()
-        print("MultiChannelEffect - init")
         self.num_channels = num_channels
         self.fs = fs
-        self.ch = []
-        self.ch.append(self.channel1())
-        self.ch.append(self.channel2())
+        self.ch = nn.ModuleList(
+            [
+                self.channel1(),
+                self.channel2(),
+            ]
+        )
 
     def channel1(self):
         return nn.Sequential(
@@ -32,28 +34,27 @@ class MultiChannelEffect(nn.Module):
         )
 
     def forward(self, x: Tensor) -> Tensor:
-        print("MultiChannelEffect - forward")
-        for i in range(self.num_channels):
-            print(f"MultiChannelEffect - forward channel {i}")
-            x[i] = self.ch[i](x[i])
+        if self.fs is None:
+            raise ValueError("Sampling frequency (fs) must be set.")
 
-        return x
+        x_stacked = torch.stack(
+            [self.ch[i](x[i]) for i in range(self.num_channels)], dim=0
+        )
+        return x_stacked
 
 
 if __name__ == "__main__":
-    print("CUDA disponibile:", torch.cuda.is_available())
-    print("Dispositivi CUDA:", torch.cuda.device_count())
-    print(
-        "Nome device:",
-        (
-            torch.cuda.get_device_name(0)
-            if torch.cuda.device_count() > 0
-            else "Nessun dispositivo"
-        ),
-    )
+    # Automatically use GPU if available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Using device:", device)
 
+    # Load the audio file
     wave = Wave.from_file("data/BERIO100.wav")
-    wave.to("cuda")
+    wave.to(device)
+
+    # Create the effect and apply it to the audio
     fx = MultiChannelEffect(num_channels=2, fs=wave.fs)
     result = wave | fx
-    torchaudio.save("BERIO100_out.wav", result.ys, wave.fs)
+
+    # Save the output
+    torchaudio.save("data/BERIO100_out.wav", result.ys, wave.fs)

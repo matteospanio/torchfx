@@ -9,7 +9,7 @@ from numpy.typing import ArrayLike
 from torch import Tensor, nn
 from typing_extensions import Self
 
-from torchfx.filter import iir
+from torchfx.effects import FX
 from torchfx.typing import Device
 
 
@@ -148,12 +148,18 @@ class Wave:
         The `fs` attribute of the wave object will be set to the `fs` attribute of the
         module.
         """
-        if isinstance(f, iir.IIR):
-            f.fs = self.fs
-        if isinstance(f, nn.Sequential):
+        if not isinstance(f, nn.Module):
+            raise TypeError(f"Expected nn.Module, but got {type(f).__name__} instead.")
+
+        if isinstance(f, FX):
+            if hasattr(f, "fs") and f.fs is None:
+                f.fs = self.fs
+
+        if isinstance(f, nn.Sequential) or isinstance(f, nn.ModuleList):
             for a in f:
-                if isinstance(a, iir.IIR):
-                    a.fs = self.fs
+                if isinstance(a, FX):
+                    if hasattr(a, "fs") and a.fs is None:
+                        a.fs = self.fs
         return self.transform(f.forward)
 
     def __len__(self) -> int:
@@ -206,7 +212,9 @@ class Wave:
                 f"Expected value of length {len(self.ys[index])}, but got {len(value)}"
             )
         if index >= self.channels():
-            raise IndexError(f"Index {index} out of bounds for {self.channels()} channels")
+            raise IndexError(
+                f"Index {index} out of bounds for {self.channels()} channels"
+            )
 
         if isinstance(value, Tensor):
             self.ys[index] = value
