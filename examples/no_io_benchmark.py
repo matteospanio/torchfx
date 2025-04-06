@@ -25,7 +25,7 @@ def load_audio_data():
 
 fs, data = load_audio_data()
 
-wave_gpu = Wave(data, fs)
+wave_gpu = Wave(data.T, fs)
 wave_gpu.to("cuda")
 
 
