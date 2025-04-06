@@ -119,3 +119,4 @@ class DesignableFIR(FIR):
             window=self.window,
             scale=True,
         )
+        super().__init__(self.b)
