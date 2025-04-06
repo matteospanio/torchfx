@@ -32,7 +32,7 @@ def scipy_filter(signal, bs, as_):
     return filtered_signal
 
 
-def start():
+def start(outfile):
     times = [1]
     for i in range(60, 601, 60):
         times.append(i)
@@ -71,11 +71,13 @@ def start():
                 number=50,
             )
 
-            print(f"Times: {t}\tChannels:{i}")
+            print(f"Times: {t}\tChannels:{i}", file=outfile)
             print(
                 f"GPU:\t{gpu_filter_time/50:.6f}s, CPU:\t{cpu_filter_time/50:.6f}s, SciPy:\t{scipy_filter_time/50:.6f}s",
+                file=outfile,
             )
 
 
 if __name__ == "__main__":
-    start()
+    with open("out") as f:
+        start(f)

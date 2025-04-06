@@ -34,7 +34,7 @@ def scipy_fir(signal, bs):
     return filtered_signal
 
 
-def start():
+def start(out_file):
     times = [1]
     for i in range(60, 601, 60):
         times.append(i)
@@ -72,11 +72,13 @@ def start():
             scipy_fir_time = timeit.timeit(
                 lambda: scipy_fir(signal, [b1, b2, b3, b4, b5]), number=50
             )
-            print(f"Times: {t}\tChannels:{i}")
+            print(f"Times: {t}\tChannels:{i}", file=out_file)
             print(
                 f"GPU: {gpu_fir_time/50:.6f}s\tCPU: {cpu_fir_time/50:.6f}s\tSciPy: {scipy_fir_time/50:.6f}s",
+                file=out_file,
             )
 
 
 if __name__ == "__main__":
-    start()
+    with open("out") as f:
+        start(f)

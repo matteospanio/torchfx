@@ -88,7 +88,7 @@ def apply_filters_with_numpy_scipy(signal):
     return filtered_signal
 
 
-def start():
+def start(out_file):
     signal_data = create_audio(SAMPLE_RATE, DURATION, NUM_CHANNELS)
     wave = Wave(signal_data, SAMPLE_RATE)
 
@@ -100,11 +100,12 @@ def start():
         lambda: apply_filters_with_numpy_scipy(signal_data), number=50
     )
 
-    print(f"FilterChain (Classes) Time: {class_time/50:.6f}s")
-    print(f"Sequential Time: {seq_time/50:.6f}s")
-    print(f"Pipe Operator Time: {pipe_time/50:.6f}s")
-    print(f"SciPy + NumPy Time: {scipy_time/50:.6f}s")
+    print(f"FilterChain (Classes) Time: {class_time/50:.6f}s", file=out_file)
+    print(f"Sequential Time: {seq_time/50:.6f}s", file=out_file)
+    print(f"Pipe Operator Time: {pipe_time/50:.6f}s", file=out_file)
+    print(f"SciPy + NumPy Time: {scipy_time/50:.6f}s", file=out_file)
 
 
 if __name__ == "__main__":
-    start()
+    with open("test") as f:
+        start(f)
