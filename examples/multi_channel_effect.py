@@ -6,8 +6,9 @@ from torchfx import FX, Wave
 from torchfx.filter import HiButterworth, LoButterworth
 
 
-class MultiChannelEffect(FX):
+class ComplexEffect(FX):
     ch: nn.ModuleList
+    fs: int | None
 
     def __init__(self, num_channels: int, fs: int | None = None) -> None:
         super().__init__()
@@ -48,12 +49,12 @@ if __name__ == "__main__":
     print("Using device:", device)
 
     # Load the audio file
-    wave = Wave.from_file("data/BERIO100.wav")
-    wave.to(device)
+    wave = Wave.from_file("data/BERIO226.wav")
+    # wave.to(device)
 
     # Create the effect and apply it to the audio
-    fx = MultiChannelEffect(num_channels=2, fs=wave.fs)
+    fx = ComplexEffect(num_channels=2, fs=wave.fs)
     result = wave | fx
 
     # Save the output
-    torchaudio.save("data/BERIO100_out.wav", result.ys, wave.fs)
+    torchaudio.save("data/BERIO226_out1.wav", result.ys, wave.fs)
