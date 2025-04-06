@@ -1,3 +1,4 @@
+import torch
 from torch import nn, Tensor
 import torchaudio.transforms as T
 import torchaudio
@@ -40,12 +41,19 @@ class MultiChannelEffect(nn.Module):
 
 
 if __name__ == "__main__":
-    print("letto il file")
-    wave = Wave.from_file("data/BERIO100.wav")
+    print("CUDA disponibile:", torch.cuda.is_available())
+    print("Dispositivi CUDA:", torch.cuda.device_count())
+    print(
+        "Nome device:",
+        (
+            torch.cuda.get_device_name(0)
+            if torch.cuda.device_count() > 0
+            else "Nessun dispositivo"
+        ),
+    )
 
+    wave = Wave.from_file("data/BERIO100.wav")
+    wave.to("cuda")
     fx = MultiChannelEffect(num_channels=2, fs=wave.fs)
-    print("filtraggio")
     result = wave | fx
-    print("salvataggio")
     torchaudio.save("BERIO100_out.wav", result.ys, wave.fs)
-    print("salvato")
