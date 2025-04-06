@@ -23,14 +23,14 @@ def create_audio(sample_rate, duration, num_channels):
 
 # Implementation using classes
 class FilterChain(nn.Module):
-    def __init__(self, sample_rate):
+    def __init__(self, fs):
         super().__init__()
-        self.f1 = HiChebyshev1(20, sample_rate)
-        self.f2 = HiChebyshev1(60, sample_rate)
-        self.f3 = HiChebyshev1(65, sample_rate)
-        self.f4 = LoButterworth(5000, sample_rate)
-        self.f5 = LoButterworth(4900, sample_rate)
-        self.f6 = LoButterworth(4850, sample_rate)
+        self.f1 = HiChebyshev1(20, fs=fs)
+        self.f2 = HiChebyshev1(60, fs=fs)
+        self.f3 = HiChebyshev1(65, fs=fs)
+        self.f4 = LoButterworth(5000, fs=fs)
+        self.f5 = LoButterworth(4900, fs=fs)
+        self.f6 = LoButterworth(4850, fs=fs)
 
     def forward(self, x):
         x = self.f1(x)
