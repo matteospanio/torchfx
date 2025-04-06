@@ -6,27 +6,6 @@ from torchfx import Wave
 from torchfx.filter import HiButterworth, LoButterworth, HiShelving, LoChebyshev1
 
 
-# Load audio data once, outside the benchmark
-def load_audio_data():
-    fs, data = wavfile.read("data/BERIO226.wav")
-    return fs, data
-
-
-fs, data = load_audio_data()
-
-
-# Benchmark function for the torchfx-based implementation
-def benchmark_torchfx():
-    wave = Wave(data, fs)
-    fx = nn.Sequential(
-        HiButterworth(1000),
-        LoButterworth(2000),
-        HiShelving(1200, q=0.5, gain=0.5),
-        LoChebyshev1(2000),
-    )
-    result = wave | fx  # noqa: F841
-
-
 # Benchmark function for the scipy-based implementation
 class SimpleWave:
     def __init__(self, ys, fs):
@@ -36,6 +15,29 @@ class SimpleWave:
     def apply_filter(self, b, a):
         filtered = lfilter(b, a, self.ys)
         return SimpleWave(filtered, self.fs)
+
+
+# Load audio data once, outside the benchmark
+def load_audio_data():
+    fs, data = wavfile.read("data/BERIO100.wav")
+    return fs, data
+
+
+fs, data = load_audio_data()
+
+wave_gpu = Wave(data, fs)
+wave_gpu.to("cuda")
+
+
+# Benchmark function for the torchfx-based implementation
+def benchmark_torchfx():
+    fx = nn.Sequential(
+        HiButterworth(1000),
+        LoButterworth(2000),
+        HiShelving(1200, q=0.5, gain=0.5),
+        LoChebyshev1(2000),
+    )
+    result = wave_gpu | fx  # noqa: F841
 
 
 def butter_highpass(cutoff, fs, order=5):
@@ -65,15 +67,15 @@ def chebyshev_lowpass(cutoff, fs, order=4, ripple=0.1):
 
 
 def benchmark_scipy():
-    wave = SimpleWave(data, fs)
-    b, a = butter_highpass(1000, wave.fs)
-    wave = wave.apply_filter(b, a)
-    b, a = butter_lowpass(2000, wave.fs)
-    wave = wave.apply_filter(b, a)
-    b, a = shelving_highpass(1200, wave.fs, gain=0.5, q=0.5)
-    wave = wave.apply_filter(b, a)
-    b, a = chebyshev_lowpass(2000, wave.fs)
-    wave = wave.apply_filter(b, a)
+    wave_cpu = SimpleWave(data, fs)
+    b, a = butter_highpass(1000, wave_cpu.fs)
+    wave_cpu = wave_cpu.apply_filter(b, a)
+    b, a = butter_lowpass(2000, wave_cpu.fs)
+    wave_cpu = wave_cpu.apply_filter(b, a)
+    b, a = shelving_highpass(1200, wave_cpu.fs, gain=0.5, q=0.5)
+    wave_cpu = wave_cpu.apply_filter(b, a)
+    b, a = chebyshev_lowpass(2000, wave_cpu.fs)
+    wave_cpu = wave_cpu.apply_filter(b, a)
 
 
 # Run benchmarks
