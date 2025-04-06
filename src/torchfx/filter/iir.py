@@ -1,6 +1,7 @@
 """Module of IIR filters."""
 
 import abc
+from typing import Sequence
 
 import numpy as np
 import torch
@@ -26,9 +27,26 @@ class IIR(AbstractFilter):
         super().__init__()
         self.fs = fs
 
+    @override
+    def forward(self, x: Tensor) -> Tensor:
+        dtype = x.dtype
+        device = x.device
+        if self.fs is None:
+            raise ValueError(NONE_FS_ERR)
+
+        if self.a is None or self.b is None:
+            self.compute_coefficients()
+
+        return F.lfilter(
+            x,
+            torch.as_tensor(self.a, dtype=dtype, device=device),
+            torch.as_tensor(self.b, dtype=dtype, device=device),
+        )
+
 
 class Butterworth(IIR):
     """Butterworth filter."""
+
     def __init__(
         self,
         btype: str,
@@ -36,30 +54,23 @@ class Butterworth(IIR):
         order: int = 4,
         order_scale: FilterOrderScale = "linear",
         fs: int | None = None,
+        a: Sequence | None = None,
+        b: Sequence | None = None,
     ) -> None:
         super().__init__(fs)
         self.btype = btype
         self.cutoff = cutoff
         self.order = order if order_scale == "linear" else order // 6
+        self.a = a
+        self.b = b
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
-        dtype = x.dtype
-        device = x.device
-        if self.fs is None:
-            raise ValueError(NONE_FS_ERR)
-        
-        b, a = butter( # type: ignore
-            self.order,
-            self.cutoff / (0.5 * self.fs),
-            btype=self.btype,
-        )
+    def compute_coefficients(self) -> None:
+        assert self.fs is not None
 
-        return F.lfilter(
-            x,
-            torch.as_tensor(a, dtype=dtype, device=device),
-            torch.as_tensor(b, dtype=dtype, device=device),
-        )
+        b, a = butter(self.order, self.cutoff / (0.5 * self.fs), btype=self.btype)  # type: ignore
+        self.b = b
+        self.a = a
 
 
 class Chebyshev1(IIR):
@@ -72,32 +83,30 @@ class Chebyshev1(IIR):
         order: int = 4,
         ripple: float = 0.1,
         fs: int | None = None,
+        a: Sequence | None = None,
+        b: Sequence | None = None,
     ) -> None:
         super().__init__(fs)
         self.btype = btype
         self.cutoff = cutoff
         self.order = order
         self.ripple = ripple
+        self.a = a
+        self.b = b
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
-        dtype = x.dtype
-        device = x.device
-        if self.fs is None:
-            raise ValueError(NONE_FS_ERR)
+    def compute_coefficients(self) -> None:
+        assert self.fs is not None
 
-        b, a = cheby1( # type: ignore
+        b, a = cheby1(  # type: ignore
             self.order,
             self.ripple,
             self.cutoff / (0.5 * self.fs),
             btype=self.btype,
         )
+        self.b = b
+        self.a = a
 
-        return F.lfilter(
-            x,
-            torch.as_tensor(a, dtype=dtype, device=device),
-            torch.as_tensor(b, dtype=dtype, device=device),
-        )
 
 class Chebyshev2(IIR):
     """Chebyshev type 2 filter."""
@@ -117,26 +126,19 @@ class Chebyshev2(IIR):
         self.ripple = ripple
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
-        dtype = x.dtype
-        device = x.device
-        if self.fs is None:
-            raise ValueError(NONE_FS_ERR)
+    def compute_coefficients(self) -> None:
+        assert self.fs is not None
 
-        b, a = cheby2( # type: ignore
+        b, a = cheby2(  # type: ignore
             self.order,
             self.ripple,
             self.cutoff / (0.5 * self.fs),
             btype=self.btype,
         )
+        self.b = b
+        self.a = a
 
-        return F.lfilter(
-            x,
-            torch.as_tensor(a, dtype=dtype, device=device),
-            torch.as_tensor(b, dtype=dtype, device=device),
-        )
 
-    
 class HiChebyshev1(Chebyshev1):
     """High-pass Chebyshev type 1 filter."""
 
@@ -149,10 +151,7 @@ class HiChebyshev1(Chebyshev1):
     ) -> None:
         super().__init__("highpass", cutoff, order, ripple, fs)
 
-    @override
-    def forward(self, x: Tensor) -> Tensor:
-        return super().forward(x)
-    
+
 class LoChebyshev1(Chebyshev1):
     """Low-pass Chebyshev type 1 filter."""
 
@@ -165,10 +164,7 @@ class LoChebyshev1(Chebyshev1):
     ) -> None:
         super().__init__("lowpass", cutoff, order, ripple, fs)
 
-    @override
-    def forward(self, x: Tensor) -> Tensor:
-        return super().forward(x)
-    
+
 class HiChebyshev2(Chebyshev2):
     """High-pass Chebyshev type 2 filter."""
 
@@ -181,10 +177,7 @@ class HiChebyshev2(Chebyshev2):
     ) -> None:
         super().__init__("highpass", cutoff, order, ripple, fs)
 
-    @override
-    def forward(self, x: Tensor) -> Tensor:
-        return super().forward(x)
-    
+
 class LoChebyshev2(Chebyshev2):
     """Low-pass Chebyshev type 2 filter."""
 
@@ -196,10 +189,6 @@ class LoChebyshev2(Chebyshev2):
         fs: int | None = None,
     ) -> None:
         super().__init__("lowpass", cutoff, order, ripple, fs)
-
-    @override
-    def forward(self, x: Tensor) -> Tensor:
-        return super().forward(x)
 
 
 class HiButterworth(Butterworth):
@@ -214,10 +203,6 @@ class HiButterworth(Butterworth):
     ) -> None:
         super().__init__("highpass", cutoff, order, order_scale, fs)
 
-    @override
-    def forward(self, x: Tensor) -> Tensor:
-        return super().forward(x)
-
 
 class LoButterworth(Butterworth):
     """Low-pass filter."""
@@ -230,10 +215,6 @@ class LoButterworth(Butterworth):
         fs: int | None = None,
     ) -> None:
         super().__init__("lowpass", cutoff, order, order_scale, fs)
-
-    @override
-    def forward(self, x: Tensor) -> Tensor:
-        return super().forward(x)
 
 
 class Shelving(IIR):
@@ -251,9 +232,6 @@ class Shelving(IIR):
     def _alpha(self) -> float:
         return np.sin(self._omega) / (2 * self.q)
 
-    @abc.abstractmethod
-    def _coefficients(self) -> tuple[list[float], list[float]]: ...
-
 
 class HiShelving(Shelving):
     """High pass shelving filter."""
@@ -265,7 +243,7 @@ class HiShelving(Shelving):
         cutoff: float,
         q: float,
         gain: float,
-        gain_scale: FilterOrderScale,
+        gain_scale: FilterOrderScale = "linear",
         fs: int | None = None,
     ):
         super().__init__(fs)
@@ -274,18 +252,7 @@ class HiShelving(Shelving):
         self.gain = gain if gain_scale == "linear" else 10 ** (gain / 20)
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
-        dtype = x.dtype
-        device = x.device
-        b, a = self._coefficients()
-        return F.lfilter(
-            x,
-            torch.as_tensor(a, dtype=dtype, device=device),
-            torch.as_tensor(b, dtype=dtype, device=device),
-        )
-
-    @override
-    def _coefficients(self) -> tuple[list[float], list[float]]:
+    def compute_coefficients(self) -> None:
         A = self.gain  # noqa: N806
         b0 = A * (
             (A + 1) + (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha
@@ -302,7 +269,8 @@ class HiShelving(Shelving):
         b = [b0 / a0, b1 / a0, b2 / a0]
         a = [1.0, a1 / a0, a2 / a0]
 
-        return b, a
+        self.b = b
+        self.a = a
 
 
 class LoShelving(Shelving): ...
@@ -325,17 +293,13 @@ class Peaking(IIR):
         self.gain = gain if gain_scale == "linear" else 10 ** (gain / 20)
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
-        dtype = x.dtype
-        device = x.device
-        if self.fs is None:
-            raise ValueError(NONE_FS_ERR)
-        b, a = iirpeak(self.cutoff / (self.fs / 2), self.Q)
-        return F.lfilter(
-            x,
-            torch.as_tensor(a, dtype=dtype, device=device),
-            torch.as_tensor(b, dtype=dtype, device=device),
-        )
+    def compute_coefficients(self) -> None:
+        assert self.fs is not None
+
+        b, a = iirpeak(self.cutoff / (self.fs / 2), self.Q, self.fs)
+        self.b = b
+        self.a = a
+
 
 class Notch(IIR):
     """Notch filter."""
@@ -351,17 +315,12 @@ class Notch(IIR):
         self.Q = Q
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
-        dtype = x.dtype
-        device = x.device
-        if self.fs is None:
-            raise ValueError(NONE_FS_ERR)
+    def compute_coefficients(self) -> None:
+        assert self.fs is not None
+
         b, a = iirnotch(self.cutoff / (self.fs / 2), self.Q)
-        return F.lfilter(
-            x,
-            torch.as_tensor(a, dtype=dtype, device=device),
-            torch.as_tensor(b, dtype=dtype, device=device),
-        )
+        self.b = b
+        self.a = a
 
 
 class AllPass(IIR):
@@ -378,14 +337,9 @@ class AllPass(IIR):
         self.Q = Q
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
-        dtype = x.dtype
-        device = x.device
-        if self.fs is None:
-            raise ValueError(NONE_FS_ERR)
+    def compute_coefficients(self) -> None:
+        assert self.fs is not None
+
         b, a = iirpeak(self.cutoff / (self.fs / 2), self.Q)
-        return F.lfilter(
-            x,
-            torch.as_tensor(a, dtype=dtype, device=device),
-            torch.as_tensor(b, dtype=dtype, device=device),
-        )
+        self.b = b
+        self.a = a

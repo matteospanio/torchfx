@@ -10,6 +10,7 @@ from torch import Tensor, nn
 from typing_extensions import Self
 
 from torchfx.effects import FX
+from torchfx.filter.__base import AbstractFilter
 from torchfx.typing import Device
 
 
@@ -153,13 +154,19 @@ class Wave:
 
         if isinstance(f, FX):
             if hasattr(f, "fs") and f.fs is None:
-                f.fs = self.fs
+                f.fs = self.fs  # type: ignore
+
+            if isinstance(f, AbstractFilter):
+                f.compute_coefficients()
 
         if isinstance(f, nn.Sequential) or isinstance(f, nn.ModuleList):
             for a in f:
                 if isinstance(a, FX):
                     if hasattr(a, "fs") and a.fs is None:
-                        a.fs = self.fs
+                        a.fs = self.fs  # type: ignore
+                    if isinstance(a, AbstractFilter):
+                        a.compute_coefficients()
+
         return self.transform(f.forward)
 
     def __len__(self) -> int:
@@ -190,36 +197,6 @@ class Wave:
 
         """
         return Wave(self.ys[index], self.fs)
-
-    def set_channel(self, index: int, value: "Tensor | Wave") -> None:
-        """Set a specific channel of the wave.
-
-        Parameters
-        ----------
-        index : int
-            The index of the channel to set.
-        value : Tensor
-            The value to set the channel to.
-
-        Examples
-        --------
-        >>> wave = Wave.from_file("path/to/file.wav")
-        >>> wave.set_channel(0, torch.ones(1000))
-
-        """
-        if len(value) != len(self.ys[index]):
-            raise ValueError(
-                f"Expected value of length {len(self.ys[index])}, but got {len(value)}"
-            )
-        if index >= self.channels():
-            raise IndexError(
-                f"Index {index} out of bounds for {self.channels()} channels"
-            )
-
-        if isinstance(value, Tensor):
-            self.ys[index] = value
-        elif isinstance(value, Wave):
-            self.ys[index] = value.ys[0]
 
     def duration(self, unit: tp.Literal["sec", "ms"]) -> float:
         """Return the length of the wave in seconds or milliseconds.

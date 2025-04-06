@@ -1,41 +1,77 @@
 """Fir filters."""
 
+from typing import Sequence
 from numpy.typing import ArrayLike
-from torch import Tensor
+from torch import Tensor, nn
 import torch
-from torchaudio import functional as F  # noqa: N812
 from typing_extensions import override
 from scipy.signal import firwin
-from typing import Literal, Sequence
 
 from torchfx.filter.__base import AbstractFilter
 from torchfx.typing import WindowType
 
 
 class FIR(AbstractFilter):
-    """A FIR filter implemented via torchaudio.lfilter."""
+    """Efficient FIR filter using conv1d. Supports [T], [C, T], [B, C, T]."""
 
     def __init__(self, b: ArrayLike) -> None:
         super().__init__()
-        self.b = torch.tensor(b, dtype=torch.float32)
-        self.a = torch.tensor([1.0], dtype=torch.float32)  # FIR has no feedback
+        # Flip the kernel for causal convolution (like lfilter)
+        b_tensor = torch.tensor(b, dtype=torch.float32).flip(0)
+        self.register_buffer("kernel", b_tensor[None, None, :])  # [1, 1, K]
+
+    @override
+    def compute_coefficients(self) -> None:
+        """Compute the filter coefficients."""
+        # This method is not used in FIR, but defined for consistency with IIR
+        pass
 
     @override
     def forward(self, x: Tensor) -> Tensor:
         dtype = x.dtype
         device = x.device
+        kernel = self.kernel.to(dtype=dtype, device=device)
 
-        x = x.to(dtype).to(device)
+        original_shape = x.shape
 
+        # Reshape input to [B, C, T]
         if x.ndim == 1:
-            x = x[None, None, :]  # [1, 1, T]
+            # [T] → [1, 1, T]
+            x = x.unsqueeze(0).unsqueeze(0)
         elif x.ndim == 2:
-            x = x[:, None, :]     # [B, 1, T]
+            # [C, T] → [1, C, T]
+            x = x.unsqueeze(0)
+        elif x.ndim == 3:
+            # [B, C, T] → as is
+            pass
+        else:
+            raise ValueError("Input must be of shape [T], [C, T], or [B, C, T]")
 
-        return F.lfilter(x, self.a.to(device), self.b.to(device))
+        B, C, T = x.shape
 
+        # Expand kernel to match number of channels
+        kernel_exp = kernel.expand(C, 1, -1)  # [C, 1, K] # type: ignore
 
-# Tipi per chiarezza
+        # Reshape input to [B * C, 1, T] to apply grouped conv
+        x_reshaped = x.reshape(B * C, 1, T)
+
+        # Pad input to maintain original length, pad right side
+        pad = kernel.shape[-1] - 1  # type: ignore
+        x_padded = nn.functional.pad(x_reshaped, (pad, 0))  # pad right only
+
+        # Apply convolution with groups = C (same kernel per channel, repeated for batch)
+        y = nn.functional.conv1d(x_padded, kernel_exp.repeat(B, 1, 1), groups=C)
+
+        # Reshape back to [B, C, T]
+        y = y.view(B, C, T)
+
+        # Reduce to original shape if input wasn't batched
+        if len(original_shape) == 1:
+            return y[0, 0]
+        elif len(original_shape) == 2:
+            return y[0]
+        else:
+            return y
 
 
 class DesignableFIR(FIR):
@@ -54,24 +90,33 @@ class DesignableFIR(FIR):
     def __init__(
         self,
         cutoff: float | Sequence[float],
-        fs: float,
-        num_taps: int = 101,
-        pass_zero: bool | Literal["bandpass", "lowpass", "highpass", "bandstop"] = True,
+        num_taps: int,
+        fs: int | None = None,
+        pass_zero: bool = True,
         window: WindowType = "hamming",
-        scale: bool = True,
-    ):
-        b = firwin(
-            numtaps=num_taps,
-            cutoff=cutoff,
-            fs=fs,
-            pass_zero=pass_zero, # type: ignore
-            window=window,
-            scale=scale,
-        )
-        super().__init__(b)
-        self.fs = fs
-        self.cutoff = cutoff
+    ) -> None:
+        # Design the filter using firwin
         self.num_taps = num_taps
+        self.cutoff = cutoff
+        self.fs = fs
         self.pass_zero = pass_zero
         self.window = window
-        self.scale = scale
+
+        self.b: ArrayLike | None = None
+        if fs is not None:
+            self.compute_coefficients()
+            assert self.b is not None, "Filter coefficients (b) must be computed."
+            super().__init__(self.b)
+
+    @override
+    def compute_coefficients(self) -> None:
+        assert self.fs is not None, "Sampling frequency (fs) must be set."
+
+        self.b = firwin(
+            self.num_taps,
+            self.cutoff,
+            fs=self.fs,
+            pass_zero=self.pass_zero,
+            window=self.window,
+            scale=True,
+        )

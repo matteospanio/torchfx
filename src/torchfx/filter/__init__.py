@@ -1,7 +1,25 @@
 from .fir import FIR, DesignableFIR
-from .iir import IIR, HiButterworth, LoButterworth, HiChebyshev1, LoChebyshev1, HiChebyshev2, LoChebyshev2, HiShelving, LoShelving, Notch, AllPass
+from .iir import (
+    IIR,
+    HiButterworth,
+    LoButterworth,
+    HiChebyshev1,
+    LoChebyshev1,
+    HiChebyshev2,
+    LoChebyshev2,
+    HiShelving,
+    LoShelving,
+    Notch,
+    AllPass,
+    Chebyshev1,
+    Chebyshev2,
+    Butterworth,
+)
 
 __all__ = [
+    "Butterworth",
+    "Chebyshev1",
+    "Chebyshev2",
     "FIR",
     "DesignableFIR",
     "IIR",
@@ -14,5 +32,5 @@ __all__ = [
     "HiShelving",
     "LoShelving",
     "Notch",
-    "AllPass"
+    "AllPass",
 ]
