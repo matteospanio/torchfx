@@ -34,13 +34,13 @@ def scipy_fir(signal, bs):
     return filtered_signal
 
 
-def fir_bench():
+def start():
     times = [1]
     for i in range(60, 601, 60):
         times.append(i)
 
     for t in times:
-        for i in range(1, 13):
+        for i in range(1, 9):
             signal = create_audio(SAMPLE_RATE, t, i)
 
             wave = Wave(signal, SAMPLE_RATE)
@@ -74,9 +74,9 @@ def fir_bench():
             )
             print(f"Times: {t}\tChannels:{i}")
             print(
-                f"GPU: {gpu_fir_time:.6f}s\tCPU: {cpu_fir_time:.6f}s\tSciPy: {scipy_fir_time:.6f}s",
+                f"GPU: {gpu_fir_time/50:.6f}s\tCPU: {cpu_fir_time/50:.6f}s\tSciPy: {scipy_fir_time/50:.6f}s",
             )
 
 
 if __name__ == "__main__":
-    fir_bench()
+    start()

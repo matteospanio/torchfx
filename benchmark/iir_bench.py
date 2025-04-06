@@ -32,13 +32,13 @@ def scipy_filter(signal, bs, as_):
     return filtered_signal
 
 
-def filter_bench():
+def start():
     times = [1]
     for i in range(60, 601, 60):
         times.append(i)
 
     for t in times:
-        for i in range(1, 13):
+        for i in range(1, 9):
             signal = create_audio(SAMPLE_RATE, t, i)
 
             wave = Wave(signal, SAMPLE_RATE)
@@ -73,9 +73,9 @@ def filter_bench():
 
             print(f"Times: {t}\tChannels:{i}")
             print(
-                f"GPU:\t{gpu_filter_time:.6f}s, CPU:\t{cpu_filter_time:.6f}s, SciPy:\t{scipy_filter_time:.6f}s",
+                f"GPU:\t{gpu_filter_time/50:.6f}s, CPU:\t{cpu_filter_time/50:.6f}s, SciPy:\t{scipy_filter_time/50:.6f}s",
             )
 
 
 if __name__ == "__main__":
-    filter_bench()
+    start()
