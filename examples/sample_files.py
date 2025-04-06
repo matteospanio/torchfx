@@ -16,43 +16,21 @@ def create_audio(sample_rate, duration, num_channels):
     return signal
 
 
-def gpu_fir(signal, sample_rate):
-    wave = Wave(signal, sample_rate)
-    wave.to("cuda")
-
-    fchain = nn.Sequential(
-        DesignableFIR(num_taps=101, cutoff=1000),
-        DesignableFIR(num_taps=102, cutoff=5000),
-        DesignableFIR(num_taps=103, cutoff=1500),
-        DesignableFIR(num_taps=104, cutoff=1800),
-    )
-
+def gpu_fir(wave, fchain):
     _ = wave | fchain
 
 
-def cpu_fir(signal, sample_rate):
-    wave = Wave(signal, sample_rate)
-
-    fchain = nn.Sequential(
-        DesignableFIR(num_taps=101, cutoff=1000),
-        DesignableFIR(num_taps=102, cutoff=5000),
-        DesignableFIR(num_taps=103, cutoff=1500),
-        DesignableFIR(num_taps=104, cutoff=1800),
-    )
-
+def cpu_fir(wave, fchain):
     _ = wave | fchain
 
 
-def scipy_fir(signal, sample_rate):
-    b1 = firwin(101, 1000, fs=sample_rate)
-    b2 = firwin(102, 1000, fs=sample_rate)
-    b3 = firwin(103, 1000, fs=sample_rate)
-    b4 = firwin(104, 1000, fs=sample_rate)
+def scipy_fir(signal, bs):
     a = [1]
-    filtered_signal = lfilter(b1, a, signal)
-    filtered_signal = lfilter(b2, a, filtered_signal)
-    filtered_signal = lfilter(b3, a, filtered_signal)
-    filtered_signal = lfilter(b4, a, filtered_signal)
+    filtered_signal = lfilter(bs[0], a, signal)
+    filtered_signal = lfilter(bs[1], a, filtered_signal)
+    filtered_signal = lfilter(bs[2], a, filtered_signal)
+    filtered_signal = lfilter(bs[3], a, filtered_signal)
+    filtered_signal = lfilter(bs[4], a, filtered_signal)
     return filtered_signal
 
 
@@ -60,15 +38,40 @@ def fir_bench():
     for i in range(1, 8):
         signal = create_audio(SAMPLE_RATE, 60, i)
 
-        gpu_fir_time = timeit.timeit(lambda: gpu_fir(signal, SAMPLE_RATE), number=100)
-        cpu_fir_time = timeit.timeit(lambda: cpu_fir(signal, SAMPLE_RATE), number=100)
-        scipy_fir_time = timeit.timeit(
-            lambda: scipy_fir(signal, SAMPLE_RATE), number=100
+        wave = Wave(signal, SAMPLE_RATE)
+        fchain = nn.ModuleList(
+            [
+                DesignableFIR(num_taps=101, cutoff=1000, fs=SAMPLE_RATE),
+                DesignableFIR(num_taps=102, cutoff=5000, fs=SAMPLE_RATE),
+                DesignableFIR(num_taps=103, cutoff=1500, fs=SAMPLE_RATE),
+                DesignableFIR(num_taps=104, cutoff=1800, fs=SAMPLE_RATE),
+                DesignableFIR(num_taps=105, cutoff=1850, fs=SAMPLE_RATE),
+            ]
         )
+
+        for f in fchain:
+            f.compute_coefficients()
+
+        wave.to("cuda")
+        fchain.to("cuda")
+        gpu_fir_time = timeit.timeit(lambda: gpu_fir(wave, fchain), number=100)
+
+        wave.to("cpu")
+        fchain.to("cpu")
+        cpu_fir_time = timeit.timeit(lambda: cpu_fir(wave, SAMPLE_RATE), number=100)
+
+        b1 = firwin(101, 1000, fs=SAMPLE_RATE)
+        b2 = firwin(102, 5000, fs=SAMPLE_RATE)
+        b3 = firwin(103, 1500, fs=SAMPLE_RATE)
+        b4 = firwin(104, 1800, fs=SAMPLE_RATE)
+        b5 = firwin(105, 1850, fs=SAMPLE_RATE)
+
+        scipy_fir_time = timeit.timeit(
+            lambda: scipy_fir(signal, [b1, b2, b3, b4, b5]), number=100
+        )
+        print(f"Channels:\t{i}")
         print(
-            cpu_fir_time,
-            scipy_fir_time,
-            f"Channels: {i}, GPU FIR: {gpu_fir_time:.4f}s, CPU FIR: {cpu_fir_time:.4f}s, SciPy FIR: {scipy_fir_time:.4f}s",
+            f"GPU:\t{gpu_fir_time:.6f}s, CPU:\t{cpu_fir_time:.6f}s, SciPy:\t{scipy_fir_time:.6f}s",
         )
 
 

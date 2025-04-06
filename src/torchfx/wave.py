@@ -156,7 +156,7 @@ class Wave:
             if hasattr(f, "fs") and f.fs is None:
                 f.fs = self.fs  # type: ignore
 
-            if isinstance(f, AbstractFilter):
+            if isinstance(f, AbstractFilter) and not f._has_computed_coeff:
                 f.compute_coefficients()
 
         if isinstance(f, nn.Sequential) or isinstance(f, nn.ModuleList):
@@ -164,7 +164,7 @@ class Wave:
                 if isinstance(a, FX):
                     if hasattr(a, "fs") and a.fs is None:
                         a.fs = self.fs  # type: ignore
-                    if isinstance(a, AbstractFilter):
+                    if isinstance(a, AbstractFilter) and not a._has_computed_coeff:
                         a.compute_coefficients()
 
         return self.transform(f.forward)
