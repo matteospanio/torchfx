@@ -37,7 +37,8 @@ class MultiChannelEffect(FX):
         if self.fs is None:
             raise ValueError("Sampling frequency (fs) must be set.")
 
-        x = [self.ch[i](x[i]) for i in range(self.num_channels)]
+        for i in range(self.num_channels):
+            x[i] = self.ch[i](x[i])
         return x
 
 
