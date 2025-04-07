@@ -12,13 +12,13 @@ repos:
     -   id: check-toml
     -   id: check-docstring-first
 
--   repo: https://github.com/psf/black
-    rev: 24.4.2
-    hooks:
-    -   id: black
-        name: black format
-        stages:
-          - "pre-commit"
+      # -   repo: https://github.com/psf/black
+      #     rev: 24.4.2
+      #     hooks:
+      #     -   id: black
+      #         name: black format
+      #         stages:
+      #           - "pre-commit"
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.4.4

@@ -71,7 +71,7 @@ class Wave:
 
         """
         self.__device = device
-        self.ys.to(device)
+        self.ys = self.ys.to(device)
         return self
 
     def transform(self, func: Callable[..., Tensor], *args, **kwargs) -> "Wave":

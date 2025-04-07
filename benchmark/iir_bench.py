@@ -6,6 +6,7 @@ from torchfx import Wave
 from torchfx.filter import HiButterworth, LoButterworth, HiChebyshev1, LoChebyshev1
 
 SAMPLE_RATE = 44100
+REP = 2
 
 
 def create_audio(sample_rate, duration, num_channels):
@@ -17,11 +18,11 @@ def create_audio(sample_rate, duration, num_channels):
 
 
 def gpu_filter(wave, fchain):
-    _ = wave | fchain
+    _ = fchain(wave.ys)
 
 
 def cpu_filter(wave, fchain):
-    _ = wave | fchain
+    _ = fchain(wave.ys)
 
 
 def scipy_filter(signal, bs, as_):
@@ -33,12 +34,11 @@ def scipy_filter(signal, bs, as_):
 
 
 def start(outfile):
-    times = [1]
-    for i in range(60, 601, 60):
-        times.append(i)
+    times = [1, 5, 180, 300, 600]
 
+    print("time,channels,gpu,cpu,scipy")
     for t in times:
-        for i in range(1, 9):
+        for i in [1, 2, 4, 8, 12]:
             signal = create_audio(SAMPLE_RATE, t, i)
 
             wave = Wave(signal, SAMPLE_RATE)
@@ -49,16 +49,26 @@ def start(outfile):
                 LoChebyshev1(cutoff=1800, order=2, fs=SAMPLE_RATE),
             )
 
-            for f in fchain:
-                f.compute_coefficients()
-
             wave.to("cuda")
             fchain.to("cuda")
-            gpu_filter_time = timeit.timeit(lambda: gpu_filter(wave, fchain), number=50)
+
+            for f in fchain:
+                f.compute_coefficients()
+                f.move_coeff("cuda")
+
+            gpu_filter_time = timeit.timeit(
+                lambda: gpu_filter(wave, fchain), number=REP
+            )
 
             wave.to("cpu")
             fchain.to("cpu")
-            cpu_filter_time = timeit.timeit(lambda: cpu_filter(wave, fchain), number=50)
+
+            for f in fchain:
+                f.move_coeff("cpu")
+
+            cpu_filter_time = timeit.timeit(
+                lambda: cpu_filter(wave, fchain), number=REP
+            )
 
             # SciPy filter coefficients
             b1, a1 = butter(2, 1000, btype="high", fs=SAMPLE_RATE)  # type: ignore
@@ -68,16 +78,14 @@ def start(outfile):
 
             scipy_filter_time = timeit.timeit(
                 lambda: scipy_filter(signal, [b1, b2, b3, b4], [a1, a2, a3, a4]),
-                number=50,
+                number=REP,
             )
 
-            print(f"Times: {t}\tChannels:{i}", file=outfile)
             print(
-                f"GPU:\t{gpu_filter_time/50:.6f}s, CPU:\t{cpu_filter_time/50:.6f}s, SciPy:\t{scipy_filter_time/50:.6f}s",
-                file=outfile,
+                f"{t},{i},{gpu_filter_time/REP:.6f},{cpu_filter_time/REP:.6f},{scipy_filter_time/REP:.6f}"
             )
 
 
 if __name__ == "__main__":
-    with open("out") as f:
+    with open("iir.out", "w") as f:
         start(f)

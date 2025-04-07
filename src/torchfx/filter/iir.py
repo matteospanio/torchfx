@@ -27,6 +27,10 @@ class IIR(AbstractFilter):
         super().__init__()
         self.fs = fs
 
+    def move_coeff(self, device, dtype=torch.float32):
+        self.a = torch.as_tensor(self.a, device=device, dtype=dtype)
+        self.b = torch.as_tensor(self.a, device=device, dtype=dtype)
+
     @override
     def forward(self, x: Tensor) -> Tensor:
         dtype = x.dtype
@@ -37,11 +41,10 @@ class IIR(AbstractFilter):
         if self.a is None or self.b is None:
             self.compute_coefficients()
 
-        return F.lfilter(
-            x,
-            torch.as_tensor(self.a, dtype=dtype, device=device),
-            torch.as_tensor(self.b, dtype=dtype, device=device),
-        )
+        if not isinstance(self.a, Tensor) or not isinstance(self.b, Tensor):
+            self.move_coeff(device, dtype)
+
+        return F.lfilter(x, self.a, self.b)
 
 
 class Butterworth(IIR):

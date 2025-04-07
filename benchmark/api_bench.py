@@ -10,6 +10,7 @@ from torchfx.filter import HiChebyshev1, LoButterworth
 SAMPLE_RATE = 44100
 DURATION = 120  # 2 minutes
 NUM_CHANNELS = 8
+REP = 5
 
 
 # Generate a random multichannel signal
@@ -91,21 +92,22 @@ def apply_filters_with_numpy_scipy(signal):
 def start(out_file):
     signal_data = create_audio(SAMPLE_RATE, DURATION, NUM_CHANNELS)
     wave = Wave(signal_data, SAMPLE_RATE)
+    # wave.to("cuda")
 
     # Benchmark each method
-    class_time = timeit.timeit(lambda: apply_filters_with_classes(wave), number=50)
-    seq_time = timeit.timeit(lambda: apply_filters_with_sequential(wave), number=50)
-    pipe_time = timeit.timeit(lambda: apply_filters_with_pipe(wave), number=50)
+    class_time = timeit.timeit(lambda: apply_filters_with_classes(wave), number=REP)
+    seq_time = timeit.timeit(lambda: apply_filters_with_sequential(wave), number=REP)
+    pipe_time = timeit.timeit(lambda: apply_filters_with_pipe(wave), number=REP)
     scipy_time = timeit.timeit(
-        lambda: apply_filters_with_numpy_scipy(signal_data), number=50
+        lambda: apply_filters_with_numpy_scipy(signal_data), number=REP
     )
-
-    print(f"FilterChain (Classes) Time: {class_time/50:.6f}s", file=out_file)
-    print(f"Sequential Time: {seq_time/50:.6f}s", file=out_file)
-    print(f"Pipe Operator Time: {pipe_time/50:.6f}s", file=out_file)
-    print(f"SciPy + NumPy Time: {scipy_time/50:.6f}s", file=out_file)
+    print("filter_chain,sequential,pipe,scipy", file=out_file)
+    print(
+        f"{class_time/REP:.6f},{seq_time/REP:.6f},{pipe_time/REP:.6f},{scipy_time/REP:.6f}",
+        file=out_file,
+    )
 
 
 if __name__ == "__main__":
-    with open("test") as f:
+    with open("api_bench.out", "w") as f:
         start(f)

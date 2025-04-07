@@ -6,6 +6,7 @@ from torchfx import Wave
 from torchfx.filter import DesignableFIR
 
 SAMPLE_RATE = 44100
+REP = 5
 
 
 def create_audio(sample_rate, duration, num_channels):
@@ -35,12 +36,11 @@ def scipy_fir(signal, bs):
 
 
 def start(out_file):
-    times = [1]
-    for i in range(60, 601, 60):
-        times.append(i)
+    print("time,channels,gpu,cpu,scipy")
+    times = [5, 60, 180, 300, 600]
 
     for t in times:
-        for i in range(1, 9):
+        for i in [1, 2, 4, 8, 12]:
             signal = create_audio(SAMPLE_RATE, t, i)
 
             wave = Wave(signal, SAMPLE_RATE)
@@ -57,11 +57,11 @@ def start(out_file):
 
             wave.to("cuda")
             fchain.to("cuda")
-            gpu_fir_time = timeit.timeit(lambda: gpu_fir(wave, fchain), number=50)
+            gpu_fir_time = timeit.timeit(lambda: gpu_fir(wave, fchain), number=REP)
 
             wave.to("cpu")
             fchain.to("cpu")
-            cpu_fir_time = timeit.timeit(lambda: cpu_fir(wave, fchain), number=50)
+            cpu_fir_time = timeit.timeit(lambda: cpu_fir(wave, fchain), number=REP)
 
             b1 = firwin(101, 1000, fs=SAMPLE_RATE)
             b2 = firwin(102, 5000, fs=SAMPLE_RATE)
@@ -70,15 +70,13 @@ def start(out_file):
             b5 = firwin(105, 1850, fs=SAMPLE_RATE)
 
             scipy_fir_time = timeit.timeit(
-                lambda: scipy_fir(signal, [b1, b2, b3, b4, b5]), number=50
+                lambda: scipy_fir(signal, [b1, b2, b3, b4, b5]), number=REP
             )
-            print(f"Times: {t}\tChannels:{i}", file=out_file)
             print(
-                f"GPU: {gpu_fir_time/50:.6f}s\tCPU: {cpu_fir_time/50:.6f}s\tSciPy: {scipy_fir_time/50:.6f}s",
-                file=out_file,
+                f"{t},{i},{gpu_fir_time/REP:.6f},{cpu_fir_time/REP:.6f},{scipy_fir_time/REP:.6f}",
             )
 
 
 if __name__ == "__main__":
-    with open("out") as f:
+    with open("fir.out", "w") as f:
         start(f)
