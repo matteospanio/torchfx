@@ -4,7 +4,10 @@ from torchfx.effects import FX
 
 
 class AbstractFilter(FX, abc.ABC):
-    """Base class for filters."""
+    """Base class for filters.
+    This class provides the basic structure for implementing filters. It inherits from
+    `FX`. It provides the method `compute_coefficients` to compute the filter coefficients.
+    """
 
     @property
     def _has_computed_coeff(self) -> bool:

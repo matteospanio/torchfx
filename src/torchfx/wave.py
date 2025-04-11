@@ -1,4 +1,13 @@
-"""Module containing the Wave class."""
+"""Module containing the Wave class.
+
+Digital signal is usually represented as a 2D tensor, where the first dimension is the
+channel and the second dimension is the time. Of course the signal is discrete, so the
+time is represented as a sequence of samples. The sampling frequency is the number of
+samples per second. The sampling frequency is usually represented as `fs`.
+The Wave class is a wrapper around the 2D tensor that represents the signal. It
+provides methods to manipulate the signal, such as applying filters, transforming the
+signal, and saving the signal to a file.
+"""
 
 import typing as tp
 from collections.abc import Callable
@@ -137,8 +146,8 @@ class Wave:
         Examples
         --------
         >>> wave = Wave.from_file("path/to/file.wav")
-        >>> wave | iir.HighPass(1000) | iir.LowPass(2000)
-        >>> wave | nn.Sequential(iir.HighPass(1000), iir.LowPass(2000))
+        >>> wave | iir.HiButterworth(1000) | iir.LoButterworth(2000)
+        >>> wave | nn.Sequential(iir.HiButterworth(1000), iir.LoButterworth(2000))
 
         Notes
         -----
@@ -174,7 +183,14 @@ class Wave:
         return self.ys.shape[1]
 
     def channels(self) -> int:
-        """Return the number of channels of the wave."""
+        """Return the number of channels of the wave.
+        
+        Returns
+        -------
+        int
+            The number of channels of the wave.
+
+        """
         return self.ys.shape[0]
 
     def get_channel(self, index: int) -> "Wave":

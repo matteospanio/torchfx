@@ -17,7 +17,22 @@ NONE_FS_ERR = "Sample rate of the filter could not be None."
 
 
 class IIR(AbstractFilter):
-    """IIR filter."""
+    """IIR filter.
+    This class implements the IIR filter interface. It is an abstract class that
+    provides the basic structure for implementing IIR filters. It inherits from
+    `AbstractFilter` and provides the basic structure for implementing IIR filters.
+    
+    Attributes
+    ----------
+    a : Sequence
+        The filter's numerator coefficients.
+    b : Sequence
+        The filter's denominator coefficients.
+    fs : int | None
+        The sampling frequency of the filter.
+    cutoff : float
+        The cutoff frequency of the filter.
+    """
 
     fs: int | None
     cutoff: float
@@ -28,6 +43,7 @@ class IIR(AbstractFilter):
         self.fs = fs
 
     def move_coeff(self, device, dtype=torch.float32):
+        """Move the filter coefficients to the specified device and dtype."""
         self.a = torch.as_tensor(self.a, device=device, dtype=dtype)
         self.b = torch.as_tensor(self.a, device=device, dtype=dtype)
 

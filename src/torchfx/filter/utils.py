@@ -1,3 +1,5 @@
+"""Utility functions for filter design."""
+
 from torchfx.typing import FilterOrderScale
 
 

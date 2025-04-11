@@ -77,13 +77,21 @@ class DesignableFIR(FIR):
     """
     FIR filter designed using scipy.signal.firwin.
 
-    Args:
-        cutoff: float or list of float – cutoff frequency/frequencies in Hz
-        fs: Sampling rate in Hz
-        num_taps: Length of the filter (number of coefficients)
-        pass_zero: True for lowpass/highpass, False for bandpass/stopband
-        window: Type of window to use
-        scale: Whether to scale the filter to unity gain at zero freq
+    Attributes
+    ----------
+    cutoff : float | Sequence[float]
+        Cutoff frequency or frequencies (in Hz) for the filter.
+    num_taps : int
+        Number of taps (filter order) for the FIR filter.
+    fs : int | None
+        Sampling frequency (in Hz) of the input signal. If None, the filter will not
+        be designed.
+    pass_zero : bool
+        If True, the filter will be a lowpass filter. If False, it will be a highpass
+        filter.
+    window : WindowType
+        Window type to use for the FIR filter design. Default is "hamming".
+
     """
 
     def __init__(
@@ -119,4 +127,6 @@ class DesignableFIR(FIR):
             window=self.window,
             scale=True,
         )
+        assert self.b is not None, "Filter coefficients (b) must be computed."
+
         super().__init__(self.b)
