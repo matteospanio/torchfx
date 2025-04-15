@@ -19,7 +19,7 @@ TorchFX is designed to be easy to use and integrate with existing PyTorch workfl
 To install TorchFX, you can use pip:
 
 ```bash
-pip install git+https://github.com/matteospanio/torchfx
+pip install torchfx
 ```
 or clone the repository and install it manually:
 
