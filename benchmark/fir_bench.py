@@ -6,7 +6,7 @@ from torchfx import Wave
 from torchfx.filter import DesignableFIR
 
 SAMPLE_RATE = 44100
-REP = 5
+REP = 50
 
 
 def create_audio(sample_rate, duration, num_channels):

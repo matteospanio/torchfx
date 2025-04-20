@@ -10,7 +10,7 @@ from torchfx.filter import HiChebyshev1, LoButterworth
 SAMPLE_RATE = 44100
 DURATION = 120  # 2 minutes
 NUM_CHANNELS = 8
-REP = 5
+REP = 50
 
 
 # Generate a random multichannel signal

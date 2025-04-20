@@ -6,7 +6,7 @@ from torchfx import Wave
 from torchfx.filter import HiButterworth, LoButterworth, HiChebyshev1, LoChebyshev1
 
 SAMPLE_RATE = 44100
-REP = 2
+REP = 50
 
 
 def create_audio(sample_rate, duration, num_channels):
