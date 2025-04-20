@@ -23,7 +23,7 @@ jobs:
 
       - name: Build HTML documentation
         run: |
-          cd docs && uv run make html
+          cd docs && uv run make html && cd ..
           touch docs/build/html/.nojekyll
 
       - name: Deploy to GitHub Pages
