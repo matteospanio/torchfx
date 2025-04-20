@@ -21,7 +21,7 @@ class IIR(AbstractFilter):
     This class implements the IIR filter interface. It is an abstract class that
     provides the basic structure for implementing IIR filters. It inherits from
     `AbstractFilter` and provides the basic structure for implementing IIR filters.
-    
+
     Attributes
     ----------
     a : Sequence
@@ -292,7 +292,16 @@ class HiShelving(Shelving):
         self.a = a
 
 
-class LoShelving(Shelving): ...
+class LoShelving(Shelving):
+    """Low pass shelving filter.
+
+    .. todo:::
+        Implement the low shelving filter.
+        The current implementation is a placeholder and does not perform any filtering.
+
+    """
+
+    ...
 
 
 class Peaking(IIR):
