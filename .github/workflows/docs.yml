@@ -24,7 +24,7 @@ jobs:
 
       - name: Build HTML documentation
         run: |
-          uv run sphinx-build -b html docs docs/_build/html
+          cd docs && uv run make html
           touch docs/_build/html/.nojekyll
 
       - name: Deploy to GitHub Pages
