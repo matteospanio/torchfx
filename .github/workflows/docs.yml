@@ -1,0 +1,33 @@
+name: Deploy Sphinx documentation to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # necessario per pubblicare su gh-pages
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and dependencies
+        run: |
+          curl -Ls https://astral.sh/uv/install.sh | sh
+          uv pip install sphinx
+
+      - name: Build HTML documentation
+        run: |
+          sphinx-build -b html docs docs/_build/html
+          touch docs/_build/html/.nojekyll
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_build/html
