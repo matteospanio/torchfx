@@ -44,12 +44,23 @@ class ComplexEffect(FX):
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Apply a complex multi-channel effect to an audio file."
+    )
+    parser.add_argument("input_file", type=str, help="Path to the input audio file.")
+    parser.add_argument(
+        "output_file", type=str, help="Path to save the output audio file."
+    )
+    args = parser.parse_args()
+
     # Automatically use GPU if available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device:", device)
 
     # Load the audio file
-    wave = Wave.from_file("data/BERIO226.wav")
+    wave = Wave.from_file(args.input_file)
     # wave.to(device)
 
     # Create the effect and apply it to the audio
@@ -57,4 +68,4 @@ if __name__ == "__main__":
     result = wave | fx
 
     # Save the output
-    torchaudio.save("data/BERIO226_out1.wav", result.ys, wave.fs)
+    torchaudio.save(args.output_file, result.ys, wave.fs)

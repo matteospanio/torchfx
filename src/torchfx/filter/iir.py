@@ -241,6 +241,20 @@ class Shelving(IIR):
 
     q: float
 
+    def __init__(
+        self,
+        cutoff: float,
+        q: float,
+        fs: int | None = None,
+        a: Sequence | None = None,
+        b: Sequence | None = None,
+    ) -> None:
+        super().__init__(fs)
+        self.cutoff = cutoff
+        self.q = q
+        self.b = b
+        self.a = a
+
     @property
     def _omega(self) -> float:
         if self.fs is None:
@@ -265,7 +279,7 @@ class HiShelving(Shelving):
         gain_scale: FilterOrderScale = "linear",
         fs: int | None = None,
     ):
-        super().__init__(fs)
+        super().__init__(cutoff=cutoff, q=q, fs=fs)
         self.cutoff = cutoff
         self.q = q
         self.gain = gain if gain_scale == "linear" else 10 ** (gain / 20)
@@ -314,11 +328,15 @@ class Peaking(IIR):
         gain: float,
         gain_scale: FilterOrderScale,
         fs: int | None = None,
+        a: Sequence | None = None,
+        b: Sequence | None = None,
     ) -> None:
         super().__init__(fs)
         self.cutoff = cutoff
         self.Q = Q
         self.gain = gain if gain_scale == "linear" else 10 ** (gain / 20)
+        self.a = a
+        self.b = b
 
     @override
     def compute_coefficients(self) -> None:
@@ -371,3 +389,92 @@ class AllPass(IIR):
         b, a = iirpeak(self.cutoff / (self.fs / 2), self.Q)
         self.b = b
         self.a = a
+
+
+class LinkwitzRiley(IIR):
+    """Linkwitz-Riley filter.
+
+    This filter is created by cascading two identical Butterworth filters.
+    The resulting filter has an order that is twice the order of the
+    base Butterworth filter and a -6 dB gain at the cutoff frequency.
+    The order of a Linkwitz-Riley filter must be an even integer.
+    """
+
+    def __init__(
+        self,
+        btype: str,
+        cutoff: float,
+        order: int = 4,
+        order_scale: FilterOrderScale = "linear",
+        fs: int | None = None,
+    ) -> None:
+        """Initialize the Linkwitz-Riley filter.
+
+        Args:
+        ----
+            btype (str): The type of filter, 'lowpass' or 'highpass'.
+            cutoff (float): The cutoff frequency in Hz.
+            order (int): The filter order. Must be a positive even integer (e.g., 2, 4, 8).
+                         Defaults to 4.
+            fs (int | None): The sampling frequency in Hz. Defaults to None.
+
+        """
+        super().__init__(fs)
+        self.order = order if order_scale == "linear" else order // 6
+        if order <= 0 or order % 2 != 0:
+            raise ValueError(
+                "Linkwitz-Riley filter order must be a positive even integer."
+            )
+        self.btype = btype
+        self.cutoff = cutoff
+        self.order = order
+        self.a = None
+        self.b = None
+
+    @override
+    def compute_coefficients(self) -> None:
+        """Compute the filter coefficients.
+
+        The method calculates the coefficients for a Butterworth filter of half
+        the specified order and then cascades it with itself by convolving
+        the numerator and denominator coefficients.
+        """
+        assert self.fs is not None
+
+        # An Nth-order Linkwitz-Riley filter is made from two (N/2)th-order Butterworth filters.
+        butter_order = self.order // 2
+
+        # Get the coefficients for the base Butterworth filter
+        b_butter, a_butter = butter(
+            butter_order, self.cutoff / (0.5 * self.fs), btype=self.btype
+        )  # type: ignore
+
+        # Cascade the filters by convolving the coefficients with themselves
+        self.b = np.convolve(b_butter, b_butter)
+        self.a = np.convolve(a_butter, a_butter)
+
+
+class HiLinkwitzRiley(LinkwitzRiley):
+    """High-pass Linkwitz-Riley filter."""
+
+    def __init__(
+        self,
+        cutoff: float,
+        order: int = 4,
+        order_scale: FilterOrderScale = "linear",
+        fs: int | None = None,
+    ) -> None:
+        super().__init__("highpass", cutoff, order, order_scale, fs)
+
+
+class LoLinkwitzRiley(LinkwitzRiley):
+    """Low-pass Linkwitz-Riley filter."""
+
+    def __init__(
+        self,
+        cutoff: float,
+        order: int = 4,
+        order_scale: FilterOrderScale = "linear",
+        fs: int | None = None,
+    ) -> None:
+        super().__init__("lowpass", cutoff, order, order_scale, fs)

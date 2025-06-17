@@ -15,6 +15,7 @@ from pathlib import Path
 
 import torchaudio
 from numpy.typing import ArrayLike
+import torch
 from torch import Tensor, nn
 from typing_extensions import Self
 
@@ -184,7 +185,7 @@ class Wave:
 
     def channels(self) -> int:
         """Return the number of channels of the wave.
-        
+
         Returns
         -------
         int
@@ -237,3 +238,52 @@ class Wave:
 
         """
         return len(self) / self.fs * (1000 if unit == "ms" else 1)
+
+    @classmethod
+    def merge(cls, waves: tp.Sequence["Wave"], split_channels: bool = False) -> "Wave":
+        """Merge multiple waves into a single wave.
+
+        Parameters
+        ----------
+        other : Sequence[Wave]
+            The waves to merge.
+        split_channels : bool, optional
+            If False, the channels of the waves will be merged into a single channel.
+            If True, the channels will be merged into multiple channels. Default is False.
+
+        Returns
+        -------
+        Wave
+            The merged wave object.
+
+        Examples
+        --------
+        >>> wave1 = Wave.from_file("path/to/file1.wav")
+        >>> wave2 = Wave.from_file("path/to/file2.wav")
+        >>> merged_wave = wave1.merge([wave2])
+
+        """
+
+        if not waves:
+            raise ValueError("No waves to merge. Provide at least one wave.")
+
+        fs = waves[0].fs
+        for w in waves:
+            if w.fs != fs:
+                raise ValueError(
+                    f"Sampling frequency mismatch: {w.fs} != {fs}. "
+                    "All waves must have the same sampling frequency."
+                )
+
+        if split_channels:
+            ys = torch.cat([w.ys for w in waves], dim=0)
+        else:
+            ys = torch.zeros(
+                (len(waves), max(len(w.ys) for w in waves)),
+                dtype=waves[0].ys.dtype,
+                device=waves[0].device,
+            )
+            for s in waves:
+                ys += s.ys
+
+        return Wave(ys, fs)
