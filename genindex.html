@@ -38,7 +38,7 @@
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
-        <link rel="stylesheet" type="text/css" href="_static/sphinx_immaterial_theme.96fe8683ff2bd71e9.min.css?v=13adf062" />
+        <link rel="stylesheet" type="text/css" href="_static/sphinx_immaterial_theme.6ec1c446c2c357833.min.css?v=e2e8fea8" />
     <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -414,6 +414,7 @@
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#W"><strong>W</strong></a>
  | <a href="#Y"><strong>Y</strong></a>
@@ -467,6 +468,8 @@
 </li>
         <li><a href="api.html#torchfx.filter.HiShelving.compute_coefficients">(torchfx.filter.HiShelving method)</a>
 </li>
+        <li><a href="api.html#torchfx.filter.LinkwitzRiley.compute_coefficients">(torchfx.filter.LinkwitzRiley method)</a>
+</li>
         <li><a href="api.html#torchfx.filter.Notch.compute_coefficients">(torchfx.filter.Notch method)</a>
 </li>
       </ul></li>
@@ -500,9 +503,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#torchfx.filter.FIR">FIR (class in torchfx.filter)</a>
 </li>
-      <li><a href="api.html#torchfx.filter.FIR.forward">forward() (torchfx.filter.FIR method)</a>
+      <li><a href="api.html#torchfx.effects.FX.forward">forward() (torchfx.effects.FX method)</a>
 
       <ul>
+        <li><a href="api.html#torchfx.effects.Gain.forward">(torchfx.effects.Gain method)</a>
+</li>
+        <li><a href="api.html#torchfx.effects.Normalize.forward">(torchfx.effects.Normalize method)</a>
+</li>
+        <li><a href="api.html#torchfx.filter.FIR.forward">(torchfx.filter.FIR method)</a>
+</li>
         <li><a href="api.html#torchfx.filter.IIR.forward">(torchfx.filter.IIR method)</a>
 </li>
         <li><a href="api.html#torchfx.FX.forward">(torchfx.FX method)</a>
@@ -521,12 +530,20 @@
 </li>
       </ul></li>
       <li><a href="api.html#torchfx.FX">FX (class in torchfx)</a>
+
+      <ul>
+        <li><a href="api.html#torchfx.effects.FX">(class in torchfx.effects)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#torchfx.effects.Gain">Gain (class in torchfx.effects)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#torchfx.Wave.get_channel">get_channel() (torchfx.Wave method)</a>
 </li>
@@ -544,6 +561,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#torchfx.filter.HiChebyshev2">HiChebyshev2 (class in torchfx.filter)</a>
 </li>
+      <li><a href="api.html#torchfx.filter.HiLinkwitzRiley">HiLinkwitzRiley (class in torchfx.filter)</a>
+</li>
       <li><a href="api.html#torchfx.filter.HiShelving">HiShelving (class in torchfx.filter)</a>
 </li>
   </ul></td>
@@ -560,6 +579,8 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#torchfx.filter.LinkwitzRiley">LinkwitzRiley (class in torchfx.filter)</a>
+</li>
       <li><a href="api.html#torchfx.filter.LoButterworth">LoButterworth (class in torchfx.filter)</a>
 </li>
       <li><a href="api.html#torchfx.filter.LoChebyshev1">LoChebyshev1 (class in torchfx.filter)</a>
@@ -567,6 +588,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#torchfx.filter.LoChebyshev2">LoChebyshev2 (class in torchfx.filter)</a>
+</li>
+      <li><a href="api.html#torchfx.filter.LoLinkwitzRiley">LoLinkwitzRiley (class in torchfx.filter)</a>
 </li>
       <li><a href="api.html#torchfx.filter.LoShelving">LoShelving (class in torchfx.filter)</a>
 </li>
@@ -576,10 +599,14 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#torchfx.Wave.merge">merge() (torchfx.Wave class method)</a>
+</li>
       <li>
     module
 
       <ul>
+        <li><a href="api.html#module-torchfx.effects">torchfx.effects</a>
+</li>
         <li><a href="api.html#module-torchfx.filter">torchfx.filter</a>
 </li>
       </ul></li>
@@ -593,10 +620,14 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#torchfx.filter.Notch">Notch (class in torchfx.filter)</a>
+      <li><a href="api.html#torchfx.effects.NormalizationStrategy">NormalizationStrategy (class in torchfx.effects)</a>
+</li>
+      <li><a href="api.html#torchfx.effects.Normalize">Normalize (class in torchfx.effects)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#torchfx.filter.Notch">Notch (class in torchfx.filter)</a>
+</li>
       <li><a href="api.html#torchfx.filter.DesignableFIR.num_taps">num_taps (torchfx.filter.DesignableFIR attribute)</a>
 </li>
   </ul></td>
@@ -607,6 +638,22 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#torchfx.filter.DesignableFIR.pass_zero">pass_zero (torchfx.filter.DesignableFIR attribute)</a>
 </li>
+      <li><a href="api.html#torchfx.effects.PeakNormalizationStrategy">PeakNormalizationStrategy (class in torchfx.effects)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#torchfx.effects.PercentileNormalizationStrategy">PercentileNormalizationStrategy (class in torchfx.effects)</a>
+</li>
+      <li><a href="api.html#torchfx.effects.PerChannelNormalizationStrategy">PerChannelNormalizationStrategy (class in torchfx.effects)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#torchfx.effects.RMSNormalizationStrategy">RMSNormalizationStrategy (class in torchfx.effects)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -616,14 +663,21 @@
       <li><a href="api.html#torchfx.Wave.to">to() (torchfx.Wave method)</a>
 </li>
       <li>
+    torchfx.effects
+
+      <ul>
+        <li><a href="api.html#module-torchfx.effects">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
     torchfx.filter
 
       <ul>
         <li><a href="api.html#module-torchfx.filter">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#torchfx.Wave.transform">transform() (torchfx.Wave method)</a>
 </li>
   </ul></td>

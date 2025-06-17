@@ -38,7 +38,7 @@
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
-        <link rel="stylesheet" type="text/css" href="../../_static/sphinx_immaterial_theme.96fe8683ff2bd71e9.min.css?v=13adf062" />
+        <link rel="stylesheet" type="text/css" href="../../_static/sphinx_immaterial_theme.6ec1c446c2c357833.min.css?v=e2e8fea8" />
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -417,6 +417,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
@@ -599,7 +600,7 @@
 <a class="viewcode-back" href="../../api.html#torchfx.Wave.channels">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">channels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of channels of the wave.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        int</span>
@@ -658,6 +659,58 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1000</span> <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;ms&quot;</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Wave.merge">
+<a class="viewcode-back" href="../../api.html#torchfx.Wave.merge">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">waves</span><span class="p">:</span> <span class="n">tp</span><span class="o">.</span><span class="n">Sequence</span><span class="p">[</span><span class="s2">&quot;Wave&quot;</span><span class="p">],</span> <span class="n">split_channels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Wave&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge multiple waves into a single wave.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        waves : Sequence[Wave]</span>
+<span class="sd">            The waves to merge.</span>
+<span class="sd">        split_channels : bool, optional</span>
+<span class="sd">            If False, the channels of the waves will be merged into a single channel.</span>
+<span class="sd">            If True, the channels will be merged into multiple channels. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Wave</span>
+<span class="sd">            The merged wave object.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; wave1 = Wave.from_file(&quot;path/to/file1.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; wave2 = Wave.from_file(&quot;path/to/file2.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; merged_wave = wave1.merge([wave2])</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">waves</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No waves to merge. Provide at least one wave.&quot;</span><span class="p">)</span>
+
+        <span class="n">fs</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fs</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">fs</span> <span class="o">!=</span> <span class="n">fs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Sampling frequency mismatch: </span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">fs</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">fs</span><span class="si">}</span><span class="s2">. &quot;</span>
+                    <span class="s2">&quot;All waves must have the same sampling frequency.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">split_channels</span><span class="p">:</span>
+            <span class="n">ys</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">w</span><span class="o">.</span><span class="n">ys</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ys</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waves</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">ys</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">)),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">waves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">waves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">:</span>
+                <span class="n">ys</span> <span class="o">+=</span> <span class="n">s</span><span class="o">.</span><span class="n">ys</span>
+
+        <span class="k">return</span> <span class="n">Wave</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span></div>
 </div>
 
 </code></pre></div>
