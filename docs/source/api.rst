@@ -20,3 +20,10 @@ The already implemented filters are disponible under the `filter` module:
    :members:
    :show-inheritance:
    :exclude-members: __init__, __str__, __repr__, __call__
+
+The already implemented effects are disponible under the `effects` module:
+
+.. automodule:: torchfx.effects
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__

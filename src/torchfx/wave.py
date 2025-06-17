@@ -245,7 +245,7 @@ class Wave:
 
         Parameters
         ----------
-        other : Sequence[Wave]
+        waves : Sequence[Wave]
             The waves to merge.
         split_channels : bool, optional
             If False, the channels of the waves will be merged into a single channel.

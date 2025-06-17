@@ -29,10 +29,6 @@ class Gain(FX):
     r"""Adjust volume of waveform.
     This effect is the same as `torchaudio.transforms.Vol`, but it adds the option to clamp or not the output waveform.
 
-    .. devices:: CPU CUDA
-
-    .. properties:: Autograd TorchScript
-
     Properties
     ----------
         gain (float): The gain factor to apply to the waveform.
@@ -89,10 +85,6 @@ class Gain(FX):
 
 class Normalize(FX):
     r"""Normalize the waveform to a given peak value using a selected strategy.
-
-    .. devices:: CPU CUDA
-
-    .. properties:: Autograd TorchScript
 
     Args:
         peak (float): The peak value to normalize to. Default is 1.0.
