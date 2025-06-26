@@ -27,23 +27,29 @@ class FX(nn.Module, abc.ABC):
 
 class Gain(FX):
     r"""Adjust volume of waveform.
+
     This effect is the same as `torchaudio.transforms.Vol`, but it adds the option to clamp or not the output waveform.
 
-    Properties
+    Parameters
     ----------
-        gain (float): The gain factor to apply to the waveform.
-        gain_type (str): The type of gain to apply. Can be one of "amplitude", "db", or "power".
-        clamp (bool): If True, clamps the output waveform to the range [-1.0, 1.0].
+    gain (float): The gain factor to apply to the waveform.
+    gain_type (str): The type of gain to apply. Can be one of "amplitude", "db", or "power".
+    clamp (bool): If True, clamps the output waveform to the range [-1.0, 1.0].
 
     Example
-    --------
+    -------
         >>> waveform, sample_rate = torchaudio.load("test.wav", normalize=True)
         >>> transform = transforms.Vol(gain=0.5, gain_type="amplitude")
         >>> quieter_waveform = transform(waveform)
 
     See Also
     --------
-        torchaudio.transforms.Vol: Transform to apply gain to a waveform.
+    torchaudio.transforms.Vol: Transform to apply gain to a waveform.
+
+    Notes
+    -----
+    This class is based on `torchaudio.transforms.Vol`, licensed under the BSD 2-Clause License.
+    See licenses.torchaudio.BSD-2-Clause.txt for details.
     """
 
     def __init__(
