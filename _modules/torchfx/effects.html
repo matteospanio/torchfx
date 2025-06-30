@@ -405,11 +405,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">Tensor</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchaudio</span><span class="w"> </span><span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchaudio</span><span class="w"> </span><span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 
 <div class="viewcode-block" id="FX">
@@ -437,37 +438,39 @@
 <a class="viewcode-back" href="../../api.html#torchfx.Gain">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Gain</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adjust volume of waveform.</span>
+
 <span class="sd">    This effect is the same as `torchaudio.transforms.Vol`, but it adds the option to clamp or not the output waveform.</span>
 
-<span class="sd">    Properties</span>
+<span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">        gain (float): The gain factor to apply to the waveform.</span>
-<span class="sd">        gain_type (str): The type of gain to apply. Can be one of &quot;amplitude&quot;, &quot;db&quot;, or &quot;power&quot;.</span>
-<span class="sd">        clamp (bool): If True, clamps the output waveform to the range [-1.0, 1.0].</span>
+<span class="sd">    gain (float): The gain factor to apply to the waveform.</span>
+<span class="sd">    gain_type (str): The type of gain to apply. Can be one of &quot;amplitude&quot;, &quot;db&quot;, or &quot;power&quot;.</span>
+<span class="sd">    clamp (bool): If True, clamps the output waveform to the range [-1.0, 1.0].</span>
 
 <span class="sd">    Example</span>
-<span class="sd">    --------</span>
+<span class="sd">    -------</span>
 <span class="sd">        &gt;&gt;&gt; waveform, sample_rate = torchaudio.load(&quot;test.wav&quot;, normalize=True)</span>
 <span class="sd">        &gt;&gt;&gt; transform = transforms.Vol(gain=0.5, gain_type=&quot;amplitude&quot;)</span>
 <span class="sd">        &gt;&gt;&gt; quieter_waveform = transform(waveform)</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">        torchaudio.transforms.Vol: Transform to apply gain to a waveform.</span>
+<span class="sd">    torchaudio.transforms.Vol: Transform to apply gain to a waveform.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This class is based on `torchaudio.transforms.Vol`, licensed under the BSD 2-Clause License.</span>
+<span class="sd">    See licenses.torchaudio.BSD-2-Clause.txt for details.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gain_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="n">clamp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gain_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="n">clamp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">=</span> <span class="n">gain_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">=</span> <span class="n">clamp</span>
 
         <span class="k">if</span> <span class="n">gain_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">gain</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;If gain_type = amplitude or power, gain must be positive.&quot;</span>
-            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;If gain_type = amplitude or power, gain must be positive.&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Gain.forward">
 <a class="viewcode-back" href="../../api.html#torchfx.Gain.forward">[docs]</a>
@@ -511,9 +514,7 @@
 <span class="sd">        &gt;&gt;&gt; normalized_waveform = transform(waveform)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="n">NormalizationStrategy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="n">NormalizationStrategy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">peak</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Peak value must be positive.&quot;</span><span class="p">)</span>
@@ -577,9 +578,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">abs_waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
-        <span class="n">threshold</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span>
-            <span class="n">abs_waveform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">percentile</span> <span class="o">/</span> <span class="mi">100</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span>
-        <span class="p">)</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">abs_waveform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">percentile</span> <span class="o">/</span> <span class="mi">100</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">waveform</span> <span class="o">/</span> <span class="n">threshold</span> <span class="o">*</span> <span class="n">peak</span> <span class="k">if</span> <span class="n">threshold</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">waveform</span></div>
 
 
@@ -591,24 +590,75 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Waveform must have at least 2 dimensions (channels, time).&quot;</span>
-            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Waveform must have at least 2 dimensions (channels, time).&quot;</span><span class="p">)</span>
 
         <span class="c1"># waveform: (channels, time) or (batch, channels, time)</span>
         <span class="n">dims</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span>
         <span class="k">if</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">max_per_channel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">waveform</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                <span class="n">max_per_channel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">waveform</span> <span class="o">/</span> <span class="n">max_per_channel</span> <span class="o">*</span> <span class="n">peak</span><span class="p">,</span> <span class="n">waveform</span>
-            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">max_per_channel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">waveform</span> <span class="o">/</span> <span class="n">max_per_channel</span> <span class="o">*</span> <span class="n">peak</span><span class="p">,</span> <span class="n">waveform</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="n">max_per_channel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">waveform</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                <span class="n">max_per_channel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">waveform</span> <span class="o">/</span> <span class="n">max_per_channel</span> <span class="o">*</span> <span class="n">peak</span><span class="p">,</span> <span class="n">waveform</span>
-            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">max_per_channel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">waveform</span> <span class="o">/</span> <span class="n">max_per_channel</span> <span class="o">*</span> <span class="n">peak</span><span class="p">,</span> <span class="n">waveform</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Waveform must have shape (C, T) or (B, C, T)&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Reverb">
+<a class="viewcode-back" href="../../api.html#torchfx.Reverb">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Reverb</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply a simple reverb effect using a feedback delay network.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        delay (int): Delay in samples for the feedback comb filter.</span>
+<span class="sd">        decay (float): Feedback decay factor (0 &lt; decay &lt; 1).</span>
+<span class="sd">        mix (float): Wet/dry mix (0 = dry, 1 = wet).</span>
+
+<span class="sd">    The reverb effect is computed as:</span>
+<span class="sd">        y[n] = (1 - mix) * x[n] + mix * (x[n] + decay * x[n - delay])</span>
+<span class="sd">    where:</span>
+<span class="sd">        - x[n] is the input signal,</span>
+<span class="sd">        - y[n] is the output signal,</span>
+<span class="sd">        - delay is the number of samples for the delay,</span>
+<span class="sd">        - decay is the feedback decay factor,</span>
+<span class="sd">        - mix is the wet/dry mix parameter.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">        &gt;&gt;&gt; reverb = Reverb(delay=4410, decay=0.5, mix=0.3)</span>
+<span class="sd">        &gt;&gt;&gt; reverberated = reverb(waveform)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">delay</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Delay must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">decay</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Decay must be between 0 and 1.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">mix</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Mix must be between 0 and 1.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">delay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">decay</span> <span class="o">=</span> <span class="n">decay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="n">mix</span>
+
+<div class="viewcode-block" id="Reverb.forward">
+<a class="viewcode-back" href="../../api.html#torchfx.Reverb.forward">[docs]</a>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># waveform: (..., time)</span>
+        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">waveform</span>
+
+        <span class="c1"># Pad waveform for delay</span>
+        <span class="n">padded</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="c1"># Create delayed signal</span>
+        <span class="n">delayed</span> <span class="o">=</span> <span class="n">padded</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">]</span>
+        <span class="c1"># Feedback comb filter</span>
+        <span class="n">reverb_signal</span> <span class="o">=</span> <span class="n">waveform</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay</span> <span class="o">*</span> <span class="n">delayed</span>
+        <span class="c1"># Wet/dry mix</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span> <span class="o">*</span> <span class="n">waveform</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">*</span> <span class="n">reverb_signal</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+</div>
 
 </code></pre></div>
 
