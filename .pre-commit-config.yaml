@@ -40,6 +40,6 @@ repos:
 #     -   id: docformatter
 #         additional_dependencies: [tomli]
 #         args: [--in-place]
-
-default_stages: [commit]
+exclude: ^(scripts/|benchmark/|examples/|docs/)
 files: ^(?!scripts/)
+default_stages: [commit]

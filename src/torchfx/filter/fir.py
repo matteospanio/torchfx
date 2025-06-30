@@ -1,11 +1,12 @@
 """Fir filters."""
 
-from typing import Sequence
-from numpy.typing import ArrayLike
-from torch import Tensor, nn
+from collections.abc import Sequence
+
 import torch
-from typing_extensions import override
+from numpy.typing import ArrayLike
 from scipy.signal import firwin
+from torch import Tensor, nn
+from typing_extensions import override
 
 from torchfx.filter.__base import AbstractFilter
 from torchfx.typing import WindowType
@@ -57,9 +58,7 @@ class FIR(AbstractFilter):
         x_padded = nn.functional.pad(x, (pad, 0))  # pad right only # type: ignore
 
         # Apply convolution with groups = C (same kernel per channel, repeated for batch)
-        y = nn.functional.conv1d(
-            x_padded, kernel_exp.repeat(BATCHES, 1, 1), groups=CHANNELS
-        )
+        y = nn.functional.conv1d(x_padded, kernel_exp.repeat(BATCHES, 1, 1), groups=CHANNELS)
 
         # Reshape back to [B, C, T]
         y = y.view(BATCHES, CHANNELS, TIME)

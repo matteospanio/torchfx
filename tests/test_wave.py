@@ -1,10 +1,11 @@
 import pytest
 import torch
+
 from torchfx import Wave  # Replace with the actual module name
 from torchfx.filter import (
     HiButterworth,
     LoButterworth,
-)  # Replace with actual filter classes
+)
 
 
 @pytest.fixture

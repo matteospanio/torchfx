@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import abc
-from torch import nn, Tensor
-from typing_extensions import override
-from torchaudio import functional as F
 import math
+
 import torch
+from torch import Tensor, nn
+from torchaudio import functional as F
+from typing_extensions import override
 
 
 class FX(nn.Module, abc.ABC):
@@ -52,18 +53,14 @@ class Gain(FX):
     See licenses.torchaudio.BSD-2-Clause.txt for details.
     """
 
-    def __init__(
-        self, gain: float, gain_type: str = "amplitude", clamp: bool = False
-    ) -> None:
+    def __init__(self, gain: float, gain_type: str = "amplitude", clamp: bool = False) -> None:
         super().__init__()
         self.gain = gain
         self.gain_type = gain_type
         self.clamp = clamp
 
         if gain_type in ["amplitude", "power"] and gain < 0:
-            raise ValueError(
-                "If gain_type = amplitude or power, gain must be positive."
-            )
+            raise ValueError("If gain_type = amplitude or power, gain must be positive.")
 
     @override
     def forward(self, waveform: Tensor) -> Tensor:
@@ -101,9 +98,7 @@ class Normalize(FX):
         >>> normalized_waveform = transform(waveform)
     """
 
-    def __init__(
-        self, peak: float = 1.0, strategy: NormalizationStrategy | None = None
-    ) -> None:
+    def __init__(self, peak: float = 1.0, strategy: NormalizationStrategy | None = None) -> None:
         super().__init__()
         if peak <= 0:
             raise ValueError("Peak value must be positive.")
@@ -152,9 +147,7 @@ class PercentileNormalizationStrategy(NormalizationStrategy):
 
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
         abs_waveform = torch.abs(waveform)
-        threshold = torch.quantile(
-            abs_waveform, self.percentile / 100, interpolation="linear"
-        )
+        threshold = torch.quantile(abs_waveform, self.percentile / 100, interpolation="linear")
         return waveform / threshold * peak if threshold > 0 else waveform
 
 
@@ -163,21 +156,66 @@ class PerChannelNormalizationStrategy(NormalizationStrategy):
 
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
         if waveform.ndim < 2:
-            raise ValueError(
-                "Waveform must have at least 2 dimensions (channels, time)."
-            )
+            raise ValueError("Waveform must have at least 2 dimensions (channels, time).")
 
         # waveform: (channels, time) or (batch, channels, time)
         dims = waveform.ndim
         if dims == 2:
             max_per_channel = torch.max(torch.abs(waveform), dim=1, keepdim=True).values
-            return torch.where(
-                max_per_channel > 0, waveform / max_per_channel * peak, waveform
-            )
+            return torch.where(max_per_channel > 0, waveform / max_per_channel * peak, waveform)
         elif dims == 3:
             max_per_channel = torch.max(torch.abs(waveform), dim=2, keepdim=True).values
-            return torch.where(
-                max_per_channel > 0, waveform / max_per_channel * peak, waveform
-            )
+            return torch.where(max_per_channel > 0, waveform / max_per_channel * peak, waveform)
         else:
             raise ValueError("Waveform must have shape (C, T) or (B, C, T)")
+
+
+class Reverb(FX):
+    r"""Apply a simple reverb effect using a feedback delay network.
+
+    Args:
+        delay (int): Delay in samples for the feedback comb filter.
+        decay (float): Feedback decay factor (0 < decay < 1).
+        mix (float): Wet/dry mix (0 = dry, 1 = wet).
+
+    The reverb effect is computed as:
+        y[n] = (1 - mix) * x[n] + mix * (x[n] + decay * x[n - delay])
+    where:
+        - x[n] is the input signal,
+        - y[n] is the output signal,
+        - delay is the number of samples for the delay,
+        - decay is the feedback decay factor,
+        - mix is the wet/dry mix parameter.
+
+    Example
+        >>> reverb = Reverb(delay=4410, decay=0.5, mix=0.3)
+        >>> reverberated = reverb(waveform)
+    """
+
+    def __init__(self, delay: int = 4410, decay: float = 0.5, mix: float = 0.5) -> None:
+        super().__init__()
+        if delay <= 0:
+            raise ValueError("Delay must be positive.")
+        if not (0 < decay < 1):
+            raise ValueError("Decay must be between 0 and 1.")
+        if not (0 <= mix <= 1):
+            raise ValueError("Mix must be between 0 and 1.")
+        self.delay = delay
+        self.decay = decay
+        self.mix = mix
+
+    @override
+    def forward(self, waveform: Tensor) -> Tensor:
+        # waveform: (..., time)
+        if waveform.size(-1) <= self.delay:
+            return waveform
+
+        # Pad waveform for delay
+        padded = torch.nn.functional.pad(waveform, (self.delay, 0))
+        # Create delayed signal
+        delayed = padded[..., : -self.delay]
+        # Feedback comb filter
+        reverb_signal = waveform + self.decay * delayed
+        # Wet/dry mix
+        output = (1 - self.mix) * waveform + self.mix * reverb_signal
+        return output
