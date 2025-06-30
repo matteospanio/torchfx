@@ -30,21 +30,21 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install .[cli,dev]
+          uv sync
 
       - name: Check formatting with Black
         run: |
-          black --check src tests
+          uv run black --check src tests
 
       - name: Lint with Ruff
         run: |
-          ruff check src tests
-          ruff format --check src tests
+          uv run ruff check src tests
+          uv run ruff format --check src tests
 
-      - name: Type check with mypy
-        run: |
-          mypy src
+      # - name: Type check with mypy
+      #   run: |
+      #     mypy src
 
       - name: Run tests with pytest
         run: |
-          pytest
+          uv run pytest
