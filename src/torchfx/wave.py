@@ -13,9 +13,9 @@ import typing as tp
 from collections.abc import Callable
 from pathlib import Path
 
+import torch
 import torchaudio
 from numpy.typing import ArrayLike
-import torch
 from torch import Tensor, nn
 from typing_extensions import Self
 
@@ -169,7 +169,7 @@ class Wave:
             if isinstance(f, AbstractFilter) and not f._has_computed_coeff:
                 f.compute_coefficients()
 
-        if isinstance(f, nn.Sequential) or isinstance(f, nn.ModuleList):
+        if isinstance(f, (nn.Sequential | nn.ModuleList)):
             for a in f:
                 if isinstance(a, FX):
                     if hasattr(a, "fs") and a.fs is None:

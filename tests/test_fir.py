@@ -1,6 +1,7 @@
 import pytest
 import torch
 from scipy.signal import firwin
+
 from torchfx.filter import FIR, DesignableFIR
 
 
@@ -16,9 +17,7 @@ def test_fir_initialization():
     fir_filter = FIR(b)
 
     # Check if kernel is correctly registered
-    assert torch.allclose(
-        fir_filter.kernel[0, 0], torch.tensor(b[::-1], dtype=torch.float32)
-    )
+    assert torch.allclose(fir_filter.kernel[0, 0], torch.tensor(b[::-1], dtype=torch.float32))
 
 
 def test_fir_forward(sample_signal):
@@ -41,9 +40,7 @@ def test_designable_fir_coefficients():
     designable_fir = DesignableFIR(cutoff=cutoff, num_taps=num_taps, fs=fs)
 
     # Compute expected coefficients using scipy
-    expected_b = firwin(
-        num_taps, cutoff, fs=fs, pass_zero=True, window="hamming", scale=True
-    )
+    expected_b = firwin(num_taps, cutoff, fs=fs, pass_zero=True, window="hamming", scale=True)
 
     # Check if computed coefficients match expected coefficients
     assert designable_fir.b is not None

@@ -1,7 +1,8 @@
 import torch
-from torch import nn, Tensor
-import torchaudio.transforms as T
 import torchaudio
+import torchaudio.transforms as T
+from torch import Tensor, nn
+
 from torchfx import FX, Wave
 from torchfx.filter import HiButterworth, LoButterworth
 
@@ -50,9 +51,7 @@ if __name__ == "__main__":
         description="Apply a complex multi-channel effect to an audio file."
     )
     parser.add_argument("input_file", type=str, help="Path to the input audio file.")
-    parser.add_argument(
-        "output_file", type=str, help="Path to save the output audio file."
-    )
+    parser.add_argument("output_file", type=str, help="Path to save the output audio file.")
     args = parser.parse_args()
 
     # Automatically use GPU if available

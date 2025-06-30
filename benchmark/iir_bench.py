@@ -1,9 +1,11 @@
 import timeit
+
 import numpy as np
-from scipy.signal import butter, cheby1, lfilter
 import torch.nn as nn
+from scipy.signal import butter, cheby1, lfilter
+
 from torchfx import Wave
-from torchfx.filter import HiButterworth, LoButterworth, HiChebyshev1, LoChebyshev1
+from torchfx.filter import HiButterworth, HiChebyshev1, LoButterworth, LoChebyshev1
 
 SAMPLE_RATE = 44100
 REP = 50
@@ -56,9 +58,7 @@ def start(outfile):
                 f.compute_coefficients()
                 f.move_coeff("cuda")
 
-            gpu_filter_time = timeit.timeit(
-                lambda: gpu_filter(wave, fchain), number=REP
-            )
+            gpu_filter_time = timeit.timeit(lambda: gpu_filter(wave, fchain), number=REP)
 
             wave.to("cpu")
             fchain.to("cpu")
@@ -66,9 +66,7 @@ def start(outfile):
             for f in fchain:
                 f.move_coeff("cpu")
 
-            cpu_filter_time = timeit.timeit(
-                lambda: cpu_filter(wave, fchain), number=REP
-            )
+            cpu_filter_time = timeit.timeit(lambda: cpu_filter(wave, fchain), number=REP)
 
             # SciPy filter coefficients
             b1, a1 = butter(2, 1000, btype="high", fs=SAMPLE_RATE)  # type: ignore

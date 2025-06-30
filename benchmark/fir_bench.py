@@ -1,7 +1,9 @@
 import timeit
+
 import numpy as np
-from scipy.signal import lfilter, firwin
 import torch.nn as nn
+from scipy.signal import firwin, lfilter
+
 from torchfx import Wave
 from torchfx.filter import DesignableFIR
 

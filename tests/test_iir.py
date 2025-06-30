@@ -1,13 +1,16 @@
+# ruff: noqa: A001
+
 import pytest
 import torch
 from scipy.signal import butter, cheby1, cheby2
+
 from torchfx.filter import (
     Butterworth,
     Chebyshev1,
     Chebyshev2,
-    LoChebyshev1,
-    HiChebyshev2,
     HiButterworth,
+    HiChebyshev2,
+    LoChebyshev1,
 )
 
 

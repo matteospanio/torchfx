@@ -1,6 +1,6 @@
 [project]
 name = "torchfx"
-version = "0.1.1"
+version = "0.1.2"
 description = "A GPU accelerated library for audio DSP based on PyTorch"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -16,7 +16,7 @@ dependencies = [
     "torch>=2.6.0",
     "torchaudio>=2.6.0",
 ]
-keyword = [
+keywords = [
     "torch",
     "torchfx",
     "audio",
@@ -39,8 +39,12 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[project.scripts]
+torchfx = "cli.__main__:main"
+
 [project.urls]
 Repository = "https://github.com/matteospanio/torchfx"
+Documentation = "https://matteospanio.github.io/torchfx/"
 Changelog = "https://github.com/matteospanio/torchfx/blob/master/CHANGELOG"
 
 [tool.uv.sources]
@@ -63,14 +67,83 @@ name = "pytorch-cu124"
 url = "https://download.pytorch.org/whl/cu124"
 explicit = true
 
+[tool.mypy]
+python_version = "3.10"
+strict = true
+check_untyped_defs = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_redundant_casts = true
+warn_unused_configs = true
+no_implicit_optional = true
+namespace_packages = true
+explicit_package_bases = true
+
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = [
+  "torchfx.*",
+  "cli.*"
+]
+ignore_missing_imports = true
+
+[tool.ruff]
+src = ["src"]
+line-length = 100
+target-version = "py310"
+lint.select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "TID", "ARG"]
+lint.ignore = ["E501", "N803", "N806", "N812"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+skip-string-normalization = false
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.coverage.run]
+source = ["src/torchfx"]
+branch = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "--strict-markers --tb=short"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
+cli = [
+    "typer>=0.16.0",
+]
 dev = [
+    "black>=25.1.0",
+    "coverage>=7.9.1",
+    "mypy>=1.16.1",
     "pytest>=8.3.5",
+    "ruff>=0.12.1",
     "scalene>=1.5.51",
+    "scipy-stubs>=1.15.3.0",
 ]
 docs = [
     "sphinx>=8.1.3",

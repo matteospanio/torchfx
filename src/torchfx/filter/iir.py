@@ -1,11 +1,11 @@
 """Module of IIR filters."""
 
 import abc
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import torch
-from scipy.signal import butter, iirpeak, iirnotch, cheby1, cheby2
+from scipy.signal import butter, cheby1, cheby2, iirnotch, iirpeak
 from torch import Tensor
 from torchaudio import functional as F  # noqa: N812
 from typing_extensions import override
@@ -287,13 +287,9 @@ class HiShelving(Shelving):
     @override
     def compute_coefficients(self) -> None:
         A = self.gain  # noqa: N806
-        b0 = A * (
-            (A + 1) + (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha
-        )
+        b0 = A * ((A + 1) + (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha)
         b1 = -2 * A * ((A - 1) + (A + 1) * np.cos(self._omega))
-        b2 = A * (
-            (A + 1) + (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha
-        )
+        b2 = A * ((A + 1) + (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha)
 
         a0 = (A + 1) - (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha
         a1 = 2 * ((A - 1) - (A + 1) * np.cos(self._omega))
@@ -422,9 +418,7 @@ class LinkwitzRiley(IIR):
         super().__init__(fs)
         self.order = order if order_scale == "linear" else order // 6
         if order <= 0 or order % 2 != 0:
-            raise ValueError(
-                "Linkwitz-Riley filter order must be a positive even integer."
-            )
+            raise ValueError("Linkwitz-Riley filter order must be a positive even integer.")
         self.btype = btype
         self.cutoff = cutoff
         self.order = order
@@ -445,9 +439,7 @@ class LinkwitzRiley(IIR):
         butter_order = self.order // 2
 
         # Get the coefficients for the base Butterworth filter
-        b_butter, a_butter = butter(
-            butter_order, self.cutoff / (0.5 * self.fs), btype=self.btype
-        )  # type: ignore
+        b_butter, a_butter = butter(butter_order, self.cutoff / (0.5 * self.fs), btype=self.btype)  # type: ignore
 
         # Cascade the filters by convolving the coefficients with themselves
         self.b = np.convolve(b_butter, b_butter)

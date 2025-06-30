@@ -1,8 +1,10 @@
 import timeit
+
 import numpy as np
-from scipy.signal import cheby1, butter, lfilter
+from scipy.signal import butter, cheby1, lfilter
 from torch import nn
 from torch.nn import Sequential
+
 from torchfx import Wave
 from torchfx.filter import HiChebyshev1, LoButterworth
 
@@ -98,9 +100,7 @@ def start(out_file):
     class_time = timeit.timeit(lambda: apply_filters_with_classes(wave), number=REP)
     seq_time = timeit.timeit(lambda: apply_filters_with_sequential(wave), number=REP)
     pipe_time = timeit.timeit(lambda: apply_filters_with_pipe(wave), number=REP)
-    scipy_time = timeit.timeit(
-        lambda: apply_filters_with_numpy_scipy(signal_data), number=REP
-    )
+    scipy_time = timeit.timeit(lambda: apply_filters_with_numpy_scipy(signal_data), number=REP)
     print("filter_chain,sequential,pipe,scipy", file=out_file)
     print(
         f"{class_time/REP:.6f},{seq_time/REP:.6f},{pipe_time/REP:.6f},{scipy_time/REP:.6f}",
