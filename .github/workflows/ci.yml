@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync
+          uv sync --all-groups
 
       - name: Check formatting with Black
         run: |
