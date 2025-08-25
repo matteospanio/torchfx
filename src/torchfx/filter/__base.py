@@ -1,6 +1,9 @@
 import abc
 
-from torchfx.effects import FX
+from torch import conv1d
+from typing_extensions import Self
+
+from torchfx.effect import FX
 
 
 class AbstractFilter(FX, abc.ABC):
@@ -25,3 +28,17 @@ class AbstractFilter(FX, abc.ABC):
     def compute_coefficients(self) -> None:
         """Compute the filter coefficients."""
         pass
+
+    def combine(self, other: Self) -> Self:
+        if not isinstance(other, AbstractFilter):
+            raise TypeError(
+                f"Unsupported operand type(s) for +: '{type(self)}' and '{type(other)}'"
+            )
+        if not self._has_computed_coeff:
+            self.compute_coefficients()
+        if not other._has_computed_coeff:
+            other.compute_coefficients()
+        b = conv1d(self.b, other.b)
+        a = conv1d(self.a, other.a)
+        new_filter = self.__class__(b=b, a=a)
+        return new_filter

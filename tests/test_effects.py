@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from torchfx.effects import (
+from torchfx.effect import (
     Gain,
     NormalizationStrategy,
     Normalize,
@@ -91,7 +91,7 @@ def test_normalize_invalid_peak():
 
 def test_normalize_invalid_strategy():
     with pytest.raises(TypeError):
-        Normalize(peak=1.0, strategy="not_a_strategy")
+        Normalize(peak=1.0, strategy="not_a_strategy")  # type: ignore
 
 
 def test_peak_normalization_strategy():
