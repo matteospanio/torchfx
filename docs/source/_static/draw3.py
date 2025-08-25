@@ -21,7 +21,7 @@ methods = ["gpu", "cpu", "scipy"]
 grouped = df.groupby(["channels", "filter"])[methods].mean().reset_index()
 
 # Crea i subplot
-fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
+fig, axes = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
 
 
 # Funzione per plottare i dati medi
@@ -44,6 +44,7 @@ def plot_means(ax, data, filter_type):
     ax.set_xticklabels(channels)
     ax.set_xlabel("Number of channels")
     ax.set_ylabel("Execution time (s)")
+    ax.set_ylim(0, 10)
     ax.set_title(f"{filter_type} filter")
 
 

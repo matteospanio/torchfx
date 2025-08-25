@@ -21,9 +21,9 @@ The already implemented filters are disponible under the `filter` module:
    :show-inheritance:
    :exclude-members: __init__, __str__, __repr__, __call__
 
-The already implemented effects are disponible under the `effects` module:
+The already implemented effects are disponible under the `effect` module:
 
-.. automodule:: torchfx.effects
+.. automodule:: torchfx.effect
    :members:
    :show-inheritance:
    :exclude-members: __init__, __str__, __repr__
