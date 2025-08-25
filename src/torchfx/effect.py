@@ -33,15 +33,18 @@ class Gain(FX):
 
     Parameters
     ----------
-    gain (float): The gain factor to apply to the waveform.
-    gain_type (str): The type of gain to apply. Can be one of "amplitude", "db", or "power".
-    clamp (bool): If True, clamps the output waveform to the range [-1.0, 1.0].
+    gain : float
+        The gain factor to apply to the waveform.
+    gain_type : str
+        The type of gain to apply. Can be one of "amplitude", "db", or "power".
+    clamp : bool
+        If True, clamps the output waveform to the range [-1.0, 1.0].
 
     Example
     -------
-        >>> waveform, sample_rate = torchaudio.load("test.wav", normalize=True)
-        >>> transform = transforms.Vol(gain=0.5, gain_type="amplitude")
-        >>> quieter_waveform = transform(waveform)
+    >>> waveform, sample_rate = torchaudio.load("test.wav", normalize=True)
+    >>> transform = transforms.Vol(gain=0.5, gain_type="amplitude")
+    >>> quieter_waveform = transform(waveform)
 
     See Also
     --------
@@ -173,13 +176,12 @@ class PerChannelNormalizationStrategy(NormalizationStrategy):
 class Reverb(FX):
     r"""Apply a simple reverb effect using a feedback delay network.
 
-    Args:
-        delay (int): Delay in samples for the feedback comb filter.
-        decay (float): Feedback decay factor (0 < decay < 1).
-        mix (float): Wet/dry mix (0 = dry, 1 = wet).
-
     The reverb effect is computed as:
-        y[n] = (1 - mix) * x[n] + mix * (x[n] + decay * x[n - delay])
+
+    .. math::
+
+        y[n] = (1 - mix) x[n] + mix (x[n] + decay x[n - delay])
+
     where:
         - x[n] is the input signal,
         - y[n] is the output signal,
@@ -187,9 +189,21 @@ class Reverb(FX):
         - decay is the feedback decay factor,
         - mix is the wet/dry mix parameter.
 
-    Example
-        >>> reverb = Reverb(delay=4410, decay=0.5, mix=0.3)
-        >>> reverberated = reverb(waveform)
+    Attributes
+    ----------
+    delay : int
+        Delay in samples for the feedback comb filter. Default is 4410 (100ms at 44.1kHz).
+    decay : float
+        Feedback decay factor. Must be between 0 and 1. Default is 0.5.
+    mix : float
+        Wet/dry mix. 0 = dry, 1 = wet. Default is 0.5.
+
+    Examples
+    --------
+    >>> import torchfx as fx
+    >>> wave = fx.Wave.from_file("path_to_audio.wav")
+    >>> reverb = fx.effect.Reverb(delay=4410, decay=0.5, mix=0.3)
+    >>> reverberated = wave | reverb
     """
 
     def __init__(self, delay: int = 4410, decay: float = 0.5, mix: float = 0.5) -> None:
