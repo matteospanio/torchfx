@@ -2,6 +2,7 @@ import pytest
 import torch
 
 from torchfx.effect import (
+    CustomNormalizationStrategy,
     Gain,
     NormalizationStrategy,
     Normalize,
@@ -84,6 +85,14 @@ def test_normalize_custom_strategy():
     torch.testing.assert_close(out, torch.full_like(waveform, 2.0))
 
 
+def test_normalize_callable_strategy():
+    waveform = torch.tensor([1.0, 2.0, 3.0])
+
+    norm = Normalize(peak=5.0, strategy=lambda w, p: w + p)
+    out = norm(waveform)
+    torch.testing.assert_close(out, waveform + 5.0)
+
+
 def test_normalize_invalid_peak():
     with pytest.raises(ValueError):
         Normalize(peak=0)
@@ -121,6 +130,17 @@ def test_rms_normalization_strategy_zero():
     strat = RMSNormalizationStrategy()
     out = strat(waveform, 1.0)
     torch.testing.assert_close(out, waveform)
+
+
+def test_custom_normalization_strategy():
+    waveform = torch.tensor([1.0, 2.0, 3.0])
+
+    def custom_func(waveform, peak):
+        return waveform + peak
+
+    strat = CustomNormalizationStrategy(custom_func)
+    out = strat(waveform, 5.0)
+    torch.testing.assert_close(out, waveform + 5.0)
 
 
 def test_percentile_normalization_strategy():

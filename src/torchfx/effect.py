@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import abc
 import math
+from collections.abc import Callable
 
 import torch
 from torch import Tensor, nn
@@ -101,11 +102,16 @@ class Normalize(FX):
         >>> normalized_waveform = transform(waveform)
     """
 
-    def __init__(self, peak: float = 1.0, strategy: NormalizationStrategy | None = None) -> None:
+    def __init__(
+        self, peak: float = 1.0, strategy: NormalizationStrategy | Callable | None = None
+    ) -> None:
         super().__init__()
-        if peak <= 0:
-            raise ValueError("Peak value must be positive.")
+        assert peak > 0, "Peak value must be positive."
         self.peak = peak
+
+        if callable(strategy):
+            self.strategy = CustomNormalizationStrategy(strategy)
+
         self.strategy = strategy or PeakNormalizationStrategy()
         if not isinstance(self.strategy, NormalizationStrategy):
             raise TypeError("Strategy must be an instance of NormalizationStrategy.")
@@ -122,6 +128,17 @@ class NormalizationStrategy(abc.ABC):
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
         """Normalize the waveform to the given peak value."""
         pass
+
+
+class CustomNormalizationStrategy(NormalizationStrategy):
+    """Normalization using a custom function."""
+
+    def __init__(self, func: Callable[[Tensor, float], Tensor]) -> None:
+        assert callable(func), "func must be callable"
+        self.func = func
+
+    def __call__(self, waveform: Tensor, peak: float) -> Tensor:
+        return self.func(waveform, peak)
 
 
 class PeakNormalizationStrategy(NormalizationStrategy):
