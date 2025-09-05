@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import abc
 import math
+from collections.abc import Callable
 
 import torch
 from torch import Tensor, nn
@@ -33,15 +34,18 @@ class Gain(FX):
 
     Parameters
     ----------
-    gain (float): The gain factor to apply to the waveform.
-    gain_type (str): The type of gain to apply. Can be one of "amplitude", "db", or "power".
-    clamp (bool): If True, clamps the output waveform to the range [-1.0, 1.0].
+    gain : float
+        The gain factor to apply to the waveform.
+    gain_type : str
+        The type of gain to apply. Can be one of "amplitude", "db", or "power".
+    clamp : bool
+        If True, clamps the output waveform to the range [-1.0, 1.0].
 
     Example
     -------
-        >>> waveform, sample_rate = torchaudio.load("test.wav", normalize=True)
-        >>> transform = transforms.Vol(gain=0.5, gain_type="amplitude")
-        >>> quieter_waveform = transform(waveform)
+    >>> waveform, sample_rate = torchaudio.load("test.wav", normalize=True)
+    >>> transform = transforms.Vol(gain=0.5, gain_type="amplitude")
+    >>> quieter_waveform = transform(waveform)
 
     See Also
     --------
@@ -63,6 +67,7 @@ class Gain(FX):
             raise ValueError("If gain_type = amplitude or power, gain must be positive.")
 
     @override
+    @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
         r"""
         Args:
@@ -98,16 +103,22 @@ class Normalize(FX):
         >>> normalized_waveform = transform(waveform)
     """
 
-    def __init__(self, peak: float = 1.0, strategy: NormalizationStrategy | None = None) -> None:
+    def __init__(
+        self, peak: float = 1.0, strategy: NormalizationStrategy | Callable | None = None
+    ) -> None:
         super().__init__()
-        if peak <= 0:
-            raise ValueError("Peak value must be positive.")
+        assert peak > 0, "Peak value must be positive."
         self.peak = peak
+
+        if callable(strategy):
+            strategy = CustomNormalizationStrategy(strategy)
+
         self.strategy = strategy or PeakNormalizationStrategy()
         if not isinstance(self.strategy, NormalizationStrategy):
             raise TypeError("Strategy must be an instance of NormalizationStrategy.")
 
     @override
+    @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
         return self.strategy(waveform, self.peak)
 
@@ -119,6 +130,17 @@ class NormalizationStrategy(abc.ABC):
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
         """Normalize the waveform to the given peak value."""
         pass
+
+
+class CustomNormalizationStrategy(NormalizationStrategy):
+    """Normalization using a custom function."""
+
+    def __init__(self, func: Callable[[Tensor, float], Tensor]) -> None:
+        assert callable(func), "func must be callable"
+        self.func = func
+
+    def __call__(self, waveform: Tensor, peak: float) -> Tensor:
+        return self.func(waveform, peak)
 
 
 class PeakNormalizationStrategy(NormalizationStrategy):
@@ -141,8 +163,7 @@ class PercentileNormalizationStrategy(NormalizationStrategy):
     """Normalization using a percentile of absolute values."""
 
     def __init__(self, percentile: float = 99.0) -> None:
-        if not (0 < percentile <= 100):
-            raise ValueError("Percentile must be between 0 and 100.")
+        assert 0 < percentile <= 100, "Percentile must be between 0 and 100."
         self.percentile = percentile
 
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
@@ -155,8 +176,7 @@ class PerChannelNormalizationStrategy(NormalizationStrategy):
     """Normalize each channel independently to its own peak."""
 
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
-        if waveform.ndim < 2:
-            raise ValueError("Waveform must have at least 2 dimensions (channels, time).")
+        assert waveform.ndim >= 2, "Waveform must have at least 2 dimensions (channels, time)."
 
         # waveform: (channels, time) or (batch, channels, time)
         dims = waveform.ndim
@@ -173,13 +193,12 @@ class PerChannelNormalizationStrategy(NormalizationStrategy):
 class Reverb(FX):
     r"""Apply a simple reverb effect using a feedback delay network.
 
-    Args:
-        delay (int): Delay in samples for the feedback comb filter.
-        decay (float): Feedback decay factor (0 < decay < 1).
-        mix (float): Wet/dry mix (0 = dry, 1 = wet).
-
     The reverb effect is computed as:
-        y[n] = (1 - mix) * x[n] + mix * (x[n] + decay * x[n - delay])
+
+    .. math::
+
+        y[n] = (1 - mix) x[n] + mix (x[n] + decay x[n - delay])
+
     where:
         - x[n] is the input signal,
         - y[n] is the output signal,
@@ -187,9 +206,21 @@ class Reverb(FX):
         - decay is the feedback decay factor,
         - mix is the wet/dry mix parameter.
 
-    Example
-        >>> reverb = Reverb(delay=4410, decay=0.5, mix=0.3)
-        >>> reverberated = reverb(waveform)
+    Attributes
+    ----------
+    delay : int
+        Delay in samples for the feedback comb filter. Default is 4410 (100ms at 44.1kHz).
+    decay : float
+        Feedback decay factor. Must be between 0 and 1. Default is 0.5.
+    mix : float
+        Wet/dry mix. 0 = dry, 1 = wet. Default is 0.5.
+
+    Examples
+    --------
+    >>> import torchfx as fx
+    >>> wave = fx.Wave.from_file("path_to_audio.wav")
+    >>> reverb = fx.effect.Reverb(delay=4410, decay=0.5, mix=0.3)
+    >>> reverberated = wave | reverb
     """
 
     def __init__(self, delay: int = 4410, decay: float = 0.5, mix: float = 0.5) -> None:
@@ -205,6 +236,7 @@ class Reverb(FX):
         self.mix = mix
 
     @override
+    @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
         # waveform: (..., time)
         if waveform.size(-1) <= self.delay:

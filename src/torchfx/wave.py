@@ -19,7 +19,7 @@ from numpy.typing import ArrayLike
 from torch import Tensor, nn
 from typing_extensions import Self
 
-from torchfx.effects import FX
+from torchfx.effect import FX
 from torchfx.filter.__base import AbstractFilter
 from torchfx.typing import Device
 
@@ -163,21 +163,22 @@ class Wave:
             raise TypeError(f"Expected nn.Module, but got {type(f).__name__} instead.")
 
         if isinstance(f, FX):
-            if hasattr(f, "fs") and f.fs is None:
-                f.fs = self.fs  # type: ignore
+            self.__update_config(f)
 
-            if isinstance(f, AbstractFilter) and not f._has_computed_coeff:
-                f.compute_coefficients()
-
-        if isinstance(f, (nn.Sequential | nn.ModuleList)):
+        elif isinstance(f, (nn.Sequential | nn.ModuleList)):
             for a in f:
                 if isinstance(a, FX):
-                    if hasattr(a, "fs") and a.fs is None:
-                        a.fs = self.fs  # type: ignore
-                    if isinstance(a, AbstractFilter) and not a._has_computed_coeff:
-                        a.compute_coefficients()
+                    self.__update_config(a)
 
         return self.transform(f.forward)
+
+    def __update_config(self, f: FX) -> None:
+        """Update the configuration of the filter with the wave's sampling frequency."""
+        if hasattr(f, "fs") and f.fs is None:
+            f.fs = self.fs  # type: ignore
+
+        if isinstance(f, AbstractFilter) and not f._has_computed_coeff:
+            f.compute_coefficients()
 
     def __len__(self) -> int:
         """Return the length, in samples, of the wave."""

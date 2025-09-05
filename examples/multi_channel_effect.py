@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# This example demonstrates how to create a non-trivial multi-channel effect using torchfx.
+# The effect consists of two channels, each with a different sequence of filters and transformations.
+
 import torch
 import torchaudio
 import torchaudio.transforms as T

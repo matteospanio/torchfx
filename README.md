@@ -42,6 +42,7 @@ filtered_out = (
     fx.Wave.from_file("path_to_audio.wav")
     | fx.filter.LoButterworth(8000)
     | fx.filter.HiShelving(2000)
+    | fx.effect.Reverb()
 )
 ```
 
@@ -50,7 +51,7 @@ This example demonstrates how to create a simple audio processing pipeline using
 
 ## API
 
-At the moment the API is not fully documented, but you can find the list of available filters in the [filters.py](src/torchfx/filter/__init__.py) file. The filters are implemented as subclasses of `torch.nn.Module`, and you can use them just like any other PyTorch module.
+At the moment the API is not fully documented, but you can find the list of available filters in the [filter](src/torchfx/filter/__init__.py) module.
 
 ## How to cite
 
@@ -67,6 +68,11 @@ If you use this code in your research, please cite the following paper:
       url={https://arxiv.org/abs/2504.08624},
 }
 ```
+
+## TODO
+
+- [ ] add realtime input support
+- [ ] add more examples
 
 ## License
 

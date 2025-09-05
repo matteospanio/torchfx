@@ -45,9 +45,10 @@ class IIR(AbstractFilter):
     def move_coeff(self, device, dtype=torch.float32):
         """Move the filter coefficients to the specified device and dtype."""
         self.a = torch.as_tensor(self.a, device=device, dtype=dtype)
-        self.b = torch.as_tensor(self.a, device=device, dtype=dtype)
+        self.b = torch.as_tensor(self.b, device=device, dtype=dtype)
 
     @override
+    @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
         dtype = x.dtype
         device = x.device
@@ -406,13 +407,17 @@ class LinkwitzRiley(IIR):
     ) -> None:
         """Initialize the Linkwitz-Riley filter.
 
-        Args:
-        ----
-            btype (str): The type of filter, 'lowpass' or 'highpass'.
-            cutoff (float): The cutoff frequency in Hz.
-            order (int): The filter order. Must be a positive even integer (e.g., 2, 4, 8).
-                         Defaults to 4.
-            fs (int | None): The sampling frequency in Hz. Defaults to None.
+        Parameters
+        ----------
+        btype : str
+            The type of filter, 'lowpass' or 'highpass'.
+        cutoff : float
+            The cutoff frequency in Hz.
+        order : int
+            The filter order. Must be a positive even integer (e.g., 2, 4, 8).
+            Defaults to 4.
+        fs : int | None
+            The sampling frequency in Hz. Defaults to None.
 
         """
         super().__init__(fs)
