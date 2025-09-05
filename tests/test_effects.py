@@ -94,7 +94,7 @@ def test_normalize_callable_strategy():
 
 
 def test_normalize_invalid_peak():
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Normalize(peak=0)
 
 
@@ -152,9 +152,9 @@ def test_percentile_normalization_strategy():
 
 
 def test_percentile_normalization_strategy_invalid():
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         PercentileNormalizationStrategy(percentile=0)
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         PercentileNormalizationStrategy(percentile=101)
 
 
@@ -188,7 +188,7 @@ def test_per_channel_normalization_strategy_3d():
 def test_per_channel_normalization_strategy_invalid_shape():
     waveform = torch.tensor([1.0, -2.0])
     strat = PerChannelNormalizationStrategy()
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         strat(waveform, 1.0)
 
 

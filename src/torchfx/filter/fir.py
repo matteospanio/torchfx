@@ -19,6 +19,7 @@ class FIR(AbstractFilter):
         super().__init__()
         # Flip the kernel for causal convolution (like lfilter)
         b_tensor = torch.tensor(b, dtype=torch.float32).flip(0)
+        self.a = [1.0]  # FIR filter denominator is always 1
         self.register_buffer("kernel", b_tensor[None, None, :])  # [1, 1, K]
 
     @override
@@ -28,6 +29,7 @@ class FIR(AbstractFilter):
         pass
 
     @override
+    @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
         dtype = x.dtype
         device = x.device

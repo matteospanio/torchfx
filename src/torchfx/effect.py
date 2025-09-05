@@ -67,6 +67,7 @@ class Gain(FX):
             raise ValueError("If gain_type = amplitude or power, gain must be positive.")
 
     @override
+    @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
         r"""
         Args:
@@ -110,13 +111,14 @@ class Normalize(FX):
         self.peak = peak
 
         if callable(strategy):
-            self.strategy = CustomNormalizationStrategy(strategy)
+            strategy = CustomNormalizationStrategy(strategy)
 
         self.strategy = strategy or PeakNormalizationStrategy()
         if not isinstance(self.strategy, NormalizationStrategy):
             raise TypeError("Strategy must be an instance of NormalizationStrategy.")
 
     @override
+    @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
         return self.strategy(waveform, self.peak)
 
@@ -161,8 +163,7 @@ class PercentileNormalizationStrategy(NormalizationStrategy):
     """Normalization using a percentile of absolute values."""
 
     def __init__(self, percentile: float = 99.0) -> None:
-        if not (0 < percentile <= 100):
-            raise ValueError("Percentile must be between 0 and 100.")
+        assert 0 < percentile <= 100, "Percentile must be between 0 and 100."
         self.percentile = percentile
 
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
@@ -175,8 +176,7 @@ class PerChannelNormalizationStrategy(NormalizationStrategy):
     """Normalize each channel independently to its own peak."""
 
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
-        if waveform.ndim < 2:
-            raise ValueError("Waveform must have at least 2 dimensions (channels, time).")
+        assert waveform.ndim >= 2, "Waveform must have at least 2 dimensions (channels, time)."
 
         # waveform: (channels, time) or (batch, channels, time)
         dims = waveform.ndim
@@ -236,6 +236,7 @@ class Reverb(FX):
         self.mix = mix
 
     @override
+    @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
         # waveform: (..., time)
         if waveform.size(-1) <= self.delay:
