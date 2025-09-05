@@ -451,12 +451,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">move_coeff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move the filter coefficients to the specified device and dtype.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="IIR.forward">
 <a class="viewcode-back" href="../../../api.html#torchfx.filter.IIR.forward">[docs]</a>
     <span class="nd">@override</span>
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">dtype</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>
@@ -876,13 +877,17 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the Linkwitz-Riley filter.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">        ----</span>
-<span class="sd">            btype (str): The type of filter, &#39;lowpass&#39; or &#39;highpass&#39;.</span>
-<span class="sd">            cutoff (float): The cutoff frequency in Hz.</span>
-<span class="sd">            order (int): The filter order. Must be a positive even integer (e.g., 2, 4, 8).</span>
-<span class="sd">                         Defaults to 4.</span>
-<span class="sd">            fs (int | None): The sampling frequency in Hz. Defaults to None.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        btype : str</span>
+<span class="sd">            The type of filter, &#39;lowpass&#39; or &#39;highpass&#39;.</span>
+<span class="sd">        cutoff : float</span>
+<span class="sd">            The cutoff frequency in Hz.</span>
+<span class="sd">        order : int</span>
+<span class="sd">            The filter order. Must be a positive even integer (e.g., 2, 4, 8).</span>
+<span class="sd">            Defaults to 4.</span>
+<span class="sd">        fs : int | None</span>
+<span class="sd">            The sampling frequency in Hz. Defaults to None.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>

@@ -1670,25 +1670,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.FX" class="md-nav__link">
+  <a href="#torchfx.effect.CustomNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.FX (Python class) — Bases: Module, ABC">torchfx.<wbr>effects.<wbr>FX</span>
+      <span title="torchfx.effect.CustomNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>Custom<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="torchfx.effects.FX">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#torchfx.effect.FX" class="md-nav__link">
+    
+      <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.FX (Python class) — Bases: Module, ABC">torchfx.<wbr>effect.<wbr>FX</span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="torchfx.effect.FX">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.FX.forward" class="md-nav__link">
+  <a href="#torchfx.effect.FX.forward" class="md-nav__link">
     
       <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.FX.forward (Python method) — Define the computation performed at every call.">forward</span>
+      <span title="torchfx.effect.FX.forward (Python method) — Define the computation performed at every call.">forward</span>
     </span>
   </a>
   
@@ -1700,43 +1712,20 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain" class="md-nav__link">
+  <a href="#torchfx.effect.Gain" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Gain (Python class) — Bases: FX">torchfx.<wbr>effects.<wbr>Gain</span>
+      <span title="torchfx.effect.Gain (Python class) — Bases: FX">torchfx.<wbr>effect.<wbr>Gain</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="torchfx.effects.Gain">
+    <nav class="md-nav" aria-label="torchfx.effect.Gain">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain-parameters" class="md-nav__link">
-    
-    <span class="md-ellipsis">
-      Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward" class="md-nav__link">
-    
-      <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
-    
-    <span class="md-ellipsis">
-      <span title="torchfx.effects.Gain.forward (Python method) — Tensor of audio of dimension (..., time).">forward</span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="forward">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward-parameters" class="md-nav__link">
+  <a href="#torchfx.effect.Gain-parameters" class="md-nav__link">
     
     <span class="md-ellipsis">
       Parameters
@@ -1747,12 +1736,36 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward.waveform" class="md-nav__link">
+  <a href="#torchfx.effect.Gain.__init__.gain" class="md-nav__link">
     
       <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Gain.forward.waveform (Python parameter) — Tensor of audio of dimension (..., time).">waveform</span>
+      <span title="torchfx.effect.Gain.__init__.gain (Python parameter) — The gain factor to apply to the waveform.">gain</span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.__init__.gain_type" class="md-nav__link">
+    
+      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Gain.__init__.gain_type (Python parameter) — The type of gain to apply.">gain_<wbr>type</span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.__init__.clamp" class="md-nav__link">
+    
+      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Gain.__init__.clamp (Python parameter) — If True, clamps the output waveform to the range [-1.0, 1.0].">clamp</span>
     </span>
   </a>
   
@@ -1764,7 +1777,48 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward-returns" class="md-nav__link">
+  <a href="#torchfx.effect.Gain.forward" class="md-nav__link">
+    
+      <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Gain.forward (Python method) — Tensor of audio of dimension (..., time).">forward</span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="forward">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.forward-parameters" class="md-nav__link">
+    
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.forward.waveform" class="md-nav__link">
+    
+      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Gain.forward.waveform (Python parameter) — Tensor of audio of dimension (..., time).">waveform</span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.forward-returns" class="md-nav__link">
     
     <span class="md-ellipsis">
       Returns
@@ -1774,7 +1828,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward-return-type" class="md-nav__link">
+  <a href="#torchfx.effect.Gain.forward-return-type" class="md-nav__link">
     
     <span class="md-ellipsis">
       Return type
@@ -1794,32 +1848,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.NormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.NormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.NormalizationStrategy (Python class) — Bases: ABC">torchfx.<wbr>effects.<wbr>Normalization<wbr>Strategy</span>
+      <span title="torchfx.effect.NormalizationStrategy (Python class) — Bases: ABC">torchfx.<wbr>effect.<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.Normalize" class="md-nav__link">
+  <a href="#torchfx.effect.Normalize" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Normalize (Python class) — Bases: FX">torchfx.<wbr>effects.<wbr>Normalize</span>
+      <span title="torchfx.effect.Normalize (Python class) — Bases: FX">torchfx.<wbr>effect.<wbr>Normalize</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="torchfx.effects.Normalize">
+    <nav class="md-nav" aria-label="torchfx.effect.Normalize">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Normalize-parameters" class="md-nav__link">
+  <a href="#torchfx.effect.Normalize-parameters" class="md-nav__link">
     
     <span class="md-ellipsis">
       Parameters
@@ -1830,12 +1884,12 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Normalize.__init__.peak" class="md-nav__link">
+  <a href="#torchfx.effect.Normalize.__init__.peak" class="md-nav__link">
     
       <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Normalize.__init__.peak (Python parameter) — The peak value to normalize to.">peak</span>
+      <span title="torchfx.effect.Normalize.__init__.peak (Python parameter) — The peak value to normalize to.">peak</span>
     </span>
   </a>
   
@@ -1847,12 +1901,12 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Normalize.forward" class="md-nav__link">
+  <a href="#torchfx.effect.Normalize.forward" class="md-nav__link">
     
       <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Normalize.forward (Python method) — Define the computation performed at every call.">forward</span>
+      <span title="torchfx.effect.Normalize.forward (Python method) — Define the computation performed at every call.">forward</span>
     </span>
   </a>
   
@@ -1864,108 +1918,84 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.PeakNormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.PeakNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.PeakNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effects.<wbr>Peak<wbr>Normalization<wbr>Strategy</span>
+      <span title="torchfx.effect.PeakNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>Peak<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.PerChannelNormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.PerChannelNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.PerChannelNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effects.<wbr>Per<wbr>Channel<wbr>Normalization<wbr>Strategy</span>
+      <span title="torchfx.effect.PerChannelNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>Per<wbr>Channel<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.PercentileNormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.PercentileNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.PercentileNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effects.<wbr>Percentile<wbr>Normalization<wbr>Strategy</span>
+      <span title="torchfx.effect.PercentileNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>Percentile<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.RMSNormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.RMSNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.RMSNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effects.<wbr>RMSNormalization<wbr>Strategy</span>
+      <span title="torchfx.effect.RMSNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>RMSNormalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb" class="md-nav__link">
+  <a href="#torchfx.effect.Reverb" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb (Python class) — Bases: FX">torchfx.<wbr>effects.<wbr>Reverb</span>
+      <span title="torchfx.effect.Reverb (Python class) — Bases: FX">torchfx.<wbr>effect.<wbr>Reverb</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="torchfx.effects.Reverb">
+    <nav class="md-nav" aria-label="torchfx.effect.Reverb">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb-parameters" class="md-nav__link">
+  <a href="#torchfx.effect.Reverb.delay" class="md-nav__link">
+    
+      <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span>
     
     <span class="md-ellipsis">
-      Parameters
+      <span title="torchfx.effect.Reverb.delay (Python attribute) — Delay in samples for the feedback comb filter. Default is 4410 (100ms at 44.1kHz).">delay</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Parameters">
+    <nav class="md-nav" aria-label="delay">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb.__init__.delay" class="md-nav__link">
-    
-      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
+  <a href="#torchfx.effect.Reverb.delay-type" class="md-nav__link">
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb.__init__.delay (Python parameter) — Delay in samples for the feedback comb filter.">delay</span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb.__init__.decay" class="md-nav__link">
-    
-      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
-    
-    <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb.__init__.decay (Python parameter) — Feedback decay factor (0 &lt; decay &lt; 1).">decay</span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb.__init__.mix" class="md-nav__link">
-    
-      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
-    
-    <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb.__init__.mix (Python parameter) — Wet/dry mix (0 = dry, 1 = wet).">mix</span>
+      Type
     </span>
   </a>
   
@@ -1977,12 +2007,68 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb.forward" class="md-nav__link">
+  <a href="#torchfx.effect.Reverb.decay" class="md-nav__link">
+    
+      <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Reverb.decay (Python attribute) — Feedback decay factor. Must be between 0 and 1. Default is 0.5.">decay</span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="decay">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Reverb.decay-type" class="md-nav__link">
+    
+    <span class="md-ellipsis">
+      Type
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Reverb.mix" class="md-nav__link">
+    
+      <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Reverb.mix (Python attribute) — Wet/dry mix. 0 = dry, 1 = wet. Default is 0.5.">mix</span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Reverb.mix-type" class="md-nav__link">
+    
+    <span class="md-ellipsis">
+      Type
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Reverb.forward" class="md-nav__link">
     
       <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb.forward (Python method) — Define the computation performed at every call.">forward</span>
+      <span title="torchfx.effect.Reverb.forward (Python method) — Define the computation performed at every call.">forward</span>
     </span>
   </a>
   
@@ -3306,25 +3392,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.FX" class="md-nav__link">
+  <a href="#torchfx.effect.CustomNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.FX (Python class) — Bases: Module, ABC">torchfx.<wbr>effects.<wbr>FX</span>
+      <span title="torchfx.effect.CustomNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>Custom<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="torchfx.effects.FX">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#torchfx.effect.FX" class="md-nav__link">
+    
+      <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.FX (Python class) — Bases: Module, ABC">torchfx.<wbr>effect.<wbr>FX</span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="torchfx.effect.FX">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.FX.forward" class="md-nav__link">
+  <a href="#torchfx.effect.FX.forward" class="md-nav__link">
     
       <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.FX.forward (Python method) — Define the computation performed at every call.">forward</span>
+      <span title="torchfx.effect.FX.forward (Python method) — Define the computation performed at every call.">forward</span>
     </span>
   </a>
   
@@ -3336,43 +3434,20 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain" class="md-nav__link">
+  <a href="#torchfx.effect.Gain" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Gain (Python class) — Bases: FX">torchfx.<wbr>effects.<wbr>Gain</span>
+      <span title="torchfx.effect.Gain (Python class) — Bases: FX">torchfx.<wbr>effect.<wbr>Gain</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="torchfx.effects.Gain">
+    <nav class="md-nav" aria-label="torchfx.effect.Gain">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain-parameters" class="md-nav__link">
-    
-    <span class="md-ellipsis">
-      Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward" class="md-nav__link">
-    
-      <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
-    
-    <span class="md-ellipsis">
-      <span title="torchfx.effects.Gain.forward (Python method) — Tensor of audio of dimension (..., time).">forward</span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="forward">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward-parameters" class="md-nav__link">
+  <a href="#torchfx.effect.Gain-parameters" class="md-nav__link">
     
     <span class="md-ellipsis">
       Parameters
@@ -3383,12 +3458,36 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward.waveform" class="md-nav__link">
+  <a href="#torchfx.effect.Gain.__init__.gain" class="md-nav__link">
     
       <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Gain.forward.waveform (Python parameter) — Tensor of audio of dimension (..., time).">waveform</span>
+      <span title="torchfx.effect.Gain.__init__.gain (Python parameter) — The gain factor to apply to the waveform.">gain</span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.__init__.gain_type" class="md-nav__link">
+    
+      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Gain.__init__.gain_type (Python parameter) — The type of gain to apply.">gain_<wbr>type</span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.__init__.clamp" class="md-nav__link">
+    
+      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Gain.__init__.clamp (Python parameter) — If True, clamps the output waveform to the range [-1.0, 1.0].">clamp</span>
     </span>
   </a>
   
@@ -3400,7 +3499,48 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward-returns" class="md-nav__link">
+  <a href="#torchfx.effect.Gain.forward" class="md-nav__link">
+    
+      <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Gain.forward (Python method) — Tensor of audio of dimension (..., time).">forward</span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="forward">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.forward-parameters" class="md-nav__link">
+    
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.forward.waveform" class="md-nav__link">
+    
+      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Gain.forward.waveform (Python parameter) — Tensor of audio of dimension (..., time).">waveform</span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Gain.forward-returns" class="md-nav__link">
     
     <span class="md-ellipsis">
       Returns
@@ -3410,7 +3550,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Gain.forward-return-type" class="md-nav__link">
+  <a href="#torchfx.effect.Gain.forward-return-type" class="md-nav__link">
     
     <span class="md-ellipsis">
       Return type
@@ -3430,32 +3570,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.NormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.NormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.NormalizationStrategy (Python class) — Bases: ABC">torchfx.<wbr>effects.<wbr>Normalization<wbr>Strategy</span>
+      <span title="torchfx.effect.NormalizationStrategy (Python class) — Bases: ABC">torchfx.<wbr>effect.<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.Normalize" class="md-nav__link">
+  <a href="#torchfx.effect.Normalize" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Normalize (Python class) — Bases: FX">torchfx.<wbr>effects.<wbr>Normalize</span>
+      <span title="torchfx.effect.Normalize (Python class) — Bases: FX">torchfx.<wbr>effect.<wbr>Normalize</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="torchfx.effects.Normalize">
+    <nav class="md-nav" aria-label="torchfx.effect.Normalize">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Normalize-parameters" class="md-nav__link">
+  <a href="#torchfx.effect.Normalize-parameters" class="md-nav__link">
     
     <span class="md-ellipsis">
       Parameters
@@ -3466,12 +3606,12 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Normalize.__init__.peak" class="md-nav__link">
+  <a href="#torchfx.effect.Normalize.__init__.peak" class="md-nav__link">
     
       <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Normalize.__init__.peak (Python parameter) — The peak value to normalize to.">peak</span>
+      <span title="torchfx.effect.Normalize.__init__.peak (Python parameter) — The peak value to normalize to.">peak</span>
     </span>
   </a>
   
@@ -3483,12 +3623,12 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Normalize.forward" class="md-nav__link">
+  <a href="#torchfx.effect.Normalize.forward" class="md-nav__link">
     
       <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Normalize.forward (Python method) — Define the computation performed at every call.">forward</span>
+      <span title="torchfx.effect.Normalize.forward (Python method) — Define the computation performed at every call.">forward</span>
     </span>
   </a>
   
@@ -3500,108 +3640,84 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.PeakNormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.PeakNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.PeakNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effects.<wbr>Peak<wbr>Normalization<wbr>Strategy</span>
+      <span title="torchfx.effect.PeakNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>Peak<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.PerChannelNormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.PerChannelNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.PerChannelNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effects.<wbr>Per<wbr>Channel<wbr>Normalization<wbr>Strategy</span>
+      <span title="torchfx.effect.PerChannelNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>Per<wbr>Channel<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.PercentileNormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.PercentileNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.PercentileNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effects.<wbr>Percentile<wbr>Normalization<wbr>Strategy</span>
+      <span title="torchfx.effect.PercentileNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>Percentile<wbr>Normalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.RMSNormalizationStrategy" class="md-nav__link">
+  <a href="#torchfx.effect.RMSNormalizationStrategy" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.RMSNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effects.<wbr>RMSNormalization<wbr>Strategy</span>
+      <span title="torchfx.effect.RMSNormalizationStrategy (Python class) — Bases: NormalizationStrategy">torchfx.<wbr>effect.<wbr>RMSNormalization<wbr>Strategy</span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb" class="md-nav__link">
+  <a href="#torchfx.effect.Reverb" class="md-nav__link">
     
       <span aria-label="Python class" class="objinfo-icon objinfo-icon__data" title="Python class">C</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb (Python class) — Bases: FX">torchfx.<wbr>effects.<wbr>Reverb</span>
+      <span title="torchfx.effect.Reverb (Python class) — Bases: FX">torchfx.<wbr>effect.<wbr>Reverb</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="torchfx.effects.Reverb">
+    <nav class="md-nav" aria-label="torchfx.effect.Reverb">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb-parameters" class="md-nav__link">
+  <a href="#torchfx.effect.Reverb.delay" class="md-nav__link">
+    
+      <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span>
     
     <span class="md-ellipsis">
-      Parameters
+      <span title="torchfx.effect.Reverb.delay (Python attribute) — Delay in samples for the feedback comb filter. Default is 4410 (100ms at 44.1kHz).">delay</span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Parameters">
+    <nav class="md-nav" aria-label="delay">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb.__init__.delay" class="md-nav__link">
-    
-      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
+  <a href="#torchfx.effect.Reverb.delay-type" class="md-nav__link">
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb.__init__.delay (Python parameter) — Delay in samples for the feedback comb filter.">delay</span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb.__init__.decay" class="md-nav__link">
-    
-      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
-    
-    <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb.__init__.decay (Python parameter) — Feedback decay factor (0 &lt; decay &lt; 1).">decay</span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb.__init__.mix" class="md-nav__link">
-    
-      <span aria-label="Python parameter" class="objinfo-icon objinfo-icon__sub-data" title="Python parameter">p</span>
-    
-    <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb.__init__.mix (Python parameter) — Wet/dry mix (0 = dry, 1 = wet).">mix</span>
+      Type
     </span>
   </a>
   
@@ -3613,12 +3729,68 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#torchfx.effects.Reverb.forward" class="md-nav__link">
+  <a href="#torchfx.effect.Reverb.decay" class="md-nav__link">
+    
+      <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Reverb.decay (Python attribute) — Feedback decay factor. Must be between 0 and 1. Default is 0.5.">decay</span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="decay">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Reverb.decay-type" class="md-nav__link">
+    
+    <span class="md-ellipsis">
+      Type
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Reverb.mix" class="md-nav__link">
+    
+      <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span>
+    
+    <span class="md-ellipsis">
+      <span title="torchfx.effect.Reverb.mix (Python attribute) — Wet/dry mix. 0 = dry, 1 = wet. Default is 0.5.">mix</span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Reverb.mix-type" class="md-nav__link">
+    
+    <span class="md-ellipsis">
+      Type
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#torchfx.effect.Reverb.forward" class="md-nav__link">
     
       <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
     
     <span class="md-ellipsis">
-      <span title="torchfx.effects.Reverb.forward (Python method) — Define the computation performed at every call.">forward</span>
+      <span title="torchfx.effect.Reverb.forward (Python method) — Define the computation performed at every call.">forward</span>
     </span>
   </a>
   
@@ -3650,7 +3822,7 @@
 The <a class="reference internal" href="#torchfx.Wave" title="torchfx.Wave (Python class) — Bases: object"><code class="xref py py-class docutils literal notranslate"><span class="pre">torchfx.Wave</span></code></a> class is used to handle audio data, while the <a class="reference internal" href="#torchfx.FX" title="torchfx.FX (Python class) — Bases: Module, ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">torchfx.FX</span></code></a> class is used to apply various audio effects and transformations. The library also provides a set of built-in effects and filters that can be easily applied to audio data.</p>
 <dl class="py class objdesc">
 <dt class="sig sig-object highlight sig-wrap py" id="torchfx.Wave">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.</span></span><span class="sig-name descname"><span class="pre">Wave</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave" title="torchfx.Wave.__init__.ys (Python parameter)"><span class="n"><span class="pre">ys</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><span class="pre">_Buffer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.13)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.13)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span></span></span></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave" title="torchfx.Wave.__init__.fs (Python parameter)"><span class="n"><span class="pre">fs</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave" title="torchfx.Wave.__init__.device (Python parameter)"><span class="n"><span class="pre">device</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><span class="s"><span class="pre">'cpu'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'cuda'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.7)"><span class="pre">device</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="s1">&#39;cpu&#39;</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/wave.html#Wave"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.Wave" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.</span></span><span class="sig-name descname"><span class="pre">Wave</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave" title="torchfx.Wave.__init__.ys (Python parameter)"><span class="n"><span class="pre">ys</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><span class="pre">_Buffer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.13)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#complex" title="(in Python v3.13)"><span class="pre">complex</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span></span></span></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave" title="torchfx.Wave.__init__.fs (Python parameter)"><span class="n"><span class="pre">fs</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave" title="torchfx.Wave.__init__.device (Python parameter)"><span class="n"><span class="pre">device</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><span class="s"><span class="pre">'cpu'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'cuda'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.8)"><span class="pre">device</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="s1">&#39;cpu&#39;</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/wave.html#Wave"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.Wave" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>A discrete time waveform.</p>
 <dl class="py attribute objdesc">
@@ -3691,7 +3863,7 @@ The <a class="reference internal" href="#torchfx.Wave" title="torchfx.Wave (Pyth
 
 <dl class="py property objdesc">
 <dt class="sig sig-object highlight py" id="torchfx.Wave.device">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><span class="p"> <span class="pre">:</span> </span><span class="desctype"><span class="s"><span class="pre">'cpu'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'cuda'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.7)"><span class="pre">device</span></a></span><a class="headerlink" href="#torchfx.Wave.device" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><span class="p"> <span class="pre">:</span> </span><span class="desctype"><span class="s"><span class="pre">'cpu'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'cuda'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.8)"><span class="pre">device</span></a></span><a class="headerlink" href="#torchfx.Wave.device" title="Link to this definition">¶</a></dt>
 <dd><p>Print the device where is located this object, if there’s an assignment move
 the object to that device.</p>
 <div class="seealso admonition">
@@ -3812,7 +3984,7 @@ If True, the channels will be merged into multiple channels. Default is False.</
 
 <dl class="py method objdesc">
 <dt class="sig sig-object highlight py" id="torchfx.Wave.to">
-<span class="sig-name descname"><span class="pre">to</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave.to.device" title="torchfx.Wave.to.device (Python parameter) — The device to move the wave object to."><span class="n"><span class="pre">device</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><span class="s"><span class="pre">'cpu'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'cuda'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.7)"><span class="pre">device</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Self" title="(in Python v3.13)"><span class="pre">Self</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/wave.html#Wave.to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.Wave.to" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave.to.device" title="torchfx.Wave.to.device (Python parameter) — The device to move the wave object to."><span class="n"><span class="pre">device</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><span class="s"><span class="pre">'cpu'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'cuda'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.8)"><span class="pre">device</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Self" title="(in Python v3.13)"><span class="pre">Self</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/wave.html#Wave.to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.Wave.to" title="Link to this definition">¶</a></dt>
 <dd><p>Move the wave object to a specific device (<cite>cpu</cite> or <cite>cuda</cite>).</p>
 <dl class="field-list simple">
 <dt class="field-odd" id="torchfx.Wave.to-parameters">Parameters<span class="colon">:</span><a class="headerlink" href="#torchfx.Wave.to-parameters" title="Permalink to this headline">¶</a></dt>
@@ -3837,7 +4009,7 @@ If True, the channels will be merged into multiple channels. Default is False.</
 
 <dl class="py method objdesc">
 <dt class="sig sig-object highlight py" id="torchfx.Wave.transform">
-<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave.transform.func" title="torchfx.Wave.transform.func (Python parameter) — The function to apply to the signal."><span class="n"><span class="pre">func</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.13)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span></em>, </span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">*</span></span><a class="n reference internal" href="#torchfx.Wave.transform" title="torchfx.Wave.transform.args (Python parameter)"><span class="n"><span class="pre">args</span></span></a></em>, </span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">**</span></span><a class="n reference internal" href="#torchfx.Wave.transform" title="torchfx.Wave.transform.kwargs (Python parameter)"><span class="n"><span class="pre">kwargs</span></span></a></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference internal" href="#torchfx.Wave" title="torchfx.wave.Wave (Python class)"><span class="pre">Wave</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/wave.html#Wave.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.Wave.transform" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.Wave.transform.func" title="torchfx.Wave.transform.func (Python parameter) — The function to apply to the signal."><span class="n"><span class="pre">func</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.13)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span></em>, </span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">*</span></span><a class="n reference internal" href="#torchfx.Wave.transform" title="torchfx.Wave.transform.args (Python parameter)"><span class="n"><span class="pre">args</span></span></a></em>, </span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">**</span></span><a class="n reference internal" href="#torchfx.Wave.transform" title="torchfx.Wave.transform.kwargs (Python parameter)"><span class="n"><span class="pre">kwargs</span></span></a></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference internal" href="#torchfx.Wave" title="torchfx.wave.Wave (Python class)"><span class="pre">Wave</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/wave.html#Wave.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.Wave.transform" title="Link to this definition">¶</a></dt>
 <dd><p>Apply a functional transformation to the signal.</p>
 <dl class="field-list simple">
 <dt class="field-odd" id="torchfx.Wave.transform-parameters">Parameters<span class="colon">:</span><a class="headerlink" href="#torchfx.Wave.transform-parameters" title="Permalink to this headline">¶</a></dt>
@@ -3864,14 +4036,14 @@ If True, the channels will be merged into multiple channels. Default is False.</
 
 <dl class="py class objdesc">
 <dt class="sig sig-object highlight py" id="torchfx.FX">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.</span></span><span class="sig-name descname"><span class="pre">FX</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">*</span></span><a class="n reference internal" href="#torchfx.FX" title="torchfx.FX.__init__.args (Python parameter)"><span class="n"><span class="pre">args</span></span></a></em>, </span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">**</span></span><a class="n reference internal" href="#torchfx.FX" title="torchfx.FX.__init__.kwargs (Python parameter)"><span class="n"><span class="pre">kwargs</span></span></a></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effects.html#FX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.FX" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.</span></span><span class="sig-name descname"><span class="pre">FX</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">*</span></span><a class="n reference internal" href="#torchfx.FX" title="torchfx.FX.__init__.args (Python parameter)"><span class="n"><span class="pre">args</span></span></a></em>, </span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">**</span></span><a class="n reference internal" href="#torchfx.FX" title="torchfx.FX.__init__.kwargs (Python parameter)"><span class="n"><span class="pre">kwargs</span></span></a></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effect.html#FX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.FX" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
 <p>Abstract base class for all effects.
 This class defines the interface for all effects in the library. It inherits from
 <cite>torch.nn.Module</cite> and provides the basic structure for implementing effects.</p>
 <dl class="py method objdesc">
 <dt class="sig sig-object highlight py" id="torchfx.FX.forward">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.FX.forward" title="torchfx.FX.forward.x (Python parameter)"><span class="n"><span class="pre">x</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effects.html#FX.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.FX.forward" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.FX.forward" title="torchfx.FX.forward.x (Python parameter)"><span class="n"><span class="pre">x</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effect.html#FX.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.FX.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="note admonition">
@@ -4021,7 +4193,7 @@ filter.</p>
 
 <dl class="py method objdesc">
 <dt class="sig sig-object highlight py" id="torchfx.filter.FIR.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.filter.FIR.forward" title="torchfx.filter.FIR.forward.x (Python parameter)"><span class="n"><span class="pre">x</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/filter/fir.html#FIR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.FIR.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.filter.FIR.forward" title="torchfx.filter.FIR.forward.x (Python parameter)"><span class="n"><span class="pre">x</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/filter/fir.html#FIR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.FIR.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="note admonition">
@@ -4130,7 +4302,7 @@ provides the basic structure for implementing IIR filters. It inherits from
 
 <dl class="py method objdesc">
 <dt class="sig sig-object highlight py" id="torchfx.filter.IIR.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.filter.IIR.forward" title="torchfx.filter.IIR.forward.x (Python parameter)"><span class="n"><span class="pre">x</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/filter/iir.html#IIR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.IIR.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.filter.IIR.forward" title="torchfx.filter.IIR.forward.x (Python parameter)"><span class="n"><span class="pre">x</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/filter/iir.html#IIR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.IIR.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="note admonition">
@@ -4218,18 +4390,25 @@ the numerator and denominator coefficients.</p>
 
 </dd></dl>
 
-<p>The already implemented effects are disponible under the <cite>effects</cite> module:</p>
-<p id="module-torchfx.effects">Base class for all effects.</p>
+<p>The already implemented effects are disponible under the <cite>effect</cite> module:</p>
+<p id="module-torchfx.effect">Base class for all effects.</p>
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight py" id="torchfx.effects.FX">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effects.</span></span><span class="sig-name descname"><span class="pre">FX</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">*</span></span><a class="n reference internal" href="#torchfx.effects.FX" title="torchfx.effects.FX.__init__.args (Python parameter)"><span class="n"><span class="pre">args</span></span></a></em>, </span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">**</span></span><a class="n reference internal" href="#torchfx.effects.FX" title="torchfx.effects.FX.__init__.kwargs (Python parameter)"><span class="n"><span class="pre">kwargs</span></span></a></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effects.html#FX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.FX" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<dt class="sig sig-object highlight sig-wrap py" id="torchfx.effect.CustomNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">CustomNormalizationStrategy</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.CustomNormalizationStrategy" title="torchfx.effect.CustomNormalizationStrategy.__init__.func (Python parameter)"><span class="n"><span class="pre">func</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.13)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effect.html#CustomNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.CustomNormalizationStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy (Python class) — Bases: ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<p>Normalization using a custom function.</p>
+</dd></dl>
+
+<dl class="py class objdesc">
+<dt class="sig sig-object highlight py" id="torchfx.effect.FX">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">FX</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">*</span></span><a class="n reference internal" href="#torchfx.effect.FX" title="torchfx.effect.FX.__init__.args (Python parameter)"><span class="n"><span class="pre">args</span></span></a></em>, </span><span class="sig-param-decl"><em class="sig-param"><span class="o"><span class="pre">**</span></span><a class="n reference internal" href="#torchfx.effect.FX" title="torchfx.effect.FX.__init__.kwargs (Python parameter)"><span class="n"><span class="pre">kwargs</span></span></a></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effect.html#FX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.FX" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
 <p>Abstract base class for all effects.
 This class defines the interface for all effects in the library. It inherits from
 <cite>torch.nn.Module</cite> and provides the basic structure for implementing effects.</p>
 <dl class="py method objdesc">
-<dt class="sig sig-object highlight py" id="torchfx.effects.FX.forward">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.FX.forward" title="torchfx.effects.FX.forward.x (Python parameter)"><span class="n"><span class="pre">x</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effects.html#FX.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.FX.forward" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object highlight py" id="torchfx.effect.FX.forward">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.FX.forward" title="torchfx.effect.FX.forward.x (Python parameter)"><span class="n"><span class="pre">x</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effect.html#FX.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.FX.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="note admonition">
@@ -4244,19 +4423,19 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight sig-wrap py" id="torchfx.effects.Gain">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effects.</span></span><span class="sig-name descname"><span class="pre">Gain</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Gain" title="torchfx.effects.Gain.__init__.gain (Python parameter)"><span class="n"><span class="pre">gain</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Gain" title="torchfx.effects.Gain.__init__.gain_type (Python parameter)"><span class="n"><span class="pre">gain_type</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="s1">&#39;amplitude&#39;</span></code></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Gain" title="torchfx.effects.Gain.__init__.clamp (Python parameter)"><span class="n"><span class="pre">clamp</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="kc">False</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effects.html#Gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.Gain" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchfx.effects.FX" title="torchfx.effects.FX (Python class) — Bases: Module, ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
+<dt class="sig sig-object highlight sig-wrap py" id="torchfx.effect.Gain">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">Gain</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Gain.__init__.gain" title="torchfx.effect.Gain.__init__.gain (Python parameter) — The gain factor to apply to the waveform."><span class="n"><span class="pre">gain</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Gain.__init__.gain_type" title="torchfx.effect.Gain.__init__.gain_type (Python parameter) — The type of gain to apply."><span class="n"><span class="pre">gain_type</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="s1">&#39;amplitude&#39;</span></code></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Gain.__init__.clamp" title="torchfx.effect.Gain.__init__.clamp (Python parameter) — If True, clamps the output waveform to the range [-1.0, 1.0]."><span class="n"><span class="pre">clamp</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="kc">False</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effect.html#Gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Gain" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.FX" title="torchfx.effect.FX (Python class) — Bases: Module, ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
 <p>Adjust volume of waveform.</p>
 <p>This effect is the same as <cite>torchaudio.transforms.Vol</cite>, but it adds the option to clamp or not the output waveform.</p>
 <dl class="field-list simple">
-<dt class="field-odd" id="torchfx.effects.Gain-parameters">Parameters<span class="colon">:</span><a class="headerlink" href="#torchfx.effects.Gain-parameters" title="Permalink to this headline">¶</a></dt>
+<dt class="field-odd" id="torchfx.effect.Gain-parameters">Parameters<span class="colon">:</span><a class="headerlink" href="#torchfx.effect.Gain-parameters" title="Permalink to this headline">¶</a></dt>
 <dd class="field-odd"><dl class="simple api-field highlight">
-<dt><span class="sig-name descname">(float)</span><span class="p"> : </span><span class="desctype"><span class="desctype">gain</span></span></dt><dd><p></p>
+<dt id="torchfx.effect.Gain.__init__.gain"><span class="sig-name descname">gain</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a></span></span><a class="headerlink" href="#torchfx.effect.Gain.__init__.gain" title="Permalink to this definition">¶</a></dt><dd><p>The gain factor to apply to the waveform.</p>
 </dd>
-<dt><span class="sig-name descname">(str)</span><span class="p"> : </span><span class="desctype"><span class="desctype">gain_type</span></span></dt><dd><p></p>
+<dt id="torchfx.effect.Gain.__init__.gain_type"><span class="sig-name descname">gain_type</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></span></span><a class="headerlink" href="#torchfx.effect.Gain.__init__.gain_type" title="Permalink to this definition">¶</a></dt><dd><p>The type of gain to apply. Can be one of “amplitude”, “db”, or “power”.</p>
 </dd>
-<dt><span class="sig-name descname">(bool)</span><span class="p"> : </span><span class="desctype"><span class="desctype">clamp</span></span></dt><dd><p></p>
+<dt id="torchfx.effect.Gain.__init__.clamp"><span class="sig-name descname">clamp</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)">bool</a></span></span><a class="headerlink" href="#torchfx.effect.Gain.__init__.clamp" title="Permalink to this definition">¶</a></dt><dd><p>If True, clamps the output waveform to the range [-1.0, 1.0].</p>
 </dd>
 </dl>
 </dd>
@@ -4278,19 +4457,19 @@ registered hooks while the latter silently ignores them.</p>
 <p>This class is based on <cite>torchaudio.transforms.Vol</cite>, licensed under the BSD 2-Clause License.
 See licenses.torchaudio.BSD-2-Clause.txt for details.</p>
 <dl class="py method objdesc">
-<dt class="sig sig-object highlight py" id="torchfx.effects.Gain.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Gain.forward.waveform" title="torchfx.effects.Gain.forward.waveform (Python parameter) — Tensor of audio of dimension (..., time)."><span class="n"><span class="pre">waveform</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effects.html#Gain.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.Gain.forward" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object highlight py" id="torchfx.effect.Gain.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Gain.forward.waveform" title="torchfx.effect.Gain.forward.waveform (Python parameter) — Tensor of audio of dimension (..., time)."><span class="n"><span class="pre">waveform</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effect.html#Gain.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Gain.forward" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd" id="torchfx.effects.Gain.forward-parameters">Parameters<span class="colon">:</span><a class="headerlink" href="#torchfx.effects.Gain.forward-parameters" title="Permalink to this headline">¶</a></dt>
+<dt class="field-odd" id="torchfx.effect.Gain.forward-parameters">Parameters<span class="colon">:</span><a class="headerlink" href="#torchfx.effect.Gain.forward-parameters" title="Permalink to this headline">¶</a></dt>
 <dd class="field-odd"><dl class="simple api-field highlight">
-<dt id="torchfx.effects.Gain.forward.waveform"><span class="sig-name descname">waveform</span><span class="p"> : </span><span class="desctype"><span class="desctype">Tensor</span></span><a class="headerlink" href="#torchfx.effects.Gain.forward.waveform" title="Permalink to this definition">¶</a></dt><dd><p>Tensor of audio of dimension <cite>(…, time)</cite>.</p>
+<dt id="torchfx.effect.Gain.forward.waveform"><span class="sig-name descname">waveform</span><span class="p"> : </span><span class="desctype"><span class="desctype">Tensor</span></span><a class="headerlink" href="#torchfx.effect.Gain.forward.waveform" title="Permalink to this definition">¶</a></dt><dd><p>Tensor of audio of dimension <cite>(…, time)</cite>.</p>
 </dd>
 </dl>
 </dd>
-<dt class="field-even" id="torchfx.effects.Gain.forward-returns">Returns<span class="colon">:</span><a class="headerlink" href="#torchfx.effects.Gain.forward-returns" title="Permalink to this headline">¶</a></dt>
+<dt class="field-even" id="torchfx.effect.Gain.forward-returns">Returns<span class="colon">:</span><a class="headerlink" href="#torchfx.effect.Gain.forward-returns" title="Permalink to this headline">¶</a></dt>
 <dd class="field-even"><p>Tensor of audio of dimension <cite>(…, time)</cite>.</p>
 </dd>
-<dt class="field-odd" id="torchfx.effects.Gain.forward-return-type">Return type<span class="colon">:</span><a class="headerlink" href="#torchfx.effects.Gain.forward-return-type" title="Permalink to this headline">¶</a></dt>
+<dt class="field-odd" id="torchfx.effect.Gain.forward-return-type">Return type<span class="colon">:</span><a class="headerlink" href="#torchfx.effect.Gain.forward-return-type" title="Permalink to this headline">¶</a></dt>
 <dd class="field-odd"><p>Tensor</p>
 </dd>
 </dl>
@@ -4299,21 +4478,21 @@ See licenses.torchaudio.BSD-2-Clause.txt for details.</p>
 </dd></dl>
 
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight py" id="torchfx.effects.NormalizationStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effects.</span></span><span class="sig-name descname"><span class="pre">NormalizationStrategy</span></span><a class="reference internal" href="_modules/torchfx/effects.html#NormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.NormalizationStrategy" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object highlight py" id="torchfx.effect.NormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">NormalizationStrategy</span></span><a class="reference internal" href="_modules/torchfx/effect.html#NormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.NormalizationStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
 <p>Abstract base class for normalization strategies.</p>
 </dd></dl>
 
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight sig-wrap py" id="torchfx.effects.Normalize">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effects.</span></span><span class="sig-name descname"><span class="pre">Normalize</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Normalize.__init__.peak" title="torchfx.effects.Normalize.__init__.peak (Python parameter) — The peak value to normalize to."><span class="n"><span class="pre">peak</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mf">1.0</span></code></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Normalize" title="torchfx.effects.Normalize.__init__.strategy (Python parameter)"><span class="n"><span class="pre">strategy</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference internal" href="#torchfx.effects.NormalizationStrategy" title="torchfx.effects.NormalizationStrategy (Python class) — Bases: ABC"><span class="pre">NormalizationStrategy</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="kc">None</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effects.html#Normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.Normalize" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchfx.effects.FX" title="torchfx.effects.FX (Python class) — Bases: Module, ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
+<dt class="sig sig-object highlight sig-wrap py" id="torchfx.effect.Normalize">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">Normalize</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Normalize.__init__.peak" title="torchfx.effect.Normalize.__init__.peak (Python parameter) — The peak value to normalize to."><span class="n"><span class="pre">peak</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mf">1.0</span></code></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Normalize" title="torchfx.effect.Normalize.__init__.strategy (Python parameter)"><span class="n"><span class="pre">strategy</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy (Python class) — Bases: ABC"><span class="pre">NormalizationStrategy</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.13)"><span class="pre">Callable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="kc">None</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effect.html#Normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Normalize" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.FX" title="torchfx.effect.FX (Python class) — Bases: Module, ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
 <p>Normalize the waveform to a given peak value using a selected strategy.</p>
 <dl class="field-list simple">
-<dt class="field-odd" id="torchfx.effects.Normalize-parameters">Parameters<span class="colon">:</span><a class="headerlink" href="#torchfx.effects.Normalize-parameters" title="Permalink to this headline">¶</a></dt>
+<dt class="field-odd" id="torchfx.effect.Normalize-parameters">Parameters<span class="colon">:</span><a class="headerlink" href="#torchfx.effect.Normalize-parameters" title="Permalink to this headline">¶</a></dt>
 <dd class="field-odd"><dl class="simple api-field highlight">
-<dt id="torchfx.effects.Normalize.__init__.peak"><span class="sig-name descname">peak</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a></span></span><a class="headerlink" href="#torchfx.effects.Normalize.__init__.peak" title="Permalink to this definition">¶</a></dt><dd><p>The peak value to normalize to. Default is 1.0.</p>
+<dt id="torchfx.effect.Normalize.__init__.peak"><span class="sig-name descname">peak</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a></span></span><a class="headerlink" href="#torchfx.effect.Normalize.__init__.peak" title="Permalink to this definition">¶</a></dt><dd><p>The peak value to normalize to. Default is 1.0.</p>
 </dd>
 </dl>
 </dd>
@@ -4327,8 +4506,8 @@ See licenses.torchaudio.BSD-2-Clause.txt for details.</p>
 </dd>
 </dl>
 <dl class="py method objdesc">
-<dt class="sig sig-object highlight py" id="torchfx.effects.Normalize.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Normalize.forward" title="torchfx.effects.Normalize.forward.waveform (Python parameter)"><span class="n"><span class="pre">waveform</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effects.html#Normalize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.Normalize.forward" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object highlight py" id="torchfx.effect.Normalize.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Normalize.forward" title="torchfx.effect.Normalize.forward.waveform (Python parameter)"><span class="n"><span class="pre">waveform</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effect.html#Normalize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Normalize.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="note admonition">
@@ -4343,53 +4522,42 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight py" id="torchfx.effects.PeakNormalizationStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effects.</span></span><span class="sig-name descname"><span class="pre">PeakNormalizationStrategy</span></span><a class="reference internal" href="_modules/torchfx/effects.html#PeakNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.PeakNormalizationStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchfx.effects.NormalizationStrategy" title="torchfx.effects.NormalizationStrategy (Python class) — Bases: ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<dt class="sig sig-object highlight py" id="torchfx.effect.PeakNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">PeakNormalizationStrategy</span></span><a class="reference internal" href="_modules/torchfx/effect.html#PeakNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.PeakNormalizationStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy (Python class) — Bases: ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
 <p>Normalization to the absolute peak value.</p>
 </dd></dl>
 
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight py" id="torchfx.effects.PerChannelNormalizationStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effects.</span></span><span class="sig-name descname"><span class="pre">PerChannelNormalizationStrategy</span></span><a class="reference internal" href="_modules/torchfx/effects.html#PerChannelNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.PerChannelNormalizationStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchfx.effects.NormalizationStrategy" title="torchfx.effects.NormalizationStrategy (Python class) — Bases: ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<dt class="sig sig-object highlight py" id="torchfx.effect.PerChannelNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">PerChannelNormalizationStrategy</span></span><a class="reference internal" href="_modules/torchfx/effect.html#PerChannelNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.PerChannelNormalizationStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy (Python class) — Bases: ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
 <p>Normalize each channel independently to its own peak.</p>
 </dd></dl>
 
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight sig-wrap py" id="torchfx.effects.PercentileNormalizationStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effects.</span></span><span class="sig-name descname"><span class="pre">PercentileNormalizationStrategy</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.PercentileNormalizationStrategy" title="torchfx.effects.PercentileNormalizationStrategy.__init__.percentile (Python parameter)"><span class="n"><span class="pre">percentile</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mf">99.0</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effects.html#PercentileNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.PercentileNormalizationStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchfx.effects.NormalizationStrategy" title="torchfx.effects.NormalizationStrategy (Python class) — Bases: ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<dt class="sig sig-object highlight sig-wrap py" id="torchfx.effect.PercentileNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">PercentileNormalizationStrategy</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.PercentileNormalizationStrategy" title="torchfx.effect.PercentileNormalizationStrategy.__init__.percentile (Python parameter)"><span class="n"><span class="pre">percentile</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mf">99.0</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effect.html#PercentileNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.PercentileNormalizationStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy (Python class) — Bases: ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
 <p>Normalization using a percentile of absolute values.</p>
 </dd></dl>
 
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight py" id="torchfx.effects.RMSNormalizationStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effects.</span></span><span class="sig-name descname"><span class="pre">RMSNormalizationStrategy</span></span><a class="reference internal" href="_modules/torchfx/effects.html#RMSNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.RMSNormalizationStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchfx.effects.NormalizationStrategy" title="torchfx.effects.NormalizationStrategy (Python class) — Bases: ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<dt class="sig sig-object highlight py" id="torchfx.effect.RMSNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">RMSNormalizationStrategy</span></span><a class="reference internal" href="_modules/torchfx/effect.html#RMSNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.RMSNormalizationStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy (Python class) — Bases: ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
 <p>Normalization to Root Mean Square (RMS) energy.</p>
 </dd></dl>
 
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight sig-wrap py" id="torchfx.effects.Reverb">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effects.</span></span><span class="sig-name descname"><span class="pre">Reverb</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Reverb.__init__.delay" title="torchfx.effects.Reverb.__init__.delay (Python parameter) — Delay in samples for the feedback comb filter."><span class="n"><span class="pre">delay</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mi">4410</span></code></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Reverb.__init__.decay" title="torchfx.effects.Reverb.__init__.decay (Python parameter) — Feedback decay factor (0 &lt; decay &lt; 1)."><span class="n"><span class="pre">decay</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mf">0.5</span></code></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Reverb.__init__.mix" title="torchfx.effects.Reverb.__init__.mix (Python parameter) — Wet/dry mix (0 = dry, 1 = wet)."><span class="n"><span class="pre">mix</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mf">0.5</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effects.html#Reverb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.Reverb" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchfx.effects.FX" title="torchfx.effects.FX (Python class) — Bases: Module, ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
+<dt class="sig sig-object highlight sig-wrap py" id="torchfx.effect.Reverb">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">Reverb</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Reverb" title="torchfx.effect.Reverb.__init__.delay (Python parameter)"><span class="n"><span class="pre">delay</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mi">4410</span></code></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Reverb" title="torchfx.effect.Reverb.__init__.decay (Python parameter)"><span class="n"><span class="pre">decay</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mf">0.5</span></code></em>, </span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Reverb" title="torchfx.effect.Reverb.__init__.mix (Python parameter)"><span class="n"><span class="pre">mix</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><code class="code python default_value docutils literal highlight highlight-python"><span class="mf">0.5</span></code></em></span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torchfx/effect.html#Reverb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Reverb" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.FX" title="torchfx.effect.FX (Python class) — Bases: Module, ABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
 <p>Apply a simple reverb effect using a feedback delay network.</p>
-<dl class="field-list simple">
-<dt class="field-odd" id="torchfx.effects.Reverb-parameters">Parameters<span class="colon">:</span><a class="headerlink" href="#torchfx.effects.Reverb-parameters" title="Permalink to this headline">¶</a></dt>
-<dd class="field-odd"><dl class="simple api-field highlight">
-<dt id="torchfx.effects.Reverb.__init__.delay"><span class="sig-name descname">delay</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></span></span><a class="headerlink" href="#torchfx.effects.Reverb.__init__.delay" title="Permalink to this definition">¶</a></dt><dd><p>Delay in samples for the feedback comb filter.</p>
-</dd>
-<dt id="torchfx.effects.Reverb.__init__.decay"><span class="sig-name descname">decay</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a></span></span><a class="headerlink" href="#torchfx.effects.Reverb.__init__.decay" title="Permalink to this definition">¶</a></dt><dd><p>Feedback decay factor (0 &lt; decay &lt; 1).</p>
-</dd>
-<dt id="torchfx.effects.Reverb.__init__.mix"><span class="sig-name descname">mix</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a></span></span><a class="headerlink" href="#torchfx.effects.Reverb.__init__.mix" title="Permalink to this definition">¶</a></dt><dd><p>Wet/dry mix (0 = dry, 1 = wet).</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<dl>
-<dt>The reverb effect is computed as:</dt><dd><p>y[n] = (1 - mix) * x[n] + mix * (x[n] + decay * x[n - delay])</p>
-</dd>
+<p>The reverb effect is computed as:</p>
+<div class="math notranslate nohighlight">
+\[y[n] = (1 - mix) x[n] + mix (x[n] + decay x[n - delay])\]</div>
+<dl class="simple">
 <dt>where:</dt><dd><ul class="simple">
 <li><p>x[n] is the input signal,</p></li>
 <li><p>y[n] is the output signal,</p></li>
@@ -4398,15 +4566,50 @@ registered hooks while the latter silently ignores them.</p>
 <li><p>mix is the wet/dry mix parameter.</p></li>
 </ul>
 </dd>
-<dt>Example</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reverberated</span> <span class="o">=</span> <span class="n">reverb</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
-</code></pre></div>
-</div>
+</dl>
+<dl class="py attribute objdesc">
+<dt class="sig sig-object highlight py" id="torchfx.effect.Reverb.delay">
+<span class="sig-name descname"><span class="pre">delay</span></span><a class="headerlink" href="#torchfx.effect.Reverb.delay" title="Link to this definition">¶</a></dt>
+<dd><p>Delay in samples for the feedback comb filter. Default is 4410 (100ms at 44.1kHz).</p>
+<dl class="field-list simple">
+<dt class="field-odd" id="torchfx.effect.Reverb.delay-type">Type<span class="colon">:</span><a class="headerlink" href="#torchfx.effect.Reverb.delay-type" title="Permalink to this headline">¶</a></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py attribute objdesc">
+<dt class="sig sig-object highlight py" id="torchfx.effect.Reverb.decay">
+<span class="sig-name descname"><span class="pre">decay</span></span><a class="headerlink" href="#torchfx.effect.Reverb.decay" title="Link to this definition">¶</a></dt>
+<dd><p>Feedback decay factor. Must be between 0 and 1. Default is 0.5.</p>
+<dl class="field-list simple">
+<dt class="field-odd" id="torchfx.effect.Reverb.decay-type">Type<span class="colon">:</span><a class="headerlink" href="#torchfx.effect.Reverb.decay-type" title="Permalink to this headline">¶</a></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute objdesc">
+<dt class="sig sig-object highlight py" id="torchfx.effect.Reverb.mix">
+<span class="sig-name descname"><span class="pre">mix</span></span><a class="headerlink" href="#torchfx.effect.Reverb.mix" title="Link to this definition">¶</a></dt>
+<dd><p>Wet/dry mix. 0 = dry, 1 = wet. Default is 0.5.</p>
+<dl class="field-list simple">
+<dt class="field-odd" id="torchfx.effect.Reverb.mix-type">Type<span class="colon">:</span><a class="headerlink" href="#torchfx.effect.Reverb.mix-type" title="Permalink to this headline">¶</a></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="example rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;path_to_audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reverberated</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
+</code></pre></div>
+</div>
 <dl class="py method objdesc">
-<dt class="sig sig-object highlight py" id="torchfx.effects.Reverb.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effects.Reverb.forward" title="torchfx.effects.Reverb.forward.waveform (Python parameter)"><span class="n"><span class="pre">waveform</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effects.html#Reverb.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effects.Reverb.forward" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object highlight py" id="torchfx.effect.Reverb.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><a class="n reference internal" href="#torchfx.effect.Reverb.forward" title="torchfx.effect.Reverb.forward.waveform (Python parameter)"><span class="n"><span class="pre">waveform</span></span></a><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></em></span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><span class="pre">Tensor</span></a></span></span></span><a class="reference internal" href="_modules/torchfx/effect.html#Reverb.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Reverb.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="note admonition">
@@ -4532,6 +4735,7 @@ registered hooks while the latter silently ignores them.</p>
     
       
         <script src="_static/sphinx_immaterial_theme.32136f45f91ae6956.min.js?v=a7a9472a"></script>
+        <script id="MathJax-script" src="_static/mathjax/tex-mml-chtml.js?v=cadf963e"></script>
     
   </body>
 </html>

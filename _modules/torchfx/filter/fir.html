@@ -423,6 +423,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="c1"># Flip the kernel for causal convolution (like lfilter)</span>
         <span class="n">b_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>  <span class="c1"># FIR filter denominator is always 1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">&quot;kernel&quot;</span><span class="p">,</span> <span class="n">b_tensor</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:])</span>  <span class="c1"># [1, 1, K]</span>
 
 <div class="viewcode-block" id="FIR.compute_coefficients">
@@ -437,6 +438,7 @@
 <div class="viewcode-block" id="FIR.forward">
 <a class="viewcode-back" href="../../../api.html#torchfx.filter.FIR.forward">[docs]</a>
     <span class="nd">@override</span>
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">dtype</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>

@@ -421,7 +421,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effects</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.__base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractFilter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Device</span>
 
@@ -576,21 +576,22 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected nn.Module, but got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> instead.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">FX</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;fs&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">f</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>  <span class="c1"># type: ignore</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__update_config</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">AbstractFilter</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">_has_computed_coeff</span><span class="p">:</span>
-                <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span> <span class="o">|</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">)):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span> <span class="o">|</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">)):</span>
             <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">FX</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">&quot;fs&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="n">a</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>  <span class="c1"># type: ignore</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">AbstractFilter</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">_has_computed_coeff</span><span class="p">:</span>
-                        <span class="n">a</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__update_config</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">forward</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__update_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">FX</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the configuration of the filter with the wave&#39;s sampling frequency.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;fs&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>  <span class="c1"># type: ignore</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">AbstractFilter</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">_has_computed_coeff</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the length, in samples, of the wave.&quot;&quot;&quot;</span>
