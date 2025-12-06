@@ -393,15 +393,15 @@ def test_delay_bpm_calculation():
     bpm = 120
     sample_rate = 44100
     # 120 BPM = 0.5 seconds per beat
-    
+
     # 1/4 note = 0.5 seconds = 22050 samples
     delay = Delay(bpm=bpm, delay_time="1/4", sample_rate=sample_rate)
     assert delay.delay_samples == 22050
-    
+
     # 1/8 note = 0.25 seconds = 11025 samples
     delay = Delay(bpm=bpm, delay_time="1/8", sample_rate=sample_rate)
     assert delay.delay_samples == 11025
-    
+
     # 1/16 note = 0.125 seconds = 5512 samples
     delay = Delay(bpm=bpm, delay_time="1/16", sample_rate=sample_rate)
     assert delay.delay_samples == 5512
@@ -427,10 +427,10 @@ def test_delay_pingpong():
     # Create impulse on left channel only
     waveform = torch.zeros(2, 10)
     waveform[0, 0] = 1.0  # Impulse on left channel
-    
+
     delay = Delay(delay_samples=2, feedback=0.0, mix=1.0, taps=2, stereo_mode="pingpong")
     out = delay(waveform)
-    
+
     # Tap 1 (odd): Left -> Right, should appear on right channel at position 2
     # Tap 2 (even): Right -> Left, but right has no signal, so nothing
     assert out[1, 2].item() == pytest.approx(1.0, abs=1e-5)  # Left -> Right

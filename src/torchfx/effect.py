@@ -314,18 +314,18 @@ class Delay(FX):
     --------
     >>> import torchfx as fx
     >>> import torch
-    >>> 
+    >>>
     >>> # BPM-synced delay (1/8 note at 128 BPM)
     >>> waveform = torch.randn(2, 44100)  # (channels, samples)
     >>> delay = fx.effect.Delay(bpm=128, delay_time='1/8', sample_rate=44100, feedback=0.3, mix=0.2)
     >>> delayed = delay(waveform)
-    >>> 
+    >>>
     >>> # Direct delay in samples
     >>> delay = fx.effect.Delay(delay_samples=2205, feedback=0.4, mix=0.3)
     >>> delayed = delay(waveform)
-    >>> 
+    >>>
     >>> # Ping-pong delay
-    >>> delay = fx.effect.Delay(bpm=128, delay_time='1/4', sample_rate=44100, 
+    >>> delay = fx.effect.Delay(bpm=128, delay_time='1/4', sample_rate=44100,
     ...                         feedback=0.5, mix=0.4, stereo_mode='pingpong')
     >>> delayed = delay(waveform)
     """
@@ -399,7 +399,7 @@ class Delay(FX):
         """Extend waveform with zeros to target length along the last dimension."""
         if waveform.size(-1) >= target_length:
             return waveform
-        
+
         if waveform.ndim == 1:
             extended = torch.zeros(target_length, dtype=waveform.dtype, device=waveform.device)
             extended[: waveform.size(0)] = waveform
@@ -413,7 +413,7 @@ class Delay(FX):
             extended_shape[-1] = target_length
             extended = torch.zeros(extended_shape, dtype=waveform.dtype, device=waveform.device)
             extended[..., : waveform.size(-1)] = waveform
-        
+
         return extended
 
     @override
@@ -451,14 +451,14 @@ class Delay(FX):
 
     def _apply_mono_delay(self, waveform: Tensor) -> Tensor:
         """Apply delay with multiple taps and feedback.
-        
+
         Output length is extended to accommodate all delayed taps.
         """
         # Calculate required output length
         original_length = waveform.size(-1)
         max_delay_samples = self.delay_samples * self.taps
         output_length = original_length + max_delay_samples
-        
+
         # waveform shape: (..., time) or (channels, time)
         if waveform.ndim == 1:
             # Single channel: (time,)
@@ -473,12 +473,16 @@ class Delay(FX):
                 # Copy original signal starting at tap_delay
                 copy_length = min(original_length, output_length - tap_delay)
                 if copy_length > 0:
-                    delayed[tap_delay:tap_delay + copy_length] += waveform[:copy_length] * feedback_amt
+                    delayed[tap_delay : tap_delay + copy_length] += (
+                        waveform[:copy_length] * feedback_amt
+                    )
             return delayed
 
         elif waveform.ndim == 2:
             # Multi-channel: (channels, time)
-            delayed = torch.zeros(waveform.size(0), output_length, dtype=waveform.dtype, device=waveform.device)
+            delayed = torch.zeros(
+                waveform.size(0), output_length, dtype=waveform.dtype, device=waveform.device
+            )
             for ch in range(waveform.size(0)):
                 for tap in range(1, self.taps + 1):
                     tap_delay = self.delay_samples * tap
@@ -490,7 +494,9 @@ class Delay(FX):
                     # Copy original signal starting at tap_delay
                     copy_length = min(original_length, output_length - tap_delay)
                     if copy_length > 0:
-                        delayed[ch, tap_delay:tap_delay + copy_length] += waveform[ch, :copy_length] * feedback_amt
+                        delayed[ch, tap_delay : tap_delay + copy_length] += (
+                            waveform[ch, :copy_length] * feedback_amt
+                        )
             return delayed
 
         else:
@@ -505,7 +511,7 @@ class Delay(FX):
 
     def _apply_pingpong_delay(self, waveform: Tensor) -> Tensor:
         """Apply ping-pong delay (alternates between channels).
-        
+
         Output length is extended to accommodate all delayed taps.
         """
         if waveform.ndim < 2 or waveform.size(-2) != 2:
@@ -535,10 +541,14 @@ class Delay(FX):
                     # Odd taps: left delays to right, even taps: right delays to left
                     if tap % 2 == 1:
                         # Left -> Right
-                        delayed[1, tap_delay:tap_delay + copy_length] += waveform[0, :copy_length] * feedback_amt
+                        delayed[1, tap_delay : tap_delay + copy_length] += (
+                            waveform[0, :copy_length] * feedback_amt
+                        )
                     else:
                         # Right -> Left
-                        delayed[0, tap_delay:tap_delay + copy_length] += waveform[1, :copy_length] * feedback_amt
+                        delayed[0, tap_delay : tap_delay + copy_length] += (
+                            waveform[1, :copy_length] * feedback_amt
+                        )
             return delayed
 
         else:
@@ -559,9 +569,13 @@ class Delay(FX):
                 if copy_length > 0:
                     if tap % 2 == 1:
                         # Left -> Right
-                        delayed[..., 1, tap_delay:tap_delay + copy_length] += waveform[..., 0, :copy_length] * feedback_amt
+                        delayed[..., 1, tap_delay : tap_delay + copy_length] += (
+                            waveform[..., 0, :copy_length] * feedback_amt
+                        )
                     else:
                         # Right -> Left
-                        delayed[..., 0, tap_delay:tap_delay + copy_length] += waveform[..., 1, :copy_length] * feedback_amt
+                        delayed[..., 0, tap_delay : tap_delay + copy_length] += (
+                            waveform[..., 1, :copy_length] * feedback_amt
+                        )
 
             return delayed

@@ -39,7 +39,7 @@ class AbstractFilter(FX, abc.ABC):
 
 class ParallelFilterCombination(AbstractFilter):
     """Combine multiple filters in parallel.
-    
+
     The output is the sum of the outputs of each filter.
 
     Parameters
