@@ -3,6 +3,7 @@ import torch
 
 from torchfx.effect import (
     CustomNormalizationStrategy,
+    Delay,
     Gain,
     NormalizationStrategy,
     Normalize,
@@ -268,3 +269,245 @@ def test_reverb_invalid_decay(decay):
 def test_reverb_invalid_mix(mix):
     with pytest.raises(ValueError):
         Reverb(delay=2, decay=0.5, mix=mix)
+
+
+# Delay tests
+def test_delay_basic():
+    """Test basic delay functionality with known input/output."""
+    # Simple waveform, delay=2, feedback=0.0, mix=1.0 (fully wet)
+    # With feedback=0.0, only first tap should appear (amplitude 1.0)
+    waveform = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0])
+    delay = Delay(delay_samples=2, feedback=0.0, mix=1.0, taps=1)
+    out = delay(waveform)
+    # Output should be extended: original (5) + delay (2) = 7 samples
+    assert out.size(0) >= 7
+    # With mix=1.0, original positions should be 0.0 (only delayed signal)
+    assert out[0].item() == pytest.approx(0.0, abs=1e-5)
+    assert out[1].item() == pytest.approx(0.0, abs=1e-5)
+    # First tap at position 2 should have amplitude 1.0
+    assert out[2].item() == pytest.approx(1.0, abs=1e-5)
+
+
+def test_delay_feedback_zero():
+    """Test delay with feedback=0.0 (first tap should still work)."""
+    # Verify our fix: feedback=0.0 should still create first tap
+    waveform = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    delay = Delay(delay_samples=2, feedback=0.0, mix=1.0, taps=2)
+    out = delay(waveform)
+    # First tap at position 2 should have amplitude 1.0
+    # Second tap at position 4 should have amplitude 0.0 (feedback=0.0)
+    assert out[2].item() == pytest.approx(1.0, abs=1e-5)
+    assert out[4].item() == pytest.approx(0.0, abs=1e-5)
+
+
+def test_delay_feedback():
+    """Test delay with feedback creates multiple taps."""
+    waveform = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    delay = Delay(delay_samples=2, feedback=0.5, mix=1.0, taps=3)
+    out = delay(waveform)
+    # First tap at position 2: amplitude 1.0
+    # Second tap at position 4: amplitude 0.5 (feedback^1)
+    # Third tap at position 6: amplitude 0.25 (feedback^2)
+    assert out[2].item() == pytest.approx(1.0, abs=1e-5)
+    assert out[4].item() == pytest.approx(0.5, abs=1e-5)
+    assert out[6].item() == pytest.approx(0.25, abs=1e-5)
+
+
+def test_delay_mix_zero():
+    """Test delay with mix=0 (should return original signal, possibly extended)."""
+    waveform = torch.randn(10)
+    delay = Delay(delay_samples=3, feedback=0.5, mix=0.0)
+    out = delay(waveform)
+    # With mix=0.0, output should match original in the original region
+    torch.testing.assert_close(out[:10], waveform)
+    # Output may be extended, but extended region should be zeros
+    if out.size(0) > 10:
+        assert torch.allclose(out[10:], torch.zeros(out.size(0) - 10), atol=1e-5)
+
+
+def test_delay_mix_one():
+    """Test delay with mix=1.0 (should return only delayed echoes)."""
+    waveform = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0])
+    delay = Delay(delay_samples=2, feedback=0.0, mix=1.0, taps=1)
+    out = delay(waveform)
+    # With mix=1.0, output should be only delayed (no original)
+    # Original at position 0 should be 0.0
+    assert out[0].item() == pytest.approx(0.0, abs=1e-5)
+    # Delayed at position 2 should be 1.0
+    assert out[2].item() == pytest.approx(1.0, abs=1e-5)
+
+
+def test_delay_mix_half():
+    """Test delay with mix=0.5 (50% original, 50% delayed)."""
+    waveform = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0])
+    delay = Delay(delay_samples=2, feedback=0.0, mix=0.5, taps=1)
+    out = delay(waveform)
+    # output = 0.5 * original + 0.5 * delayed
+    # Position 0: 0.5 * 1.0 + 0.5 * 0.0 = 0.5
+    # Position 2: 0.5 * 0.0 + 0.5 * 1.0 = 0.5
+    assert out[0].item() == pytest.approx(0.5, abs=1e-5)
+    assert out[2].item() == pytest.approx(0.5, abs=1e-5)
+
+
+def test_delay_multichannel():
+    """Test delay with multi-channel waveform."""
+    waveform = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.5, 0.0, 0.0, 0.0]])
+    delay = Delay(delay_samples=2, feedback=0.0, mix=1.0, taps=1)
+    out = delay(waveform)
+    # Channel 0: delayed at position 2 should be 1.0
+    # Channel 1: delayed at position 2 should be 0.5
+    assert out[0, 2].item() == pytest.approx(1.0, abs=1e-5)
+    assert out[1, 2].item() == pytest.approx(0.5, abs=1e-5)
+
+
+def test_delay_short_waveform():
+    """Test delay with waveform shorter than delay time."""
+    waveform = torch.tensor([1.0, 2.0])
+    delay = Delay(delay_samples=3, feedback=0.5, mix=1.0, taps=1)
+    out = delay(waveform)
+    # Output should be extended to accommodate delay
+    # Original (2) + delay (3) = 5 samples minimum
+    assert out.size(0) >= 5
+    # With mix=1.0, original region should be zeros, delayed region should have signal
+    assert out[0].item() == pytest.approx(0.0, abs=1e-5)
+    assert out[1].item() == pytest.approx(0.0, abs=1e-5)
+    # Delayed signal should appear at position 3
+    assert out[3].item() == pytest.approx(1.0, abs=1e-5)
+
+
+def test_delay_bpm_synced():
+    """Test BPM-synced delay calculation."""
+    waveform = torch.randn(2, 44100)  # 1 second at 44.1kHz
+    delay = Delay(bpm=120, delay_time="1/8", sample_rate=44100, feedback=0.3, mix=0.2)
+    # 120 BPM = 0.5 seconds per beat
+    # 1/8 note = 0.25 seconds = 11025 samples at 44.1kHz
+    assert delay.delay_samples == 11025
+    output = delay(waveform)
+    # Output should be extended (original length + delay * taps)
+    assert output.shape[0] == waveform.shape[0]  # Same number of channels
+    assert output.shape[1] >= waveform.shape[1]  # Extended time dimension
+
+
+def test_delay_bpm_calculation():
+    """Test BPM delay calculation for different time divisions."""
+    bpm = 120
+    sample_rate = 44100
+    # 120 BPM = 0.5 seconds per beat
+    
+    # 1/4 note = 0.5 seconds = 22050 samples
+    delay = Delay(bpm=bpm, delay_time="1/4", sample_rate=sample_rate)
+    assert delay.delay_samples == 22050
+    
+    # 1/8 note = 0.25 seconds = 11025 samples
+    delay = Delay(bpm=bpm, delay_time="1/8", sample_rate=sample_rate)
+    assert delay.delay_samples == 11025
+    
+    # 1/16 note = 0.125 seconds = 5512 samples
+    delay = Delay(bpm=bpm, delay_time="1/16", sample_rate=sample_rate)
+    assert delay.delay_samples == 5512
+
+
+def test_delay_musical_divisions():
+    """Test different musical time divisions."""
+    waveform = torch.randn(1, 44100)
+    sample_rate = 44100
+    bpm = 120
+
+    # Test various divisions
+    for div in ["1/4", "1/8", "1/16", "1/8d", "1/4d", "1/8t"]:
+        delay = Delay(bpm=bpm, delay_time=div, sample_rate=sample_rate, feedback=0.3, mix=0.2)
+        output = delay(waveform)
+        assert output.shape[0] == waveform.shape[0]  # Same number of channels
+        assert output.shape[1] >= waveform.shape[1]  # Extended time dimension
+        assert delay.delay_samples > 0
+
+
+def test_delay_pingpong():
+    """Test ping-pong delay mode alternates between channels."""
+    # Create impulse on left channel only
+    waveform = torch.zeros(2, 10)
+    waveform[0, 0] = 1.0  # Impulse on left channel
+    
+    delay = Delay(delay_samples=2, feedback=0.0, mix=1.0, taps=2, stereo_mode="pingpong")
+    out = delay(waveform)
+    
+    # Tap 1 (odd): Left -> Right, should appear on right channel at position 2
+    # Tap 2 (even): Right -> Left, but right has no signal, so nothing
+    assert out[1, 2].item() == pytest.approx(1.0, abs=1e-5)  # Left -> Right
+    assert out[0, 4].item() == pytest.approx(0.0, abs=1e-5)  # Right -> Left (no signal)
+
+
+def test_delay_multiple_taps():
+    """Test delay with multiple taps."""
+    waveform = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    delay = Delay(delay_samples=2, feedback=0.5, mix=1.0, taps=3)
+    out = delay(waveform)
+    # Should have taps at positions 2, 4, 6
+    assert out[2].item() > 0
+    assert out[4].item() > 0
+    assert out[6].item() > 0
+
+
+def test_delay_samples():
+    """Test delay with direct sample specification."""
+    waveform = torch.randn(1, 10000)
+    delay = Delay(delay_samples=2205, feedback=0.4, mix=0.3)
+    output = delay(waveform)
+    assert output.shape[0] == waveform.shape[0]  # Same number of channels
+    assert output.shape[1] >= waveform.shape[1]  # Extended time dimension
+    assert delay.delay_samples == 2205
+
+
+@pytest.mark.parametrize("delay_samples", [0, -1])
+def test_delay_invalid_delay_samples(delay_samples):
+    """Test delay with invalid delay_samples."""
+    with pytest.raises(ValueError):
+        Delay(delay_samples=delay_samples, feedback=0.3, mix=0.2)
+
+
+def test_delay_missing_bpm():
+    """Test delay without BPM or delay_samples."""
+    with pytest.raises(ValueError):
+        Delay(feedback=0.3, mix=0.2)
+
+
+def test_delay_invalid_bpm():
+    """Test delay with invalid BPM."""
+    with pytest.raises(ValueError):
+        Delay(bpm=0, delay_time="1/8", sample_rate=44100)
+    with pytest.raises(ValueError):
+        Delay(bpm=-1, delay_time="1/8", sample_rate=44100)
+
+
+def test_delay_invalid_sample_rate():
+    """Test delay with invalid sample rate."""
+    with pytest.raises(ValueError):
+        Delay(bpm=120, delay_time="1/8", sample_rate=0)
+    with pytest.raises(ValueError):
+        Delay(bpm=120, delay_time="1/8", sample_rate=-1)
+
+
+@pytest.mark.parametrize("feedback", [-0.1, 1.0, 1.1])
+def test_delay_invalid_feedback(feedback):
+    """Test delay with invalid feedback values."""
+    with pytest.raises(ValueError):
+        Delay(delay_samples=1000, feedback=feedback, mix=0.2)
+
+
+@pytest.mark.parametrize("mix", [-0.1, 1.1])
+def test_delay_invalid_mix(mix):
+    """Test delay with invalid mix values."""
+    with pytest.raises(ValueError):
+        Delay(delay_samples=1000, feedback=0.3, mix=mix)
+
+
+def test_delay_invalid_taps():
+    """Test delay with invalid taps."""
+    with pytest.raises(ValueError):
+        Delay(delay_samples=1000, feedback=0.3, mix=0.2, taps=0)
+
+
+def test_delay_invalid_stereo_mode():
+    """Test delay with invalid stereo mode."""
+    with pytest.raises(ValueError):
+        Delay(delay_samples=1000, feedback=0.3, mix=0.2, stereo_mode="invalid")
