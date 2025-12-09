@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
@@ -12,34 +12,38 @@ repos:
     -   id: check-toml
     -   id: check-docstring-first
 
-# -   repo: https://github.com/psf/black
-#     rev: 24.4.2
-#     hooks:
-#     -   id: black
-#         name: black format
-#         stages:
-#         -   "pre-commit"
+-   repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+    -   id: black
+        name: black format
+        stages:
+        -   "pre-commit"
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4
+    rev: v0.12.4
     hooks:
     # Run the linter.
     -   id: ruff
-        args: [ --fix ]
+        args: [ --config, ./pyproject.toml, --fix ]
     # Run the formatter.
     -   id: ruff-format
+        args: [ --config, ./pyproject.toml ]
 
-# -   repo: https://github.com/pre-commit/mirrors-mypy
-#     rev: v1.13.0
-#     hooks:
-#     -   id: mypy
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.0
+    hooks:
+    -   id: mypy
+        args: [--config-file, ./pyproject.toml]
+        exclude: ^tests/
 
-# -   repo: https://github.com/PyCQA/docformatter
-#     rev: v1.7.5
-#     hooks:
-#     -   id: docformatter
-#         additional_dependencies: [tomli]
-#         args: [--in-place]
+-   repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.7
+    hooks:
+    -   id: docformatter
+        additional_dependencies: [tomli]
+        args: [--in-place, --config, ./pyproject.toml, --black]
+
 exclude: ^(scripts/|benchmark/|examples/|docs/)
 files: ^(?!scripts/)
 default_stages: [pre-commit]
