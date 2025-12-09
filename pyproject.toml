@@ -81,13 +81,13 @@ warn_unused_configs = true
 no_implicit_optional = true
 namespace_packages = true
 explicit_package_bases = true
-
 mypy_path = "src"
 
 [[tool.mypy.overrides]]
 module = [
   "torchfx.*",
-  "cli.*"
+  "cli.*",
+  "torchaudio.*",
 ]
 ignore_missing_imports = true
 
@@ -127,6 +127,10 @@ minversion = "7.0"
 addopts = "--strict-markers --tb=short"
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.docformatter]
+recursive = true
+blank = true
 
 [build-system]
 requires = ["hatchling"]
