@@ -28,6 +28,7 @@ def compute_order(o: int, scale: FilterOrderScale) -> int:
     >>> o = 24 # db
     >>> compute_order(o, "db")
     4
+
     """
     match scale:
         case "db":

@@ -13,7 +13,11 @@ from torchfx.typing import WindowType
 
 
 class FIR(AbstractFilter):
-    """Efficient FIR filter using conv1d. Supports [T], [C, T], [B, C, T]."""
+    """Efficient FIR filter using conv1d.
+
+    Supports [T], [C, T], [B, C, T].
+
+    """
 
     def __init__(self, b: ArrayLike) -> None:
         super().__init__()
@@ -53,10 +57,10 @@ class FIR(AbstractFilter):
         BATCHES, CHANNELS, TIME = x.shape
 
         # Expand kernel to match number of channels
-        kernel_exp = kernel.expand(CHANNELS, 1, -1)  # [C, 1, K] # type: ignore
+        kernel_exp = kernel.expand(CHANNELS, 1, -1)  # type: ignore # [C, 1, K]
 
         # Pad input to maintain original length, pad right side
-        pad = kernel.shape[-1] - 1  # type: ignore
+        pad = int(kernel.shape[-1] - 1)  # type: ignore
         x_padded = nn.functional.pad(x, (pad, 0))  # pad right only # type: ignore
 
         # Apply convolution with groups = C (same kernel per channel, repeated for batch)
@@ -75,8 +79,7 @@ class FIR(AbstractFilter):
 
 
 class DesignableFIR(FIR):
-    """
-    FIR filter designed using scipy.signal.firwin.
+    """FIR filter designed using scipy.signal.firwin.
 
     Attributes
     ----------
@@ -125,7 +128,7 @@ class DesignableFIR(FIR):
             self.cutoff,
             fs=self.fs,
             pass_zero=self.pass_zero,
-            window=self.window,
+            window=self.window,  # type: ignore
             scale=True,
         )
         assert self.b is not None, "Filter coefficients (b) must be computed."

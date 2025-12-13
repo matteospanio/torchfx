@@ -1,16 +1,19 @@
 import abc
+from collections.abc import Sequence
 
-from typing import Sequence
+import torch
+from torch import Tensor
 from typing_extensions import override
 
 from torchfx.effect import FX
-import torch
 
 
 class AbstractFilter(FX, abc.ABC):
     """Base class for filters.
+
     This class provides the basic structure for implementing filters. It inherits from
     `FX`. It provides the method `compute_coefficients` to compute the filter coefficients.
+
     """
 
     @property
@@ -20,7 +23,7 @@ class AbstractFilter(FX, abc.ABC):
         return True
 
     @abc.abstractmethod
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:  # type: ignore
         super().__init__(*args, **kwargs)
 
     @abc.abstractmethod
@@ -39,7 +42,7 @@ class AbstractFilter(FX, abc.ABC):
 
 class ParallelFilterCombination(AbstractFilter):
     """Combine multiple filters in parallel.
-    
+
     The output is the sum of the outputs of each filter.
 
     Parameters
@@ -58,6 +61,7 @@ class ParallelFilterCombination(AbstractFilter):
     >>> combined_filter = lowpass + highpass
     >>> wave = fx.Wave.from_file("path/to/file.wav")
     >>> result = wave | combined_filter
+
     """
 
     filters: Sequence[AbstractFilter]
@@ -67,7 +71,7 @@ class ParallelFilterCombination(AbstractFilter):
     def _has_computed_coeff(self) -> bool:
         return all(f._has_computed_coeff for f in self.filters)
 
-    def __init__(self, *filters, fs: int | None = None) -> None:
+    def __init__(self, *filters: AbstractFilter, fs: int | None = None) -> None:
         super().__init__()
         self.fs = fs
         self.filters = filters
@@ -86,7 +90,7 @@ class ParallelFilterCombination(AbstractFilter):
         if value is not None:
             for f in self.filters:
                 if hasattr(f, "fs") and f.fs is None:
-                    f.fs = value  # type: ignore
+                    f.fs = value
 
     @override
     def compute_coefficients(self) -> None:
@@ -95,7 +99,7 @@ class ParallelFilterCombination(AbstractFilter):
 
     @override
     @torch.no_grad()
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         outputs = [f.forward(x) for f in self.filters]
         results = torch.zeros_like(x)
         for t in outputs:
