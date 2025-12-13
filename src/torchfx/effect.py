@@ -14,12 +14,14 @@ from typing_extensions import override
 
 class FX(nn.Module, abc.ABC):
     """Abstract base class for all effects.
+
     This class defines the interface for all effects in the library. It inherits from
     `torch.nn.Module` and provides the basic structure for implementing effects.
+
     """
 
     @abc.abstractmethod
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:  # type: ignore
         super().__init__(*args, **kwargs)
 
     @override
@@ -55,6 +57,7 @@ class Gain(FX):
     -----
     This class is based on `torchaudio.transforms.Vol`, licensed under the BSD 2-Clause License.
     See licenses.torchaudio.BSD-2-Clause.txt for details.
+
     """
 
     def __init__(self, gain: float, gain_type: str = "amplitude", clamp: bool = False) -> None:
@@ -101,10 +104,13 @@ class Normalize(FX):
         >>> waveform, sample_rate = torchaudio.load("test.wav", normalize=True)
         >>> transform = transforms.Normalize(peak=0.5)
         >>> normalized_waveform = transform(waveform)
+
     """
 
     def __init__(
-        self, peak: float = 1.0, strategy: NormalizationStrategy | Callable | None = None
+        self,
+        peak: float = 1.0,
+        strategy: NormalizationStrategy | Callable[[Tensor, float], Tensor] | None = None,
     ) -> None:
         super().__init__()
         assert peak > 0, "Peak value must be positive."
@@ -144,7 +150,21 @@ class CustomNormalizationStrategy(NormalizationStrategy):
 
 
 class PeakNormalizationStrategy(NormalizationStrategy):
-    """Normalization to the absolute peak value."""
+    r"""Normalization to the absolute peak value.
+
+    .. math::
+        y[n] =
+        \begin{cases}
+            \frac{x[n]}{max(|x[n]|)} \cdot peak, & \text{if } max(|x[n]|) > 0 \\
+            x[n], & \text{otherwise}
+        \end{cases}
+
+    where:
+        - :math:`x[n]` is the input signal,
+        - :math:`y[n]` is the output signal,
+        - :math:`peak` is the target peak value.
+
+    """
 
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
         max_val = torch.max(torch.abs(waveform))
@@ -152,7 +172,22 @@ class PeakNormalizationStrategy(NormalizationStrategy):
 
 
 class RMSNormalizationStrategy(NormalizationStrategy):
-    """Normalization to Root Mean Square (RMS) energy."""
+    r"""Normalization to Root Mean Square (RMS) energy.
+
+    .. math::
+        y[n] =
+        \begin{cases}
+            \frac{x[n]}{RMS(x[n])} \cdot peak, & \text{if } RMS(x[n]) > 0 \\
+            x[n], & \text{otherwise}
+        \end{cases}
+
+    where:
+        - :math:`x[n]` is the input signal,
+        - :math:`y[n]` is the output signal,
+        - :math:`RMS(x[n])` is the root mean square of the signal,
+        - :math:`peak` is the target peak value.
+
+    """
 
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
         rms = torch.sqrt(torch.mean(waveform**2))
@@ -160,7 +195,28 @@ class RMSNormalizationStrategy(NormalizationStrategy):
 
 
 class PercentileNormalizationStrategy(NormalizationStrategy):
-    """Normalization using a percentile of absolute values."""
+    r"""Normalization using a percentile of absolute values.
+
+    .. math::
+        y[n] =
+        \begin{cases}
+            \frac{x[n]}{P_p(|x[n]|)} \cdot peak, & \text{if } P_p(|x[n]|) > 0 \\
+            x[n], & \text{otherwise}
+        \end{cases}
+
+    where:
+        - :math:`x[n]` is the input signal,
+        - :math:`y[n]` is the output signal,
+        - :math:`P_p(|x[n]|)` is the p-th percentile of the absolute values of the signal,
+        - :math:`peak` is the target peak value,
+        - :math:`p` is the specified percentile (:math:`0 < p \leqslant 100`).
+
+    Attributes
+    ----------
+    percentile : float
+        The percentile :math:`p` to use for normalization (:math:`0 < p \leqslant 100`). Default is 99.0.
+
+    """
 
     def __init__(self, percentile: float = 99.0) -> None:
         assert 0 < percentile <= 100, "Percentile must be between 0 and 100."
@@ -173,7 +229,21 @@ class PercentileNormalizationStrategy(NormalizationStrategy):
 
 
 class PerChannelNormalizationStrategy(NormalizationStrategy):
-    """Normalize each channel independently to its own peak."""
+    r"""Normalize each channel independently to its own peak.
+
+    .. math::
+        y_c[n] =
+        \begin{cases}
+            \frac{x_c[n]}{max(|x_c[n]|)} \cdot peak, & \text{if } max(|x_c[n]|) > 0 \\
+            x_c[n], & \text{otherwise}
+        \end{cases}
+
+    where:
+        - :math:`x_c[n]` is the input signal for channel c,
+        - :math:`y_c[n]` is the output signal for channel c,
+        - :math:`peak` is the target peak value.
+
+    """
 
     def __call__(self, waveform: Tensor, peak: float) -> Tensor:
         assert waveform.ndim >= 2, "Waveform must have at least 2 dimensions (channels, time)."
@@ -221,16 +291,15 @@ class Reverb(FX):
     >>> wave = fx.Wave.from_file("path_to_audio.wav")
     >>> reverb = fx.effect.Reverb(delay=4410, decay=0.5, mix=0.3)
     >>> reverberated = wave | reverb
+
     """
 
     def __init__(self, delay: int = 4410, decay: float = 0.5, mix: float = 0.5) -> None:
         super().__init__()
-        if delay <= 0:
-            raise ValueError("Delay must be positive.")
-        if not (0 < decay < 1):
-            raise ValueError("Decay must be between 0 and 1.")
-        if not (0 <= mix <= 1):
-            raise ValueError("Mix must be between 0 and 1.")
+        assert delay > 0, "Delay must be positive."
+        assert 0 < decay < 1, "Decay must be between 0 and 1."
+        assert 0 <= mix <= 1, "Mix must be between 0 and 1."
+
         self.delay = delay
         self.decay = decay
         self.mix = mix
@@ -258,6 +327,7 @@ class DelayStrategy(abc.ABC):
 
     Delay strategies define how the delay effect is applied to the audio signal,
     allowing for different stereo behaviors and custom processing logic.
+
     """
 
     @abc.abstractmethod
@@ -281,6 +351,7 @@ class DelayStrategy(abc.ABC):
         -------
         Tensor
             Delayed audio with extended length to accommodate all taps.
+
         """
         pass
 
@@ -294,6 +365,7 @@ class MonoDelayStrategy(DelayStrategy):
         """Apply mono delay with multiple taps and feedback.
 
         Output length is extended to accommodate all delayed taps.
+
         """
         # Calculate required output length
         original_length = waveform.size(-1)
@@ -307,10 +379,9 @@ class MonoDelayStrategy(DelayStrategy):
             for tap in range(1, taps + 1):
                 tap_delay = delay_samples * tap
                 # First tap always has amplitude 1.0, subsequent taps use feedback
-                if tap == 1:
-                    feedback_amt = 1.0
-                else:
-                    feedback_amt = feedback ** (tap - 1)
+                # Copy original signal starting
+                feedback_amt = 1.0 if tap == 1 else feedback ** (tap - 1)
+
                 # Copy original signal starting at tap_delay
                 copy_length = min(original_length, output_length - tap_delay)
                 if copy_length > 0:
@@ -328,10 +399,7 @@ class MonoDelayStrategy(DelayStrategy):
                 for tap in range(1, taps + 1):
                     tap_delay = delay_samples * tap
                     # First tap always has amplitude 1.0, subsequent taps use feedback
-                    if tap == 1:
-                        feedback_amt = 1.0
-                    else:
-                        feedback_amt = feedback ** (tap - 1)
+                    feedback_amt = 1.0 if tap == 1 else feedback ** (tap - 1)
                     # Copy original signal starting at tap_delay
                     copy_length = min(original_length, output_length - tap_delay)
                     if copy_length > 0:
@@ -360,6 +428,7 @@ class PingPongDelayStrategy(DelayStrategy):
         """Apply ping-pong delay (alternates between channels).
 
         Output length is extended to accommodate all delayed taps.
+
         """
         if waveform.ndim < 2 or waveform.size(-2) != 2:
             # Not stereo, fall back to mono
@@ -377,10 +446,7 @@ class PingPongDelayStrategy(DelayStrategy):
             for tap in range(1, taps + 1):
                 tap_delay = delay_samples * tap
                 # First tap always has amplitude 1.0, subsequent taps use feedback
-                if tap == 1:
-                    feedback_amt = 1.0
-                else:
-                    feedback_amt = feedback ** (tap - 1)
+                feedback_amt = 1.0 if tap == 1 else feedback ** (tap - 1)
 
                 # Copy length for this tap
                 copy_length = min(original_length, output_length - tap_delay)
@@ -406,10 +472,7 @@ class PingPongDelayStrategy(DelayStrategy):
             for tap in range(1, taps + 1):
                 tap_delay = delay_samples * tap
                 # First tap always has amplitude 1.0, subsequent taps use feedback
-                if tap == 1:
-                    feedback_amt = 1.0
-                else:
-                    feedback_amt = feedback ** (tap - 1)
+                feedback_amt = 1.0 if tap == 1 else feedback ** (tap - 1)
 
                 # Copy length for this tap
                 copy_length = min(original_length, output_length - tap_delay)
@@ -451,21 +514,28 @@ class Delay(FX):
 
     Parameters
     ----------
-    delay_samples : int, optional
+    delay_samples : int
         Delay time in samples. If provided, this is used directly.
         Default is None (requires bpm and delay_time).
-    bpm : float, optional
+    bpm : float
         Beats per minute for BPM-synced delay. Required if delay_samples is None.
-    delay_time : str, optional
-        Musical time division for BPM-synced delay. Options:
-        - '1/4': Quarter note
-        - '1/8': Eighth note
-        - '1/16': Sixteenth note
-        - '1/8d': Dotted eighth note
-        - '1/4d': Dotted quarter note
-        - '1/8t': Eighth note triplet
-        Default is '1/8'.
-    fs : int | None, optional
+    delay_time : str
+        Musical time division for BPM-synced delay. Should be a string in the format :code:`n/d[modifier]`, where:
+
+        * :code:`n/d` represents the note division (e.g., :code:`1/4` for quarter note).
+        * :code:`modifier` is optional and can be :code:`d` for dotted notes or :code:`t` for triplets.
+
+        Valid examples include:
+
+        * :code:`1/4`: Quarter note
+        * :code:`1/8`: Eighth note
+        * :code:`1/16`: Sixteenth note
+        * :code:`1/8d`: Dotted eighth note
+        * :code:`1/4d`: Dotted quarter note
+        * :code:`1/8t`: Eighth note triplet
+
+        Default is :code:`1/8`.
+    fs : int | None
         Sample frequency (sample rate) in Hz. Required if using BPM-synced delay
         without Wave pipeline. When None (default), fs will be automatically inferred
         from the Wave object when used with the pipeline operator (wave | delay).
@@ -510,6 +580,11 @@ class Delay(FX):
     ...     feedback=0.5, mix=0.4, strategy=fx.effect.PingPongDelayStrategy()
     ... )
     >>> delayed = delay(waveform)
+
+    Author
+    ------
+    Uzef <@itsuzef>
+
     """
 
     def __init__(
@@ -531,21 +606,17 @@ class Delay(FX):
 
         # If delay_samples is provided directly, use it
         if delay_samples is not None:
-            if delay_samples <= 0:
-                raise ValueError("Delay must be positive.")
+            assert delay_samples > 0, "Delay samples must be positive."
             self.delay_samples = delay_samples
             self._needs_calculation = False
         else:
             # BPM-synced delay requires bpm parameter
-            if bpm is None:
-                raise ValueError("Either delay_samples or bpm must be provided.")
-            if bpm <= 0:
-                raise ValueError("BPM must be positive.")
+            assert bpm is not None, "BPM must be provided if delay_samples is not set."
+            assert bpm > 0, "BPM must be positive."
 
             # If fs is available now, calculate immediately
             if fs is not None:
-                if fs <= 0:
-                    raise ValueError("Sample rate (fs) must be positive.")
+                assert fs > 0, "Sample rate (fs) must be positive."
                 self.delay_samples = self._calculate_delay_samples(bpm, delay_time, fs)
                 self._needs_calculation = False
             else:
@@ -554,12 +625,9 @@ class Delay(FX):
                 self._needs_calculation = True
 
         # Validate other parameters
-        if not (0 <= feedback <= 0.95):
-            raise ValueError("Feedback must be between 0 and 0.95.")
-        if not (0 <= mix <= 1):
-            raise ValueError("Mix must be between 0 and 1.")
-        if taps < 1:
-            raise ValueError("Taps must be at least 1.")
+        assert 0 <= feedback <= 0.95, "Feedback must be between 0 and 0.95."
+        assert 0 <= mix <= 1, "Mix must be between 0 and 1."
+        assert taps >= 1, "Taps must be at least 1."
 
         self.feedback = feedback
         self.mix = mix
@@ -583,6 +651,7 @@ class Delay(FX):
         -------
         int
             Delay time in samples.
+
         """
         from torchfx.typing import MusicalTime
 
@@ -624,13 +693,13 @@ class Delay(FX):
         """
         # Lazy calculation of delay_samples if needed
         if self._needs_calculation:
-            if self.fs is None:
-                raise ValueError(
-                    "Sample rate (fs) is required for BPM-synced delay. "
-                    "Either provide fs parameter or use with Wave pipeline (wave | delay)."
-                )
-            if self.fs <= 0:
-                raise ValueError("Sample rate (fs) must be positive.")
+            assert self.fs is not None, (
+                "Sample rate (fs) is required for BPM-synced delay."
+                "Either provide fs parameter or use with Wave pipeline (wave | delay)."
+            )
+            assert self.fs > 0, "Sample rate (fs) must be positive."
+            assert self.bpm is not None, "BPM must be set for BPM-synced delay."
+
             self.delay_samples = self._calculate_delay_samples(self.bpm, self.delay_time, self.fs)
             self._needs_calculation = False
 
