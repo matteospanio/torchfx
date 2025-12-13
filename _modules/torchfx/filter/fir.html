@@ -38,7 +38,7 @@
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
-        <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_immaterial_theme.6ec1c446c2c357833.min.css?v=e2e8fea8" />
+        <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_immaterial_theme.acf80fe7f4d9ef9e2.min.css?v=9e56d0d2" />
     <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -417,7 +417,11 @@
 <div class="viewcode-block" id="FIR">
 <a class="viewcode-back" href="../../../api.html#torchfx.filter.FIR">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FIR</span><span class="p">(</span><span class="n">AbstractFilter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Efficient FIR filter using conv1d. Supports [T], [C, T], [B, C, T].&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Efficient FIR filter using conv1d.</span>
+
+<span class="sd">    Supports [T], [C, T], [B, C, T].</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -462,10 +466,10 @@
         <span class="n">BATCHES</span><span class="p">,</span> <span class="n">CHANNELS</span><span class="p">,</span> <span class="n">TIME</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
 
         <span class="c1"># Expand kernel to match number of channels</span>
-        <span class="n">kernel_exp</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">CHANNELS</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [C, 1, K] # type: ignore</span>
+        <span class="n">kernel_exp</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">CHANNELS</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore # [C, 1, K]</span>
 
         <span class="c1"># Pad input to maintain original length, pad right side</span>
-        <span class="n">pad</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># type: ignore</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
         <span class="n">x_padded</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>  <span class="c1"># pad right only # type: ignore</span>
 
         <span class="c1"># Apply convolution with groups = C (same kernel per channel, repeated for batch)</span>
@@ -488,8 +492,7 @@
 <div class="viewcode-block" id="DesignableFIR">
 <a class="viewcode-back" href="../../../api.html#torchfx.filter.DesignableFIR">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DesignableFIR</span><span class="p">(</span><span class="n">FIR</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    FIR filter designed using scipy.signal.firwin.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;FIR filter designed using scipy.signal.firwin.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -540,7 +543,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span>
             <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
             <span class="n">pass_zero</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pass_zero</span><span class="p">,</span>
-            <span class="n">window</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span>
+            <span class="n">window</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
             <span class="n">scale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Filter coefficients (b) must be computed.&quot;</span>

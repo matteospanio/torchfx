@@ -38,7 +38,7 @@
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
-        <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_immaterial_theme.6ec1c446c2c357833.min.css?v=e2e8fea8" />
+        <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_immaterial_theme.acf80fe7f4d9ef9e2.min.css?v=9e56d0d2" />
     <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -408,12 +408,12 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span><span class="p">,</span> <span class="n">cheby1</span><span class="p">,</span> <span class="n">cheby2</span><span class="p">,</span> <span class="n">iirnotch</span><span class="p">,</span> <span class="n">iirpeak</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dtype</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchaudio</span><span class="w"> </span><span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>  <span class="c1"># noqa: N812</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.__base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractFilter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">FilterOrderScale</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Device</span><span class="p">,</span> <span class="n">FilterOrderScale</span>
 
 <span class="n">NONE_FS_ERR</span> <span class="o">=</span> <span class="s2">&quot;Sample rate of the filter could not be None.&quot;</span>
 
@@ -421,10 +421,9 @@
 <div class="viewcode-block" id="IIR">
 <a class="viewcode-back" href="../../../api.html#torchfx.filter.IIR">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">IIR</span><span class="p">(</span><span class="n">AbstractFilter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;IIR filter.</span>
-<span class="sd">    This class implements the IIR filter interface. It is an abstract class that</span>
-<span class="sd">    provides the basic structure for implementing IIR filters. It inherits from</span>
-<span class="sd">    `AbstractFilter` and provides the basic structure for implementing IIR filters.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;IIR filter. This class implements the IIR filter interface. It is an abstract</span>
+<span class="sd">    class that provides the basic structure for implementing IIR filters. It inherits</span>
+<span class="sd">    from `AbstractFilter` and provides the basic structure for implementing IIR filters.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -436,10 +435,13 @@
 <span class="sd">        The sampling frequency of the filter.</span>
 <span class="sd">    cutoff : float</span>
 <span class="sd">        The cutoff frequency of the filter.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span>
 
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -448,7 +450,7 @@
 
 <div class="viewcode-block" id="IIR.move_coeff">
 <a class="viewcode-back" href="../../../api.html#torchfx.filter.IIR.move_coeff">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">move_coeff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">move_coeff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move the filter coefficients to the specified device and dtype.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span></div>
@@ -470,7 +472,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
 </div>
 
 
@@ -487,8 +489,8 @@
         <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">order_scale</span><span class="p">:</span> <span class="n">FilterOrderScale</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">btype</span> <span class="o">=</span> <span class="n">btype</span>
@@ -522,8 +524,8 @@
         <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">ripple</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">btype</span> <span class="o">=</span> <span class="n">btype</span>
@@ -539,11 +541,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
-        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">cheby1</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">cheby1</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ripple</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
-            <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>
+            <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
@@ -576,11 +578,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
-        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">cheby2</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">cheby2</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ripple</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
-            <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>
+            <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
@@ -694,8 +696,8 @@
         <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
@@ -711,7 +713,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="HiShelving">
@@ -781,8 +783,8 @@
         <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">gain_scale</span><span class="p">:</span> <span class="n">FilterOrderScale</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
@@ -796,8 +798,8 @@
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">iirpeak</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>  <span class="c1"># type: ignore</span>
 
 
 <div class="viewcode-block" id="Notch">
@@ -822,8 +824,8 @@
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">iirnotch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>  <span class="c1"># type: ignore</span></div>
 </div>
 
 
@@ -850,8 +852,8 @@
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">iirpeak</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>  <span class="c1"># type: ignore</span></div>
 </div>
 
 
@@ -861,10 +863,11 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">LinkwitzRiley</span><span class="p">(</span><span class="n">IIR</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Linkwitz-Riley filter.</span>
 
-<span class="sd">    This filter is created by cascading two identical Butterworth filters.</span>
-<span class="sd">    The resulting filter has an order that is twice the order of the</span>
-<span class="sd">    base Butterworth filter and a -6 dB gain at the cutoff frequency.</span>
-<span class="sd">    The order of a Linkwitz-Riley filter must be an even integer.</span>
+<span class="sd">    This filter is created by cascading two identical Butterworth filters. The resulting</span>
+<span class="sd">    filter has an order that is twice the order of the base Butterworth filter and a -6</span>
+<span class="sd">    dB gain at the cutoff frequency. The order of a Linkwitz-Riley filter must be an</span>
+<span class="sd">    even integer.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -906,9 +909,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the filter coefficients.</span>
 
-<span class="sd">        The method calculates the coefficients for a Butterworth filter of half</span>
-<span class="sd">        the specified order and then cascades it with itself by convolving</span>
-<span class="sd">        the numerator and denominator coefficients.</span>
+<span class="sd">        The method calculates the coefficients for a Butterworth filter of half the</span>
+<span class="sd">        specified order and then cascades it with itself by convolving the numerator and</span>
+<span class="sd">        denominator coefficients.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
@@ -919,8 +923,8 @@
         <span class="n">b_butter</span><span class="p">,</span> <span class="n">a_butter</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="n">butter_order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span> <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
 
         <span class="c1"># Cascade the filters by convolving the coefficients with themselves</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">b_butter</span><span class="p">,</span> <span class="n">b_butter</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">a_butter</span><span class="p">,</span> <span class="n">a_butter</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">b_butter</span><span class="p">,</span> <span class="n">b_butter</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">a_butter</span><span class="p">,</span> <span class="n">a_butter</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
 </div>
 
 

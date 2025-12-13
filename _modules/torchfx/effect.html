@@ -38,7 +38,7 @@
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
-        <link rel="stylesheet" type="text/css" href="../../_static/sphinx_immaterial_theme.6ec1c446c2c357833.min.css?v=e2e8fea8" />
+        <link rel="stylesheet" type="text/css" href="../../_static/sphinx_immaterial_theme.acf80fe7f4d9ef9e2.min.css?v=9e56d0d2" />
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -418,12 +418,14 @@
 <a class="viewcode-back" href="../../api.html#torchfx.FX">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FX</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all effects.</span>
+
 <span class="sd">    This class defines the interface for all effects in the library. It inherits from</span>
 <span class="sd">    `torch.nn.Module` and provides the basic structure for implementing effects.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FX.forward">
@@ -465,6 +467,7 @@
 <span class="sd">    -----</span>
 <span class="sd">    This class is based on `torchaudio.transforms.Vol`, licensed under the BSD 2-Clause License.</span>
 <span class="sd">    See licenses.torchaudio.BSD-2-Clause.txt for details.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gain_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="n">clamp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -517,10 +520,13 @@
 <span class="sd">        &gt;&gt;&gt; waveform, sample_rate = torchaudio.load(&quot;test.wav&quot;, normalize=True)</span>
 <span class="sd">        &gt;&gt;&gt; transform = transforms.Normalize(peak=0.5)</span>
 <span class="sd">        &gt;&gt;&gt; normalized_waveform = transform(waveform)</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="n">NormalizationStrategy</span> <span class="o">|</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">strategy</span><span class="p">:</span> <span class="n">NormalizationStrategy</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="k">assert</span> <span class="n">peak</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Peak value must be positive.&quot;</span>
@@ -572,7 +578,21 @@
 <div class="viewcode-block" id="PeakNormalizationStrategy">
 <a class="viewcode-back" href="../../api.html#torchfx.PeakNormalizationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PeakNormalizationStrategy</span><span class="p">(</span><span class="n">NormalizationStrategy</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalization to the absolute peak value.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normalization to the absolute peak value.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[n] =</span>
+<span class="sd">        \begin{cases}</span>
+<span class="sd">            \frac{x[n]}{max(|x[n]|)} \cdot peak, &amp; \text{if } max(|x[n]|) &gt; 0 \\</span>
+<span class="sd">            x[n], &amp; \text{otherwise}</span>
+<span class="sd">        \end{cases}</span>
+
+<span class="sd">    where:</span>
+<span class="sd">        - :math:`x[n]` is the input signal,</span>
+<span class="sd">        - :math:`y[n]` is the output signal,</span>
+<span class="sd">        - :math:`peak` is the target peak value.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">max_val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">waveform</span><span class="p">))</span>
@@ -583,7 +603,22 @@
 <div class="viewcode-block" id="RMSNormalizationStrategy">
 <a class="viewcode-back" href="../../api.html#torchfx.RMSNormalizationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RMSNormalizationStrategy</span><span class="p">(</span><span class="n">NormalizationStrategy</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalization to Root Mean Square (RMS) energy.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normalization to Root Mean Square (RMS) energy.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[n] =</span>
+<span class="sd">        \begin{cases}</span>
+<span class="sd">            \frac{x[n]}{RMS(x[n])} \cdot peak, &amp; \text{if } RMS(x[n]) &gt; 0 \\</span>
+<span class="sd">            x[n], &amp; \text{otherwise}</span>
+<span class="sd">        \end{cases}</span>
+
+<span class="sd">    where:</span>
+<span class="sd">        - :math:`x[n]` is the input signal,</span>
+<span class="sd">        - :math:`y[n]` is the output signal,</span>
+<span class="sd">        - :math:`RMS(x[n])` is the root mean square of the signal,</span>
+<span class="sd">        - :math:`peak` is the target peak value.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">rms</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">waveform</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
@@ -594,7 +629,28 @@
 <div class="viewcode-block" id="PercentileNormalizationStrategy">
 <a class="viewcode-back" href="../../api.html#torchfx.PercentileNormalizationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PercentileNormalizationStrategy</span><span class="p">(</span><span class="n">NormalizationStrategy</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalization using a percentile of absolute values.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normalization using a percentile of absolute values.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[n] =</span>
+<span class="sd">        \begin{cases}</span>
+<span class="sd">            \frac{x[n]}{P_p(|x[n]|)} \cdot peak, &amp; \text{if } P_p(|x[n]|) &gt; 0 \\</span>
+<span class="sd">            x[n], &amp; \text{otherwise}</span>
+<span class="sd">        \end{cases}</span>
+
+<span class="sd">    where:</span>
+<span class="sd">        - :math:`x[n]` is the input signal,</span>
+<span class="sd">        - :math:`y[n]` is the output signal,</span>
+<span class="sd">        - :math:`P_p(|x[n]|)` is the p-th percentile of the absolute values of the signal,</span>
+<span class="sd">        - :math:`peak` is the target peak value,</span>
+<span class="sd">        - :math:`p` is the specified percentile (:math:`0 &lt; p \leqslant 100`).</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    percentile : float</span>
+<span class="sd">        The percentile :math:`p` to use for normalization (:math:`0 &lt; p \leqslant 100`). Default is 99.0.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">99.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">percentile</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;Percentile must be between 0 and 100.&quot;</span>
@@ -610,7 +666,21 @@
 <div class="viewcode-block" id="PerChannelNormalizationStrategy">
 <a class="viewcode-back" href="../../api.html#torchfx.PerChannelNormalizationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PerChannelNormalizationStrategy</span><span class="p">(</span><span class="n">NormalizationStrategy</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize each channel independently to its own peak.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normalize each channel independently to its own peak.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y_c[n] =</span>
+<span class="sd">        \begin{cases}</span>
+<span class="sd">            \frac{x_c[n]}{max(|x_c[n]|)} \cdot peak, &amp; \text{if } max(|x_c[n]|) &gt; 0 \\</span>
+<span class="sd">            x_c[n], &amp; \text{otherwise}</span>
+<span class="sd">        \end{cases}</span>
+
+<span class="sd">    where:</span>
+<span class="sd">        - :math:`x_c[n]` is the input signal for channel c,</span>
+<span class="sd">        - :math:`y_c[n]` is the output signal for channel c,</span>
+<span class="sd">        - :math:`peak` is the target peak value.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">assert</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Waveform must have at least 2 dimensions (channels, time).&quot;</span>
@@ -661,16 +731,15 @@
 <span class="sd">    &gt;&gt;&gt; wave = fx.Wave.from_file(&quot;path_to_audio.wav&quot;)</span>
 <span class="sd">    &gt;&gt;&gt; reverb = fx.effect.Reverb(delay=4410, decay=0.5, mix=0.3)</span>
 <span class="sd">    &gt;&gt;&gt; reverberated = wave | reverb</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">delay</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Delay must be positive.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">decay</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Decay must be between 0 and 1.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">mix</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Mix must be between 0 and 1.&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">delay</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Delay must be positive.&quot;</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">decay</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Decay must be between 0 and 1.&quot;</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">mix</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Mix must be between 0 and 1.&quot;</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">delay</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">decay</span> <span class="o">=</span> <span class="n">decay</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="n">mix</span>
@@ -692,6 +761,422 @@
         <span class="n">reverb_signal</span> <span class="o">=</span> <span class="n">waveform</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay</span> <span class="o">*</span> <span class="n">delayed</span>
         <span class="c1"># Wet/dry mix</span>
         <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span> <span class="o">*</span> <span class="n">waveform</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">*</span> <span class="n">reverb_signal</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DelayStrategy">
+<a class="viewcode-back" href="../../api.html#torchfx.DelayStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DelayStrategy</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for delay processing strategies.</span>
+
+<span class="sd">    Delay strategies define how the delay effect is applied to the audio signal,</span>
+<span class="sd">    allowing for different stereo behaviors and custom processing logic.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DelayStrategy.apply_delay">
+<a class="viewcode-back" href="../../api.html#torchfx.DelayStrategy.apply_delay">[docs]</a>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_delay</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">delay_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">taps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">feedback</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply delay processing to the waveform.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        waveform : Tensor</span>
+<span class="sd">            Input audio tensor of shape (..., time) or (channels, time).</span>
+<span class="sd">        delay_samples : int</span>
+<span class="sd">            Delay time in samples.</span>
+<span class="sd">        taps : int</span>
+<span class="sd">            Number of delay taps (echoes).</span>
+<span class="sd">        feedback : float</span>
+<span class="sd">            Feedback amount (0-0.95).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tensor</span>
+<span class="sd">            Delayed audio with extended length to accommodate all taps.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MonoDelayStrategy">
+<a class="viewcode-back" href="../../api.html#torchfx.MonoDelayStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MonoDelayStrategy</span><span class="p">(</span><span class="n">DelayStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply same delay to all channels with multiple taps and feedback.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MonoDelayStrategy.apply_delay">
+<a class="viewcode-back" href="../../api.html#torchfx.MonoDelayStrategy.apply_delay">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_delay</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">delay_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">taps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">feedback</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply mono delay with multiple taps and feedback.</span>
+
+<span class="sd">        Output length is extended to accommodate all delayed taps.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate required output length</span>
+        <span class="n">original_length</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">max_delay_samples</span> <span class="o">=</span> <span class="n">delay_samples</span> <span class="o">*</span> <span class="n">taps</span>
+        <span class="n">output_length</span> <span class="o">=</span> <span class="n">original_length</span> <span class="o">+</span> <span class="n">max_delay_samples</span>
+
+        <span class="c1"># waveform shape: (..., time) or (channels, time)</span>
+        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Single channel: (time,)</span>
+            <span class="n">delayed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tap</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">taps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">tap_delay</span> <span class="o">=</span> <span class="n">delay_samples</span> <span class="o">*</span> <span class="n">tap</span>
+                <span class="c1"># First tap always has amplitude 1.0, subsequent taps use feedback</span>
+                <span class="c1"># Copy original signal starting</span>
+                <span class="n">feedback_amt</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">tap</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">feedback</span> <span class="o">**</span> <span class="p">(</span><span class="n">tap</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># Copy original signal starting at tap_delay</span>
+                <span class="n">copy_length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">original_length</span><span class="p">,</span> <span class="n">output_length</span> <span class="o">-</span> <span class="n">tap_delay</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">copy_length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">delayed</span><span class="p">[</span><span class="n">tap_delay</span> <span class="p">:</span> <span class="n">tap_delay</span> <span class="o">+</span> <span class="n">copy_length</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                        <span class="n">waveform</span><span class="p">[:</span><span class="n">copy_length</span><span class="p">]</span> <span class="o">*</span> <span class="n">feedback_amt</span>
+                    <span class="p">)</span>
+            <span class="k">return</span> <span class="n">delayed</span>
+
+        <span class="k">elif</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># Multi-channel: (channels, time)</span>
+            <span class="n">delayed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">output_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">tap</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">taps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">tap_delay</span> <span class="o">=</span> <span class="n">delay_samples</span> <span class="o">*</span> <span class="n">tap</span>
+                    <span class="c1"># First tap always has amplitude 1.0, subsequent taps use feedback</span>
+                    <span class="n">feedback_amt</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">tap</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">feedback</span> <span class="o">**</span> <span class="p">(</span><span class="n">tap</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="c1"># Copy original signal starting at tap_delay</span>
+                    <span class="n">copy_length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">original_length</span><span class="p">,</span> <span class="n">output_length</span> <span class="o">-</span> <span class="n">tap_delay</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">copy_length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">delayed</span><span class="p">[</span><span class="n">ch</span><span class="p">,</span> <span class="n">tap_delay</span> <span class="p">:</span> <span class="n">tap_delay</span> <span class="o">+</span> <span class="n">copy_length</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                            <span class="n">waveform</span><span class="p">[</span><span class="n">ch</span><span class="p">,</span> <span class="p">:</span><span class="n">copy_length</span><span class="p">]</span> <span class="o">*</span> <span class="n">feedback_amt</span>
+                        <span class="p">)</span>
+            <span class="k">return</span> <span class="n">delayed</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Higher dimensions: (..., time)</span>
+            <span class="c1"># Flatten to (channels, time) for processing</span>
+            <span class="n">original_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">waveform</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">flattened</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">processed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_delay</span><span class="p">(</span><span class="n">flattened</span><span class="p">,</span> <span class="n">delay_samples</span><span class="p">,</span> <span class="n">taps</span><span class="p">,</span> <span class="n">feedback</span><span class="p">)</span>
+            <span class="c1"># Reshape with extended time dimension</span>
+            <span class="n">new_shape</span> <span class="o">=</span> <span class="n">original_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">processed</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="n">processed</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PingPongDelayStrategy">
+<a class="viewcode-back" href="../../api.html#torchfx.PingPongDelayStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PingPongDelayStrategy</span><span class="p">(</span><span class="n">DelayStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply ping-pong delay alternating between left and right channels.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PingPongDelayStrategy.apply_delay">
+<a class="viewcode-back" href="../../api.html#torchfx.PingPongDelayStrategy.apply_delay">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_delay</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">delay_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">taps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">feedback</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply ping-pong delay (alternates between channels).</span>
+
+<span class="sd">        Output length is extended to accommodate all delayed taps.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># Not stereo, fall back to mono</span>
+            <span class="k">return</span> <span class="n">MonoDelayStrategy</span><span class="p">()</span><span class="o">.</span><span class="n">apply_delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">delay_samples</span><span class="p">,</span> <span class="n">taps</span><span class="p">,</span> <span class="n">feedback</span><span class="p">)</span>
+
+        <span class="c1"># Calculate required output length</span>
+        <span class="n">original_length</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">max_delay_samples</span> <span class="o">=</span> <span class="n">delay_samples</span> <span class="o">*</span> <span class="n">taps</span>
+        <span class="n">output_length</span> <span class="o">=</span> <span class="n">original_length</span> <span class="o">+</span> <span class="n">max_delay_samples</span>
+
+        <span class="c1"># waveform: (2, time) or (..., 2, time)</span>
+        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># Simple case: (2, time)</span>
+            <span class="n">delayed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">output_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tap</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">taps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">tap_delay</span> <span class="o">=</span> <span class="n">delay_samples</span> <span class="o">*</span> <span class="n">tap</span>
+                <span class="c1"># First tap always has amplitude 1.0, subsequent taps use feedback</span>
+                <span class="n">feedback_amt</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">tap</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">feedback</span> <span class="o">**</span> <span class="p">(</span><span class="n">tap</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># Copy length for this tap</span>
+                <span class="n">copy_length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">original_length</span><span class="p">,</span> <span class="n">output_length</span> <span class="o">-</span> <span class="n">tap_delay</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">copy_length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># Odd taps: left delays to right, even taps: right delays to left</span>
+                    <span class="k">if</span> <span class="n">tap</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="c1"># Left -&gt; Right</span>
+                        <span class="n">delayed</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">tap_delay</span> <span class="p">:</span> <span class="n">tap_delay</span> <span class="o">+</span> <span class="n">copy_length</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                            <span class="n">waveform</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="n">copy_length</span><span class="p">]</span> <span class="o">*</span> <span class="n">feedback_amt</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># Right -&gt; Left</span>
+                        <span class="n">delayed</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">tap_delay</span> <span class="p">:</span> <span class="n">tap_delay</span> <span class="o">+</span> <span class="n">copy_length</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                            <span class="n">waveform</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="n">copy_length</span><span class="p">]</span> <span class="o">*</span> <span class="n">feedback_amt</span>
+                        <span class="p">)</span>
+            <span class="k">return</span> <span class="n">delayed</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Higher dimensions: (..., 2, time)</span>
+            <span class="n">original_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">waveform</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">original_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_length</span>
+            <span class="n">delayed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">original_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tap</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">taps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">tap_delay</span> <span class="o">=</span> <span class="n">delay_samples</span> <span class="o">*</span> <span class="n">tap</span>
+                <span class="c1"># First tap always has amplitude 1.0, subsequent taps use feedback</span>
+                <span class="n">feedback_amt</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">tap</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">feedback</span> <span class="o">**</span> <span class="p">(</span><span class="n">tap</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># Copy length for this tap</span>
+                <span class="n">copy_length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">original_length</span><span class="p">,</span> <span class="n">output_length</span> <span class="o">-</span> <span class="n">tap_delay</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">copy_length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">tap</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="c1"># Left -&gt; Right</span>
+                        <span class="n">delayed</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tap_delay</span> <span class="p">:</span> <span class="n">tap_delay</span> <span class="o">+</span> <span class="n">copy_length</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                            <span class="n">waveform</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="n">copy_length</span><span class="p">]</span> <span class="o">*</span> <span class="n">feedback_amt</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># Right -&gt; Left</span>
+                        <span class="n">delayed</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tap_delay</span> <span class="p">:</span> <span class="n">tap_delay</span> <span class="o">+</span> <span class="n">copy_length</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                            <span class="n">waveform</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="n">copy_length</span><span class="p">]</span> <span class="o">*</span> <span class="n">feedback_amt</span>
+                        <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">delayed</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Delay">
+<a class="viewcode-back" href="../../api.html#torchfx.Delay">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Delay</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply a delay effect with BPM-synced musical time divisions.</span>
+
+<span class="sd">    The delay effect creates echoes of the input signal with configurable feedback.</span>
+<span class="sd">    Supports BPM-synced delay times for musical applications.</span>
+
+<span class="sd">    The delay effect is computed as:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        delayed[n] = \sum_{i=1}^{taps} feedback^{i-1} \cdot x[n - i \cdot delay]</span>
+<span class="sd">        y[n] = (1 - mix) x[n] + mix \cdot delayed[n]</span>
+
+<span class="sd">    where:</span>
+<span class="sd">        - x[n] is the input signal,</span>
+<span class="sd">        - y[n] is the output signal,</span>
+<span class="sd">        - delay is the delay time in samples,</span>
+<span class="sd">        - feedback is the feedback amount (0-0.95) affecting taps 2 and beyond,</span>
+<span class="sd">        - taps is the number of delay taps,</span>
+<span class="sd">        - mix is the wet/dry mix parameter.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    delay_samples : int</span>
+<span class="sd">        Delay time in samples. If provided, this is used directly.</span>
+<span class="sd">        Default is None (requires bpm and delay_time).</span>
+<span class="sd">    bpm : float</span>
+<span class="sd">        Beats per minute for BPM-synced delay. Required if delay_samples is None.</span>
+<span class="sd">    delay_time : str</span>
+<span class="sd">        Musical time division for BPM-synced delay. Should be a string in the format :code:`n/d[modifier]`, where:</span>
+
+<span class="sd">        * :code:`n/d` represents the note division (e.g., :code:`1/4` for quarter note).</span>
+<span class="sd">        * :code:`modifier` is optional and can be :code:`d` for dotted notes or :code:`t` for triplets.</span>
+
+<span class="sd">        Valid examples include:</span>
+
+<span class="sd">        * :code:`1/4`: Quarter note</span>
+<span class="sd">        * :code:`1/8`: Eighth note</span>
+<span class="sd">        * :code:`1/16`: Sixteenth note</span>
+<span class="sd">        * :code:`1/8d`: Dotted eighth note</span>
+<span class="sd">        * :code:`1/4d`: Dotted quarter note</span>
+<span class="sd">        * :code:`1/8t`: Eighth note triplet</span>
+
+<span class="sd">        Default is :code:`1/8`.</span>
+<span class="sd">    fs : int | None</span>
+<span class="sd">        Sample frequency (sample rate) in Hz. Required if using BPM-synced delay</span>
+<span class="sd">        without Wave pipeline. When None (default), fs will be automatically inferred</span>
+<span class="sd">        from the Wave object when used with the pipeline operator (wave | delay).</span>
+<span class="sd">        Must be positive if provided. Default is None.</span>
+<span class="sd">    feedback : float</span>
+<span class="sd">        Feedback amount (0-0.95). Controls amplitude of taps 2 and beyond.</span>
+<span class="sd">        First tap always has amplitude 1.0. Higher values create more prominent echoes.</span>
+<span class="sd">        Default is 0.3.</span>
+<span class="sd">    mix : float</span>
+<span class="sd">        Wet/dry mix. 0 = dry (original signal only), 1 = wet (delayed echoes only).</span>
+<span class="sd">        Default is 0.2.</span>
+<span class="sd">    taps : int</span>
+<span class="sd">        Number of delay taps (echoes). Each tap is delayed by delay_samples * tap_number.</span>
+<span class="sd">        Default is 3.</span>
+<span class="sd">    strategy : DelayStrategy | None</span>
+<span class="sd">        Delay processing strategy. If None, defaults to MonoDelayStrategy.</span>
+<span class="sd">        Use PingPongDelayStrategy for stereo ping-pong effect, or provide a custom</span>
+<span class="sd">        strategy extending DelayStrategy. Default is None.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import torchfx as fx</span>
+<span class="sd">    &gt;&gt;&gt; import torch</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # BPM-synced delay with auto fs inference from Wave</span>
+<span class="sd">    &gt;&gt;&gt; wave = fx.Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; delay = fx.effect.Delay(bpm=128, delay_time=&#39;1/8&#39;, feedback=0.3, mix=0.2)</span>
+<span class="sd">    &gt;&gt;&gt; delayed = wave | delay  # fs automatically inferred from wave</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # BPM-synced delay with explicit fs</span>
+<span class="sd">    &gt;&gt;&gt; waveform = torch.randn(2, 44100)  # (channels, samples)</span>
+<span class="sd">    &gt;&gt;&gt; delay = fx.effect.Delay(bpm=128, delay_time=&#39;1/8&#39;, fs=44100, feedback=0.3, mix=0.2)</span>
+<span class="sd">    &gt;&gt;&gt; delayed = delay(waveform)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # Direct delay in samples (no fs needed)</span>
+<span class="sd">    &gt;&gt;&gt; delay = fx.effect.Delay(delay_samples=2205, feedback=0.4, mix=0.3)</span>
+<span class="sd">    &gt;&gt;&gt; delayed = delay(waveform)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # Ping-pong delay with strategy</span>
+<span class="sd">    &gt;&gt;&gt; delay = fx.effect.Delay(</span>
+<span class="sd">    ...     bpm=128, delay_time=&#39;1/4&#39;, fs=44100,</span>
+<span class="sd">    ...     feedback=0.5, mix=0.4, strategy=fx.effect.PingPongDelayStrategy()</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; delayed = delay(waveform)</span>
+
+<span class="sd">    Author</span>
+<span class="sd">    ------</span>
+<span class="sd">    Uzef &lt;@itsuzef&gt;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">delay_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bpm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">delay_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;1/8&quot;</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">feedback</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+        <span class="n">mix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">taps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">strategy</span><span class="p">:</span> <span class="n">DelayStrategy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>  <span class="c1"># Store for Wave.__update_config to set automatically</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bpm</span> <span class="o">=</span> <span class="n">bpm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay_time</span> <span class="o">=</span> <span class="n">delay_time</span>
+
+        <span class="c1"># If delay_samples is provided directly, use it</span>
+        <span class="k">if</span> <span class="n">delay_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">delay_samples</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Delay samples must be positive.&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">=</span> <span class="n">delay_samples</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># BPM-synced delay requires bpm parameter</span>
+            <span class="k">assert</span> <span class="n">bpm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;BPM must be provided if delay_samples is not set.&quot;</span>
+            <span class="k">assert</span> <span class="n">bpm</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;BPM must be positive.&quot;</span>
+
+            <span class="c1"># If fs is available now, calculate immediately</span>
+            <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">fs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_delay_samples</span><span class="p">(</span><span class="n">bpm</span><span class="p">,</span> <span class="n">delay_time</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Defer calculation until fs is set (by Wave.__update_config)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># Validate other parameters</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">feedback</span> <span class="o">&lt;=</span> <span class="mf">0.95</span><span class="p">,</span> <span class="s2">&quot;Feedback must be between 0 and 0.95.&quot;</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">mix</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Mix must be between 0 and 1.&quot;</span>
+        <span class="k">assert</span> <span class="n">taps</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Taps must be at least 1.&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">feedback</span> <span class="o">=</span> <span class="n">feedback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="n">mix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">taps</span> <span class="o">=</span> <span class="n">taps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="n">MonoDelayStrategy</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_delay_samples</span><span class="p">(</span><span class="n">bpm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">delay_time</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate delay time in samples from BPM and musical division.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bpm : float</span>
+<span class="sd">            Beats per minute.</span>
+<span class="sd">        delay_time : str</span>
+<span class="sd">            Musical time division string (e.g., &quot;1/4&quot;, &quot;1/8d&quot;, &quot;1/8t&quot;).</span>
+<span class="sd">        fs : int</span>
+<span class="sd">            Sample frequency in Hz.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            Delay time in samples.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MusicalTime</span>
+
+        <span class="n">musical_time</span> <span class="o">=</span> <span class="n">MusicalTime</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">delay_time</span><span class="p">)</span>
+        <span class="n">delay_sec</span> <span class="o">=</span> <span class="n">musical_time</span><span class="o">.</span><span class="n">duration_seconds</span><span class="p">(</span><span class="n">bpm</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">delay_sec</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extend_waveform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extend waveform with zeros to target length along the last dimension.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">target_length</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">waveform</span>
+
+        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">extended</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">target_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">extended</span><span class="p">[:</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="n">waveform</span>
+        <span class="k">elif</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">extended</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">target_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+            <span class="n">extended</span><span class="p">[:,</span> <span class="p">:</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">waveform</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">extended_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">waveform</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">extended_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_length</span>
+            <span class="n">extended</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">extended_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">extended</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">waveform</span>
+
+        <span class="k">return</span> <span class="n">extended</span>
+
+<div class="viewcode-block" id="Delay.forward">
+<a class="viewcode-back" href="../../api.html#torchfx.Delay.forward">[docs]</a>
+    <span class="nd">@override</span>
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            waveform (Tensor): Tensor of audio of dimension `(..., time)` or `(channels, time)`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor: Tensor of delayed audio. Output length is extended to accommodate delayed echoes.</span>
+<span class="sd">            The output will be longer than the input by up to `delay_samples * taps` samples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Lazy calculation of delay_samples if needed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
+                <span class="s2">&quot;Sample rate (fs) is required for BPM-synced delay.&quot;</span>
+                <span class="s2">&quot;Either provide fs parameter or use with Wave pipeline (wave | delay).&quot;</span>
+            <span class="p">)</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">bpm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;BPM must be set for BPM-synced delay.&quot;</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_delay_samples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bpm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># Apply delay using strategy pattern</span>
+        <span class="n">delayed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">apply_delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">taps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback</span><span class="p">)</span>
+
+        <span class="c1"># Extend original waveform to match delayed length for mixing</span>
+        <span class="n">waveform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extend_waveform</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">delayed</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Wet/dry mix</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span> <span class="o">*</span> <span class="n">waveform</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">*</span> <span class="n">delayed</span>
         <span class="k">return</span> <span class="n">output</span></div>
 </div>
 
