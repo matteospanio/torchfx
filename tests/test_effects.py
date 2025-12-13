@@ -4,12 +4,15 @@ import torch
 from torchfx.effect import (
     CustomNormalizationStrategy,
     Delay,
+    DelayStrategy,
     Gain,
+    MonoDelayStrategy,
     NormalizationStrategy,
     Normalize,
     PeakNormalizationStrategy,
     PercentileNormalizationStrategy,
     PerChannelNormalizationStrategy,
+    PingPongDelayStrategy,
     Reverb,
     RMSNormalizationStrategy,
 )
@@ -255,19 +258,19 @@ def test_reverb_multichannel():
 
 @pytest.mark.parametrize("delay", [0, -1])
 def test_reverb_invalid_delay(delay):
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Reverb(delay=delay, decay=0.5, mix=0.5)
 
 
 @pytest.mark.parametrize("decay", [0.0, 1.0, -0.1, 1.1])
 def test_reverb_invalid_decay(decay):
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Reverb(delay=2, decay=decay, mix=0.5)
 
 
 @pytest.mark.parametrize("mix", [-0.1, 1.1])
 def test_reverb_invalid_mix(mix):
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Reverb(delay=2, decay=0.5, mix=mix)
 
 
@@ -424,8 +427,6 @@ def test_delay_musical_divisions():
 
 def test_delay_pingpong():
     """Test ping-pong delay mode alternates between channels."""
-    from torchfx.effect import PingPongDelayStrategy
-
     # Create impulse on left channel only
     waveform = torch.zeros(2, 10)
     waveform[0, 0] = 1.0  # Impulse on left channel
@@ -463,62 +464,62 @@ def test_delay_samples():
 @pytest.mark.parametrize("delay_samples", [0, -1])
 def test_delay_invalid_delay_samples(delay_samples):
     """Test delay with invalid delay_samples."""
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Delay(delay_samples=delay_samples, feedback=0.3, mix=0.2)
 
 
 def test_delay_missing_bpm():
     """Test delay without BPM or delay_samples."""
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Delay(feedback=0.3, mix=0.2)
 
 
 def test_delay_invalid_bpm():
     """Test delay with invalid BPM."""
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Delay(bpm=0, delay_time="1/8", fs=44100)
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Delay(bpm=-1, delay_time="1/8", fs=44100)
 
 
 def test_delay_invalid_sample_rate():
     """Test delay with invalid sample rate."""
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Delay(bpm=120, delay_time="1/8", fs=0)
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Delay(bpm=120, delay_time="1/8", fs=-1)
 
 
 @pytest.mark.parametrize("feedback", [-0.1, 1.0, 1.1])
 def test_delay_invalid_feedback(feedback):
     """Test delay with invalid feedback values."""
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Delay(delay_samples=1000, feedback=feedback, mix=0.2)
 
 
 @pytest.mark.parametrize("mix", [-0.1, 1.1])
 def test_delay_invalid_mix(mix):
     """Test delay with invalid mix values."""
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Delay(delay_samples=1000, feedback=0.3, mix=mix)
 
 
 def test_delay_invalid_taps():
     """Test delay with invalid taps."""
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         Delay(delay_samples=1000, feedback=0.3, mix=0.2, taps=0)
 
 
 def test_delay_lazy_fs_inference_with_wave():
     """Test fs auto-inference from Wave pipeline."""
     from torchfx import Wave
-    
+
     delay = Delay(bpm=120, delay_time="1/8", feedback=0.3, mix=0.2)
     assert delay.fs is None
-    
+
     wave = Wave(torch.randn(2, 44100), fs=44100)
-    delayed_wave = wave | delay
-    
+    _ = wave | delay
+
     assert delay.fs == 44100
     assert delay.delay_samples == 11025
 
@@ -527,20 +528,23 @@ def test_delay_lazy_fs_inference_error():
     """Test error when using delay without fs."""
     delay = Delay(bpm=120, delay_time="1/8", feedback=0.3, mix=0.2)
     waveform = torch.randn(2, 44100)
-    
-    with pytest.raises(ValueError, match="Sample rate \\(fs\\) is required"):
+
+    with pytest.raises(AssertionError, match="Sample rate \\(fs\\) is required"):
         delay(waveform)
 
 
-@pytest.mark.parametrize("time_str,numerator,denominator,expected_fraction", [
-    ("1/4", 1, 4, 0.25),
-    ("1/8", 1, 8, 0.125),
-    ("3/16", 3, 16, 0.1875),
-])
+@pytest.mark.parametrize(
+    "time_str,numerator,denominator,expected_fraction",
+    [
+        ("1/4", 1, 4, 0.25),
+        ("1/8", 1, 8, 0.125),
+        ("3/16", 3, 16, 0.1875),
+    ],
+)
 def test_musical_time_parser_basic(time_str, numerator, denominator, expected_fraction):
     """Test MusicalTime string parsing."""
     from torchfx.typing import MusicalTime
-    
+
     mt = MusicalTime.from_string(time_str)
     assert mt.numerator == numerator
     assert mt.denominator == denominator
@@ -548,43 +552,52 @@ def test_musical_time_parser_basic(time_str, numerator, denominator, expected_fr
     assert mt.fraction() == expected_fraction
 
 
-@pytest.mark.parametrize("time_str,modifier,expected_fraction", [
-    ("1/8d", "d", 0.125 * 1.5),
-    ("1/4d", "d", 0.25 * 1.5),
-    ("1/8t", "t", 0.125 * (1/3)),
-])
+@pytest.mark.parametrize(
+    "time_str,modifier,expected_fraction",
+    [
+        ("1/8d", "d", 0.125 * 1.5),
+        ("1/4d", "d", 0.25 * 1.5),
+        ("1/8t", "t", 0.125 * (1 / 3)),
+    ],
+)
 def test_musical_time_parser_modifiers(time_str, modifier, expected_fraction):
     """Test MusicalTime modifiers."""
     from torchfx.typing import MusicalTime
-    
+
     mt = MusicalTime.from_string(time_str)
     assert mt.modifier == modifier
     assert mt.fraction() == pytest.approx(expected_fraction)
 
 
-@pytest.mark.parametrize("time_str,bpm,expected_duration", [
-    ("1/4", 120, 0.5),
-    ("1/8", 120, 0.25),
-    ("1/8d", 120, 0.375),
-])
+@pytest.mark.parametrize(
+    "time_str,bpm,expected_duration",
+    [
+        ("1/4", 120, 0.5),
+        ("1/8", 120, 0.25),
+        ("1/8d", 120, 0.375),
+    ],
+)
 def test_musical_time_duration_calculation(time_str, bpm, expected_duration):
     """Test MusicalTime duration calculation."""
     from torchfx.typing import MusicalTime
-    
+
     mt = MusicalTime.from_string(time_str)
     assert mt.duration_seconds(bpm) == pytest.approx(expected_duration)
 
 
-@pytest.mark.parametrize("invalid_string", [
-    "invalid",
-    "1/x",
-    "1-4",
-    "1/8x",
-])
+@pytest.mark.parametrize(
+    "invalid_string",
+    [
+        "invalid",
+        "1/x",
+        "1-4",
+        "1/8x",
+    ],
+)
 def test_musical_time_invalid_strings(invalid_string):
     """Test MusicalTime rejects invalid strings."""
     from torchfx.typing import MusicalTime
-    
+
     with pytest.raises(ValueError, match="Invalid musical time string"):
         MusicalTime.from_string(invalid_string)
 
@@ -592,7 +605,7 @@ def test_musical_time_invalid_strings(invalid_string):
 def test_musical_time_invalid_modifier():
     """Test MusicalTime rejects invalid modifiers."""
     from torchfx.typing import MusicalTime
-    
+
     mt = MusicalTime(numerator=1, denominator=4, modifier="x")
     with pytest.raises(ValueError, match="Invalid time duration modifier"):
         mt.fraction()
@@ -606,57 +619,50 @@ def test_delay_invalid_time_string():
 
 def test_delay_mono_strategy_explicit():
     """Test MonoDelayStrategy processes channels independently."""
-    from torchfx.effect import MonoDelayStrategy
-    
     waveform = torch.zeros(2, 10)
     waveform[0, 0] = 1.0
-    
+
     delay = Delay(delay_samples=2, feedback=0.0, mix=1.0, taps=1, strategy=MonoDelayStrategy())
     out = delay(waveform)
-    
+
     assert out[0, 2].item() == pytest.approx(1.0, abs=1e-5)
     assert out[1, 2].item() == pytest.approx(0.0, abs=1e-5)
 
 
 def test_delay_pingpong_strategy_explicit():
     """Test PingPongDelayStrategy alternates channels."""
-    from torchfx.effect import PingPongDelayStrategy
-    
     waveform = torch.zeros(2, 10)
     waveform[0, 0] = 1.0
-    
+
     delay = Delay(delay_samples=2, feedback=0.0, mix=1.0, taps=2, strategy=PingPongDelayStrategy())
     out = delay(waveform)
-    
+
     assert out[1, 2].item() == pytest.approx(1.0, abs=1e-5)
     assert out[0, 4].item() == pytest.approx(0.0, abs=1e-5)
 
 
 def test_delay_strategy_extensibility():
     """Test custom DelayStrategy injection."""
-    from torchfx.effect import DelayStrategy
-    
+
     class DoubleStrategy(DelayStrategy):
         def apply_delay(self, waveform, delay_samples, taps, feedback):
             return waveform * 2
-    
+
     waveform = torch.ones(5)
     delay = Delay(delay_samples=10, feedback=0.5, mix=0.5, strategy=DoubleStrategy())
     out = delay(waveform)
-    
+
     assert torch.allclose(out[:5], torch.ones(5) * 1.5, atol=1e-5)
 
 
 def test_delay_pingpong_fallback_mono():
     """Test PingPongDelayStrategy falls back to mono for non-stereo."""
-    from torchfx.effect import PingPongDelayStrategy
-    
     waveform = torch.zeros(10)
     waveform[0] = 1.0
-    
+
     delay = Delay(delay_samples=2, feedback=0.0, mix=1.0, taps=1, strategy=PingPongDelayStrategy())
     out = delay(waveform)
-    
+
     assert out[2].item() == pytest.approx(1.0, abs=1e-5)
 
 
@@ -665,18 +671,16 @@ def test_delay_batched_audio():
     waveform = torch.randn(4, 2, 1000)
     delay = Delay(delay_samples=100, feedback=0.5, mix=0.3, taps=2)
     out = delay(waveform)
-    
+
     assert out.shape == (4, 2, 1200)
 
 
 def test_delay_batched_audio_with_strategy():
     """Test batched audio with PingPongDelayStrategy."""
-    from torchfx.effect import PingPongDelayStrategy
-    
     waveform = torch.zeros(2, 2, 20)
     waveform[0, 0, 0] = 1.0
-    
+
     delay = Delay(delay_samples=3, feedback=0.0, mix=1.0, taps=1, strategy=PingPongDelayStrategy())
     out = delay(waveform)
-    
+
     assert out[0, 1, 3].item() == pytest.approx(1.0, abs=1e-5)
