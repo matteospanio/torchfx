@@ -6,21 +6,20 @@ from collections.abc import Sequence
 import numpy as np
 import torch
 from scipy.signal import butter, cheby1, cheby2, iirnotch, iirpeak
-from torch import Tensor
+from torch import Tensor, dtype
 from torchaudio import functional as F  # noqa: N812
 from typing_extensions import override
 
 from torchfx.filter.__base import AbstractFilter
-from torchfx.typing import FilterOrderScale
+from torchfx.typing import Device, FilterOrderScale
 
 NONE_FS_ERR = "Sample rate of the filter could not be None."
 
 
 class IIR(AbstractFilter):
-    """IIR filter.
-    This class implements the IIR filter interface. It is an abstract class that
-    provides the basic structure for implementing IIR filters. It inherits from
-    `AbstractFilter` and provides the basic structure for implementing IIR filters.
+    """IIR filter. This class implements the IIR filter interface. It is an abstract
+    class that provides the basic structure for implementing IIR filters. It inherits
+    from `AbstractFilter` and provides the basic structure for implementing IIR filters.
 
     Attributes
     ----------
@@ -32,17 +31,20 @@ class IIR(AbstractFilter):
         The sampling frequency of the filter.
     cutoff : float
         The cutoff frequency of the filter.
+
     """
 
     fs: int | None
     cutoff: float
+    a: Sequence[float] | Tensor | None
+    b: Sequence[float] | Tensor | None
 
     @abc.abstractmethod
     def __init__(self, fs: int | None = None) -> None:
         super().__init__()
         self.fs = fs
 
-    def move_coeff(self, device, dtype=torch.float32):
+    def move_coeff(self, device: Device, dtype: dtype = torch.float32) -> None:
         """Move the filter coefficients to the specified device and dtype."""
         self.a = torch.as_tensor(self.a, device=device, dtype=dtype)
         self.b = torch.as_tensor(self.b, device=device, dtype=dtype)
@@ -61,7 +63,7 @@ class IIR(AbstractFilter):
         if not isinstance(self.a, Tensor) or not isinstance(self.b, Tensor):
             self.move_coeff(device, dtype)
 
-        return F.lfilter(x, self.a, self.b)
+        return F.lfilter(x, self.a, self.b)  # type: ignore
 
 
 class Butterworth(IIR):
@@ -74,8 +76,8 @@ class Butterworth(IIR):
         order: int = 4,
         order_scale: FilterOrderScale = "linear",
         fs: int | None = None,
-        a: Sequence | None = None,
-        b: Sequence | None = None,
+        a: Sequence[float] | None = None,
+        b: Sequence[float] | None = None,
     ) -> None:
         super().__init__(fs)
         self.btype = btype
@@ -103,8 +105,8 @@ class Chebyshev1(IIR):
         order: int = 4,
         ripple: float = 0.1,
         fs: int | None = None,
-        a: Sequence | None = None,
-        b: Sequence | None = None,
+        a: Sequence[float] | None = None,
+        b: Sequence[float] | None = None,
     ) -> None:
         super().__init__(fs)
         self.btype = btype
@@ -118,11 +120,11 @@ class Chebyshev1(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = cheby1(  # type: ignore
+        b, a = cheby1(
             self.order,
             self.ripple,
             self.cutoff / (0.5 * self.fs),
-            btype=self.btype,
+            btype=self.btype,  # type: ignore
         )
         self.b = b
         self.a = a
@@ -149,11 +151,11 @@ class Chebyshev2(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = cheby2(  # type: ignore
+        b, a = cheby2(
             self.order,
             self.ripple,
             self.cutoff / (0.5 * self.fs),
-            btype=self.btype,
+            btype=self.btype,  # type: ignore
         )
         self.b = b
         self.a = a
@@ -247,8 +249,8 @@ class Shelving(IIR):
         cutoff: float,
         q: float,
         fs: int | None = None,
-        a: Sequence | None = None,
-        b: Sequence | None = None,
+        a: Sequence[float] | None = None,
+        b: Sequence[float] | None = None,
     ) -> None:
         super().__init__(fs)
         self.cutoff = cutoff
@@ -264,7 +266,7 @@ class Shelving(IIR):
 
     @property
     def _alpha(self) -> float:
-        return np.sin(self._omega) / (2 * self.q)
+        return float(np.sin(self._omega) / (2 * self.q))
 
 
 class HiShelving(Shelving):
@@ -325,8 +327,8 @@ class Peaking(IIR):
         gain: float,
         gain_scale: FilterOrderScale,
         fs: int | None = None,
-        a: Sequence | None = None,
-        b: Sequence | None = None,
+        a: Sequence[float] | None = None,
+        b: Sequence[float] | None = None,
     ) -> None:
         super().__init__(fs)
         self.cutoff = cutoff
@@ -340,8 +342,8 @@ class Peaking(IIR):
         assert self.fs is not None
 
         b, a = iirpeak(self.cutoff / (self.fs / 2), self.Q, self.fs)
-        self.b = b
-        self.a = a
+        self.b = b  # type: ignore
+        self.a = a  # type: ignore
 
 
 class Notch(IIR):
@@ -362,8 +364,8 @@ class Notch(IIR):
         assert self.fs is not None
 
         b, a = iirnotch(self.cutoff / (self.fs / 2), self.Q)
-        self.b = b
-        self.a = a
+        self.b = b  # type: ignore
+        self.a = a  # type: ignore
 
 
 class AllPass(IIR):
@@ -384,17 +386,18 @@ class AllPass(IIR):
         assert self.fs is not None
 
         b, a = iirpeak(self.cutoff / (self.fs / 2), self.Q)
-        self.b = b
-        self.a = a
+        self.b = b  # type: ignore
+        self.a = a  # type: ignore
 
 
 class LinkwitzRiley(IIR):
     """Linkwitz-Riley filter.
 
-    This filter is created by cascading two identical Butterworth filters.
-    The resulting filter has an order that is twice the order of the
-    base Butterworth filter and a -6 dB gain at the cutoff frequency.
-    The order of a Linkwitz-Riley filter must be an even integer.
+    This filter is created by cascading two identical Butterworth filters. The resulting
+    filter has an order that is twice the order of the base Butterworth filter and a -6
+    dB gain at the cutoff frequency. The order of a Linkwitz-Riley filter must be an
+    even integer.
+
     """
 
     def __init__(
@@ -434,9 +437,10 @@ class LinkwitzRiley(IIR):
     def compute_coefficients(self) -> None:
         """Compute the filter coefficients.
 
-        The method calculates the coefficients for a Butterworth filter of half
-        the specified order and then cascades it with itself by convolving
-        the numerator and denominator coefficients.
+        The method calculates the coefficients for a Butterworth filter of half the
+        specified order and then cascades it with itself by convolving the numerator and
+        denominator coefficients.
+
         """
         assert self.fs is not None
 
@@ -447,8 +451,8 @@ class LinkwitzRiley(IIR):
         b_butter, a_butter = butter(butter_order, self.cutoff / (0.5 * self.fs), btype=self.btype)  # type: ignore
 
         # Cascade the filters by convolving the coefficients with themselves
-        self.b = np.convolve(b_butter, b_butter)
-        self.a = np.convolve(a_butter, a_butter)
+        self.b = np.convolve(b_butter, b_butter)  # type: ignore
+        self.a = np.convolve(a_butter, a_butter)  # type: ignore
 
 
 class HiLinkwitzRiley(LinkwitzRiley):
