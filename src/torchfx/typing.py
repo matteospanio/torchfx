@@ -8,7 +8,7 @@ import torch
 from annotated_types import Ge, Le
 
 Decibel = tp.Annotated[float, Le(0)]
-Millisecond = tp.Annotated[int, Ge(0)]
+Millisecond = tp.Annotated[float, Ge(0)]
 Second = tp.Annotated[float, Ge(0)]
 BitRate = tp.Literal[16, 24, 32]
 
@@ -63,6 +63,7 @@ class MusicalTime:
         The denominator of the time fraction (e.g., 4 in "1/4").
     modifier : str
         Optional modifier: "" (none), "d" (dotted), "t" (triplet). Default is "".
+
     """
 
     numerator: int
@@ -88,12 +89,13 @@ class MusicalTime:
         ------
         ValueError
             If the modifier is invalid.
+
         """
         base = self.numerator / self.denominator
         modifier_coeff = self._modifier_values.get(self.modifier)
         if modifier_coeff is None:
             raise ValueError(f"Invalid time duration modifier: {self.modifier}")
-        
+
         return base * modifier_coeff
 
     def duration_seconds(self, bpm: float, beats_per_bar: int = 4) -> Second:
@@ -118,9 +120,9 @@ class MusicalTime:
         ------
         ValueError
             If BPM is not positive.
+
         """
-        if bpm <= 0:
-            raise ValueError("BPM must be positive")
+        assert bpm > 0, "BPM must be positive"
         beat_duration = 60.0 / bpm
         bar_duration = beat_duration * beats_per_bar
         return self.fraction() * bar_duration
@@ -145,6 +147,7 @@ class MusicalTime:
         ------
         ValueError
             If the string format is invalid.
+
         """
         m = re.match(r"(\d+)/(\d+)([dt]?)$", s)
         if not m:

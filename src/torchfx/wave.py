@@ -7,6 +7,7 @@ samples per second. The sampling frequency is usually represented as `fs`.
 The Wave class is a wrapper around the 2D tensor that represents the signal. It
 provides methods to manipulate the signal, such as applying filters, transforming the
 signal, and saving the signal to a file.
+
 """
 
 import typing as tp
@@ -21,7 +22,7 @@ from typing_extensions import Self
 
 from torchfx.effect import FX
 from torchfx.filter.__base import AbstractFilter
-from torchfx.typing import Device
+from torchfx.typing import Device, Millisecond, Second
 
 
 class Wave:
@@ -84,7 +85,7 @@ class Wave:
         self.ys = self.ys.to(device)
         return self
 
-    def transform(self, func: Callable[..., Tensor], *args, **kwargs) -> "Wave":
+    def transform(self, func: Callable[..., Tensor], *args, **kwargs) -> "Wave":  # type: ignore
         """Apply a functional transformation to the signal.
 
         Parameters
@@ -106,7 +107,7 @@ class Wave:
         return Wave(func(self.ys, *args, **kwargs), self.fs)
 
     @classmethod
-    def from_file(cls, path: str | Path, *args, **kwargs) -> "Wave":
+    def from_file(cls, path: str | Path, *args, **kwargs) -> "Wave":  # type: ignore
         """Instantiate a wave from an audio file.
 
         Parameters
@@ -175,7 +176,7 @@ class Wave:
     def __update_config(self, f: FX) -> None:
         """Update the configuration of the filter with the wave's sampling frequency."""
         if hasattr(f, "fs") and f.fs is None:
-            f.fs = self.fs  # type: ignore
+            f.fs = self.fs
 
         if isinstance(f, AbstractFilter) and not f._has_computed_coeff:
             f.compute_coefficients()
@@ -216,7 +217,7 @@ class Wave:
         """
         return Wave(self.ys[index], self.fs)
 
-    def duration(self, unit: tp.Literal["sec", "ms"]) -> float:
+    def duration(self, unit: tp.Literal["sec", "ms"]) -> Second | Millisecond:
         """Return the length of the wave in seconds or milliseconds.
 
         Parameters
