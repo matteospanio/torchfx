@@ -291,6 +291,6 @@ class Wave:
             )
             for w in waves:
                 # Add each wave, handling different lengths
-                ys[:, :len(w)] += w.ys
+                ys[:, : len(w)] += w.ys
 
         return Wave(ys, fs)
