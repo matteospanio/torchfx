@@ -280,12 +280,17 @@ class Wave:
         if split_channels:
             ys = torch.cat([w.ys for w in waves], dim=0)
         else:
+            # Get the maximum length and number of channels
+            max_length = max(len(w) for w in waves)
+            num_channels = waves[0].ys.shape[0]
+
             ys = torch.zeros(
-                (len(waves), max(len(w.ys) for w in waves)),
+                (num_channels, max_length),
                 dtype=waves[0].ys.dtype,
                 device=waves[0].device,
             )
-            for s in waves:
-                ys += s.ys
+            for w in waves:
+                # Add each wave, handling different lengths
+                ys[:, : len(w)] += w.ys
 
         return Wave(ys, fs)
