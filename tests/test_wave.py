@@ -132,20 +132,6 @@ class TestWaveSave:
             assert loaded_wave.fs == mono_wave.fs
             assert torch.allclose(loaded_wave.ys, mono_wave.ys, atol=1e-4)
 
-    @pytest.mark.skip(reason="OGG/Vorbis support requires additional backend configuration")
-    def test_save_ogg(self, mono_wave):
-        """Test saving an OGG file.
-
-        Note: This test is skipped because OGG/Vorbis requires specific
-        encoding settings that vary by backend. This will be implemented
-        in a future version with proper backend detection.
-
-        """
-        with tempfile.TemporaryDirectory() as tmpdir:
-            output_path = Path(tmpdir) / "test_output.ogg"
-            mono_wave.save(output_path, format="ogg")
-            assert output_path.exists()
-
     def test_save_high_bit_depth_32bit_float(self, mono_wave):
         """Test saving with 32-bit float encoding."""
         with tempfile.TemporaryDirectory() as tmpdir:

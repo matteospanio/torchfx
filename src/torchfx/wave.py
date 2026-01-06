@@ -42,14 +42,14 @@ class Wave:
     ys: Tensor
     fs: int
     __device: Device  # private field
-    metadata: dict[str, tp.Any] | None
+    metadata: dict[str, tp.Any]
 
     def __init__(
         self,
         ys: ArrayLike,
         fs: int,
         device: Device = "cpu",
-        metadata: dict[str, tp.Any] | None = None,
+        metadata: dict[str, tp.Any] = {},  # noqa: B006
     ) -> None:
         self.fs = fs
         self.ys = Tensor(ys)
@@ -173,7 +173,7 @@ class Wave:
             The path where to save the audio file.
         format : str, optional
             Override the audio format. If not specified, the format is inferred
-            from the file extension. Valid values include: "wav", "flac", "ogg".
+            from the file extension. Valid values include: "wav", "flac".
         encoding : str, optional
             Changes the encoding for supported formats (wav, flac).
             Valid values: "PCM_S" (signed int), "PCM_U" (unsigned int),

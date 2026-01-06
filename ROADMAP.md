@@ -66,7 +66,7 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 
 - [x] **Implement Wave.save() / to_file() method**
   - ✅ Support formats: WAV, FLAC (OGG/MP3/AAC require additional backend configuration)
-  - ✅ High bit-depth: 32-bit float, 64-bit float (8, 16, 24, 32, 64 bits supported)
+  - ✅ High bit-depth: 32-bit float, 64-bit float (8, 16, 24, 32 bits supported)
   - ✅ High sample rates: up to 192kHz+ (tested with 96kHz and 192kHz)
   - ✅ Metadata preservation (automatic extraction and storage via torchaudio.info)
   - Implementation details:
