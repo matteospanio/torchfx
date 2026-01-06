@@ -371,7 +371,7 @@ class Peaking(IIR):
     def __init__(
         self,
         cutoff: float,
-        Q: float,
+        q: float,
         gain: float,
         gain_scale: FilterOrderScale,
         fs: int | None = None,
@@ -380,7 +380,7 @@ class Peaking(IIR):
     ) -> None:
         super().__init__(fs)
         self.cutoff = cutoff
-        self.Q = Q
+        self.q = q
         self.gain = gain if gain_scale == "linear" else 10 ** (gain / 20)
         self.a = a
         self.b = b
@@ -389,7 +389,7 @@ class Peaking(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = iirpeak(self.cutoff / (self.fs / 2), self.Q, self.fs)
+        b, a = iirpeak(self.cutoff / (self.fs / 2), self.q, self.fs)
         self.b = b  # type: ignore
         self.a = a  # type: ignore
 
@@ -486,18 +486,18 @@ class Notch(IIR):
     def __init__(
         self,
         cutoff: float,
-        Q: float,
+        q: float,
         fs: int | None = None,
     ) -> None:
         super().__init__(fs)
         self.cutoff = cutoff
-        self.Q = Q
+        self.q = q
 
     @override
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = iirnotch(self.cutoff / (self.fs / 2), self.Q)
+        b, a = iirnotch(self.cutoff / (self.fs / 2), self.q)
         self.b = b  # type: ignore
         self.a = a  # type: ignore
 
@@ -508,18 +508,18 @@ class AllPass(IIR):
     def __init__(
         self,
         cutoff: float,
-        Q: float,
+        q: float,
         fs: int | None = None,
     ) -> None:
         super().__init__(fs)
         self.cutoff = cutoff
-        self.Q = Q
+        self.q = q
 
     @override
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = iirpeak(self.cutoff / (self.fs / 2), self.Q)
+        b, a = iirpeak(self.cutoff / (self.fs / 2), self.q)
         self.b = b  # type: ignore
         self.a = a  # type: ignore
 
