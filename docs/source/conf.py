@@ -16,7 +16,9 @@ extensions = [
     "ablog",
     "myst_parser",
     "sphinxcontrib.mermaid",
+    "sphinxcontrib.bibtex",
 ]
+bibtex_bibfiles = ["references.bib"]
 myst_update_mathjax = False
 source_suffix = {
     ".rst": "restructuredtext",
