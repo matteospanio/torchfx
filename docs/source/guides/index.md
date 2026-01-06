@@ -6,6 +6,7 @@ Comprehensive documentation for using and developing with TorchFX.
 :maxdepth: 2
 
 getting-started/index
+core-concepts/index
 tutorials/index
 api_stability
 migration_guide
@@ -18,6 +19,15 @@ New to TorchFX? Start here:
 
 - [Installation](getting-started/installation.rst) - Install TorchFX and set up your environment
 - [Getting Started Guide](getting-started/getting_started.rst) - Your first steps with TorchFX
+
+## Core Concepts
+
+Understand the fundamental building blocks of TorchFX:
+
+- [Wave](core-concepts/wave.md) - Digital audio representation with metadata
+- [FX Base Class](core-concepts/fx.md) - Foundation for all effects and filters
+- [Pipeline Operator](core-concepts/pipeline-operator.md) - Functional composition with `|`
+- [Type System](core-concepts/type-system.md) - Musical time and audio units
 
 ## Tutorials
 

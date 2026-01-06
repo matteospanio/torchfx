@@ -187,3 +187,10 @@ If you use TorchFX in your research, please cite our paper:
    :hidden:
 
    blog/index
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Reference
+   :hidden:
+
+   glossary

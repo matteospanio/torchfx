@@ -19,6 +19,8 @@ extensions = [
     "sphinxcontrib.bibtex",
 ]
 bibtex_bibfiles = ["references.bib"]
+bibtex_reference_style = "author_year"
+bibtex_default_style = "alpha"
 myst_update_mathjax = False
 source_suffix = {
     ".rst": "restructuredtext",
