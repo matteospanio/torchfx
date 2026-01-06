@@ -5,22 +5,6 @@
 
 This roadmap outlines the development path for TorchFX from the current alpha state to a production-ready v1.0.0 release. The plan is organized into major epics, each containing specific deliverables and tasks.
 
-## Table of Contents
-
-- [Vision](#vision)
-- [Current State](#current-state)
-- [Epic 1: Core Library Stabilization](#epic-1-core-library-stabilization)
-- [Epic 2: Real-Time Audio Processing](#epic-2-real-time-audio-processing)
-- [Epic 3: CLI Application](#epic-3-cli-application)
-- [Epic 4: Performance Optimization & CUDA](#epic-4-performance-optimization--cuda)
-- [Epic 5: Comprehensive Documentation](#epic-5-comprehensive-documentation)
-- [Epic 6: Testing & Quality Assurance](#epic-6-testing--quality-assurance)
-- [Epic 7: Additional Effects](#epic-7-additional-effects)
-- [Implementation Phases](#implementation-phases)
-- [Success Metrics](#success-metrics)
-
----
-
 ## Vision
 
 TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library with:
@@ -95,19 +79,27 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 
 ### 1.2 API Stabilization
 
-- [ ] **Audit and freeze public API**
-  - Mark public classes with explicit export policy
-  - Document backward compatibility guarantees
-  - Add deprecation warning system
+- [x] **Audit and freeze public API**
+  - ✅ Marked all public classes in `__all__` exports
+  - ✅ Created [API_STABILITY.md](API_STABILITY.md) with backward compatibility guarantees
+  - ✅ Implemented deprecation warning system with decorators (`@deprecated`, `@deprecated_parameter`, `DeprecatedAlias`)
+  - ✅ Full test coverage (9 tests) for deprecation utilities
 
-- [ ] **Implement semantic versioning policy**
-  - No breaking changes in minor versions (1.x.x)
-  - Deprecation warnings for at least one minor version
-  - Create migration guide template
+- [x] **Implement semantic versioning policy**
+  - ✅ Documented policy: No breaking changes in minor versions (1.x.x)
+  - ✅ Deprecation warnings for at least one minor version before removal
+  - ✅ Created [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) template with migration patterns
+  - ✅ Added versioning examples and guidelines
 
-- [ ] **Parameter naming consistency**
-  - Standardize: `cutoff`, `frequency`, `gain`, `q_factor`, `order`
-  - Create style guide
+- [x] **Parameter naming consistency**
+  - ✅ Standardized naming conventions documented in [STYLE_GUIDE.md](STYLE_GUIDE.md):
+    - `cutoff` for lowpass/highpass/shelving filters
+    - `frequency` for ParametricEQ (center frequency)
+    - `Q` (uppercase) for Peaking, Notch, AllPass (mathematical convention)
+    - `q` (lowercase) for Shelving, ParametricEQ (industry convention)
+    - `gain` with `gain_scale` for units ("linear" or "db")
+    - `fs` for sampling frequency
+  - ✅ Style guide includes naming, units, code organization, and documentation standards
 
 ### 1.3 Error Handling & Validation
 
@@ -621,13 +613,8 @@ TorchFX follows **SOLID** and **DRY** principles:
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) (coming soon) for guidelines.
+We welcome contributions! See the [style guide](./style_guide.md) for guidelines.
 
 - **Current focus**: Phase 1 (Core Stabilization)
 - **Good first issues**: Check GitHub issues tagged `good-first-issue`
 - **Questions**: Open a discussion on GitHub
-
----
-
-**Last Updated:** 2026-01-06
-**Roadmap Version:** 1.0
