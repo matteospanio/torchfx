@@ -4,6 +4,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2504.08624-b31b1b.svg)](https://arxiv.org/abs/2504.08624)
 [![PyPI version](https://badge.fury.io/py/torchfx.svg)](https://badge.fury.io/py/torchfx)
 ![PyPI - Status](https://img.shields.io/pypi/status/torchfx)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Indexed-brightgreen.svg)](https://deepwiki.com/matteospanio/torchfx)
 
 TorchFX is a Python library that provides a modern approach to audio digital signal processing (DSP) using PyTorch. It allows you to create and manipulate audio processing pipelines in a flexible and efficient way, leveraging the power of PyTorch for GPU acceleration.
 TorchFX is designed to be easy to use and integrate with existing PyTorch workflows, making it a great choice for researchers and developers working in the field of audio processing.

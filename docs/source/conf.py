@@ -12,6 +12,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
+    "sphinx_design",
     "ablog",
     "myst_parser",
     "sphinxcontrib.mermaid",
