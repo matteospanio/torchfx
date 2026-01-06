@@ -22,7 +22,7 @@ from typing_extensions import Self
 
 from torchfx.effect import FX
 from torchfx.filter.__base import AbstractFilter
-from torchfx.typing import Device, Millisecond, Second
+from torchfx.typing import BitRate, Device, Millisecond, Second
 
 
 class Wave:
@@ -34,16 +34,26 @@ class Wave:
         The signal.
     fs : int
         The sampling frequency.
+    metadata : dict, optional
+        Optional metadata dictionary for the audio file.
 
     """
 
     ys: Tensor
     fs: int
     __device: Device  # private field
+    metadata: dict[str, tp.Any] | None
 
-    def __init__(self, ys: ArrayLike, fs: int, device: Device = "cpu") -> None:
+    def __init__(
+        self,
+        ys: ArrayLike,
+        fs: int,
+        device: Device = "cpu",
+        metadata: dict[str, tp.Any] | None = None,
+    ) -> None:
         self.fs = fs
         self.ys = Tensor(ys)
+        self.metadata = metadata or {}
         self.to(device)
 
     @property
@@ -122,15 +132,108 @@ class Wave:
         Returns
         -------
         Wave
-            The wave object.
+            The wave object with audio data and metadata.
 
         Examples
         --------
         >>> wave = Wave.from_file("path/to/file.wav")
+        >>> print(wave.metadata)  # Access file metadata
 
         """
         data, fs = torchaudio.load(path, *args, **kwargs)
-        return cls(data, fs)
+
+        # Extract metadata from the file
+        try:
+            info = torchaudio.info(path)
+            metadata = {
+                "num_frames": info.num_frames,
+                "num_channels": info.num_channels,
+                "bits_per_sample": info.bits_per_sample,
+                "encoding": info.encoding,
+            }
+        except Exception:
+            # If metadata extraction fails, continue without it
+            metadata = {}
+
+        return cls(data, fs, metadata=metadata)
+
+    def save(
+        self,
+        path: str | Path,
+        format: str | None = None,  # noqa: A002
+        encoding: str | None = None,
+        bits_per_sample: BitRate | None = None,
+        **kwargs: tp.Any,
+    ) -> None:
+        """Save the wave to an audio file.
+
+        Parameters
+        ----------
+        path : str or Path
+            The path where to save the audio file.
+        format : str, optional
+            Override the audio format. If not specified, the format is inferred
+            from the file extension. Valid values include: "wav", "flac", "ogg".
+        encoding : str, optional
+            Changes the encoding for supported formats (wav, flac).
+            Valid values: "PCM_S" (signed int), "PCM_U" (unsigned int),
+            "PCM_F" (float), "ULAW", "ALAW".
+        bits_per_sample : int, optional
+            Changes the bit depth for supported formats.
+            Valid values: 8, 16, 24, 32, 64.
+        **kwargs
+            Additional keyword arguments to pass to `torchaudio.save`.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        Save as WAV file:
+
+        >>> wave = Wave.from_file("input.wav")
+        >>> wave.save("output.wav")
+
+        Save as FLAC with specific encoding:
+
+        >>> wave.save("output.flac", encoding="PCM_S", bits_per_sample=24)
+
+        Save with high bit depth:
+
+        >>> wave.save("output.wav", encoding="PCM_F", bits_per_sample=32)
+
+        Notes
+        -----
+        - The method automatically creates parent directories if they don't exist.
+        - The audio data is moved to CPU before saving.
+        - Supported formats depend on the available torchaudio backend.
+
+        See Also
+        --------
+        from_file : Load a wave from an audio file.
+        torchaudio.save : Underlying function used for saving.
+
+        """
+        # Convert path to Path object for easier manipulation
+        output_path = Path(path)
+
+        # Create parent directories if they don't exist
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Move tensor to CPU for saving (torchaudio requires CPU tensors)
+        audio_data = self.ys.cpu()
+
+        # Save using torchaudio
+        torchaudio.save(
+            uri=str(output_path),
+            src=audio_data,
+            sample_rate=self.fs,
+            format=format,
+            encoding=encoding,
+            bits_per_sample=bits_per_sample,
+            **kwargs,
+        )
 
     def __or__(self, f: nn.Module) -> "Wave":
         """Apply a module to the wave through the pipeline operator: `|`.
