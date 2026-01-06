@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 >    The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [Unreleased]
+
+### Added
+
+- method `Wave.save` to save audio files with custom format, encoding and bits per sample
+
+### Changed
+
+- type hint `BitRate` to include 8 bits per sample option
+
+### Fixed
+
+- `Wave.merge` had a bug due to incorrect tensor concatenation along the channel dimension
+
 ## [0.2.1] - 2025-12-13
 
 ### Added
