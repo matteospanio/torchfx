@@ -5,7 +5,7 @@ from collections.abc import Sequence
 
 import numpy as np
 import torch
-from scipy.signal import butter, cheby1, cheby2, iirnotch, iirpeak
+from scipy.signal import butter, cheby1, cheby2, ellip, iirnotch, iirpeak
 from torch import Tensor, dtype
 from torchaudio import functional as F  # noqa: N812
 from typing_extensions import override
@@ -308,13 +308,61 @@ class HiShelving(Shelving):
 class LoShelving(Shelving):
     """Low pass shelving filter.
 
-    .. todo:::
-        Implement the low shelving filter.
-        The current implementation is a placeholder and does not perform any filtering.
+    A low-shelving filter boosts or cuts frequencies below the cutoff frequency.
+    This filter is commonly used in audio equalization to adjust bass frequencies.
+
+    Parameters
+    ----------
+    cutoff : float
+        The cutoff frequency in Hz.
+    q : float
+        The quality factor (Q). Higher Q values result in a steeper transition.
+        Typical values range from 0.5 to 1.0, with 0.707 being common.
+    gain : float
+        The gain in linear scale or dB (depending on gain_scale).
+    gain_scale : {"linear", "db"}
+        Whether the gain is specified in linear scale or dB.
+    fs : int | None
+        The sampling frequency in Hz.
+
+    Examples
+    --------
+    >>> filter = LoShelving(cutoff=200, q=0.707, gain=6, gain_scale="db", fs=44100)
+    >>> filtered = filter.forward(signal)
 
     """
 
-    ...
+    gain: float
+
+    def __init__(
+        self,
+        cutoff: float,
+        q: float,
+        gain: float,
+        gain_scale: FilterOrderScale = "linear",
+        fs: int | None = None,
+    ):
+        super().__init__(cutoff=cutoff, q=q, fs=fs)
+        self.cutoff = cutoff
+        self.q = q
+        self.gain = gain if gain_scale == "linear" else 10 ** (gain / 20)
+
+    @override
+    def compute_coefficients(self) -> None:
+        A = self.gain  # noqa: N806
+        b0 = A * ((A + 1) - (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha)
+        b1 = 2 * A * ((A - 1) - (A + 1) * np.cos(self._omega))
+        b2 = A * ((A + 1) - (A - 1) * np.cos(self._omega) - 2 * np.sqrt(A) * self._alpha)
+
+        a0 = (A + 1) + (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha
+        a1 = -2 * ((A - 1) + (A + 1) * np.cos(self._omega))
+        a2 = (A + 1) + (A - 1) * np.cos(self._omega) - 2 * np.sqrt(A) * self._alpha
+
+        b = [b0 / a0, b1 / a0, b2 / a0]
+        a = [1.0, a1 / a0, a2 / a0]
+
+        self.b = b
+        self.a = a
 
 
 class Peaking(IIR):
@@ -344,6 +392,92 @@ class Peaking(IIR):
         b, a = iirpeak(self.cutoff / (self.fs / 2), self.Q, self.fs)
         self.b = b  # type: ignore
         self.a = a  # type: ignore
+
+
+class ParametricEQ(IIR):
+    """Parametric equalizer (peaking filter).
+
+    A parametric EQ is a bell-shaped filter that boosts or cuts a specific frequency
+    range. It's the most common type of EQ used in music production for precise
+    frequency control.
+
+    Parameters
+    ----------
+    frequency : float
+        The center frequency in Hz.
+    q : float
+        The quality factor (Q). Higher Q values result in a narrower bandwidth.
+        Typical values: 0.5 (wide), 0.707 (moderate), 2.0 (narrow), 5.0+ (very narrow).
+    gain : float
+        The gain in dB. Positive values boost, negative values cut.
+    fs : int | None
+        The sampling frequency in Hz.
+
+    Examples
+    --------
+    Boost at 1kHz with moderate bandwidth:
+
+    >>> eq = ParametricEQ(frequency=1000, q=0.707, gain=6, fs=44100)
+    >>> filtered = eq.forward(signal)
+
+    Cut at 200Hz with narrow bandwidth:
+
+    >>> eq = ParametricEQ(frequency=200, q=2.0, gain=-3, fs=44100)
+    >>> filtered = eq.forward(signal)
+
+    Notes
+    -----
+    The bandwidth of the filter is inversely proportional to Q:
+    - Low Q (< 1): Wide bandwidth, gentle slope
+    - Medium Q (≈ 1): Moderate bandwidth
+    - High Q (> 2): Narrow bandwidth, steep slope
+
+    """
+
+    def __init__(
+        self,
+        frequency: float,
+        q: float,
+        gain: float,
+        fs: int | None = None,
+    ) -> None:
+        super().__init__(fs)
+        self.cutoff = frequency
+        self.q = q
+        self.gain_db = gain
+        self.gain = 10 ** (gain / 20)
+        self.a = None
+        self.b = None
+
+    @property
+    def _omega(self) -> float:
+        if self.fs is None:
+            raise ValueError(NONE_FS_ERR)
+        return 2 * np.pi * self.cutoff / self.fs
+
+    @property
+    def _alpha(self) -> float:
+        return float(np.sin(self._omega) / (2 * self.q))
+
+    @override
+    def compute_coefficients(self) -> None:
+        """Compute the filter coefficients using the Audio EQ Cookbook formulas."""
+        A = self.gain  # noqa: N806
+
+        b0 = 1 + self._alpha * A
+        b1 = -2 * np.cos(self._omega)
+        b2 = 1 - self._alpha * A
+
+        a0 = 1 + self._alpha / A
+        a1 = -2 * np.cos(self._omega)
+        a2 = 1 - self._alpha / A
+
+        # Normalize coefficients
+        b = [b0 / a0, b1 / a0, b2 / a0]
+        a = [1.0, a1 / a0, a2 / a0]
+
+        self.b = b
+        self.a = a
 
 
 class Notch(IIR):
@@ -479,3 +613,130 @@ class LoLinkwitzRiley(LinkwitzRiley):
         fs: int | None = None,
     ) -> None:
         super().__init__("lowpass", cutoff, order, order_scale, fs)
+
+
+class Elliptic(IIR):
+    """Elliptic (Cauer) filter.
+
+    Elliptic filters have equalized ripple in both the passband and stopband,
+    providing the sharpest transition between passband and stopband for a given
+    filter order. They are optimal in terms of minimizing the filter order for
+    specified passband and stopband specifications.
+
+    Parameters
+    ----------
+    btype : str
+        The type of filter: 'lowpass', 'highpass', 'bandpass', or 'bandstop'.
+    cutoff : float
+        The cutoff frequency in Hz.
+    order : int
+        The order of the filter. Default is 4.
+    passband_ripple : float
+        Maximum passband ripple in dB. Default is 0.1 dB.
+    stopband_attenuation : float
+        Minimum stopband attenuation in dB. Default is 40 dB.
+    fs : int | None
+        The sampling frequency in Hz.
+
+    Examples
+    --------
+    >>> filter = Elliptic(btype="lowpass", cutoff=1000, order=4, fs=44100)
+    >>> filtered = filter.forward(signal)
+
+    Notes
+    -----
+    Elliptic filters provide:
+    - Sharpest transition for a given order
+    - Ripple in both passband and stopband
+    - Nonlinear phase response
+    - Best for applications where phase distortion is acceptable
+
+    """
+
+    def __init__(
+        self,
+        btype: str,
+        cutoff: float,
+        order: int = 4,
+        passband_ripple: float = 0.1,
+        stopband_attenuation: float = 40,
+        fs: int | None = None,
+    ) -> None:
+        super().__init__(fs)
+        self.btype = btype
+        self.cutoff = cutoff
+        self.order = order
+        self.passband_ripple = passband_ripple
+        self.stopband_attenuation = stopband_attenuation
+        self.a = None
+        self.b = None
+
+    @override
+    def compute_coefficients(self) -> None:
+        assert self.fs is not None
+
+        b, a = ellip(
+            self.order,
+            self.passband_ripple,
+            self.stopband_attenuation,
+            self.cutoff / (0.5 * self.fs),
+            btype=self.btype,  # type: ignore
+        )
+        self.b = b
+        self.a = a
+
+
+class HiElliptic(Elliptic):
+    """High-pass Elliptic filter.
+
+    Examples
+    --------
+    >>> filter = HiElliptic(cutoff=200, order=4, fs=44100)
+    >>> filtered = filter.forward(signal)
+
+    """
+
+    def __init__(
+        self,
+        cutoff: float,
+        order: int = 4,
+        passband_ripple: float = 0.1,
+        stopband_attenuation: float = 40,
+        fs: int | None = None,
+    ) -> None:
+        super().__init__(
+            "highpass",
+            cutoff,
+            order,
+            passband_ripple,
+            stopband_attenuation,
+            fs,
+        )
+
+
+class LoElliptic(Elliptic):
+    """Low-pass Elliptic filter.
+
+    Examples
+    --------
+    >>> filter = LoElliptic(cutoff=5000, order=4, fs=44100)
+    >>> filtered = filter.forward(signal)
+
+    """
+
+    def __init__(
+        self,
+        cutoff: float,
+        order: int = 4,
+        passband_ripple: float = 0.1,
+        stopband_attenuation: float = 40,
+        fs: int | None = None,
+    ) -> None:
+        super().__init__(
+            "lowpass",
+            cutoff,
+            order,
+            passband_ripple,
+            stopband_attenuation,
+            fs,
+        )

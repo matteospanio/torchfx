@@ -66,7 +66,7 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 
 - [x] **Implement Wave.save() / to_file() method**
   - ✅ Support formats: WAV, FLAC (OGG/MP3/AAC require additional backend configuration)
-  - ✅ High bit-depth: 32-bit float, 64-bit float (8, 16, 24, 32 bits supported)
+  - ✅ High bit-depth: 32-bit float, 64-bit float (8, 16, 24, 32, 64 bits supported)
   - ✅ High sample rates: up to 192kHz+ (tested with 96kHz and 192kHz)
   - ✅ Metadata preservation (automatic extraction and storage via torchaudio.info)
   - Implementation details:
@@ -76,14 +76,22 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
     - CPU tensor conversion for compatibility
     - Comprehensive test suite (16 tests, 1 skipped for OGG)
 
-- [ ] **Complete LoShelving filter**
-  - Currently marked TODO in `src/torchfx/filter/iir.py`
-  - Follow existing HiShelving pattern
+- [x] **Complete LoShelving filter**
+  - ✅ Implemented following HiShelving pattern
+  - ✅ Uses Audio EQ Cookbook formulas
+  - ✅ Supports both linear and dB gain scales
+  - ✅ Full test coverage (7 tests)
 
-- [ ] **Add professional filters**
-  - Parametric EQ (essential for music production)
-  - Elliptic filters
-  - State variable filters (TPT)
+- [x] **Add professional filters**
+  - ✅ **Parametric EQ** (essential for music production)
+    - Bell-shaped peaking filter with configurable Q and gain
+    - Intuitive interface: frequency, Q, gain in dB
+    - Perfect for surgical frequency adjustments
+  - ✅ **Elliptic filters** (HiElliptic, LoElliptic)
+    - Sharpest transition for given order
+    - Configurable passband ripple and stopband attenuation
+    - Optimal for applications where phase is not critical
+  - [ ] State variable filters (TPT) - deferred to future version
 
 ### 1.2 API Stabilization
 
