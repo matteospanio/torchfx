@@ -1,4 +1,4 @@
-# TorchFX Roadmap to v1.0.0
+# Roadmap to v1.0.0
 
 **Current Version:** 0.2.1 (Alpha)
 **Target:** v1.0.0 Stable Release

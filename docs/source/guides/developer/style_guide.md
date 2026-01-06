@@ -1,4 +1,4 @@
-# TorchFX Style Guide
+# Style Guide
 
 This document defines the coding standards, naming conventions, and best practices for TorchFX development.
 
