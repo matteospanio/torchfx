@@ -3,11 +3,6 @@
 
 This tutorial explains how to create custom audio effects in TorchFX by subclassing the {class}`~torchfx.FX` abstract base class. You'll learn about parameter handling, the strategy pattern for extensibility, and multi-channel processing.
 
-```{contents} Table of Contents
-:local:
-:depth: 2
-```
-
 ## Prerequisites
 
 Before starting this tutorial, you should be familiar with:
@@ -1064,20 +1059,6 @@ This multi-tap delay can be extended further:
 - Add modulation to delay time for chorus-like effects
 - Combine with reverb for rich spatial effects
 ```
-
-## Summary and Best Practices
-
-Creating custom effects in TorchFX requires:
-
-| Requirement | Implementation | Reference |
-|------------|----------------|-----------|
-| Inheritance | Subclass {class}`~torchfx.FX` | [Understanding the FX Base Class](#understanding-the-fx-base-class) |
-| Constructor | Call `super().__init__()` | All examples above |
-| Forward method | Implement `forward(x: Tensor) -> Tensor` | [Creating a Basic Custom Effect](#creating-a-basic-custom-effect) |
-| Parameter validation | Use assertions in `__init__` | [Parameter Configuration and Validation](#parameter-configuration-and-validation) |
-| Sample rate handling | Optional `fs: int | None` attribute | [Sample Rate Handling](#sample-rate-handling) |
-| Strategy pattern | Abstract strategy class + concrete implementations | [Strategy Pattern for Extensibility](#strategy-pattern-for-extensibility) |
-| Multi-channel support | Use `nn.ModuleList` for per-channel chains | [Multi-Channel Effects](#multi-channel-effects) |
 
 ### Best Practices
 

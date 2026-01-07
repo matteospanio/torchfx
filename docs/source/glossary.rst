@@ -55,7 +55,7 @@ This glossary defines common terms used throughout the TorchFX documentation.
       Time specified in musical units (e.g., quarter notes, eighth notes) relative to a :term:`BPM` tempo, rather than absolute time in seconds. Used for tempo-synchronized audio effects.
 
    Pipeline
-      A sequence of connected audio processing operations where the output of one stage becomes the input to the next. In TorchFX, pipelines are created using the :ref:`pipe operator <pipeline-operator>` (``|``).
+      A sequence of connected audio processing operations where the output of one stage becomes the input to the next. In TorchFX, pipelines are created using the pipe operator (``|``).
 
    Pipeline Operator
       The pipe operator (``|``) in TorchFX, used to chain effects and filters into processing pipelines. Automatically handles sample rate configuration and signal routing.
@@ -64,7 +64,7 @@ This glossary defines common terms used throughout the TorchFX documentation.
       The number of audio samples captured or played per second, measured in :term:`Hz`. Common sample rates include 44.1 kHz (CD quality) and 48 kHz (professional audio). Abbreviated as ``fs`` in TorchFX.
 
    Strategy Pattern
-      A software design pattern that enables selecting an algorithm's behavior at runtime. Used in TorchFX effects (e.g., :class:`~torchfx.Delay`) to support different processing strategies. See :cite:p:`gamma1994design`.
+      A software design pattern that enables selecting an algorithm's behavior at runtime. Used in TorchFX effects (e.g., :class:`~torchfx.Delay`) to support different processing strategies.
 
    Tensor
       PyTorch's fundamental data structure, an n-dimensional array similar to NumPy arrays but with GPU acceleration support. Audio signals in TorchFX are represented as tensors. See `PyTorch tensor documentation <https://pytorch.org/docs/stable/tensors.html>`_.
@@ -85,8 +85,3 @@ This glossary defines common terms used throughout the TorchFX documentation.
       - `PyTorch Documentation <https://pytorch.org/docs/stable/index.html>`_
       - `Audio Signal Processing (Wikipedia) <https://en.wikipedia.org/wiki/Audio_signal_processing>`_
       - `CCRMA Stanford - DSP Resources <https://ccrma.stanford.edu/>`_
-
-.. rubric:: References
-
-.. bibliography::
-   :filter: docname in docnames

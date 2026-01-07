@@ -5,26 +5,26 @@ Learn TorchFX through practical examples organized by use case.
 ```{toctree}
 :maxdepth: 2
 
-ml-batch-processing
-real-time-processing
-filters-design
-effects-design
+custom-filters
+series-parallel-filters
 custom-effects
+multi-channel-effects
+bpm-delay
 ```
 
 ## Available Tutorials
 
-### [ML Batch Processing](ml-batch-processing.md)
-Learn how to use TorchFX for batch processing audio data in machine learning pipelines. Perfect for training data preprocessing and augmentation.
+### [Custom filters](custom-filters.md)
+Create and apply your own audio filters using TorchFX's filter framework.
 
-### [Real-time Processing](real-time-processing.md)
-Discover how to implement real-time audio processing with TorchFX, including streaming audio and low-latency effects.
-
-### [Filters Design](filters-design.md)
-Deep dive into designing custom IIR and FIR filters, understanding filter parameters, and creating complex filter chains.
-
-### [Effects Design](effects-design.md)
-Create professional audio effects using TorchFX's built-in effects and learn best practices for effect design.
+### [Series parallel filters](series-parallel-filters.md)
+Explore how to combine multiple filters in series and parallel configurations for complex audio processing.
 
 ### [Custom Effects](custom-effects.md)
 Build your own custom audio effects by extending TorchFX's FX base class and integrating them into your pipelines.
+
+### [Multi Channel Effects](multi-channel-effects.md)
+Learn how to apply audio effects to multi-channel audio data using TorchFX.
+
+### [BPM delay effect](bpm-delay.md)
+Implement a tempo-synced delay effect that adjusts delay times based on the beats per minute (BPM) of the audio.

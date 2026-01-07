@@ -81,18 +81,18 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 
 - [x] **Audit and freeze public API**
   - ✅ Marked all public classes in `__all__` exports
-  - ✅ Created [API_STABILITY.md](API_STABILITY.md) with backward compatibility guarantees
+  - ✅ Created [api stability](../api_stability.md) with backward compatibility guarantees
   - ✅ Implemented deprecation warning system with decorators (`@deprecated`, `@deprecated_parameter`, `DeprecatedAlias`)
   - ✅ Full test coverage (9 tests) for deprecation utilities
 
 - [x] **Implement semantic versioning policy**
   - ✅ Documented policy: No breaking changes in minor versions (1.x.x)
   - ✅ Deprecation warnings for at least one minor version before removal
-  - ✅ Created [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) template with migration patterns
+  - ✅ Created [migration guide](../migration_guide.md) template with migration patterns
   - ✅ Added versioning examples and guidelines
 
 - [x] **Parameter naming consistency**
-  - ✅ Standardized naming conventions documented in [STYLE_GUIDE.md](STYLE_GUIDE.md):
+  - ✅ Standardized naming conventions documented in [style guide](./style_guide.md):
     - `cutoff` for lowpass/highpass/shelving filters
     - `frequency` for ParametricEQ (center frequency)
     - `Q` (uppercase) for Peaking, Notch, AllPass (mathematical convention)

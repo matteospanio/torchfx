@@ -171,7 +171,7 @@ Check [CHANGELOG.md](https://github.com/matteospanio/torchfx/CHANGELOG) for:
 
 ### 4. Follow Migration Guide
 
-See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for version-specific migration instructions.
+See [migration guide](./migration_guide.md) for version-specific migration instructions.
 
 ## Handling Breaking Changes
 
@@ -179,7 +179,7 @@ See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for version-specific migration inst
 
 When a breaking change is necessary (major version bump):
 
-1. **Read the migration guide**: [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
+1. **Read the migration guide**: [migration guide](./migration_guide.md)
 2. **Update incrementally**: Update to latest minor version first
 3. **Fix deprecation warnings**: Address all warnings before upgrading
 4. **Test thoroughly**: Run your test suite

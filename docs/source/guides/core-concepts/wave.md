@@ -59,7 +59,7 @@ print(f"Samples: {len(wave)}")
 print(f"Metadata: {wave.metadata}")
 ```
 
-**Supported formats**: WAV, FLAC, MP3, OGG (depends on {term}`torchaudio` backend)
+**Supported formats**: WAV, FLAC, MP3, OGG (depends on torchaudio backend)
 
 ### From NumPy/PyTorch Arrays
 

@@ -46,7 +46,7 @@ graph TB
 
 The {class}`~torchfx.Wave` class wraps PyTorch tensors to represent digital audio signals. It provides:
 
-- Sample rate ({term}`sampling frequency`) management
+- Sample rate ({term}`Sample Rate`) management
 - Device handling (CPU/GPU)
 - Audio file I/O (load/save)
 - Metadata tracking
@@ -112,7 +112,7 @@ TorchFX follows these design principles:
 ```{seealso}
 - {doc}`/guides/tutorials/index` - Practical examples using these concepts
 - {doc}`/api/index` - Complete API reference
-- {cite:t}`spanio2024torchfx` - Academic paper on TorchFX design
+- {cite:t}`spanio2025torchfx` - Academic paper on TorchFX design
 ```
 
 ## Architecture Diagram
