@@ -18,8 +18,8 @@ developer/index
 
 New to TorchFX? Start here:
 
-- [Installation](getting-started/installation.rst) - Install TorchFX and set up your environment
-- [Getting Started Guide](getting-started/getting_started.rst) - Your first steps with TorchFX
+- [Installation](getting-started/installation.md) - Install TorchFX and set up your environment
+- [Getting Started Guide](getting-started/getting_started.md) - Your first steps with TorchFX
 
 ## Core Concepts
 

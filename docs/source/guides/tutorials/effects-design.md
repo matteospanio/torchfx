@@ -12,7 +12,7 @@ This tutorial covers:
 
 ## Prerequisites
 
-- [Getting Started](../getting-started/getting_started.rst)
+- [Getting Started](../getting-started/getting_started.md)
 - [Filters Design](filters-design.md) recommended
 - Basic understanding of audio effects
 

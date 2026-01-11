@@ -12,7 +12,7 @@ This tutorial covers:
 
 ## Prerequisites
 
-- [Getting Started](../getting-started/getting_started.rst)
+- [Getting Started](../getting-started/getting_started.md)
 - Basic DSP knowledge
 - Understanding of frequency domain concepts
 

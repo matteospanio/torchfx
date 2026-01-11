@@ -12,7 +12,7 @@ This tutorial covers:
 
 ## Prerequisites
 
-- Completion of [Getting Started](../getting-started/getting_started.rst)
+- Completion of [Getting Started](../getting-started/getting_started.md)
 - Understanding of audio streaming concepts
 - Basic knowledge of signal processing
 
