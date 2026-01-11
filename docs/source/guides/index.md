@@ -8,6 +8,7 @@ Comprehensive documentation for using and developing with TorchFX.
 getting-started/index
 core-concepts/index
 tutorials/index
+advanced/index
 api_stability
 migration_guide
 developer/index
@@ -33,11 +34,20 @@ Understand the fundamental building blocks of TorchFX:
 
 Learn TorchFX through practical examples:
 
-- [ML Batch Processing](tutorials/ml-batch-processing.md) - Batch audio processing for ML pipelines
-- [Real-time Processing](tutorials/real-time-processing.md) - Low-latency real-time audio processing
-- [Filters Design](tutorials/filters-design.md) - Designing custom IIR and FIR filters
-- [Effects Design](tutorials/effects-design.md) - Creating professional audio effects
 - [Custom Effects](tutorials/custom-effects.md) - Building your own custom effects
+- [Series and Parallel Filters](tutorials/series-parallel-filters.md) - Combining filters in complex patterns
+- [Custom Filters](tutorials/custom-filters.md) - Creating custom filter designs
+- [Multi-Channel Effects](tutorials/multi-channel-effects.md) - Processing stereo and surround sound
+- [BPM-Synced Delay](tutorials/bpm-delay.md) - Musical time-based delay effects
+
+## Advanced Topics
+
+Master advanced TorchFX features:
+
+- [GPU Acceleration](advanced/gpu-acceleration.md) - Leverage CUDA for faster processing
+- [PyTorch Integration](advanced/pytorch-integration.md) - Integrate with neural networks
+- [Multi-Channel Processing](advanced/multi-channel.md) - Advanced multi-channel patterns
+- [Performance Optimization](advanced/performance.md) - Benchmarks and optimization strategies
 
 ## Reference Guides
 
