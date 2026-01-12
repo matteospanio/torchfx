@@ -1,0 +1,43 @@
+Available pages for matteospanio/torchfx:
+
+- 1 Overview
+  - 1.1 Quick Start
+  - 1.2 Installation
+- 2 Core Concepts
+  - 2.1 Wave Class
+  - 2.2 FX Base Class
+  - 2.3 Pipeline Operator
+  - 2.4 Type System
+- 3 Effects
+  - 3.1 Gain
+  - 3.2 Normalize
+  - 3.3 Reverb
+  - 3.4 Delay
+  - 3.5 Creating Custom Effects
+- 4 Filters
+  - 4.1 IIR Filters
+  - 4.2 FIR Filters
+  - 4.3 Parallel Filter Combination
+  - 4.4 Creating Custom Filters
+- 5 Advanced Usage
+  - 5.1 Multi-Channel Processing
+  - 5.2 GPU Acceleration
+  - 5.3 PyTorch Integration
+- 6 Examples
+  - 6.1 Series and Parallel Filters
+  - 6.2 Multi-Channel Effect Example
+  - 6.3 BPM-Synced Delay Example
+- 7 Development Guide
+  - 7.1 Project Structure
+  - 7.2 Build and Dependencies
+  - 7.3 Development Workflow
+  - 7.4 Testing
+  - 7.5 Benchmarking
+  - 7.6 Documentation
+- 8 API Reference
+  - 8.1 torchfx.Wave
+  - 8.2 torchfx.FX and Effects
+  - 8.3 torchfx.filter
+  - 8.4 torchfx.typing
+- 9 Performance
+- 10 Changelog
