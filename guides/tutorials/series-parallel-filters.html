@@ -1,0 +1,1660 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Series and Parallel Filter Combinations &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/tutorials/series-parallel-filters';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Creating Custom Effects" href="custom-effects.html" />
+    <link rel="prev" title="Creating Custom Filters" href="custom-filters.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Series and Parallel Filter Combinations</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="series-and-parallel-filter-combinations">
+<h1>Series and Parallel Filter Combinations<a class="headerlink" href="#series-and-parallel-filter-combinations" title="Link to this heading">#</a></h1>
+<p>Learn how to create complex filter networks by combining filters in series (sequential) and parallel (simultaneous) configurations. This tutorial demonstrates TorchFX’s intuitive operators for building sophisticated audio processing chains.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>TorchFX provides two fundamental ways to combine filters:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Configuration</p></th>
+<th class="head"><p>Operator</p></th>
+<th class="head"><p>Behavior</p></th>
+<th class="head"><p>Use Case</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Series</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">|</span></code> (pipe)</p></td>
+<td><p>Sequential processing</p></td>
+<td><p>Filter chains, cascaded stages</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Parallel</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">+</span></code> (addition)</p></td>
+<td><p>Simultaneous processing with summed outputs</p></td>
+<td><p>Band-pass filters, multi-band processing</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Both can be combined to create complex signal processing networks with minimal code.</p>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;Series Configuration&quot;
+        Input1[Input] --&gt; F1[Filter 1]
+        F1 --&gt; F2[Filter 2]
+        F2 --&gt; F3[Filter 3]
+        F3 --&gt; Output1[Output]
+    end
+
+    subgraph &quot;Parallel Configuration&quot;
+        Input2[Input] --&gt; Split{Split}
+        Split --&gt; FA[Filter A]
+        Split --&gt; FB[Filter B]
+        Split --&gt; FC[Filter C]
+        FA --&gt; Sum((+))
+        FB --&gt; Sum
+        FC --&gt; Sum
+        Sum --&gt; Output2[Output]
+    end
+
+    style Input1 fill:#e1f5ff
+    style Output1 fill:#e1f5ff
+    style Input2 fill:#e1f5ff
+    style Output2 fill:#e1f5ff
+    style F1 fill:#fff5e1
+    style F2 fill:#fff5e1
+    style F3 fill:#fff5e1
+    style FA fill:#fff5e1
+    style FB fill:#fff5e1
+    style FC fill:#fff5e1
+    </pre></section>
+<section id="series-filter-chains">
+<h2>Series Filter Chains<a class="headerlink" href="#series-filter-chains" title="Link to this heading">#</a></h2>
+<p>Series combinations use the <a class="reference internal" href="../../glossary.html#term-Pipeline-Operator"><span class="xref std std-term">pipeline operator</span></a> (<code class="docutils literal notranslate"><span class="pre">|</span></code>) to process audio sequentially through multiple filters.</p>
+<section id="basic-series-chain">
+<h3>Basic Series Chain<a class="headerlink" href="#basic-series-chain" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Load audio</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Apply filters in series</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>    <span class="c1"># Remove low frequencies</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>   <span class="c1"># Remove high frequencies</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>                       <span class="c1"># Normalize</span>
+<span class="p">)</span>
+
+<span class="n">processed</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;filtered.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Signal flow</strong>: Input → High-pass (100 Hz) → Low-pass (5000 Hz) → Normalize → Output</p>
+</section>
+<section id="how-series-works">
+<h3>How Series Works<a class="headerlink" href="#how-series-works" title="Link to this heading">#</a></h3>
+<p>When you use the pipe operator:</p>
+<ol class="arabic simple">
+<li><p>The <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> object flows through each filter sequentially</p></li>
+<li><p>Each filter’s <code class="docutils literal notranslate"><span class="pre">forward()</span></code> method processes the audio tensor</p></li>
+<li><p>A new <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> is returned at each stage</p></li>
+<li><p>Sample rate (<code class="docutils literal notranslate"><span class="pre">fs</span></code>) is automatically propagated through the pipeline</p></li>
+</ol>
+<pre  class="mermaid">
+        sequenceDiagram
+    participant Wave
+    participant Filter1
+    participant Filter2
+    participant Filter3
+
+    Wave-&gt;&gt;Filter1: wave | filter1
+    Note over Filter1: fs auto-configured
+    Filter1-&gt;&gt;Filter1: forward(wave.ys)
+    Filter1-&gt;&gt;Wave: Return new Wave
+
+    Wave-&gt;&gt;Filter2: result | filter2
+    Note over Filter2: fs auto-configured
+    Filter2-&gt;&gt;Filter2: forward(result.ys)
+    Filter2-&gt;&gt;Wave: Return new Wave
+
+    Wave-&gt;&gt;Filter3: result | filter3
+    Note over Filter3: fs auto-configured
+    Filter3-&gt;&gt;Filter3: forward(result.ys)
+    Filter3-&gt;&gt;Wave: Return final Wave
+    </pre></section>
+<section id="multi-stage-processing">
+<h3>Multi-Stage Processing<a class="headerlink" href="#multi-stage-processing" title="Link to this heading">#</a></h3>
+<p>Build complex filter chains with multiple stages:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;vocal.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Multi-stage vocal processing chain</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>          <span class="c1"># Remove rumble</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>     <span class="c1"># Presence boost</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>     <span class="c1"># Reduce muddiness</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Compressor</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span> <span class="c1"># Dynamic control</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>                 <span class="c1"># Final normalization</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Each stage processes the output of the previous stage, allowing you to build sophisticated processing chains.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../core-concepts/pipeline-operator.html"><span class="doc">Pipeline Operator - Functional Composition</span></a> - Deep dive into the pipeline operator</p>
+</div>
+</section>
+</section>
+<section id="parallel-filter-combinations">
+<h2>Parallel Filter Combinations<a class="headerlink" href="#parallel-filter-combinations" title="Link to this heading">#</a></h2>
+<p>Parallel combinations use the addition operator (<code class="docutils literal notranslate"><span class="pre">+</span></code>) to apply multiple filters simultaneously and sum their outputs.</p>
+<section id="basic-parallel-combination">
+<h3>Basic Parallel Combination<a class="headerlink" href="#basic-parallel-combination" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create a band-pass filter using parallel high-pass and low-pass</span>
+<span class="n">bandpass</span> <span class="o">=</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="c1"># Apply the combined filter</span>
+<span class="n">filtered</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">bandpass</span>
+</pre></div>
+</div>
+<p><strong>Signal flow</strong>: Input → [High-pass (200 Hz) + Low-pass (2000 Hz)] → Output</p>
+<p>The output is the sum: <code class="docutils literal notranslate"><span class="pre">result</span> <span class="pre">=</span> <span class="pre">highpass(input)</span> <span class="pre">+</span> <span class="pre">lowpass(input)</span></code></p>
+</section>
+<section id="the-parallelfiltercombination-class">
+<h3>The ParallelFilterCombination Class<a class="headerlink" href="#the-parallelfiltercombination-class" title="Link to this heading">#</a></h3>
+<p>When you use the <code class="docutils literal notranslate"><span class="pre">+</span></code> operator with filters, TorchFX creates a <code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelFilterCombination</span></code> instance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="c1"># These are equivalent</span>
+<span class="n">combination1</span> <span class="o">=</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">)</span>
+<span class="n">combination2</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">ParallelFilterCombination</span><span class="p">(</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelFilterCombination</span></code> class:</p>
+<ul class="simple">
+<li><p>Stores all filters in a <code class="docutils literal notranslate"><span class="pre">filters</span></code> attribute</p></li>
+<li><p>Automatically propagates sample rate (<code class="docutils literal notranslate"><span class="pre">fs</span></code>) to all child filters</p></li>
+<li><p>Sums outputs: <code class="docutils literal notranslate"><span class="pre">result</span> <span class="pre">=</span> <span class="pre">sum(filter(input)</span> <span class="pre">for</span> <span class="pre">filter</span> <span class="pre">in</span> <span class="pre">filters)</span></code></p></li>
+</ul>
+<pre  class="mermaid">
+        classDiagram
+    class ParallelFilterCombination {
+        +Sequence~AbstractFilter~ filters
+        +int|None fs
+        +compute_coefficients() None
+        +forward(x) Tensor
+    }
+
+    class AbstractFilter {
+        &lt;&lt;abstract&gt;&gt;
+        +__add__(other) ParallelFilterCombination
+        +compute_coefficients() None
+        +forward(x) Tensor
+    }
+
+    class HiButterworth {
+        +float cutoff
+        +int order
+        +forward(x) Tensor
+    }
+
+    class LoButterworth {
+        +float cutoff
+        +int order
+        +forward(x) Tensor
+    }
+
+    AbstractFilter &lt;|-- ParallelFilterCombination
+    AbstractFilter &lt;|-- HiButterworth
+    AbstractFilter &lt;|-- LoButterworth
+    ParallelFilterCombination o-- AbstractFilter : contains
+
+    note for ParallelFilterCombination &quot;Sums outputs of all child filters&quot;
+    </pre></section>
+<section id="how-parallel-works">
+<h3>How Parallel Works<a class="headerlink" href="#how-parallel-works" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">forward()</span></code> method of <code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelFilterCombination</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="c1"># Apply each filter independently</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">]</span>
+
+    <span class="c1"># Create result tensor on same device as input</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># Sum all outputs</span>
+    <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">+=</span> <span class="n">output</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+</pre></div>
+</div>
+<p>This implementation:</p>
+<ul class="simple">
+<li><p>Processes all filters in parallel (conceptually)</p></li>
+<li><p>Uses <code class="docutils literal notranslate"><span class="pre">torch.zeros_like(x)</span></code> to ensure device compatibility</p></li>
+<li><p>Accumulates outputs via element-wise addition</p></li>
+<li><p>Disables gradients with <code class="docutils literal notranslate"><span class="pre">&#64;torch.no_grad()</span></code> for efficiency</p></li>
+</ul>
+</section>
+<section id="multiple-parallel-filters">
+<h3>Multiple Parallel Filters<a class="headerlink" href="#multiple-parallel-filters" title="Link to this heading">#</a></h3>
+<p>Combine more than two filters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Three-way parallel combination</span>
+<span class="n">multiband</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span>      <span class="c1"># Low band</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">BandPass</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span>     <span class="c1"># Mid band</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>       <span class="c1"># High band</span>
+<span class="p">)</span>
+
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">multiband</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="combining-series-and-parallel">
+<h2>Combining Series and Parallel<a class="headerlink" href="#combining-series-and-parallel" title="Link to this heading">#</a></h2>
+<p>The real power comes from combining both patterns in a single pipeline.</p>
+<section id="complete-example">
+<h3>Complete Example<a class="headerlink" href="#complete-example" title="Link to this heading">#</a></h3>
+<p>Here’s a complete example demonstrating mixed series/parallel processing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="c1"># Load audio</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Move to GPU if available</span>
+<span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Complex processing chain</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="c1"># Stage 1: Remove low-frequency rumble (series)</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Stage 2: Parallel high-pass filters (parallel)</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiChebyshev1</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Stage 3: Reduce level (series)</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Save result (move to CPU for I/O)</span>
+<span class="n">processed</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;processed.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="signal-flow-visualization">
+<h3>Signal Flow Visualization<a class="headerlink" href="#signal-flow-visualization" title="Link to this heading">#</a></h3>
+<pre  class="mermaid">
+        graph TB
+    Input[Input Signal&lt;br/&gt;from_file] --&gt; Stage1[Stage 1: LoButterworth&lt;br/&gt;fc=100 Hz, order=2]
+
+    Stage1 --&gt; Split{Split}
+
+    subgraph Stage2 [Stage 2: Parallel Combination]
+        Split --&gt; HP1[HiButterworth&lt;br/&gt;fc=2000 Hz, order=4]
+        Split --&gt; HP2[HiChebyshev1&lt;br/&gt;fc=2000 Hz, order=2]
+        HP1 --&gt; Sum((+))
+        HP2 --&gt; Sum
+    end
+
+    Sum --&gt; Stage3[Stage 3: Gain&lt;br/&gt;amplitude=0.5]
+
+    Stage3 --&gt; Output[Output Signal&lt;br/&gt;save to file]
+
+    style Input fill:#e1f5ff
+    style Output fill:#e1f5ff
+    style Stage1 fill:#fff5e1
+    style HP1 fill:#fff5e1
+    style HP2 fill:#fff5e1
+    style Stage3 fill:#fff5e1
+    style Stage2 fill:#f9f9f9
+    </pre></section>
+<section id="operator-precedence">
+<h3>Operator Precedence<a class="headerlink" href="#operator-precedence" title="Link to this heading">#</a></h3>
+<p>Python’s operator precedence affects how series and parallel combine:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Addition (+) has HIGHER precedence than pipe (|)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter1</span> <span class="o">+</span> <span class="n">filter2</span> <span class="o">|</span> <span class="n">filter3</span>
+
+<span class="c1"># This is parsed as:</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="p">(</span><span class="n">filter1</span> <span class="o">+</span> <span class="n">filter2</span><span class="p">)</span> <span class="o">|</span> <span class="n">filter3</span>
+
+<span class="c1"># For clarity, use explicit parentheses:</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="p">(</span><span class="n">filter1</span> <span class="o">+</span> <span class="n">filter2</span><span class="p">)</span> <span class="o">|</span> <span class="n">filter3</span>
+
+<span class="c1"># Or break into variables:</span>
+<span class="n">parallel_section</span> <span class="o">=</span> <span class="n">filter1</span> <span class="o">+</span> <span class="n">filter2</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">parallel_section</span> <span class="o">|</span> <span class="n">filter3</span>
+</pre></div>
+</div>
+<p><strong>Best practice</strong>: Use parentheses or intermediate variables for complex combinations.</p>
+</section>
+</section>
+<section id="sample-rate-management">
+<h2>Sample Rate Management<a class="headerlink" href="#sample-rate-management" title="Link to this heading">#</a></h2>
+<p>Both series and parallel combinations handle sample rate automatically.</p>
+<section id="automatic-propagation">
+<h3>Automatic Propagation<a class="headerlink" href="#automatic-propagation" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="c1"># Load audio (fs automatically extracted from file)</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>  <span class="c1"># fs = 44100</span>
+
+<span class="c1"># Filters auto-configured with fs=44100</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="p">(</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>When you use the pipeline operator:</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> sets each filter’s <code class="docutils literal notranslate"><span class="pre">fs</span></code> attribute</p></li>
+<li><p>For <code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelFilterCombination</span></code>, <code class="docutils literal notranslate"><span class="pre">fs</span></code> propagates to all child filters</p></li>
+<li><p>Filters compute coefficients using the correct sample rate</p></li>
+</ol>
+</section>
+<section id="manual-configuration">
+<h3>Manual Configuration<a class="headerlink" href="#manual-configuration" title="Link to this heading">#</a></h3>
+<p>You can also set sample rate explicitly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span><span class="p">,</span> <span class="n">ParallelFilterCombination</span>
+
+<span class="c1"># Create parallel combination with explicit fs</span>
+<span class="n">parallel</span> <span class="o">=</span> <span class="n">ParallelFilterCombination</span><span class="p">(</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">HiChebyshev1</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span>
+<span class="p">)</span>
+
+<span class="c1"># All child filters now have fs=44100</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">fs</span></code> property automatically propagates to child filters that have <code class="docutils literal notranslate"><span class="pre">fs=None</span></code>.</p>
+</section>
+</section>
+<section id="performance-considerations">
+<h2>Performance Considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading">#</a></h2>
+<section id="gpu-acceleration">
+<h3>GPU Acceleration<a class="headerlink" href="#gpu-acceleration" title="Link to this heading">#</a></h3>
+<p>Both series and parallel work seamlessly on GPU:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Move to GPU</span>
+<span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+
+    <span class="c1"># All processing happens on GPU</span>
+    <span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="p">(</span><span class="n">filter1</span> <span class="o">+</span> <span class="n">filter2</span><span class="p">)</span> <span class="o">|</span> <span class="n">filter3</span>
+
+    <span class="c1"># Move back to CPU for saving</span>
+    <span class="n">processed</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The device is automatically propagated because:</p>
+<ul class="simple">
+<li><p>Filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a></p></li>
+<li><p>Filter coefficients are stored as <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.Tensor</span></code></a></p></li>
+<li><p>The <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> tensor carries device information</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../advanced/gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a> - GPU acceleration guide</p>
+</div>
+</section>
+<section id="memory-efficiency">
+<h3>Memory Efficiency<a class="headerlink" href="#memory-efficiency" title="Link to this heading">#</a></h3>
+<p>For parallel combinations with many filters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Current implementation collects all outputs</span>
+<span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">]</span>  <span class="c1"># List of N tensors</span>
+
+<span class="c1"># Then sums them</span>
+<span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">+=</span> <span class="n">output</span>
+</pre></div>
+</div>
+<p>This holds all filter outputs in memory simultaneously. For very large signals or many filters, consider processing in chunks.</p>
+</section>
+</section>
+<section id="mixing-with-pytorch-modules">
+<h2>Mixing with PyTorch Modules<a class="headerlink" href="#mixing-with-pytorch-modules" title="Link to this heading">#</a></h2>
+<p>Since filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, they work with standard PyTorch containers:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="c1"># Use nn.Sequential</span>
+<span class="n">effect_chain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">5000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">()</span>
+<span class="p">)</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">effect_chain</span>
+</pre></div>
+</div>
+<p>You can also mix TorchFX filters with torchaudio transforms:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiChebyshev1</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">T</span><span class="o">.</span><span class="n">Vol</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># torchaudio volume transform</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Reverb</span><span class="p">()</span>  <span class="c1"># torchfx reverb effect</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="real-world-examples">
+<h2>Real-World Examples<a class="headerlink" href="#real-world-examples" title="Link to this heading">#</a></h2>
+<section id="vocal-processing-chain">
+<h3>Vocal Processing Chain<a class="headerlink" href="#vocal-processing-chain" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;vocal.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Professional vocal processing</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="c1"># Remove rumble and noise</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">12000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="c1"># Parallel EQ boosts for presence and air</span>
+    <span class="o">|</span> <span class="p">(</span>
+        <span class="n">iir</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span>   <span class="c1"># Presence</span>
+        <span class="n">iir</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>    <span class="c1"># Air</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Dynamics and final polish</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Compressor</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-band-processing">
+<h3>Multi-Band Processing<a class="headerlink" href="#multi-band-processing" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;master.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Three-band processing</span>
+<span class="n">low</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">1.2</span><span class="p">)</span>
+<span class="n">mid</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">BandPass</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Compressor</span><span class="p">(</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+<span class="n">high</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">1.1</span><span class="p">)</span>
+
+<span class="c1"># Recombine bands</span>
+<span class="n">multiband</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">merge</span><span class="p">([</span><span class="n">low</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">high</span><span class="p">],</span> <span class="n">split_channels</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="creative-parallel-effects">
+<h3>Creative Parallel Effects<a class="headerlink" href="#creative-parallel-effects" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;guitar.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Parallel processing for thickness</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="c1"># Three parallel delay lines</span>
+    <span class="o">|</span> <span class="p">(</span>
+        <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span> <span class="o">+</span>
+        <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span> <span class="o">+</span>
+        <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># Final processing</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<section id="use-multi-line-for-readability">
+<h3>Use Multi-Line for Readability<a class="headerlink" href="#use-multi-line-for-readability" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Clear, readable</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="o">|</span> <span class="n">filter1</span>
+    <span class="o">|</span> <span class="n">filter2</span> <span class="o">+</span> <span class="n">filter3</span>
+    <span class="o">|</span> <span class="n">filter4</span>
+<span class="p">)</span>
+
+<span class="c1"># ❌ BAD: Hard to read</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter1</span> <span class="o">|</span> <span class="n">filter2</span> <span class="o">+</span> <span class="n">filter3</span> <span class="o">|</span> <span class="n">filter4</span>
+</pre></div>
+</div>
+</section>
+<section id="name-complex-sections">
+<h3>Name Complex Sections<a class="headerlink" href="#name-complex-sections" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Named sections</span>
+<span class="n">parallel_hp</span> <span class="o">=</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiChebyshev1</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="o">|</span> <span class="n">parallel_hp</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># ❌ LESS GOOD: Inline everything</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiChebyshev1</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="use-parentheses-for-clarity">
+<h3>Use Parentheses for Clarity<a class="headerlink" href="#use-parentheses-for-clarity" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Explicit grouping</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="p">(</span><span class="n">lowpass</span> <span class="o">+</span> <span class="n">highpass</span><span class="p">)</span> <span class="o">|</span> <span class="n">gain</span>
+
+<span class="c1"># ⚠️  WORKS: Relies on operator precedence</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">lowpass</span> <span class="o">+</span> <span class="n">highpass</span> <span class="o">|</span> <span class="n">gain</span>
+</pre></div>
+</div>
+</section>
+<section id="reuse-filter-combinations">
+<h3>Reuse Filter Combinations<a class="headerlink" href="#reuse-filter-combinations" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Reusable filter</span>
+<span class="n">mastering_chain</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span>
+    <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">18000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Apply to multiple files</span>
+<span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">audio_files</span><span class="p">:</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+    <span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">mastering_chain</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">()</span>
+    <span class="n">processed</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mastered_</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="common-pitfalls">
+<h2>Common Pitfalls<a class="headerlink" href="#common-pitfalls" title="Link to this heading">#</a></h2>
+<section id="forgetting-device-management">
+<h3>Forgetting Device Management<a class="headerlink" href="#forgetting-device-management" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ WRONG: Mixing CPU and GPU</span>
+<span class="n">wave_gpu</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave_gpu</span> <span class="o">|</span> <span class="n">filter_chain</span>
+<span class="n">processed</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>  <span class="c1"># Error: can&#39;t save CUDA tensor</span>
+
+<span class="c1"># ✅ CORRECT: Move to CPU before saving</span>
+<span class="n">processed</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="misunderstanding-parallel-summation">
+<h3>Misunderstanding Parallel Summation<a class="headerlink" href="#misunderstanding-parallel-summation" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Parallel combination SUMS outputs, not average</span>
+<span class="n">parallel</span> <span class="o">=</span> <span class="n">filter1</span> <span class="o">+</span> <span class="n">filter2</span>
+
+<span class="c1"># Output amplitude may be higher than input</span>
+<span class="c1"># Consider adding gain reduction if needed</span>
+<span class="n">parallel_with_gain</span> <span class="o">=</span> <span class="p">(</span><span class="n">filter1</span> <span class="o">+</span> <span class="n">filter2</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="sample-rate-mismatch">
+<h3>Sample Rate Mismatch<a class="headerlink" href="#sample-rate-mismatch" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ WRONG: Manually created filters without fs</span>
+<span class="n">filter1</span> <span class="o">=</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">filter1</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="mi">44100</span>
+<span class="n">filter2</span> <span class="o">=</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+<span class="c1"># filter2.fs is None!</span>
+
+<span class="n">parallel</span> <span class="o">=</span> <span class="n">ParallelFilterCombination</span><span class="p">(</span><span class="n">filter1</span><span class="p">,</span> <span class="n">filter2</span><span class="p">)</span>
+
+<span class="c1"># ✅ CORRECT: Let Wave set fs automatically</span>
+<span class="n">parallel</span> <span class="o">=</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>  <span class="c1"># fs auto-configured</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">parallel</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="related-concepts">
+<h2>Related Concepts<a class="headerlink" href="#related-concepts" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../core-concepts/pipeline-operator.html"><span class="doc">Pipeline Operator - Functional Composition</span></a> - Understanding the pipe operator</p></li>
+<li><p><a class="reference internal" href="../core-concepts/fx.html"><span class="doc">FX - Audio Effect Base Class</span></a> - FX base class architecture</p></li>
+<li><p><a class="reference internal" href="custom-filters.html"><span class="doc">Creating Custom Filters</span></a> - Creating custom filters</p></li>
+<li><p><a class="reference internal" href="../advanced/pytorch-integration.html"><span class="doc">PyTorch Integration</span></a> - PyTorch nn.Module integration</p></li>
+</ul>
+</section>
+<section id="external-resources">
+<h2>External Resources<a class="headerlink" href="#external-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Digital_filter">Digital Filter on Wikipedia</a> - Filter theory and design</p></li>
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Series_and_parallel_circuits">Series and Parallel Circuits</a> - Electrical circuit analogy</p></li>
+<li><p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html">PyTorch nn.Module</a> - Module base class</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<span class="target" id="id1"></span></section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="custom-filters.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Creating Custom Filters</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="custom-effects.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Creating Custom Effects</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#series-filter-chains">Series Filter Chains</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-series-chain">Basic Series Chain</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-series-works">How Series Works</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-stage-processing">Multi-Stage Processing</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parallel-filter-combinations">Parallel Filter Combinations</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-parallel-combination">Basic Parallel Combination</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-parallelfiltercombination-class">The ParallelFilterCombination Class</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-parallel-works">How Parallel Works</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-parallel-filters">Multiple Parallel Filters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#combining-series-and-parallel">Combining Series and Parallel</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-example">Complete Example</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#signal-flow-visualization">Signal Flow Visualization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#operator-precedence">Operator Precedence</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-rate-management">Sample Rate Management</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-propagation">Automatic Propagation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#manual-configuration">Manual Configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-considerations">Performance Considerations</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-acceleration">GPU Acceleration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#memory-efficiency">Memory Efficiency</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mixing-with-pytorch-modules">Mixing with PyTorch Modules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#real-world-examples">Real-World Examples</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vocal-processing-chain">Vocal Processing Chain</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-band-processing">Multi-Band Processing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#creative-parallel-effects">Creative Parallel Effects</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-multi-line-for-readability">Use Multi-Line for Readability</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#name-complex-sections">Name Complex Sections</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-parentheses-for-clarity">Use Parentheses for Clarity</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reuse-filter-combinations">Reuse Filter Combinations</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-pitfalls">Common Pitfalls</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#forgetting-device-management">Forgetting Device Management</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#misunderstanding-parallel-summation">Misunderstanding Parallel Summation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-rate-mismatch">Sample Rate Mismatch</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts">Related Concepts</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-resources">External Resources</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/tutorials/series-parallel-filters.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/tutorials/series-parallel-filters.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

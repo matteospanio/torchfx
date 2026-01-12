@@ -1,0 +1,1714 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Project Structure &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/project-structure';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Testing" href="testing.html" />
+    <link rel="prev" title="Developer Documentation" href="index.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Developer Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Project Structure</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="project-structure">
+<h1>Project Structure<a class="headerlink" href="#project-structure" title="Link to this heading">#</a></h1>
+<p>Comprehensive overview of the TorchFX repository structure, including source code organization, module dependencies, and package layout.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>The TorchFX repository follows a standard Python package structure with clear separation between source code, tests, documentation, and supporting tools. Understanding this structure is essential for contributing to the project and navigating the codebase effectively.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="testing.html"><span class="doc">Testing</span></a> - Testing infrastructure
+<a class="reference internal" href="documentation.html"><span class="doc">Documentation</span></a> - Documentation system</p>
+</div>
+</section>
+<section id="repository-layout">
+<h2>Repository Layout<a class="headerlink" href="#repository-layout" title="Link to this heading">#</a></h2>
+<p>The repository is organized with the following top-level structure:</p>
+<pre  class="mermaid">
+        graph TB
+    Root[&quot;Repository Root&quot;]
+
+    Root --&gt; Src[&quot;src/&lt;br/&gt;Source code&quot;]
+    Root --&gt; Tests[&quot;tests/&lt;br/&gt;Test suite&quot;]
+    Root --&gt; Docs[&quot;docs/&lt;br/&gt;Sphinx documentation&quot;]
+    Root --&gt; Examples[&quot;examples/&lt;br/&gt;Usage examples&quot;]
+    Root --&gt; Benchmark[&quot;benchmark/&lt;br/&gt;Performance tests&quot;]
+    Root --&gt; CLI[&quot;cli/&lt;br/&gt;Command-line interface&quot;]
+
+    Root --&gt; PyProject[&quot;pyproject.toml&lt;br/&gt;Project configuration&quot;]
+    Root --&gt; UVLock[&quot;uv.lock&lt;br/&gt;Locked dependencies&quot;]
+    Root --&gt; PreCommit[&quot;.pre-commit-config.yaml&lt;br/&gt;Code quality hooks&quot;]
+    Root --&gt; GitHub[&quot;.github/&lt;br/&gt;CI/CD workflows&quot;]
+    Root --&gt; README[&quot;README.md&lt;br/&gt;Project overview&quot;]
+    Root --&gt; License[&quot;LICENSE&lt;br/&gt;GPLv3&quot;]
+    Root --&gt; Changelog[&quot;CHANGELOG&lt;br/&gt;Version history&quot;]
+
+    Src --&gt; TorchFX[&quot;torchfx/&lt;br/&gt;Main package&quot;]
+    Tests --&gt; TestEffects[&quot;test_effects.py&lt;br/&gt;Effect tests&quot;]
+    Docs --&gt; Source[&quot;source/&lt;br/&gt;Documentation source&quot;]
+    Examples --&gt; Ex1[&quot;series_and_parallel_filters.py&quot;]
+    Examples --&gt; Ex2[&quot;multi_channel_effect.py&quot;]
+    Examples --&gt; Ex3[&quot;delay.py&quot;]
+    Benchmark --&gt; B1[&quot;api_bench.py&quot;]
+    Benchmark --&gt; B2[&quot;fir_bench.py&quot;]
+    Benchmark --&gt; B3[&quot;iir_bench.py&quot;]
+    CLI --&gt; Main[&quot;__main__.py&lt;br/&gt;CLI entry point&quot;]
+
+    GitHub --&gt; CIWorkflow[&quot;workflows/ci.yml&quot;]
+    GitHub --&gt; DocsWorkflow[&quot;workflows/docs.yml&quot;]
+    </pre><section id="directory-purpose-summary">
+<h3>Directory Purpose Summary<a class="headerlink" href="#directory-purpose-summary" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Directory</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Key Contents</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">src/torchfx/</span></code></p></td>
+<td><p>Main library package</p></td>
+<td><p>Core modules: wave, effect, filter, typing</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tests/</span></code></p></td>
+<td><p>Test suite</p></td>
+<td><p>Unit and integration tests</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">docs/</span></code></p></td>
+<td><p>Documentation</p></td>
+<td><p>Sphinx source files and configuration</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">examples/</span></code></p></td>
+<td><p>Usage examples</p></td>
+<td><p>Practical demonstrations of library features</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">benchmark/</span></code></p></td>
+<td><p>Performance tests</p></td>
+<td><p>GPU vs CPU performance comparisons</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cli/</span></code></p></td>
+<td><p>Command-line interface</p></td>
+<td><p>CLI implementation (placeholder)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">.github/workflows/</span></code></p></td>
+<td><p>CI/CD pipelines</p></td>
+<td><p>GitHub Actions workflow definitions</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="source-package-structure">
+<h2>Source Package Structure<a class="headerlink" href="#source-package-structure" title="Link to this heading">#</a></h2>
+<p>The main library is located in <code class="docutils literal notranslate"><span class="pre">src/torchfx/</span></code> and organized as a modular Python package. The structure emphasizes clear separation of concerns and explicit public API exports.</p>
+<section id="package-layout">
+<h3>Package Layout<a class="headerlink" href="#package-layout" title="Link to this heading">#</a></h3>
+<pre  class="mermaid">
+        graph TD
+    TorchFX[&quot;src/torchfx/&quot;]
+
+    TorchFX --&gt; Init[&quot;__init__.py&lt;br/&gt;Public API exports&quot;]
+    TorchFX --&gt; Wave[&quot;wave.py&lt;br/&gt;Wave class&quot;]
+    TorchFX --&gt; Effect[&quot;effect.py&lt;br/&gt;FX, Gain, Normalize&lt;br/&gt;Reverb, Delay&quot;]
+    TorchFX --&gt; Typing[&quot;typing.py&lt;br/&gt;MusicalTime&lt;br/&gt;Type aliases&quot;]
+    TorchFX --&gt; FilterDir[&quot;filter/&lt;br/&gt;Filter subpackage&quot;]
+
+    FilterDir --&gt; FilterInit[&quot;__init__.py&lt;br/&gt;Filter exports&quot;]
+    FilterDir --&gt; FilterBase[&quot;__base.py&lt;br/&gt;AbstractFilter&lt;br/&gt;ParallelFilterCombination&quot;]
+    FilterDir --&gt; FilterIIR[&quot;iir.py&lt;br/&gt;IIR implementations&quot;]
+    FilterDir --&gt; FilterFIR[&quot;fir.py&lt;br/&gt;FIR implementations&quot;]
+
+    Init -.-&gt;|exports| Wave
+    Init -.-&gt;|exports| Effect
+    Init -.-&gt;|exports| Typing
+    Init -.-&gt;|exports| FilterInit
+
+    FilterInit -.-&gt;|aggregates| FilterBase
+    FilterInit -.-&gt;|aggregates| FilterIIR
+    FilterInit -.-&gt;|aggregates| FilterFIR
+    </pre></section>
+<section id="module-organization">
+<h3>Module Organization<a class="headerlink" href="#module-organization" title="Link to this heading">#</a></h3>
+<p>The package exposes a clean public API through <code class="docutils literal notranslate"><span class="pre">src/torchfx/__init__.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx/
+├── __init__.py          # Public API gateway
+├── wave.py              # Wave data container
+├── effect.py            # Effects and FX base class
+├── typing.py            # Custom type definitions
+└── filter/              # Filter subpackage
+    ├── __init__.py      # Filter module exports
+    ├── __base.py        # Abstract base classes
+    ├── iir.py           # IIR filter implementations
+    └── fir.py           # FIR filter implementations
+</pre></div>
+</div>
+</section>
+</section>
+<section id="core-modules">
+<h2>Core Modules<a class="headerlink" href="#core-modules" title="Link to this heading">#</a></h2>
+<section id="wave-py-audio-data-container">
+<h3>wave.py - Audio Data Container<a class="headerlink" href="#wave-py-audio-data-container" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">wave.py</span></code> module contains the <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> class, which is the primary data structure for audio in TorchFX.</p>
+<p><strong>Key responsibilities</strong>:</p>
+<ul class="simple">
+<li><p>Audio tensor data storage (<code class="docutils literal notranslate"><span class="pre">ys:</span> <span class="pre">torch.Tensor</span></code>)</p></li>
+<li><p>Sample rate management (<code class="docutils literal notranslate"><span class="pre">fs:</span> <span class="pre">int</span></code>)</p></li>
+<li><p>Device management methods (CPU/GPU)</p></li>
+<li><p>File I/O functionality</p></li>
+<li><p>Pipe operator support for chaining effects</p></li>
+</ul>
+<p><strong>Example usage</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
+
+<span class="c1"># Load audio file</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Access properties</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>  <span class="c1"># Sample rate</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># Tensor shape</span>
+
+<span class="c1"># Move to GPU</span>
+<span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../core-concepts/wave.html"><span class="doc">Wave - Digital Audio Representation</span></a> - Complete Wave documentation</p>
+</div>
+</section>
+<section id="effect-py-effects-and-base-class">
+<h3>effect.py - Effects and Base Class<a class="headerlink" href="#effect-py-effects-and-base-class" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">effect.py</span></code> module contains the <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> abstract base class and built-in effect implementations.</p>
+<p><strong>Classes</strong>:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> - Abstract base class inheriting from <code class="docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></p></li>
+<li><p><a class="reference internal" href="../../api/effects.html#torchfx.effect.Gain" title="torchfx.effect.Gain"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gain</span></code></a> - Amplitude adjustment effect</p></li>
+<li><p><a class="reference internal" href="../../api/effects.html#torchfx.effect.Normalize" title="torchfx.effect.Normalize"><code class="xref py py-class docutils literal notranslate"><span class="pre">Normalize</span></code></a> - Audio normalization with multiple strategies</p></li>
+<li><p><a class="reference internal" href="../../api/effects.html#torchfx.effect.Reverb" title="torchfx.effect.Reverb"><code class="xref py py-class docutils literal notranslate"><span class="pre">Reverb</span></code></a> - Reverberation effect</p></li>
+<li><p><a class="reference internal" href="../../api/effects.html#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delay</span></code></a> - BPM-synchronized delay effect</p></li>
+</ul>
+<p>All effects support the pipe operator (<code class="docutils literal notranslate"><span class="pre">|</span></code>) for chaining.</p>
+<p><strong>Example usage</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Normalize</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Chain effects using pipe operator</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">|</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../tutorials/custom-effects.html"><span class="doc">Creating Custom Effects</span></a> - Creating custom effects
+<a class="reference internal" href="../tutorials/effects-design.html"><span class="doc">Effects Design</span></a> - Effect design patterns</p>
+</div>
+</section>
+<section id="typing-py-type-system">
+<h3>typing.py - Type System<a class="headerlink" href="#typing-py-type-system" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">typing.py</span></code> module defines custom types for audio DSP operations.</p>
+<p><strong>Key types</strong>:</p>
+<ul class="simple">
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MusicalTime</span></code> - Type for BPM-synchronized timing</p></li>
+<li><p>Type aliases for audio parameters (e.g., <code class="docutils literal notranslate"><span class="pre">Decibel</span></code>, <code class="docutils literal notranslate"><span class="pre">Second</span></code>)</p></li>
+<li><p>Annotations for improved type safety</p></li>
+</ul>
+<p><strong>Example usage</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MusicalTime</span>
+
+<span class="c1"># Parse musical time notation</span>
+<span class="n">quarter_note</span> <span class="o">=</span> <span class="n">MusicalTime</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="s2">&quot;1/4&quot;</span><span class="p">)</span>
+<span class="n">dotted_eighth</span> <span class="o">=</span> <span class="n">MusicalTime</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="s2">&quot;1/8d&quot;</span><span class="p">)</span>
+
+<span class="c1"># Convert to seconds</span>
+<span class="n">duration</span> <span class="o">=</span> <span class="n">quarter_note</span><span class="o">.</span><span class="n">duration_seconds</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">beats_per_bar</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duration: </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>  <span class="c1"># 0.5 seconds</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../core-concepts/type-system.html"><span class="doc">Type System - Musical Time and Audio Units</span></a> - Complete type system documentation</p>
+</div>
+</section>
+<section id="filter-filter-subpackage">
+<h3>filter/ - Filter Subpackage<a class="headerlink" href="#filter-filter-subpackage" title="Link to this heading">#</a></h3>
+<p>The filter subpackage is organized into three main files:</p>
+<section id="base-py-abstract-interfaces">
+<h4><code class="docutils literal notranslate"><span class="pre">__base.py</span></code> - Abstract Interfaces<a class="headerlink" href="#base-py-abstract-interfaces" title="Link to this heading">#</a></h4>
+<p>Contains abstract base classes for all filters:</p>
+<ul class="simple">
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractFilter</span></code> - Base class for all filters</p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelFilterCombination</span></code> - Combines multiple filters in parallel (supports <code class="docutils literal notranslate"><span class="pre">+</span></code> operator)</p></li>
+</ul>
+</section>
+<section id="iir-py-iir-filter-implementations">
+<h4><code class="docutils literal notranslate"><span class="pre">iir.py</span></code> - IIR Filter Implementations<a class="headerlink" href="#iir-py-iir-filter-implementations" title="Link to this heading">#</a></h4>
+<p>Contains specific IIR filter types:</p>
+<ul class="simple">
+<li><p>Butterworth filters: <code class="docutils literal notranslate"><span class="pre">HiButterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">LoButterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">BandButterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">BandStopButterworth</span></code></p></li>
+<li><p>Chebyshev filters: <code class="docutils literal notranslate"><span class="pre">HiChebyshev1</span></code>, <code class="docutils literal notranslate"><span class="pre">LoChebyshev1</span></code>, <code class="docutils literal notranslate"><span class="pre">HiChebyshev2</span></code>, <code class="docutils literal notranslate"><span class="pre">LoChebyshev2</span></code></p></li>
+<li><p>Shelving filters: <code class="docutils literal notranslate"><span class="pre">LoShelving</span></code>, <code class="docutils literal notranslate"><span class="pre">HiShelving</span></code></p></li>
+<li><p>Peaking filters: <code class="docutils literal notranslate"><span class="pre">PeakingEQ</span></code></p></li>
+<li><p>Notch filters: <code class="docutils literal notranslate"><span class="pre">NotchFilter</span></code></p></li>
+<li><p>AllPass filters: <code class="docutils literal notranslate"><span class="pre">AllPassFilter</span></code></p></li>
+<li><p>Linkwitz-Riley crossover filters: <code class="docutils literal notranslate"><span class="pre">LinkwitzRiley</span></code></p></li>
+</ul>
+</section>
+<section id="fir-py-fir-filter-implementations">
+<h4><code class="docutils literal notranslate"><span class="pre">fir.py</span></code> - FIR Filter Implementations<a class="headerlink" href="#fir-py-fir-filter-implementations" title="Link to this heading">#</a></h4>
+<p>Contains FIR filter classes:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../api/filters.html#torchfx.filter.FIR" title="torchfx.filter.FIR"><code class="xref py py-class docutils literal notranslate"><span class="pre">FIR</span></code></a> - Basic FIR filter with coefficient input</p></li>
+<li><p><a class="reference internal" href="../../api/filters.html#torchfx.filter.DesignableFIR" title="torchfx.filter.DesignableFIR"><code class="xref py py-class docutils literal notranslate"><span class="pre">DesignableFIR</span></code></a> - FIR filter with automatic coefficient design</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../tutorials/filters-design.html"><span class="doc">Filters Design</span></a> - Filter design guide
+<a class="reference internal" href="../tutorials/series-parallel-filters.html"><span class="doc">Series and Parallel Filter Combinations</span></a> - Combining filters</p>
+</div>
+</section>
+</section>
+</section>
+<section id="module-dependencies">
+<h2>Module Dependencies<a class="headerlink" href="#module-dependencies" title="Link to this heading">#</a></h2>
+<p>The following diagram illustrates dependency relationships between modules and external packages:</p>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;Public API (torchfx.*)&quot;
+        Wave[&quot;Wave&lt;br/&gt;(from wave)&quot;]
+        FX[&quot;FX&lt;br/&gt;(from effect)&quot;]
+        EffectModule[&quot;effect module&lt;br/&gt;(Gain, Normalize, Reverb, Delay)&quot;]
+        FilterModule[&quot;filter module&lt;br/&gt;(AbstractFilter, IIR, FIR, Parallel)&quot;]
+        TypingModule[&quot;typing module&lt;br/&gt;(MusicalTime, type aliases)&quot;]
+    end
+
+    subgraph &quot;Internal Modules&quot;
+        WaveImpl[&quot;wave.py&lt;br/&gt;Wave class implementation&quot;]
+        EffectImpl[&quot;effect.py&lt;br/&gt;FX + effect implementations&quot;]
+        TypingImpl[&quot;typing.py&lt;br/&gt;Type definitions&quot;]
+
+        subgraph &quot;filter/ subpackage&quot;
+            FilterBase[&quot;__base.py&lt;br/&gt;AbstractFilter&lt;br/&gt;ParallelFilterCombination&quot;]
+            FilterIIR[&quot;iir.py&lt;br/&gt;Butterworth, Chebyshev&lt;br/&gt;Shelving, Peaking, etc.&quot;]
+            FilterFIR[&quot;fir.py&lt;br/&gt;FIR, DesignableFIR&quot;]
+        end
+    end
+
+    subgraph &quot;External Dependencies&quot;
+        PyTorch[&quot;torch&lt;br/&gt;torch.nn.Module&lt;br/&gt;Tensor operations&quot;]
+        TorchAudio[&quot;torchaudio&lt;br/&gt;Audio I/O&lt;br/&gt;Transforms&quot;]
+        SciPy[&quot;scipy.signal&lt;br/&gt;Filter coefficient design&quot;]
+        NumPy[&quot;numpy&lt;br/&gt;Array operations&quot;]
+    end
+
+    Wave -.-&gt;|implemented in| WaveImpl
+    FX -.-&gt;|implemented in| EffectImpl
+    EffectModule -.-&gt;|implemented in| EffectImpl
+    FilterModule -.-&gt;|aggregates| FilterBase
+    FilterModule -.-&gt;|aggregates| FilterIIR
+    FilterModule -.-&gt;|aggregates| FilterFIR
+    TypingModule -.-&gt;|implemented in| TypingImpl
+
+    WaveImpl --&gt;|depends on| PyTorch
+    WaveImpl --&gt;|depends on| TorchAudio
+    EffectImpl --&gt;|depends on| PyTorch
+    EffectImpl --&gt;|depends on| TorchAudio
+    EffectImpl --&gt;|uses| TypingImpl
+    FilterBase --&gt;|extends| PyTorch
+    FilterIIR --&gt;|extends| FilterBase
+    FilterIIR --&gt;|uses| SciPy
+    FilterFIR --&gt;|extends| FilterBase
+    FilterFIR --&gt;|uses| SciPy
+    </pre><section id="public-api-exports">
+<h3>Public API Exports<a class="headerlink" href="#public-api-exports" title="Link to this heading">#</a></h3>
+<p>The public API is explicitly controlled through <code class="docutils literal notranslate"><span class="pre">__all__</span></code> declarations in <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Export</p></th>
+<th class="head"><p>Source Module</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Wave</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torchfx.wave</span></code></p></td>
+<td><p>Audio data container class</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FX</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torchfx.effect</span></code></p></td>
+<td><p>Abstract base class for all effects/filters</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">effect</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torchfx.effect</span></code></p></td>
+<td><p>Module containing effect implementations</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">filter</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torchfx.filter</span></code></p></td>
+<td><p>Subpackage containing filter implementations</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">typing</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torchfx.typing</span></code></p></td>
+<td><p>Module with custom type definitions</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="import-patterns">
+<h2>Import Patterns<a class="headerlink" href="#import-patterns" title="Link to this heading">#</a></h2>
+<section id="recommended-import-patterns">
+<h3>Recommended Import Patterns<a class="headerlink" href="#recommended-import-patterns" title="Link to this heading">#</a></h3>
+<p>The following import patterns are recommended for clean, maintainable code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Core classes - direct import</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span><span class="p">,</span> <span class="n">FX</span>
+
+<span class="c1"># Module imports for namespace organization</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">effect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">filter</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx.typing</span>
+
+<span class="c1"># Direct class imports for convenience</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Normalize</span><span class="p">,</span> <span class="n">Delay</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Butterworth</span><span class="p">,</span> <span class="n">FIR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MusicalTime</span>
+</pre></div>
+</div>
+</section>
+<section id="import-hierarchy">
+<h3>Import Hierarchy<a class="headerlink" href="#import-hierarchy" title="Link to this heading">#</a></h3>
+<pre  class="mermaid">
+        graph LR
+    User[&quot;User Code&quot;]
+
+    subgraph &quot;Top-Level Imports&quot;
+        TopWave[&quot;from torchfx import Wave&quot;]
+        TopFX[&quot;from torchfx import FX&quot;]
+        TopEffect[&quot;import torchfx.effect&quot;]
+        TopFilter[&quot;import torchfx.filter&quot;]
+        TopTyping[&quot;import torchfx.typing&quot;]
+    end
+
+    subgraph &quot;Submodule Imports&quot;
+        EffectClasses[&quot;from torchfx.effect import Gain, Normalize, Reverb, Delay&quot;]
+        FilterClasses[&quot;from torchfx.filter import Butterworth, Chebyshev, FIR&quot;]
+        TypeDefs[&quot;from torchfx.typing import MusicalTime&quot;]
+    end
+
+    User --&gt; TopWave
+    User --&gt; TopFX
+    User --&gt; TopEffect
+    User --&gt; TopFilter
+    User --&gt; TopTyping
+
+    User --&gt; EffectClasses
+    User --&gt; FilterClasses
+    User --&gt; TypeDefs
+
+    TopEffect -.-&gt;|contains| EffectClasses
+    TopFilter -.-&gt;|contains| FilterClasses
+    TopTyping -.-&gt;|contains| TypeDefs
+    </pre></section>
+</section>
+<section id="supporting-infrastructure">
+<h2>Supporting Infrastructure<a class="headerlink" href="#supporting-infrastructure" title="Link to this heading">#</a></h2>
+<section id="examples-directory">
+<h3>Examples Directory<a class="headerlink" href="#examples-directory" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">examples/</span></code> directory contains practical demonstrations of library features:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">series_and_parallel_filters.py</span></code></p></td>
+<td><p>Demonstrates filter chaining (<code class="docutils literal notranslate"><span class="pre">|</span></code>) and parallel combination (<code class="docutils literal notranslate"><span class="pre">+</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">multi_channel_effect.py</span></code></p></td>
+<td><p>Shows custom multi-channel effect implementation</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">delay.py</span></code></p></td>
+<td><p>Demonstrates BPM-synchronized delay with musical timing</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Running examples</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>examples/series_and_parallel_filters.py
+python<span class="w"> </span>examples/multi_channel_effect.py
+python<span class="w"> </span>examples/delay.py
+</pre></div>
+</div>
+</section>
+<section id="tests-directory">
+<h3>Tests Directory<a class="headerlink" href="#tests-directory" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">tests/</span></code> directory contains the test suite with unit and integration tests. Test configuration is specified in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>:</p>
+<ul class="simple">
+<li><p>Test discovery in <code class="docutils literal notranslate"><span class="pre">tests/</span></code> directory</p></li>
+<li><p>Python path includes <code class="docutils literal notranslate"><span class="pre">src/</span></code> for imports</p></li>
+<li><p>Coverage reporting targets <code class="docutils literal notranslate"><span class="pre">src/torchfx</span></code></p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="testing.html"><span class="doc">Testing</span></a> - Complete testing documentation</p>
+</div>
+</section>
+<section id="documentation-directory">
+<h3>Documentation Directory<a class="headerlink" href="#documentation-directory" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">docs/</span></code> directory contains Sphinx documentation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>docs/
+├── source/
+│   ├── api.rst          # API reference
+│   ├── conf.py          # Sphinx configuration
+│   ├── guides/          # User and developer guides
+│   └── ...              # Other documentation pages
+├── Makefile             # Build automation (Unix)
+└── make.bat             # Build automation (Windows)
+</pre></div>
+</div>
+<p>Documentation is automatically built and deployed to GitHub Pages via <code class="docutils literal notranslate"><span class="pre">.github/workflows/docs.yml</span></code>.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="documentation.html"><span class="doc">Documentation</span></a> - Documentation build system</p>
+</div>
+</section>
+<section id="benchmark-directory">
+<h3>Benchmark Directory<a class="headerlink" href="#benchmark-directory" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">benchmark/</span></code> directory contains performance measurement scripts:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">api_bench.py</span></code></p></td>
+<td><p>Compares different API patterns (FilterChain, Sequential, pipe operator)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fir_bench.py</span></code></p></td>
+<td><p>Measures FIR filter performance (GPU vs CPU vs SciPy)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">iir_bench.py</span></code></p></td>
+<td><p>Measures IIR filter performance (GPU vs CPU vs SciPy)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">draw3.py</span></code></p></td>
+<td><p>Visualizes benchmark results as PNG images</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="benchmarking.html"><span class="doc">Benchmarking</span></a> - Benchmarking guide</p>
+</div>
+</section>
+<section id="cli-directory">
+<h3>CLI Directory<a class="headerlink" href="#cli-directory" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">cli/</span></code> directory contains the command-line interface:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>cli/
+└── __main__.py          # CLI entry point
+</pre></div>
+</div>
+<p>The CLI is configured as a project script in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project.scripts]</span>
+<span class="n">torchfx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;cli.__main__:main&quot;</span>
+</pre></div>
+</div>
+<p>Currently serves as a placeholder for future CLI functionality.</p>
+</section>
+</section>
+<section id="configuration-files">
+<h2>Configuration Files<a class="headerlink" href="#configuration-files" title="Link to this heading">#</a></h2>
+<section id="pyproject-toml-central-configuration-hub">
+<h3>pyproject.toml - Central Configuration Hub<a class="headerlink" href="#pyproject-toml-central-configuration-hub" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> file serves as the central configuration for the entire project, containing:</p>
+<section id="project-metadata">
+<h4>Project Metadata<a class="headerlink" href="#project-metadata" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>Name, version, description</p></li>
+<li><p>License (GPLv3) and authors</p></li>
+<li><p>Python version requirement (&gt;=3.10)</p></li>
+<li><p>Dependencies and classifiers</p></li>
+<li><p>Project URLs (repository, documentation, changelog)</p></li>
+</ul>
+</section>
+<section id="tool-configurations">
+<h4>Tool Configurations<a class="headerlink" href="#tool-configurations" title="Link to this heading">#</a></h4>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Tool</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Section</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">uv</span></code></p></td>
+<td><p>Package manager with PyTorch source configuration</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[tool.uv]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mypy</span></code></p></td>
+<td><p>Type checking with strict mode</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[tool.mypy]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ruff</span></code></p></td>
+<td><p>Fast Python linter and formatter</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[tool.ruff]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">black</span></code></p></td>
+<td><p>Code formatting</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[tool.black]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">coverage</span></code></p></td>
+<td><p>Test coverage measurement</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[tool.coverage]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pytest</span></code></p></td>
+<td><p>Testing framework</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[tool.pytest]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">docformatter</span></code></p></td>
+<td><p>Docstring formatting</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[tool.docformatter]</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="build-system">
+<h4>Build System<a class="headerlink" href="#build-system" title="Link to this heading">#</a></h4>
+<p>Uses <code class="docutils literal notranslate"><span class="pre">hatchling</span></code> as the build backend:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[build-system]</span>
+<span class="n">requires</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;hatchling&quot;</span><span class="p">]</span>
+<span class="n">build-backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hatchling.build&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="dependency-groups">
+<h4>Dependency Groups<a class="headerlink" href="#dependency-groups" title="Link to this heading">#</a></h4>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[dependency-groups]</span>
+<span class="n">cli</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;typer&quot;</span><span class="p">]</span>
+<span class="n">dev</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;black&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;mypy&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pytest&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;ruff&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">...]</span>
+<span class="n">docs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;sphinx&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;sphinx-immaterial&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">...]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="uv-lock-dependency-lock-file">
+<h3>uv.lock - Dependency Lock File<a class="headerlink" href="#uv-lock-dependency-lock-file" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">uv.lock</span></code> file provides:</p>
+<ul class="simple">
+<li><p>Complete dependency resolution with exact versions</p></li>
+<li><p>Reproducible builds across environments</p></li>
+<li><p>Platform-specific dependency tracking</p></li>
+</ul>
+<p>Generated and managed by the <code class="docutils literal notranslate"><span class="pre">uv</span></code> package manager.</p>
+</section>
+<section id="pre-commit-config-yaml-code-quality-hooks">
+<h3>.pre-commit-config.yaml - Code Quality Hooks<a class="headerlink" href="#pre-commit-config-yaml-code-quality-hooks" title="Link to this heading">#</a></h3>
+<p>Configures pre-commit hooks that run before each commit:</p>
+<ul class="simple">
+<li><p>Type checking with <code class="docutils literal notranslate"><span class="pre">mypy</span></code></p></li>
+<li><p>Linting with <code class="docutils literal notranslate"><span class="pre">ruff</span></code></p></li>
+<li><p>Formatting with <code class="docutils literal notranslate"><span class="pre">black</span></code></p></li>
+<li><p>Docstring formatting with <code class="docutils literal notranslate"><span class="pre">docformatter</span></code></p></li>
+</ul>
+<p><strong>Installation</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+</section>
+<section id="github-workflows-ci-cd-configuration">
+<h3>.github/workflows/ - CI/CD Configuration<a class="headerlink" href="#github-workflows-ci-cd-configuration" title="Link to this heading">#</a></h3>
+<p>Contains GitHub Actions workflow definitions:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Workflow</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>File</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CI</p></td>
+<td><p>Runs tests, linting, and type checking in parallel across Python 3.10-3.13</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ci.yml</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Docs</p></td>
+<td><p>Builds Sphinx documentation and deploys to GitHub Pages</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">docs.yml</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="package-distribution">
+<h2>Package Distribution<a class="headerlink" href="#package-distribution" title="Link to this heading">#</a></h2>
+<p>The project is configured for distribution as a Python package:</p>
+<section id="build-artifacts">
+<h3>Build Artifacts<a class="headerlink" href="#build-artifacts" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Wheel package</strong>: <code class="docutils literal notranslate"><span class="pre">torchfx-*.whl</span></code> built using hatchling</p></li>
+<li><p><strong>Source distribution</strong>: Generated from project source</p></li>
+<li><p><strong>Documentation site</strong>: Deployed to GitHub Pages at <a class="reference external" href="https://matteospanio.github.io/torchfx/">https://matteospanio.github.io/torchfx/</a></p></li>
+</ul>
+</section>
+<section id="installation-methods">
+<h3>Installation Methods<a class="headerlink" href="#installation-methods" title="Link to this heading">#</a></h3>
+<p>The package can be installed via:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># From PyPI</span>
+pip<span class="w"> </span>install<span class="w"> </span>torchfx
+
+<span class="c1"># From source (development)</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+
+<span class="c1"># With extras (CLI support)</span>
+pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h3>Module Organization<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Single Responsibility</strong>: Each module has a clear, focused purpose</p></li>
+<li><p><strong>Explicit Exports</strong>: Public API is controlled via <code class="docutils literal notranslate"><span class="pre">__all__</span></code> declarations</p></li>
+<li><p><strong>Shallow Hierarchy</strong>: Avoid deeply nested package structures</p></li>
+<li><p><strong>Clear Dependencies</strong>: Minimize coupling between modules</p></li>
+</ul>
+</section>
+<section id="code-structure">
+<h3>Code Structure<a class="headerlink" href="#code-structure" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Type Hints</strong>: Use type hints for all public functions and methods</p></li>
+<li><p><strong>Docstrings</strong>: Document all public APIs with NumPy-style docstrings</p></li>
+<li><p><strong>Testing</strong>: Write tests for all new functionality</p></li>
+<li><p><strong>Linting</strong>: Follow ruff and black formatting standards</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="style_guide.html"><span class="doc">Style Guide</span></a> - Complete style guide</p>
+</div>
+</section>
+</section>
+<section id="related-resources">
+<h2>Related Resources<a class="headerlink" href="#related-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="testing.html"><span class="doc">Testing</span></a> - Testing infrastructure</p></li>
+<li><p><a class="reference internal" href="benchmarking.html"><span class="doc">Benchmarking</span></a> - Performance benchmarking</p></li>
+<li><p><a class="reference internal" href="documentation.html"><span class="doc">Documentation</span></a> - Documentation system</p></li>
+<li><p><a class="reference internal" href="style_guide.html"><span class="doc">Style Guide</span></a> - Coding standards</p></li>
+</ul>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Developer Documentation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="testing.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Testing</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#repository-layout">Repository Layout</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-purpose-summary">Directory Purpose Summary</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source-package-structure">Source Package Structure</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#package-layout">Package Layout</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-organization">Module Organization</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-modules">Core Modules</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#wave-py-audio-data-container">wave.py - Audio Data Container</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#effect-py-effects-and-base-class">effect.py - Effects and Base Class</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#typing-py-type-system">typing.py - Type System</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filter-filter-subpackage">filter/ - Filter Subpackage</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#base-py-abstract-interfaces"><code class="docutils literal notranslate"><span class="pre">__base.py</span></code> - Abstract Interfaces</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#iir-py-iir-filter-implementations"><code class="docutils literal notranslate"><span class="pre">iir.py</span></code> - IIR Filter Implementations</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#fir-py-fir-filter-implementations"><code class="docutils literal notranslate"><span class="pre">fir.py</span></code> - FIR Filter Implementations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-dependencies">Module Dependencies</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#public-api-exports">Public API Exports</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-patterns">Import Patterns</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#recommended-import-patterns">Recommended Import Patterns</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-hierarchy">Import Hierarchy</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supporting-infrastructure">Supporting Infrastructure</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#examples-directory">Examples Directory</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tests-directory">Tests Directory</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-directory">Documentation Directory</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmark-directory">Benchmark Directory</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cli-directory">CLI Directory</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-files">Configuration Files</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pyproject-toml-central-configuration-hub">pyproject.toml - Central Configuration Hub</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#project-metadata">Project Metadata</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#tool-configurations">Tool Configurations</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#build-system">Build System</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-groups">Dependency Groups</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uv-lock-dependency-lock-file">uv.lock - Dependency Lock File</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pre-commit-config-yaml-code-quality-hooks">.pre-commit-config.yaml - Code Quality Hooks</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#github-workflows-ci-cd-configuration">.github/workflows/ - CI/CD Configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#package-distribution">Package Distribution</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-artifacts">Build Artifacts</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-methods">Installation Methods</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Module Organization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-structure">Code Structure</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-resources">Related Resources</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/developer/project-structure.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/developer/project-structure.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

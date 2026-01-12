@@ -1,503 +1,563 @@
 
+<!DOCTYPE html>
 
 
-<!doctype html>
-<html lang="en" class="no-js">
+<html lang="en" data-content_root="./" >
+
   <head>
-    
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      
-      
-      
-      
-      
-        <link rel="next" href="installation.html">
-      
-      
-      <link rel="icon" href="">
-    
-    
-      
-        <title>TorchFX</title>
-      
-    
-    
-      
-        
-      
-      
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <title>TorchFX: GPU-Accelerated Audio DSP &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
 
-    
-    
-      
-    
-    
-      
-        
-        
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
-      
-    
-        <link rel="stylesheet" type="text/css" href="_static/sphinx_immaterial_theme.acf80fe7f4d9ef9e2.min.css?v=9e56d0d2" />
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
-    
-      
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    
-    
-    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Guides" href="guides/index.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
   </head>
   
   
-    
-    
-      
-    
-    
-    
-    
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
-  
-    
-    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
-    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
-    <div data-md-component="skip">
-      
-        
-        <a href="#motivation" class="md-skip">
-          Skip to content
-        </a>
-      
-    </div>
-    <div data-md-component="announce">
-      
-    </div>
-    
-    
-      
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
   
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
-<header class="md-header md-header--shadow" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="#" title="TorchFX" class="md-header__button md-logo" aria-label="TorchFX" data-md-component="logo">
-      <img src="_static/tfx.svg" alt="logo">
-    </a>
-    <label class="md-header__button md-icon" for="__drawer">
-      
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
-    </label>
-    <div class="md-header__title" data-md-component="header-title">
-      <div class="md-header__ellipsis">
-        <div class="md-header__topic">
-          <span class="md-ellipsis">
-            TorchFX
-          </span>
-        </div>
-        <div class="md-header__topic" data-md-component="header-topic">
-          <span class="md-ellipsis">
-            
-              Audio DSP with the GPU
-            
-          </span>
-        </div>
-      </div>
-    </div>
-    
-      
-        <form class="md-header__option" data-md-component="palette">
   
+  <dialog id="pst-search-dialog">
     
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
 </form>
-      
-    
-    
-      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
-    
-    
-    
-      <label class="md-header__button md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-      </label>
-      <div class="md-search" data-md-component="search" role="dialog">
-  <label class="md-search__overlay" for="__search"></label>
-  <div class="md-search__inner" role="search">
-    <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
-      <label class="md-search__icon md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-      </label>
-      <nav class="md-search__options" aria-label="Search">
-        
-          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
-            
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
-          </a>
-        
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
-          
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-      </nav>
-      
-        <div class="md-search__suggest" data-md-component="search-suggest"></div>
-      
-    </form>
-    <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="search-result">
-          <div class="md-search-result__meta">
-            Initializing search
-          </div>
-          <ol class="md-search-result__list" role="presentation"></ol>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-    
-    
-      <div class="md-header__source">
-        <a href="https://github.com/matteospanio/torchfx/" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
-  </div>
-  <div class="md-source__repository">
-    torchfx
-  </div>
-</a>
-      </div>
-    
-  </nav>
-  
-</header>
-    
-    <div class="md-container" data-md-component="container">
-      
-      
+  </dialog>
 
-<div class="md-hero" data-md-component="hero">
-  <div class="md-hero__inner md-grid">
-    <p>A GPU accelerated and torch based audio DSP library.</p>
-  </div>
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
 
-      
-      
-        
-          
-        
-      
-      <main class="md-main" data-md-component="main">
-        <div class="md-main__inner md-grid">
-          
-            
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-
-
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
-  <label class="md-nav__title" for="__drawer">
-    <a href="#" title="TorchFX" class="md-nav__button md-logo" aria-label="TorchFX" data-md-component="logo">
-      <img src="_static/tfx.svg" alt="logo">
-    </a>
-    TorchFX
-  </label>
   
-    <div class="md-nav__source">
-      <a href="https://github.com/matteospanio/torchfx/" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="#">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
   </div>
-  <div class="md-source__repository">
-    torchfx
-  </div>
-</a>
-    </div>
   
-  <ul class="md-nav__list" data-md-scrollfix>
+  <div class=" navbar-header-items">
     
+    <div class="me-auto navbar-header-items__center">
       
-      
-  
-  
-  
-  
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
     
-    
-      
-        
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
-        
-          
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    Contents:<wbr>
-    
-  </span>
-  
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="guides/index.html">
+    Guides
+  </a>
+</li>
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1">
-            <span class="md-nav__icon md-icon"></span>
-            Contents:<wbr>
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="installation.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Installation
-    
-  </span>
-  
 
-      </a>
-    </li>
-  
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api/index.html">
+    API Reference
+  </a>
+</li>
 
-              
-            
-              
-                
-  
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="getting_started.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Getting Started
-    
-  </span>
-  
 
-      </a>
-    </li>
-  
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="blog/index.html">
+    Blog
+  </a>
+</li>
 
-              
-            
-              
-                
-  
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    API
-    
-  </span>
-  
 
-      </a>
-    </li>
-  
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="glossary.html">
+    Glossary
+  </a>
+</li>
 
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-  
-
-    
   </ul>
-</nav>
-                  </div>
-                </div>
-              </div>
-            
-            
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
               
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-  
-
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Audio DSP with the GPU
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#motivation" class="md-nav__link">
-    
-    <span class="md-ellipsis">
-      Motivation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#benefits-of-torchfx" class="md-nav__link">
-    
-    <span class="md-ellipsis">
-      Benefits of Torch<wbr>FX
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-insights" class="md-nav__link">
-    
-    <span class="md-ellipsis">
-      Performance Insights
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-to-cite" class="md-nav__link">
-    
-    <span class="md-ellipsis">
-      How to cite
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
-          
-          
-            <div class="md-content" data-md-component="content">
-              <article class="md-content__inner md-typeset" role="main">
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
                 
-                
-                  
-
-
-<h1 id="audio-dsp-with-the-gpu">Audio DSP with the GPU<a class="headerlink" href="#audio-dsp-with-the-gpu" title="Link to this heading">¶</a></h1>
-<a class="reference external image-reference" href="https://www.gnu.org/licenses/gpl-3.0"><img alt="License: GPL v3" src="https://img.shields.io/badge/License-GPLv3-blue.svg" />
-</a>
-<a class="reference external image-reference" href="https://arxiv.org/abs/2504.08624"><img alt="arXiv" src="https://img.shields.io/badge/arXiv-2504.08624-b31b1b.svg" />
-</a>
-<a class="reference external image-reference" href="https://badge.fury.io/py/torchfx"><img alt="PyPI version" src="https://badge.fury.io/py/torchfx.svg" />
-</a>
-<img alt="PyPI - Status" src="https://img.shields.io/pypi/status/torchfx" />
-<p>TorchFX is a modern Python library for digital signal processing (DSP) in audio, designed to leverage the power of <strong>PyTorch</strong> and <strong>GPU acceleration</strong>. It provides a clean and flexible API to build and compose audio processing pipelines using PyTorch modules, making it ideal for researchers, engineers, and developers working on modern audio applications.</p>
-<p>TorchFX integrates seamlessly into PyTorch workflows, enabling real-time, differentiable audio processing and model-based DSP pipelines.</p>
-<h2 id="motivation">Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h2>
-<p>While many DSP libraries exist in Python (e.g., <cite>scipy</cite>, <cite>librosa</cite>, <cite>torchaudio</cite>), they often fail to address the full spectrum of needs in contemporary audio processing, such as:</p>
-<ul class="simple">
-<li><p>Full exploitation of <strong>GPU acceleration</strong>,</p></li>
-<li><p>Native integration with <strong>deep learning models</strong>,</p></li>
-<li><p>A clean, <strong>object-oriented</strong>, and modular interface,</p></li>
-<li><p>Efficient support for <strong>multichannel audio signals</strong>.</p></li>
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="torchfx-gpu-accelerated-audio-dsp">
+<h1>TorchFX: GPU-Accelerated Audio DSP<a class="headerlink" href="#torchfx-gpu-accelerated-audio-dsp" title="Link to this heading">#</a></h1>
+<div class="lead docutils container">
+<p>A modern Python library for high-performance digital signal processing in audio, leveraging <strong>PyTorch</strong> and <strong>GPU acceleration</strong>.</p>
+</div>
+<p>TorchFX is designed for researchers, engineers, and developers who need <strong>fast, flexible, and differentiable</strong> audio processing. Build complex DSP pipelines with a clean, PyTorch-native API that scales from prototyping to production.</p>
+<hr class="docutils" />
+<div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
+<div class="sd-row sd-row-cols-2 sd-row-cols-xs-2 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-2 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+🚀 Quick Start</div>
+<p class="sd-card-text">New to TorchFX? Get started in minutes with our installation guide and first examples.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="guides/getting-started/getting_started.html"><span class="doc">Getting Started</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+📚 API Reference</div>
+<p class="sd-card-text">Explore the complete API documentation for filters, effects, and core classes.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="api/index.html"><span class="doc">API Reference</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+🎓 Tutorials</div>
+<p class="sd-card-text">Learn through practical examples: ML preprocessing, real-time processing, custom effects.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="guides/tutorials/index.html"><span class="doc">Tutorials</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+💬 Community</div>
+<p class="sd-card-text">Join the community on GitHub. Contribute, report issues, or discuss ideas.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference external" href="https://github.com/matteospanio/torchfx"><span>https://github.com/matteospanio/torchfx</span></a></div>
+</div>
+</div>
+</div>
+<section id="why-torchfx">
+<h2>Why TorchFX?<a class="headerlink" href="#why-torchfx" title="Link to this heading">#</a></h2>
+<div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
+<div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-1 sd-row-cols-md-2 sd-row-cols-lg-3 sd-g-2 sd-g-xs-2 sd-g-sm-2 sd-g-md-2 sd-g-lg-2 docutils">
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+⚡ GPU Acceleration</div>
+<p class="sd-card-text">Built on PyTorch for high-performance audio processing on CUDA-enabled devices. Process multichannel signals orders of magnitude faster than traditional CPU-based libraries.</p>
+</div>
+</div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+🔗 Composable Pipelines</div>
+<p class="sd-card-text">Chain filters and effects with the intuitive <strong>pipe operator</strong> (<code class="docutils literal notranslate"><span class="pre">|</span></code>) or combine them in <strong>parallel</strong> (<code class="docutils literal notranslate"><span class="pre">+</span></code>). Build complex processing chains with readable, maintainable code.</p>
+</div>
+</div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+🧠 PyTorch Native</div>
+<p class="sd-card-text">All filters are <code class="docutils literal notranslate"><span class="pre">torch.nn.Module</span></code> subclasses. Seamlessly integrate DSP into neural networks, enable gradient-based optimization, and leverage PyTorch’s ecosystem.</p>
+</div>
+</div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+🎯 Simple &amp; Intuitive</div>
+<p class="sd-card-text">Clean, object-oriented API designed for ease of use. Focus on your audio processing logic, not on boilerplate code.</p>
+</div>
+</div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+⚙️ Highly Extensible</div>
+<p class="sd-card-text">Create custom filters and effects by extending base classes. Implement your own processing algorithms while keeping full compatibility with the framework.</p>
+</div>
+</div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+📊 Performance Optimized</div>
+<p class="sd-card-text">Benchmarks show substantial performance gains over SciPy, especially with long and multichannel signals. Efficient threading even on CPU.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="key-features">
+<h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt><strong>Rich Filter Library</strong></dt><dd><p>Comprehensive collection of IIR and FIR filters: Butterworth, Chebyshev, Elliptic, Linkwitz-Riley, parametric EQ, shelving filters, and more.</p>
+</dd>
+<dt><strong>Professional Effects</strong></dt><dd><p>Built-in audio effects including reverb, delay, normalization with multiple strategies, and gain control.</p>
+</dd>
+<dt><strong>Flexible Composition</strong></dt><dd><ul class="simple">
+<li><p><strong>Sequential</strong>: Chain filters with <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">filter1</span> <span class="pre">|</span> <span class="pre">filter2</span></code></p></li>
+<li><p><strong>Parallel</strong>: Combine filters with <code class="docutils literal notranslate"><span class="pre">filter1</span> <span class="pre">+</span> <span class="pre">filter2</span></code> for parallel processing</p></li>
+<li><p><strong>Modular</strong>: Build reusable processing blocks as <code class="docutils literal notranslate"><span class="pre">torch.nn.Module</span></code> instances</p></li>
 </ul>
-<p>As a result, researchers and developers frequently end up building custom, ad-hoc solutions that are hard to maintain, reuse, or scale—especially when real-time performance or AI integration is required.</p>
-<h2 id="benefits-of-torchfx">Benefits of TorchFX<a class="headerlink" href="#benefits-of-torchfx" title="Link to this heading">¶</a></h2>
-<p>TorchFX is designed from the ground up to provide a modern, powerful, and flexible framework for audio DSP in Python:</p>
+</dd>
+<dt><strong>Differentiable Processing</strong></dt><dd><p>All operations are differentiable, enabling gradient-based optimization of filter parameters and integration with neural audio models.</p>
+</dd>
+<dt><strong>Multi-channel Support</strong></dt><dd><p>Efficiently process stereo, surround, and multi-mic audio with full GPU acceleration across channels.</p>
+</dd>
+</dl>
+</section>
+<section id="quick-example">
+<h2>Quick Example<a class="headerlink" href="#quick-example" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span><span class="p">,</span> <span class="n">ParametricEQ</span>
+
+<span class="c1"># Load audio</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create filters</span>
+<span class="n">lowpass</span> <span class="o">=</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+<span class="n">eq</span> <span class="o">=</span> <span class="n">ParametricEQ</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+
+<span class="c1"># Sequential processing</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">lowpass</span> <span class="o">|</span> <span class="n">eq</span>
+
+<span class="c1"># Parallel processing (filter combination)</span>
+<span class="n">stereo_enhancer</span> <span class="o">=</span> <span class="n">lowpass</span> <span class="o">+</span> <span class="n">eq</span>
+<span class="n">enhanced</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">stereo_enhancer</span>
+
+<span class="c1"># Save result</span>
+<span class="n">processed</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="performance">
+<h2>Performance<a class="headerlink" href="#performance" title="Link to this heading">#</a></h2>
+<p>TorchFX delivers <strong>significant performance improvements</strong> over traditional libraries like SciPy, especially for:</p>
 <ul class="simple">
-<li><p>✅ <strong>GPU Acceleration</strong>: Built on PyTorch, it allows high-performance, real-time audio processing on CUDA-enabled devices.</p></li>
-<li><p>✅ <strong>Functional Chaining</strong>: The overloaded pipe operator (<cite>|</cite>) enables clean and readable composition of processing pipelines.</p></li>
-<li><p>✅ <strong>Extensible API</strong>: Create custom filters and effects with ease using OOP principles.</p></li>
-<li><p>✅ <strong>PyTorch-Compatible</strong>: All filters are subclasses of <cite>torch.nn.Module</cite>, making them seamlessly integrable with PyTorch models and training loops.</p></li>
-<li><p>✅ <strong>High Performance</strong>: Benchmarks show substantial performance gains over SciPy, especially with long and multichannel signals.</p></li>
-<li><p>✅ <strong>Object-Oriented DSP</strong>: Filters are designed as individual classes, promoting modularity, reusability, and testability.</p></li>
+<li><p><strong>Long audio signals</strong> (minutes to hours)</p></li>
+<li><p><strong>Multichannel processing</strong> (stereo, surround, multi-mic)</p></li>
+<li><p><strong>Real-time applications</strong> (low-latency streaming)</p></li>
+<li><p><strong>Batch processing</strong> (ML dataset preprocessing)</p></li>
 </ul>
-<h2 id="performance-insights">Performance Insights<a class="headerlink" href="#performance-insights" title="Link to this heading">¶</a></h2>
-<p>Benchmarks included in the original paper demonstrate that TorchFX outperforms traditional DSP tools like SciPy in multi-channel contexts, thanks to its efficient use of <strong>parallel GPU computation</strong>. Even on CPU, TorchFX performs competitively due to effective multi-threading and optimized PyTorch internals.</p>
-<img alt="Benchmark performance" class="align-center" src="_images/3.png" />
-<h2 id="how-to-cite">How to cite<a class="headerlink" href="#how-to-cite" title="Link to this heading">¶</a></h2>
-<p>If you use TorchFX in your research or project, please cite the following publication:</p>
-<div class="highlight-bibtex notranslate"><div class="highlight"><pre><span></span><code><span class="nc">@misc</span><span class="p">{</span><span class="nl">spanio2025torchfxmodernapproachaudio</span><span class="p">,</span>
+<a class="reference internal image-reference" href="_images/3.png"><img alt="Performance benchmark comparing TorchFX with SciPy" class="align-center" src="_images/3.png" style="width: 80%;" />
+</a>
+<p>Benchmarks from our <a class="reference external" href="https://arxiv.org/abs/2504.08624">research paper</a> demonstrate TorchFX’s efficient use of parallel GPU computation. Even on CPU, optimized PyTorch internals provide competitive performance.</p>
+</section>
+<section id="get-started">
+<h2>Get Started<a class="headerlink" href="#get-started" title="Link to this heading">#</a></h2>
+<p>Install TorchFX with pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx
+</pre></div>
+</div>
+<p>Or from source:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/matteospanio/torchfx.git
+<span class="nb">cd</span><span class="w"> </span>torchfx
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="guides/getting-started/installation.html"><span class="doc">installation guide</span></a> for more details.</p>
+</section>
+<section id="citation">
+<h2>Citation<a class="headerlink" href="#citation" title="Link to this heading">#</a></h2>
+<p>If you use TorchFX in your research, please cite our paper:</p>
+<div class="highlight-bibtex notranslate"><div class="highlight"><pre><span></span><span class="nc">@misc</span><span class="p">{</span><span class="nl">spanio2025torchfxmodernapproachaudio</span><span class="p">,</span>
 <span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{TorchFX: A modern approach to Audio DSP with PyTorch and GPU acceleration}</span><span class="p">,</span>
 <span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Matteo Spanio and Antonio Rodà}</span><span class="p">,</span>
 <span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2025}</span><span class="p">,</span>
@@ -506,180 +566,152 @@
 <span class="w">  </span><span class="na">primaryClass</span><span class="p">=</span><span class="s">{eess.AS}</span><span class="p">,</span>
 <span class="w">  </span><span class="na">url</span><span class="p">=</span><span class="s">{https://arxiv.org/abs/2504.08624}</span><span class="p">,</span>
 <span class="p">}</span>
-</code></pre></div>
+</pre></div>
+</div>
+<hr class="docutils" />
+<div class="toctree-wrapper compound">
 </div>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#installing-from-pypi">Installing from PyPI</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#installing-from-source">Installing from Source</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#gpu-support">GPU Support</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#developers">Developers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#checking-installation">Checking Installation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#basic-concepts">Basic Concepts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#wave-class">Wave Class</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#applying-built-in-filters">Applying Built-in Filters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#creating-your-own-effect">Creating Your Own Effect</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.Wave">torchfx.Wave</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.FX">torchfx.FX</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.AllPass">torchfx.filter.AllPass</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.Butterworth">torchfx.filter.Butterworth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.Chebyshev1">torchfx.filter.Chebyshev1</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.Chebyshev2">torchfx.filter.Chebyshev2</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.DesignableFIR">torchfx.filter.DesignableFIR</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.FIR">torchfx.filter.FIR</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.HiButterworth">torchfx.filter.HiButterworth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.HiChebyshev1">torchfx.filter.HiChebyshev1</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.HiChebyshev2">torchfx.filter.HiChebyshev2</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.HiLinkwitzRiley">torchfx.filter.HiLinkwitzRiley</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.HiShelving">torchfx.filter.HiShelving</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.IIR">torchfx.filter.IIR</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.LinkwitzRiley">torchfx.filter.LinkwitzRiley</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.LoButterworth">torchfx.filter.LoButterworth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.LoChebyshev1">torchfx.filter.LoChebyshev1</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.LoChebyshev2">torchfx.filter.LoChebyshev2</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.LoLinkwitzRiley">torchfx.filter.LoLinkwitzRiley</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.LoShelving">torchfx.filter.LoShelving</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.filter.Notch">torchfx.filter.Notch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.CustomNormalizationStrategy">torchfx.effect.CustomNormalizationStrategy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.Delay">torchfx.effect.Delay</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.DelayStrategy">torchfx.effect.DelayStrategy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.FX">torchfx.effect.FX</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.Gain">torchfx.effect.Gain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.MonoDelayStrategy">torchfx.effect.MonoDelayStrategy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.NormalizationStrategy">torchfx.effect.NormalizationStrategy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.Normalize">torchfx.effect.Normalize</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.PeakNormalizationStrategy">torchfx.effect.PeakNormalizationStrategy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.PerChannelNormalizationStrategy">torchfx.effect.PerChannelNormalizationStrategy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.PercentileNormalizationStrategy">torchfx.effect.PercentileNormalizationStrategy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.PingPongDelayStrategy">torchfx.effect.PingPongDelayStrategy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.RMSNormalizationStrategy">torchfx.effect.RMSNormalizationStrategy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#torchfx.effect.Reverb">torchfx.effect.Reverb</a></li>
-</ul>
-</li>
-</ul>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
 </div>
 
-
-
-
-
-
-
-  
-  
-
-
-
-
-
-
-                
-              </article>
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="right-next"
+       href="guides/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Guides</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
             </div>
-          
-          
-  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
-        </div>
-        
-          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-torchfx">Why TorchFX?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key Features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-example">Quick Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-started">Get Started</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation">Citation</a><ul class="visible nav section-nav flex-column">
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
-  Back to top
-</button>
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/index.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
         
       </main>
-      
-        <footer class="md-footer">
-  
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-        
-          
-          <a href="installation.html" class="md-footer__link md-footer__link--next" aria-label="Next: Installation">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Installation
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
-    
-  
-  
-  
-  <div class="md-footer-meta md-typeset">
-    
-    <div class="md-footer-meta__inner md-grid">
-      <div class="md-copyright">
-  
-    <div class="md-footer-copyright__highlight">
-        &#169; Copyright 2025, Matteo Spanio.
-        
     </div>
-  
-    Created using
-    <a href="https://www.sphinx-doc.org/" target="_blank" rel="noopener">Sphinx</a>
-    8.1.3.
-     and
-    <a href="https://github.com/jbms/sphinx-immaterial/" target="_blank" rel="noopener">Sphinx-Immaterial</a>
-  
-</div>
-      
-        <div class="md-social">
-  
-    
-    
-    
-    
-    <a href="https://github.com/matteospanio/torchfx" target="_blank" rel="noopener" title="Source on github.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
-    </a>
-  
-    
-    
-    
-    
-    <a href="https://pypi.org/project/torchfx/" target="_blank" rel="noopener" title="PyPI package" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 404c11.1 0 20.1 9.1 20.1 20.3 0 11.3-9 20.4-20.1 20.4-11 0-20.1-9.2-20.1-20.4.1-11.3 9.1-20.3 20.1-20.3M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.7-142.6c-11.1 0-20.1-9.1-20.1-20.3.1-11.3 9-20.4 20.1-20.4 11 0 20.1 9.2 20.1 20.4s-9 20.3-20.1 20.3"/></svg>
-    </a>
-  
-</div>
-      
-    </div>
-    
   </div>
-</footer>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
       
     </div>
-    <div class="md-dialog" data-md-component="dialog">
-      <div class="md-dialog__inner md-typeset"></div>
-    </div>
-    
-    
-    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.expand", "navigation.sections", "navigation.top", "navigation.footer", "search.share", "search.suggest", "toc.follow", "toc.sticky", "content.tabs.link", "content.code.copy", "content.action.edit", "content.action.view", "content.tooltips", "announce.dismiss"], "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
-    
+  
+  
+  
+    <div class="footer-items__end">
       
-        <script src="_static/sphinx_immaterial_theme.32136f45f91ae6956.min.js?v=a7a9472a"></script>
-        <script id="MathJax-script" src="_static/mathjax/tex-mml-chtml.js?v=cadf963e"></script>
-    
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
   </body>
 </html>

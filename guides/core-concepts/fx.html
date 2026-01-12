@@ -1,0 +1,1669 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>FX - Audio Effect Base Class &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/core-concepts/fx';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Pipeline Operator - Functional Composition" href="pipeline-operator.html" />
+    <link rel="prev" title="Wave - Digital Audio Representation" href="wave.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Core Concepts</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Core Concepts</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">FX - Audio Effect Base Class</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="fx-audio-effect-base-class">
+<h1>FX - Audio Effect Base Class<a class="headerlink" href="#fx-audio-effect-base-class" title="Link to this heading">#</a></h1>
+<p>The <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> class is the abstract base class for all audio effects and filters in TorchFX. It defines the interface that all effects must implement and provides the foundation for building custom audio processors.</p>
+<section id="what-is-fx">
+<h2>What is FX?<a class="headerlink" href="#what-is-fx" title="Link to this heading">#</a></h2>
+<p><a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> inherits from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, making all TorchFX effects compatible with PyTorch’s neural network ecosystem. This design choice enables:</p>
+<ul class="simple">
+<li><p><strong>Gradient Computation</strong>: Effects can be used in differentiable audio processing pipelines</p></li>
+<li><p><strong>Parameter Management</strong>: Automatic device handling and parameter tracking</p></li>
+<li><p><strong>Modularity</strong>: Effects can be combined with neural networks</p></li>
+<li><p><strong>Composability</strong>: Easy integration with <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> and other PyTorch containers</p></li>
+</ul>
+<pre  class="mermaid">
+        classDiagram
+    class Module {
+        &lt;&lt;PyTorch&gt;&gt;
+        +forward(x)*
+        +to(device)
+        +parameters()
+        +train() / eval()
+    }
+
+    class FX {
+        &lt;&lt;abstract&gt;&gt;
+        +forward(x) Tensor*
+        +__init__()*
+    }
+
+    class Filter {
+        &lt;&lt;abstract&gt;&gt;
+        +int fs
+        +compute_coefficients()*
+    }
+
+    class Effect {
+        +forward(x) Tensor
+    }
+
+    class IIRFilter {
+        +Tensor b
+        +Tensor a
+        +compute_coefficients()
+        +forward(x) Tensor
+    }
+
+    class Delay {
+        +int delay_samples
+        +float feedback
+        +forward(x) Tensor
+    }
+
+    class Reverb {
+        +int delay
+        +float decay
+        +forward(x) Tensor
+    }
+
+    Module &lt;|-- FX
+    FX &lt;|-- Filter
+    FX &lt;|-- Effect
+    Filter &lt;|-- IIRFilter
+    Effect &lt;|-- Delay
+    Effect &lt;|-- Reverb
+
+    note for Module &quot;PyTorch base class\nprovides device management,\nparameter tracking&quot;
+    note for FX &quot;TorchFX base class\ndefines audio effect interface&quot;
+    </pre></section>
+<section id="the-fx-interface">
+<h2>The FX Interface<a class="headerlink" href="#the-fx-interface" title="Link to this heading">#</a></h2>
+<p>Every effect must implement two key methods:</p>
+<section id="constructor-init">
+<h3>1. Constructor (<code class="docutils literal notranslate"><span class="pre">__init__</span></code>)<a class="headerlink" href="#constructor-init" title="Link to this heading">#</a></h3>
+<p>Initializes the effect with its parameters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">param2</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>  <span class="c1"># Always call parent constructor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param1</span> <span class="o">=</span> <span class="n">param1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param2</span> <span class="o">=</span> <span class="n">param2</span>
+        <span class="c1"># Initialize any learnable parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p><strong>Key points</strong>:</p>
+<ul class="simple">
+<li><p>Always call <code class="docutils literal notranslate"><span class="pre">super().__init__()</span></code> first</p></li>
+<li><p>Store effect parameters as attributes</p></li>
+<li><p>Use <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Parameter</span></code> for learnable parameters (if needed)</p></li>
+</ul>
+</section>
+<section id="forward-method-forward">
+<h3>2. Forward Method (<code class="docutils literal notranslate"><span class="pre">forward</span></code>)<a class="headerlink" href="#forward-method-forward" title="Link to this heading">#</a></h3>
+<p>Processes the audio signal:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>  <span class="c1"># Disable gradients for efficiency (optional)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply effect to audio tensor.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : Tensor</span>
+<span class="sd">            Input audio of shape (..., time) or (channels, time)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tensor</span>
+<span class="sd">            Processed audio with the same shape as input</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>
+</pre></div>
+</div>
+<p><strong>Key points</strong>:</p>
+<ul class="simple">
+<li><p>Input shape: <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">samples)</span></code> or <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">samples)</span></code></p></li>
+<li><p>Output shape: Should match input shape (unless explicitly extending signal)</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">&#64;torch.no_grad()</span></code> for efficiency if gradients aren’t needed</p></li>
+<li><p>Handle multi-channel audio appropriately</p></li>
+</ul>
+</section>
+</section>
+<section id="built-in-effects">
+<h2>Built-in Effects<a class="headerlink" href="#built-in-effects" title="Link to this heading">#</a></h2>
+<p>TorchFX provides several built-in effects demonstrating different patterns:</p>
+<section id="simple-effects">
+<h3>Simple Effects<a class="headerlink" href="#simple-effects" title="Link to this heading">#</a></h3>
+<p>Effects with straightforward signal processing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Gain adjustment</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="n">louder</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
+
+<span class="c1"># Normalization</span>
+<span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="time-based-effects">
+<h3>Time-Based Effects<a class="headerlink" href="#time-based-effects" title="Link to this heading">#</a></h3>
+<p>Effects that use delay and feedback:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Simple reverb</span>
+<span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">wet</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
+
+<span class="c1"># BPM-synced delay</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+</section>
+<section id="strategy-pattern-effects">
+<h3>Strategy Pattern Effects<a class="headerlink" href="#strategy-pattern-effects" title="Link to this heading">#</a></h3>
+<p>Effects using the <a class="reference internal" href="../../glossary.html#term-Strategy-Pattern"><span class="xref std std-term">Strategy Pattern</span></a> for flexible behavior:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Normalize</span><span class="p">,</span>
+    <span class="n">RMSNormalizationStrategy</span><span class="p">,</span>
+    <span class="n">PercentileNormalizationStrategy</span>
+<span class="p">)</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Peak normalization (default)</span>
+<span class="n">norm1</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># RMS normalization</span>
+<span class="n">norm2</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">RMSNormalizationStrategy</span><span class="p">())</span>
+
+<span class="c1"># Percentile normalization</span>
+<span class="n">norm3</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">PercentileNormalizationStrategy</span><span class="p">(</span><span class="n">percentile</span><span class="o">=</span><span class="mi">99</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><span id="id1">Gamma <em>et al.</em> [<a class="reference internal" href="../tutorials/custom-effects.html#id5" title="Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides. Design Patterns: Elements of Reusable Object-Oriented Software. Addison-Wesley Professional, 1994. ISBN 978-0201633610. Classic reference for software design patterns including Strategy pattern.">1994</a>]</span> - Design Patterns book covering the Strategy Pattern</p>
+</div>
+</section>
+</section>
+<section id="filters-vs-effects">
+<h2>Filters vs Effects<a class="headerlink" href="#filters-vs-effects" title="Link to this heading">#</a></h2>
+<p>TorchFX distinguishes between filters and effects:</p>
+<section id="filters">
+<h3>Filters<a class="headerlink" href="#filters" title="Link to this heading">#</a></h3>
+<p>Inherit from <code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractFilter</span></code> (which inherits from <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a>):</p>
+<ul class="simple">
+<li><p><strong>Frequency-domain processing</strong>: IIR, FIR filters</p></li>
+<li><p><strong>Require sample rate</strong>: <code class="docutils literal notranslate"><span class="pre">fs</span></code> attribute is mandatory</p></li>
+<li><p><strong>Compute coefficients</strong>: Must implement <code class="docutils literal notranslate"><span class="pre">compute_coefficients()</span></code> method</p></li>
+<li><p><strong>Parallel combination</strong>: Support <code class="docutils literal notranslate"><span class="pre">+</span></code> operator for parallel filter banks</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># IIR filters with automatic fs configuration</span>
+<span class="n">lowpass</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">highpass</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Parallel combination (bandpass filter)</span>
+<span class="n">bandpass</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="p">(</span><span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">1000</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="effects">
+<h3>Effects<a class="headerlink" href="#effects" title="Link to this heading">#</a></h3>
+<p>Inherit directly from <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a>:</p>
+<ul class="simple">
+<li><p><strong>Time-domain processing</strong>: Delay, reverb, dynamics, etc.</p></li>
+<li><p><strong>Optional sample rate</strong>: May or may not need <code class="docutils literal notranslate"><span class="pre">fs</span></code></p></li>
+<li><p><strong>Direct implementation</strong>: No coefficient computation required</p></li>
+<li><p><strong>Flexible parameters</strong>: Can use any processing strategy</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Effects don&#39;t require fs (unless BPM-synced)</span>
+<span class="n">gained</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># BPM-synced effects auto-configure fs from Wave</span>
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="creating-custom-effects">
+<h2>Creating Custom Effects<a class="headerlink" href="#creating-custom-effects" title="Link to this heading">#</a></h2>
+<section id="basic-custom-effect">
+<h3>Basic Custom Effect<a class="headerlink" href="#basic-custom-effect" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SimpleDistortion</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply soft clipping distortion.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">drive</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">mix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        drive : float</span>
+<span class="sd">            Amount of distortion (&gt;1.0). Higher values = more distortion.</span>
+<span class="sd">        mix : float</span>
+<span class="sd">            Wet/dry mix (0 = dry, 1 = wet).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">drive</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;Drive must be &gt;= 1.0&quot;</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">mix</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Mix must be in [0, 1]&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">drive</span> <span class="o">=</span> <span class="n">drive</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="n">mix</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply soft clipping distortion.</span>
+
+<span class="sd">        Uses tanh for smooth saturation:</span>
+<span class="sd">        y[n] = tanh(drive * x[n])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Apply distortion</span>
+        <span class="n">distorted</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># Wet/dry mix</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">*</span> <span class="n">distorted</span>
+
+        <span class="k">return</span> <span class="n">output</span>
+</pre></div>
+</div>
+<p>Usage:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;guitar.wav&quot;</span><span class="p">)</span>
+<span class="n">distorted</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">SimpleDistortion</span><span class="p">(</span><span class="n">drive</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">distorted</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;guitar_distorted.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-channel-effect">
+<h3>Multi-Channel Effect<a class="headerlink" href="#multi-channel-effect" title="Link to this heading">#</a></h3>
+<p>Handle stereo and multi-channel audio correctly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StereoWidener</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Widen stereo image using Mid/Side processing.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        width : float</span>
+<span class="sd">            Stereo width multiplier (1.0 = no change, &gt;1.0 = wider, &lt;1.0 = narrower).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">width</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Width must be non-negative&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply stereo widening.</span>
+
+<span class="sd">        Converts to Mid/Side, scales Side, converts back to L/R.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Only works on stereo audio</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>  <span class="c1"># Return unchanged for non-stereo</span>
+
+        <span class="n">left</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Convert to Mid/Side</span>
+        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">side</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">-</span> <span class="n">right</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Widen by scaling Side component</span>
+        <span class="n">side</span> <span class="o">=</span> <span class="n">side</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span>
+
+        <span class="c1"># Convert back to L/R</span>
+        <span class="n">new_left</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">+</span> <span class="n">side</span>
+        <span class="n">new_right</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">-</span> <span class="n">side</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">new_left</span><span class="p">,</span> <span class="n">new_right</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="effect-with-strategy-pattern">
+<h3>Effect with Strategy Pattern<a class="headerlink" href="#effect-with-strategy-pattern" title="Link to this heading">#</a></h3>
+<p>Use the <a class="reference internal" href="../../glossary.html#term-Strategy-Pattern"><span class="xref std std-term">Strategy Pattern</span></a> for flexible behavior:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CompressionStrategy</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base for compression algorithms.&quot;&quot;&quot;</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">HardKneeCompression</span><span class="p">(</span><span class="n">CompressionStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hard-knee compression with sharp threshold.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">abs_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">abs_x</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+
+        <span class="c1"># Compress values above threshold</span>
+        <span class="n">compressed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">mask</span><span class="p">,</span>
+            <span class="n">threshold</span> <span class="o">+</span> <span class="p">(</span><span class="n">abs_x</span> <span class="o">-</span> <span class="n">threshold</span><span class="p">)</span> <span class="o">/</span> <span class="n">ratio</span><span class="p">,</span>
+            <span class="n">abs_x</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Restore sign</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">compressed</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SoftKneeCompression</span><span class="p">(</span><span class="n">CompressionStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Soft-knee compression with gradual transition.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># Implementation of soft-knee compression</span>
+        <span class="c1"># (simplified for brevity)</span>
+        <span class="k">return</span> <span class="n">x</span>  <span class="c1"># Placeholder</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Compressor</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dynamic range compressor with configurable strategy.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+        <span class="n">strategy</span><span class="p">:</span> <span class="n">CompressionStrategy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span> <span class="o">=</span> <span class="n">ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="n">HardKneeCompression</span><span class="p">()</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Usage:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;vocals.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Hard knee compression (default)</span>
+<span class="n">compressed1</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">Compressor</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span>
+
+<span class="c1"># Soft knee compression</span>
+<span class="n">compressed2</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">Compressor</span><span class="p">(</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">ratio</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="n">SoftKneeCompression</span><span class="p">()</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="sample-rate-handling">
+<h2>Sample Rate Handling<a class="headerlink" href="#sample-rate-handling" title="Link to this heading">#</a></h2>
+<p>Many effects need the sample rate to function correctly. TorchFX provides automatic configuration:</p>
+<section id="automatic-configuration">
+<h3>Automatic Configuration<a class="headerlink" href="#automatic-configuration" title="Link to this heading">#</a></h3>
+<p>When using the pipeline operator with <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a>, the sample rate is automatically set:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>  <span class="c1"># fs = 44100</span>
+
+<span class="c1"># Effect&#39;s fs is automatically set to 44100</span>
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="manual-configuration">
+<h3>Manual Configuration<a class="headerlink" href="#manual-configuration" title="Link to this heading">#</a></h3>
+<p>For standalone use or custom effects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyTimedEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Effect that needs sample rate.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">duration_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">duration_ms</span> <span class="o">=</span> <span class="n">duration_ms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_duration_samples</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># Lazy calculation when fs becomes available</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_duration_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Sample rate (fs) must be set&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_duration_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">duration_ms</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+
+        <span class="c1"># Use self._duration_samples for processing</span>
+        <span class="k">return</span> <span class="n">x</span>  <span class="c1"># Placeholder</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="gradient-support">
+<h2>Gradient Support<a class="headerlink" href="#gradient-support" title="Link to this heading">#</a></h2>
+<p>While most audio effects run with <code class="docutils literal notranslate"><span class="pre">&#64;torch.no_grad()</span></code> for efficiency, you can enable gradients for differentiable audio processing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LearnableGain</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gain effect with learnable parameter.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1"># Learnable parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">initial_gain</span><span class="p">]))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward with gradient support.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>
+
+<span class="c1"># Usage in a differentiable pipeline</span>
+<span class="n">effect</span> <span class="o">=</span> <span class="n">LearnableGain</span><span class="p">(</span><span class="n">initial_gain</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">effect</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+
+<span class="c1"># Training loop</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">effect</span><span class="p">(</span><span class="n">input_audio</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">some_loss_function</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target_audio</span><span class="p">)</span>
+
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><span id="id2">Engel <em>et al.</em> [<a class="reference internal" href="#id24" title="Jesse Engel, Lamtharn (Hanoi) Hantrakul, Chenjie Gu, and Adam Roberts. Ddsp: differentiable digital signal processing. In International Conference on Learning Representations. 2020. URL: https://openreview.net/forum?id=B1x1ma4tDr.">2020</a>]</span> - Differentiable Digital Signal Processing</p>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<section id="parameter-validation">
+<h3>Parameter Validation<a class="headerlink" href="#parameter-validation" title="Link to this heading">#</a></h3>
+<p>Always validate parameters in the constructor:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">param</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Parameter must be positive&quot;</span>
+        <span class="k">assert</span> <span class="n">param</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;Parameter must be &lt;= 1.0&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span>
+</pre></div>
+</div>
+</section>
+<section id="handle-edge-cases">
+<h3>Handle Edge Cases<a class="headerlink" href="#handle-edge-cases" title="Link to this heading">#</a></h3>
+<p>Consider boundary conditions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="c1"># Check for empty input</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+    <span class="c1"># Check for very short signals</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">required_length</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x</span>  <span class="c1"># Or pad, or raise error</span>
+
+    <span class="c1"># Process normally</span>
+    <span class="k">return</span> <span class="n">processed</span>
+</pre></div>
+</div>
+</section>
+<section id="preserve-tensor-properties">
+<h3>Preserve Tensor Properties<a class="headerlink" href="#preserve-tensor-properties" title="Link to this heading">#</a></h3>
+<p>Maintain dtype and device:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="c1"># Create new tensors on same device with same dtype</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># Or explicitly specify</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">buffer</span>
+</pre></div>
+</div>
+</section>
+<section id="document-mathematical-formulation">
+<h3>Document Mathematical Formulation<a class="headerlink" href="#document-mathematical-formulation" title="Link to this heading">#</a></h3>
+<p>Include formulas in docstrings:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply custom effect.</span>
+
+<span class="sd">    The effect is computed as:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[n] = \alpha x[n] + (1-\alpha) x[n-1]</span>
+
+<span class="sd">    where:</span>
+<span class="sd">        - x[n] is the input signal</span>
+<span class="sd">        - y[n] is the output signal</span>
+<span class="sd">        - \alpha is the blend factor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="common-patterns">
+<h2>Common Patterns<a class="headerlink" href="#common-patterns" title="Link to this heading">#</a></h2>
+<section id="wet-dry-mix">
+<h3>Wet/Dry Mix<a class="headerlink" href="#wet-dry-mix" title="Link to this heading">#</a></h3>
+<p>Almost all effects benefit from a mix parameter:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="c1"># Process signal</span>
+    <span class="n">processed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># Mix with dry signal</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">*</span> <span class="n">processed</span>
+
+    <span class="k">return</span> <span class="n">output</span>
+</pre></div>
+</div>
+</section>
+<section id="extend-signal-length">
+<h3>Extend Signal Length<a class="headerlink" href="#extend-signal-length" title="Link to this heading">#</a></h3>
+<p>For delay-based effects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">original_length</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">extended_length</span> <span class="o">=</span> <span class="n">original_length</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span>
+
+    <span class="c1"># Create extended buffer</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+        <span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">extended_length</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Copy original signal</span>
+    <span class="n">output</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">original_length</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+
+    <span class="c1"># Add delayed signal</span>
+    <span class="n">output</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span><span class="p">:]</span> <span class="o">+=</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback</span>
+
+    <span class="k">return</span> <span class="n">output</span>
+</pre></div>
+</div>
+</section>
+<section id="per-channel-processing">
+<h3>Per-Channel Processing<a class="headerlink" href="#per-channel-processing" title="Link to this heading">#</a></h3>
+<p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> for per-channel effects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PerChannelEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processors</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span>
+            <span class="n">ChannelProcessor</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_channels</span><span class="p">)</span>
+        <span class="p">])</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># x shape: (channels, samples)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">processed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processors</span><span class="p">[</span><span class="n">ch</span><span class="p">](</span><span class="n">x</span><span class="p">[</span><span class="n">ch</span><span class="p">:</span><span class="n">ch</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processed</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="related-concepts">
+<h2>Related Concepts<a class="headerlink" href="#related-concepts" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="wave.html"><span class="doc">Wave - Digital Audio Representation</span></a> - The audio container that uses FX effects</p></li>
+<li><p><a class="reference internal" href="pipeline-operator.html"><span class="doc">Pipeline Operator - Functional Composition</span></a> - How to chain effects together</p></li>
+<li><p><a class="reference internal" href="../tutorials/custom-effects.html"><span class="doc">Creating Custom Effects</span></a> - Detailed tutorial on creating custom effects</p></li>
+<li><p><a class="reference internal" href="../tutorials/effects-design.html"><span class="doc">Effects Design</span></a> - Design patterns for audio effects</p></li>
+</ul>
+</section>
+<section id="external-resources">
+<h2>External Resources<a class="headerlink" href="#external-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html">PyTorch nn.Module Documentation</a> - Understanding the base class</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/abc.html">Abstract Base Classes in Python</a> - Using ABC for interfaces</p></li>
+<li><p><a class="reference external" href="http://www.dafx.de/">DAFX Book</a> - Digital Audio Effects theory and algorithms</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<div class="docutils container" id="id3">
+<div role="list" class="citation-list">
+<div class="citation" id="id24" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">EHGR20</a><span class="fn-bracket">]</span></span>
+<p>Jesse Engel, Lamtharn (Hanoi) Hantrakul, Chenjie Gu, and Adam Roberts. Ddsp: differentiable digital signal processing. In <em>International Conference on Learning Representations</em>. 2020. URL: <a class="reference external" href="https://openreview.net/forum?id=B1x1ma4tDr">https://openreview.net/forum?id=B1x1ma4tDr</a>.</p>
+</div>
+<div class="citation" id="id5" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">GHJV94</a><span class="fn-bracket">]</span></span>
+<p>Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides. <em>Design Patterns: Elements of Reusable Object-Oriented Software</em>. Addison-Wesley Professional, 1994. ISBN 978-0201633610. Classic reference for software design patterns including Strategy pattern.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="wave.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Wave - Digital Audio Representation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="pipeline-operator.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Pipeline Operator - Functional Composition</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-fx">What is FX?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-fx-interface">The FX Interface</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#constructor-init">1. Constructor (<code class="docutils literal notranslate"><span class="pre">__init__</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#forward-method-forward">2. Forward Method (<code class="docutils literal notranslate"><span class="pre">forward</span></code>)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-effects">Built-in Effects</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simple-effects">Simple Effects</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#time-based-effects">Time-Based Effects</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#strategy-pattern-effects">Strategy Pattern Effects</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#filters-vs-effects">Filters vs Effects</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filters">Filters</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#effects">Effects</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-custom-effects">Creating Custom Effects</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-custom-effect">Basic Custom Effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-channel-effect">Multi-Channel Effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#effect-with-strategy-pattern">Effect with Strategy Pattern</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-rate-handling">Sample Rate Handling</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-configuration">Automatic Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#manual-configuration">Manual Configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gradient-support">Gradient Support</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-validation">Parameter Validation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#handle-edge-cases">Handle Edge Cases</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preserve-tensor-properties">Preserve Tensor Properties</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#document-mathematical-formulation">Document Mathematical Formulation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-patterns">Common Patterns</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#wet-dry-mix">Wet/Dry Mix</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extend-signal-length">Extend Signal Length</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-channel-processing">Per-Channel Processing</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts">Related Concepts</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-resources">External Resources</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/core-concepts/fx.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/core-concepts/fx.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

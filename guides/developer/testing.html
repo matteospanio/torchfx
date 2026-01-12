@@ -1,0 +1,1834 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Testing &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/testing';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Benchmarking" href="benchmarking.html" />
+    <link rel="prev" title="Project Structure" href="project-structure.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="project-structure.html">Project Structure</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Developer Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Testing</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="testing">
+<h1>Testing<a class="headerlink" href="#testing" title="Link to this heading">#</a></h1>
+<p>Comprehensive guide to the TorchFX testing infrastructure, including test organization, execution, patterns, and coverage requirements.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>The TorchFX testing infrastructure uses pytest as the test runner with comprehensive coverage reporting. Tests validate the correctness of audio effects, filters, and the core Wave class through unit and integration tests. The test suite emphasizes strategy pattern testing, multi-channel processing, and edge case validation.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="project-structure.html"><span class="doc">Project Structure</span></a> - Project structure
+<a class="reference internal" href="benchmarking.html"><span class="doc">Benchmarking</span></a> - Performance testing</p>
+</div>
+</section>
+<section id="test-infrastructure-configuration">
+<h2>Test Infrastructure Configuration<a class="headerlink" href="#test-infrastructure-configuration" title="Link to this heading">#</a></h2>
+<section id="pytest-configuration">
+<h3>Pytest Configuration<a class="headerlink" href="#pytest-configuration" title="Link to this heading">#</a></h3>
+<p>The pytest configuration is defined in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Configuration</p></th>
+<th class="head"><p>Value</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">minversion</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;7.0&quot;</span></code></p></td>
+<td><p>Minimum pytest version required</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">addopts</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;--strict-markers</span> <span class="pre">--tb=short&quot;</span></code></p></td>
+<td><p>Strict marker validation and short tracebacks</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">testpaths</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;tests&quot;]</span></code></p></td>
+<td><p>Directory containing test files</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pythonpath</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;src&quot;]</span></code></p></td>
+<td><p>Python path for importing torchfx modules</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Configuration details</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--strict-markers</span></code>: Ensures only registered markers are used, preventing typos</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--tb=short</span></code>: Provides concise traceback output for faster debugging</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pythonpath</span> <span class="pre">=</span> <span class="pre">[&quot;src&quot;]</span></code>: Allows tests to import <code class="docutils literal notranslate"><span class="pre">torchfx</span></code> directly without installation</p></li>
+</ul>
+</section>
+<section id="coverage-configuration">
+<h3>Coverage Configuration<a class="headerlink" href="#coverage-configuration" title="Link to this heading">#</a></h3>
+<p>Coverage reporting is configured to track code execution:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Configuration</p></th>
+<th class="head"><p>Value</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">source</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;src/torchfx&quot;]</span></code></p></td>
+<td><p>Source directory to measure coverage</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">branch</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Enable branch coverage analysis</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Branch coverage</strong> ensures that both <code class="docutils literal notranslate"><span class="pre">True</span></code> and <code class="docutils literal notranslate"><span class="pre">False</span></code> branches of conditional statements are tested, providing more thorough coverage metrics than simple line coverage.</p>
+</section>
+</section>
+<section id="test-organization">
+<h2>Test Organization<a class="headerlink" href="#test-organization" title="Link to this heading">#</a></h2>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;Test Directory Structure&quot;
+        TestDir[&quot;tests/&quot;]
+        TestEffects[&quot;test_effects.py&lt;br/&gt;Primary test file&quot;]
+    end
+
+    subgraph &quot;Test Categories in test_effects.py&quot;
+        GainTests[&quot;Gain Tests&lt;br/&gt;test_gain_*&quot;]
+        NormalizeTests[&quot;Normalize Tests&lt;br/&gt;test_normalize_*&quot;]
+        StrategyTests[&quot;Strategy Tests&lt;br/&gt;test_*_strategy&quot;]
+        ReverbTests[&quot;Reverb Tests&lt;br/&gt;test_reverb_*&quot;]
+        DelayTests[&quot;Delay Tests&lt;br/&gt;test_delay_*&quot;]
+        MusicalTimeTests[&quot;MusicalTime Tests&lt;br/&gt;test_musical_time_*&quot;]
+    end
+
+    subgraph &quot;Source Code Under Test&quot;
+        EffectModule[&quot;src/torchfx/effect.py&lt;br/&gt;FX, Gain, Normalize&lt;br/&gt;Reverb, Delay&quot;]
+        TypingModule[&quot;src/torchfx/typing.py&lt;br/&gt;MusicalTime&quot;]
+    end
+
+    TestDir --&gt; TestEffects
+
+    TestEffects --&gt; GainTests
+    TestEffects --&gt; NormalizeTests
+    TestEffects --&gt; StrategyTests
+    TestEffects --&gt; ReverbTests
+    TestEffects --&gt; DelayTests
+    TestEffects --&gt; MusicalTimeTests
+
+    GainTests -.-&gt;|tests| EffectModule
+    NormalizeTests -.-&gt;|tests| EffectModule
+    StrategyTests -.-&gt;|tests| EffectModule
+    ReverbTests -.-&gt;|tests| EffectModule
+    DelayTests -.-&gt;|tests| EffectModule
+    MusicalTimeTests -.-&gt;|tests| TypingModule
+    </pre><section id="test-file-structure">
+<h3>Test File Structure<a class="headerlink" href="#test-file-structure" title="Link to this heading">#</a></h3>
+<p>The primary test file is <code class="docutils literal notranslate"><span class="pre">tests/test_effects.py</span></code>, containing all tests for the effect system:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Test Group</p></th>
+<th class="head"><p>Component Tested</p></th>
+<th class="head"><p>Test Count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gain tests</p></td>
+<td><p><a class="reference internal" href="../../api/effects.html#torchfx.effect.Gain" title="torchfx.effect.Gain"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gain</span></code></a> effect</p></td>
+<td><p>5 tests</p></td>
+</tr>
+<tr class="row-odd"><td><p>Normalize tests</p></td>
+<td><p><a class="reference internal" href="../../api/effects.html#torchfx.effect.Normalize" title="torchfx.effect.Normalize"><code class="xref py py-class docutils literal notranslate"><span class="pre">Normalize</span></code></a> effect and strategy pattern</p></td>
+<td><p>15 tests</p></td>
+</tr>
+<tr class="row-even"><td><p>Reverb tests</p></td>
+<td><p><a class="reference internal" href="../../api/effects.html#torchfx.effect.Reverb" title="torchfx.effect.Reverb"><code class="xref py py-class docutils literal notranslate"><span class="pre">Reverb</span></code></a> effect</p></td>
+<td><p>7 tests</p></td>
+</tr>
+<tr class="row-odd"><td><p>Delay tests</p></td>
+<td><p><a class="reference internal" href="../../api/effects.html#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delay</span></code></a> effect including BPM sync</p></td>
+<td><p>31 tests</p></td>
+</tr>
+<tr class="row-even"><td><p>MusicalTime tests</p></td>
+<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MusicalTime</span></code> parsing</p></td>
+<td><p>8 tests</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="naming-conventions">
+<h3>Naming Conventions<a class="headerlink" href="#naming-conventions" title="Link to this heading">#</a></h3>
+<p>Test functions follow consistent naming patterns:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">test_&lt;component&gt;_&lt;scenario&gt;</span></code>: Tests a specific scenario</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_&lt;component&gt;_invalid_&lt;parameter&gt;</span></code>: Tests validation and error handling</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_&lt;strategy&gt;_strategy</span></code>: Tests strategy pattern implementations</p></li>
+</ul>
+<p><strong>Examples</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_gain_amplitude</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tests gain in amplitude mode.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_normalize_invalid_peak</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tests peak validation in Normalize.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_peak_normalization_strategy</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tests PeakNormalizationStrategy.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="test-execution-flow">
+<h2>Test Execution Flow<a class="headerlink" href="#test-execution-flow" title="Link to this heading">#</a></h2>
+<pre  class="mermaid">
+        sequenceDiagram
+    participant Dev as Developer
+    participant Pytest as pytest Runner
+    participant Test as Test Function
+    participant SUT as System Under Test
+    participant Assert as Assertion
+
+    Dev-&gt;&gt;Pytest: pytest tests/
+    Pytest-&gt;&gt;Pytest: Discover tests in tests/
+    Pytest-&gt;&gt;Pytest: Apply pythonpath = [&quot;src&quot;]
+
+    loop For each test function
+        Pytest-&gt;&gt;Test: Execute test_*()
+
+        alt Setup required
+            Test-&gt;&gt;Test: Create fixtures/mocks
+        end
+
+        Test-&gt;&gt;SUT: Instantiate component
+        Test-&gt;&gt;SUT: Call forward() or __call__()
+        SUT-&gt;&gt;Test: Return processed tensor
+
+        Test-&gt;&gt;Assert: torch.testing.assert_close()
+
+        alt Assertion passes
+            Assert-&gt;&gt;Pytest: Test passed
+        else Assertion fails
+            Assert-&gt;&gt;Pytest: Test failed (short traceback)
+        end
+    end
+
+    Pytest-&gt;&gt;Dev: Test results + coverage report
+    </pre></section>
+<section id="running-tests">
+<h2>Running Tests<a class="headerlink" href="#running-tests" title="Link to this heading">#</a></h2>
+<section id="basic-execution">
+<h3>Basic Execution<a class="headerlink" href="#basic-execution" title="Link to this heading">#</a></h3>
+<p>Run all tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/
+</pre></div>
+</div>
+<p>Run tests with coverage:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>src/torchfx<span class="w"> </span>--cov-report<span class="o">=</span>html
+</pre></div>
+</div>
+<p>Run a specific test file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/test_effects.py
+</pre></div>
+</div>
+<p>Run a specific test function:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/test_effects.py::test_gain_amplitude
+</pre></div>
+</div>
+</section>
+<section id="verbose-output">
+<h3>Verbose Output<a class="headerlink" href="#verbose-output" title="Link to this heading">#</a></h3>
+<p>For detailed output showing each test name:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/<span class="w"> </span>-v
+</pre></div>
+</div>
+<p>For even more detailed output including print statements:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/<span class="w"> </span>-vv<span class="w"> </span>-s
+</pre></div>
+</div>
+</section>
+<section id="filtering-tests">
+<h3>Filtering Tests<a class="headerlink" href="#filtering-tests" title="Link to this heading">#</a></h3>
+<p>Run tests matching a pattern:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run all tests with &quot;gain&quot; in the name</span>
+pytest<span class="w"> </span>tests/<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;gain&quot;</span>
+
+<span class="c1"># Run all tests with &quot;delay&quot; but not &quot;lazy&quot;</span>
+pytest<span class="w"> </span>tests/<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;delay and not lazy&quot;</span>
+</pre></div>
+</div>
+<p>Run tests with specific markers (requires marker registration):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;slow&quot;</span><span class="w">  </span><span class="c1"># Run only slow tests</span>
+pytest<span class="w"> </span>tests/<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not slow&quot;</span><span class="w">  </span><span class="c1"># Skip slow tests</span>
+</pre></div>
+</div>
+</section>
+<section id="coverage-reports">
+<h3>Coverage Reports<a class="headerlink" href="#coverage-reports" title="Link to this heading">#</a></h3>
+<p>Generate terminal coverage report:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>src/torchfx<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+</pre></div>
+</div>
+<p>Generate HTML coverage report:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>src/torchfx<span class="w"> </span>--cov-report<span class="o">=</span>html
+<span class="c1"># Open htmlcov/index.html in browser</span>
+</pre></div>
+</div>
+<p>Generate XML coverage report (for CI):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>src/torchfx<span class="w"> </span>--cov-report<span class="o">=</span>xml
+</pre></div>
+</div>
+</section>
+</section>
+<section id="test-types-and-patterns">
+<h2>Test Types and Patterns<a class="headerlink" href="#test-types-and-patterns" title="Link to this heading">#</a></h2>
+<section id="unit-tests">
+<h3>Unit Tests<a class="headerlink" href="#unit-tests" title="Link to this heading">#</a></h3>
+<p>Unit tests validate individual components in isolation with known inputs and expected outputs.</p>
+<p><strong>Example: Basic Gain Test</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_gain_amplitude</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that Gain with amplitude mode multiplies waveform correctly.&quot;&quot;&quot;</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">gain</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_close</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">waveform</span> <span class="o">*</span> <span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Key characteristics</strong>:</p>
+<ul class="simple">
+<li><p>Tests single component</p></li>
+<li><p>Predictable inputs and outputs</p></li>
+<li><p>No external dependencies</p></li>
+<li><p>Fast execution</p></li>
+</ul>
+</section>
+<section id="integration-tests">
+<h3>Integration Tests<a class="headerlink" href="#integration-tests" title="Link to this heading">#</a></h3>
+<p>Integration tests validate interaction between multiple components, such as pipeline chaining or multi-channel processing.</p>
+<p><strong>Example: Wave Pipeline Integration</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_delay_lazy_fs_inference_with_wave</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that Delay automatically infers fs when used with Wave.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
+
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">delay</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span>  <span class="c1"># Not yet configured</span>
+
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>  <span class="c1"># Pipeline operator triggers configuration</span>
+
+    <span class="k">assert</span> <span class="n">delay</span><span class="o">.</span><span class="n">fs</span> <span class="o">==</span> <span class="mi">44100</span>  <span class="c1"># Automatically configured</span>
+    <span class="k">assert</span> <span class="n">delay</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">==</span> <span class="mi">11025</span>  <span class="c1"># Calculated from BPM</span>
+</pre></div>
+</div>
+<p><strong>Key characteristics</strong>:</p>
+<ul class="simple">
+<li><p>Tests component interactions</p></li>
+<li><p>Validates pipeline behavior</p></li>
+<li><p>Tests automatic configuration</p></li>
+<li><p>May be slower than unit tests</p></li>
+</ul>
+</section>
+<section id="parametrized-tests">
+<h3>Parametrized Tests<a class="headerlink" href="#parametrized-tests" title="Link to this heading">#</a></h3>
+<p>Parametrized tests run the same test logic with multiple input values, reducing code duplication.</p>
+<p><strong>Example: Invalid Parameter Tests</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;delay&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_reverb_invalid_delay</span><span class="p">(</span><span class="n">delay</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that Reverb rejects invalid delay values.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">AssertionError</span><span class="p">):</span>
+        <span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Benefits</strong>:</p>
+<ul class="simple">
+<li><p>Reduces code duplication</p></li>
+<li><p>Tests multiple edge cases</p></li>
+<li><p>Clear test output showing which parameter failed</p></li>
+<li><p>Easy to add new test cases</p></li>
+</ul>
+</section>
+<section id="strategy-pattern-tests">
+<h3>Strategy Pattern Tests<a class="headerlink" href="#strategy-pattern-tests" title="Link to this heading">#</a></h3>
+<p>The test suite extensively validates the strategy pattern used in effects. These tests verify that custom strategies can be injected and built-in strategies behave correctly.</p>
+<p><strong>Example: Custom Strategy Injection</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Normalize</span><span class="p">,</span> <span class="n">NormalizationStrategy</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DummyStrategy</span><span class="p">(</span><span class="n">NormalizationStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Custom strategy that sets all values to peak.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">,</span> <span class="n">peak</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">waveform</span> <span class="o">*</span> <span class="mi">0</span> <span class="o">+</span> <span class="n">peak</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_normalize_custom_strategy</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that custom normalization strategies work.&quot;&quot;&quot;</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.2</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">])</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">DummyStrategy</span><span class="p">())</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_close</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span>
+</pre></div>
+</div>
+<p><strong>Key characteristics</strong>:</p>
+<ul class="simple">
+<li><p>Tests extensibility points</p></li>
+<li><p>Validates strategy interface</p></li>
+<li><p>Ensures custom implementations work</p></li>
+<li><p>Documents strategy usage</p></li>
+</ul>
+</section>
+<section id="mocking-with-monkeypatch">
+<h3>Mocking with Monkeypatch<a class="headerlink" href="#mocking-with-monkeypatch" title="Link to this heading">#</a></h3>
+<p>Some tests use pytest’s <code class="docutils literal notranslate"><span class="pre">monkeypatch</span></code> fixture to replace external dependencies.</p>
+<p><strong>Example: Mocking torchaudio.functional.gain</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_gain_db</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that Gain calls torchaudio.functional.gain with correct params.&quot;&quot;&quot;</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+    <span class="n">called</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fake_gain</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">gain</span><span class="p">):</span>
+        <span class="n">called</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">waveform</span> <span class="o">+</span> <span class="n">gain</span>
+
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setattr</span><span class="p">(</span><span class="s2">&quot;torchaudio.functional.gain&quot;</span><span class="p">,</span> <span class="n">fake_gain</span><span class="p">)</span>
+
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;db&quot;</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">gain</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">waveform</span> <span class="o">+</span> <span class="mf">6.0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">called</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mf">6.0</span>  <span class="c1"># Verify gain parameter</span>
+</pre></div>
+</div>
+<p><strong>Benefits</strong>:</p>
+<ul class="simple">
+<li><p>Tests internal logic without side effects</p></li>
+<li><p>Validates parameter passing</p></li>
+<li><p>Avoids external dependencies</p></li>
+<li><p>Enables testing of hard-to-test code</p></li>
+</ul>
+</section>
+</section>
+<section id="assertion-patterns">
+<h2>Assertion Patterns<a class="headerlink" href="#assertion-patterns" title="Link to this heading">#</a></h2>
+<section id="torch-testing-assert-close">
+<h3>torch.testing.assert_close<a class="headerlink" href="#torch-testing-assert-close" title="Link to this heading">#</a></h3>
+<p>The primary assertion method for tensor comparisons:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_close</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Features</strong>:</p>
+<ul class="simple">
+<li><p>Element-wise closeness checking</p></li>
+<li><p>Appropriate tolerances for floating-point comparisons</p></li>
+<li><p>Clear error messages showing differences</p></li>
+</ul>
+<p><strong>Example</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_peak_normalization_strategy</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test peak normalization strategy.&quot;&quot;&quot;</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.2</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">])</span>
+    <span class="n">strat</span> <span class="o">=</span> <span class="n">PeakNormalizationStrategy</span><span class="p">()</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">strat</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_close</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">waveform</span> <span class="o">/</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pytest-approx">
+<h3>pytest.approx<a class="headerlink" href="#pytest-approx" title="Link to this heading">#</a></h3>
+<p>For scalar comparisons with tolerance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">value</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_delay_basic</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test basic delay functionality.&quot;&quot;&quot;</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">taps</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">out</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">abs</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="torch-allclose">
+<h3>torch.allclose<a class="headerlink" href="#torch-allclose" title="Link to this heading">#</a></h3>
+<p>For boolean comparisons with tolerance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_delay_mix_zero</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that mix=0 produces only dry signal.&quot;&quot;&quot;</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+    <span class="c1"># Output beyond original length should be zeros</span>
+    <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="mi">10</span><span class="p">:],</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="mi">10</span><span class="p">),</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pytest-raises">
+<h3>pytest.raises<a class="headerlink" href="#pytest-raises" title="Link to this heading">#</a></h3>
+<p>For validating exception handling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="n">ExceptionType</span><span class="p">):</span>
+    <span class="c1"># Code that should raise exception</span>
+</pre></div>
+</div>
+<p><strong>Example</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_gain_invalid_gain_type</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that invalid gain raises ValueError.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Advanced usage with match</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_delay_lazy_fs_inference_error</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that missing fs raises helpful error message.&quot;&quot;&quot;</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">AssertionError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s2">&quot;Sample rate </span><span class="se">\\</span><span class="s2">(fs</span><span class="se">\\</span><span class="s2">) is required&quot;</span><span class="p">):</span>
+        <span class="n">delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="writing-new-tests">
+<h2>Writing New Tests<a class="headerlink" href="#writing-new-tests" title="Link to this heading">#</a></h2>
+<section id="test-structure-template">
+<h3>Test Structure Template<a class="headerlink" href="#test-structure-template" title="Link to this heading">#</a></h3>
+<p>Follow this template for new tests:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_</span><span class="o">&lt;</span><span class="n">component</span><span class="o">&gt;</span><span class="n">_</span><span class="o">&lt;</span><span class="n">scenario</span><span class="o">&gt;</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Brief description of what this test validates.</span>
+
+<span class="sd">    Include any important details about edge cases or expected behavior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Arrange: Set up test data</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+    <span class="n">component</span> <span class="o">=</span> <span class="n">ComponentClass</span><span class="p">(</span><span class="n">param1</span><span class="o">=</span><span class="n">value1</span><span class="p">,</span> <span class="n">param2</span><span class="o">=</span><span class="n">value2</span><span class="p">)</span>
+
+    <span class="c1"># Act: Execute the operation</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">component</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+
+    <span class="c1"># Assert: Verify results</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_close</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">expected_result</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="common-test-patterns">
+<h3>Common Test Patterns<a class="headerlink" href="#common-test-patterns" title="Link to this heading">#</a></h3>
+<section id="testing-effects">
+<h4>Testing Effects<a class="headerlink" href="#testing-effects" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_my_effect_basic</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test basic functionality of MyEffect.&quot;&quot;&quot;</span>
+    <span class="c1"># Create test waveform</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">])</span>
+
+    <span class="c1"># Create effect</span>
+    <span class="n">effect</span> <span class="o">=</span> <span class="n">MyEffect</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="c1"># Apply effect</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">effect</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+
+    <span class="c1"># Verify output</span>
+    <span class="k">assert</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">waveform</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_close</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="testing-filters">
+<h4>Testing Filters<a class="headerlink" href="#testing-filters" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_my_filter_frequency_response</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test filter frequency response characteristics.&quot;&quot;&quot;</span>
+    <span class="c1"># Create filter</span>
+    <span class="n">filt</span> <span class="o">=</span> <span class="n">MyFilter</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+
+    <span class="c1"># Create test signal (impulse or sine wave)</span>
+    <span class="n">impulse</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+    <span class="n">impulse</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="c1"># Apply filter</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">filt</span><span class="p">(</span><span class="n">impulse</span><span class="p">)</span>
+
+    <span class="c1"># Verify characteristics</span>
+    <span class="c1"># (e.g., DC component, high-frequency attenuation)</span>
+    <span class="k">assert</span> <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>  <span class="c1"># Filter passes signal</span>
+</pre></div>
+</div>
+</section>
+<section id="testing-multi-channel-processing">
+<h4>Testing Multi-Channel Processing<a class="headerlink" href="#testing-multi-channel-processing" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_effect_multichannel</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that effect handles multi-channel audio correctly.&quot;&quot;&quot;</span>
+    <span class="c1"># Create multi-channel waveform (2 channels)</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span>  <span class="c1"># Left channel</span>
+        <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">]</span>   <span class="c1"># Right channel</span>
+    <span class="p">])</span>
+
+    <span class="n">effect</span> <span class="o">=</span> <span class="n">MyEffect</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">effect</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+
+    <span class="c1"># Verify shape preserved</span>
+    <span class="k">assert</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">waveform</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># Verify independent channel processing (if applicable)</span>
+    <span class="c1"># Or verify cross-channel effects (if applicable)</span>
+</pre></div>
+</div>
+</section>
+<section id="testing-error-handling">
+<h4>Testing Error Handling<a class="headerlink" href="#testing-error-handling" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_effect_invalid_parameter</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that invalid parameters raise appropriate errors.&quot;&quot;&quot;</span>
+    <span class="c1"># Test invalid value</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s2">&quot;Parameter must be positive&quot;</span><span class="p">):</span>
+        <span class="n">MyEffect</span><span class="p">(</span><span class="n">param</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="c1"># Test invalid type</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
+        <span class="n">MyEffect</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="s2">&quot;invalid&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Test assertion errors</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">AssertionError</span><span class="p">):</span>
+        <span class="n">MyEffect</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># Zero not allowed</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="test-fixtures">
+<h3>Test Fixtures<a class="headerlink" href="#test-fixtures" title="Link to this heading">#</a></h3>
+<p>Use pytest fixtures for reusable test data:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">stereo_waveform</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fixture providing a standard stereo waveform.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mono_waveform</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fixture providing a standard mono waveform.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_with_fixture</span><span class="p">(</span><span class="n">stereo_waveform</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test using stereo waveform fixture.&quot;&quot;&quot;</span>
+    <span class="n">effect</span> <span class="o">=</span> <span class="n">MyEffect</span><span class="p">()</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">effect</span><span class="p">(</span><span class="n">stereo_waveform</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">stereo_waveform</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="coverage-requirements">
+<h2>Coverage Requirements<a class="headerlink" href="#coverage-requirements" title="Link to this heading">#</a></h2>
+<section id="coverage-targets">
+<h3>Coverage Targets<a class="headerlink" href="#coverage-targets" title="Link to this heading">#</a></h3>
+<p>The TorchFX project aims for comprehensive test coverage:</p>
+<ul class="simple">
+<li><p><strong>Line coverage</strong>: &gt;90% for all modules</p></li>
+<li><p><strong>Branch coverage</strong>: &gt;85% for control flow</p></li>
+<li><p><strong>Strategy coverage</strong>: 100% for all built-in strategies</p></li>
+</ul>
+</section>
+<section id="coverage-analysis">
+<h3>Coverage Analysis<a class="headerlink" href="#coverage-analysis" title="Link to this heading">#</a></h3>
+<p>Generate coverage reports to identify untested code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Terminal report with missing lines</span>
+pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>src/torchfx<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+
+<span class="c1"># HTML report for detailed analysis</span>
+pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>src/torchfx<span class="w"> </span>--cov-report<span class="o">=</span>html
+</pre></div>
+</div>
+<p><strong>Interpreting coverage reports</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Name</span>                           <span class="n">Stmts</span>   <span class="n">Miss</span> <span class="n">Branch</span> <span class="n">BrPart</span>  <span class="n">Cover</span>   <span class="n">Missing</span>
+<span class="o">--------------------------------------------------------------------------</span>
+<span class="n">src</span><span class="o">/</span><span class="n">torchfx</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>            <span class="mi">8</span>      <span class="mi">0</span>      <span class="mi">0</span>      <span class="mi">0</span>   <span class="mi">100</span><span class="o">%</span>
+<span class="n">src</span><span class="o">/</span><span class="n">torchfx</span><span class="o">/</span><span class="n">effect</span><span class="o">.</span><span class="n">py</span>            <span class="mi">250</span>     <span class="mi">15</span>     <span class="mi">60</span>      <span class="mi">8</span>    <span class="mi">92</span><span class="o">%</span>   <span class="mi">125</span><span class="o">-</span><span class="mi">130</span><span class="p">,</span> <span class="mi">245</span>
+<span class="n">src</span><span class="o">/</span><span class="n">torchfx</span><span class="o">/</span><span class="nb">filter</span><span class="o">/</span><span class="n">__base</span><span class="o">.</span><span class="n">py</span>      <span class="mi">80</span>      <span class="mi">5</span>     <span class="mi">20</span>      <span class="mi">2</span>    <span class="mi">91</span><span class="o">%</span>   <span class="mi">45</span><span class="o">-</span><span class="mi">47</span>
+<span class="n">src</span><span class="o">/</span><span class="n">torchfx</span><span class="o">/</span><span class="n">wave</span><span class="o">.</span><span class="n">py</span>              <span class="mi">120</span>      <span class="mi">8</span>     <span class="mi">30</span>      <span class="mi">3</span>    <span class="mi">90</span><span class="o">%</span>   <span class="mi">88</span><span class="o">-</span><span class="mi">92</span>
+<span class="o">--------------------------------------------------------------------------</span>
+<span class="n">TOTAL</span>                            <span class="mi">458</span>     <span class="mi">28</span>    <span class="mi">110</span>     <span class="mi">13</span>    <span class="mi">91</span><span class="o">%</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Stmts</strong>: Total number of statements</p></li>
+<li><p><strong>Miss</strong>: Number of statements not executed</p></li>
+<li><p><strong>Branch</strong>: Total number of branches</p></li>
+<li><p><strong>BrPart</strong>: Number of partially covered branches</p></li>
+<li><p><strong>Cover</strong>: Overall coverage percentage</p></li>
+<li><p><strong>Missing</strong>: Line numbers not covered</p></li>
+</ul>
+</section>
+</section>
+<section id="id1">
+<h2>Common Test Patterns<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<section id="testing-bpm-synchronization">
+<h3>Testing BPM Synchronization<a class="headerlink" href="#testing-bpm-synchronization" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_delay_bpm_synced</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test BPM-synchronized delay calculation.&quot;&quot;&quot;</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+    <span class="c1"># 120 BPM = 0.5 seconds per beat</span>
+    <span class="c1"># 1/8 note = 0.25 seconds = 11025 samples at 44.1kHz</span>
+    <span class="k">assert</span> <span class="n">delay</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">==</span> <span class="mi">11025</span>
+</pre></div>
+</div>
+</section>
+<section id="testing-strategy-pattern-extensibility">
+<h3>Testing Strategy Pattern Extensibility<a class="headerlink" href="#testing-strategy-pattern-extensibility" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_custom_strategy</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that custom strategies can be implemented.&quot;&quot;&quot;</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">CustomStrategy</span><span class="p">(</span><span class="n">BaseStrategy</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">waveform</span> <span class="o">*</span> <span class="mi">2</span>
+
+    <span class="n">effect</span> <span class="o">=</span> <span class="n">MyEffect</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="n">CustomStrategy</span><span class="p">())</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">effect</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="testing-lazy-initialization">
+<h3>Testing Lazy Initialization<a class="headerlink" href="#testing-lazy-initialization" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_lazy_fs_inference</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test lazy sample rate inference with Wave.&quot;&quot;&quot;</span>
+    <span class="n">effect</span> <span class="o">=</span> <span class="n">MyEffect</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># No fs provided</span>
+    <span class="k">assert</span> <span class="n">effect</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span>
+
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">effect</span>
+
+    <span class="k">assert</span> <span class="n">effect</span><span class="o">.</span><span class="n">fs</span> <span class="o">==</span> <span class="mi">44100</span>  <span class="c1"># Automatically configured</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="ci-testing">
+<h2>CI Testing<a class="headerlink" href="#ci-testing" title="Link to this heading">#</a></h2>
+<p>Tests run automatically in continuous integration via GitHub Actions:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># .github/workflows/ci.yml</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run tests</span>
+<span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">    </span><span class="no">pytest tests/ --cov=src/torchfx --cov-report=xml</span>
+
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Upload coverage</span>
+<span class="w">  </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">codecov/codecov-action@v3</span>
+<span class="w">  </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./coverage.xml</span>
+</pre></div>
+</div>
+<p><strong>CI test matrix</strong>:</p>
+<ul class="simple">
+<li><p>Python versions: 3.10, 3.11, 3.12, 3.13</p></li>
+<li><p>Operating systems: Ubuntu, macOS, Windows</p></li>
+<li><p>PyTorch versions: Latest stable</p></li>
+</ul>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<section id="write-descriptive-test-names">
+<h3>Write Descriptive Test Names<a class="headerlink" href="#write-descriptive-test-names" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Descriptive, explains what is tested</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_gain_amplitude_mode_doubles_waveform</span><span class="p">():</span>
+    <span class="k">pass</span>
+
+<span class="c1"># ❌ BAD: Vague, unclear what is tested</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_gain</span><span class="p">():</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+<section id="use-meaningful-assertions">
+<h3>Use Meaningful Assertions<a class="headerlink" href="#use-meaningful-assertions" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Clear assertion with context</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_normalize_peak</span><span class="p">():</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+    <span class="c1"># Max absolute value should equal target peak</span>
+    <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">out</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># ❌ BAD: Unclear what is being tested</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_normalize</span><span class="p">():</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</pre></div>
+</div>
+</section>
+<section id="test-edge-cases">
+<h3>Test Edge Cases<a class="headerlink" href="#test-edge-cases" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_delay_zero_feedback</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test delay with zero feedback produces single echo.&quot;&quot;&quot;</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">taps</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="c1"># Should only produce first tap, rest should be silent</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_delay_max_feedback</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test delay with maximum allowed feedback.&quot;&quot;&quot;</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>  <span class="c1"># Max allowed</span>
+    <span class="c1"># Should produce long decay</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_normalize_already_normalized</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test normalizing already-normalized audio.&quot;&quot;&quot;</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">])</span>  <span class="c1"># Already peak=0.5</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_close</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">waveform</span><span class="p">)</span>  <span class="c1"># Should be unchanged</span>
+</pre></div>
+</div>
+</section>
+<section id="keep-tests-independent">
+<h3>Keep Tests Independent<a class="headerlink" href="#keep-tests-independent" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Each test is self-contained</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_gain_1</span><span class="p">():</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">gain</span><span class="p">(</span><span class="n">waveform</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="mf">2.0</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_gain_2</span><span class="p">():</span>
+    <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">gain</span><span class="p">(</span><span class="n">waveform</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+
+<span class="c1"># ❌ BAD: Tests depend on order</span>
+<span class="n">global_waveform</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_setup</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">global_waveform</span>
+    <span class="n">global_waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_gain</span><span class="p">():</span>  <span class="c1"># Depends on test_setup</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">gain</span><span class="p">(</span><span class="n">global_waveform</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="related-resources">
+<h2>Related Resources<a class="headerlink" href="#related-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="project-structure.html"><span class="doc">Project Structure</span></a> - Project organization</p></li>
+<li><p><a class="reference internal" href="benchmarking.html"><span class="doc">Benchmarking</span></a> - Performance benchmarking</p></li>
+<li><p><a class="reference internal" href="style_guide.html"><span class="doc">Style Guide</span></a> - Coding standards</p></li>
+<li><p><a class="reference external" href="https://docs.pytest.org/">pytest documentation</a> - Official pytest docs</p></li>
+<li><p><a class="reference external" href="https://coverage.readthedocs.io/">Coverage.py documentation</a> - Coverage tool docs</p></li>
+</ul>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="project-structure.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Project Structure</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="benchmarking.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Benchmarking</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-infrastructure-configuration">Test Infrastructure Configuration</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytest-configuration">Pytest Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#coverage-configuration">Coverage Configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-organization">Test Organization</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-file-structure">Test File Structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#naming-conventions">Naming Conventions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-execution-flow">Test Execution Flow</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-tests">Running Tests</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-execution">Basic Execution</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#verbose-output">Verbose Output</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filtering-tests">Filtering Tests</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#coverage-reports">Coverage Reports</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-types-and-patterns">Test Types and Patterns</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#unit-tests">Unit Tests</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-tests">Integration Tests</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parametrized-tests">Parametrized Tests</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#strategy-pattern-tests">Strategy Pattern Tests</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mocking-with-monkeypatch">Mocking with Monkeypatch</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#assertion-patterns">Assertion Patterns</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torch-testing-assert-close">torch.testing.assert_close</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytest-approx">pytest.approx</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torch-allclose">torch.allclose</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytest-raises">pytest.raises</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#writing-new-tests">Writing New Tests</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-structure-template">Test Structure Template</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-test-patterns">Common Test Patterns</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-effects">Testing Effects</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-filters">Testing Filters</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-multi-channel-processing">Testing Multi-Channel Processing</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-error-handling">Testing Error Handling</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-fixtures">Test Fixtures</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coverage-requirements">Coverage Requirements</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#coverage-targets">Coverage Targets</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#coverage-analysis">Coverage Analysis</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Common Test Patterns</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-bpm-synchronization">Testing BPM Synchronization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-strategy-pattern-extensibility">Testing Strategy Pattern Extensibility</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-lazy-initialization">Testing Lazy Initialization</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ci-testing">CI Testing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#write-descriptive-test-names">Write Descriptive Test Names</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-meaningful-assertions">Use Meaningful Assertions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-edge-cases">Test Edge Cases</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#keep-tests-independent">Keep Tests Independent</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-resources">Related Resources</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/developer/testing.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/developer/testing.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

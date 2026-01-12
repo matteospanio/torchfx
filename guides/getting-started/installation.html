@@ -1,0 +1,1508 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Installation &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/getting-started/installation';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Getting Started" href="getting_started.html" />
+    <link rel="prev" title="Getting Started" href="index.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Getting Started</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Getting Started</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Installation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h1>
+<p>TorchFX can be installed either from the Python Package Index (PyPI) or by cloning the repository from GitHub. This guide covers system requirements, installation methods, platform-specific configuration, and dependency management.</p>
+<div class="tip admonition">
+<p class="admonition-title">Quick Start</p>
+<p>For most users, a simple <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchfx</span></code> is all you need to get started. For development or advanced configurations, see the sections below.</p>
+</div>
+<section id="purpose-and-scope">
+<h2>Purpose and Scope<a class="headerlink" href="#purpose-and-scope" title="Link to this heading">#</a></h2>
+<p>This document describes the installation procedures for TorchFX, including system requirements, installation methods, platform-specific PyTorch configuration, and dependency management. For a quick start guide with minimal setup, see <a class="reference internal" href="getting_started.html"><span class="doc">Getting Started</span></a>. For details on the development environment setup, see <a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a>.</p>
+</section>
+<section id="system-requirements">
+<h2>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading">#</a></h2>
+<p>TorchFX requires <strong>Python 3.10 or higher</strong>. The library is designed to run on multiple platforms with different hardware acceleration capabilities:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>PyTorch Backend</p></th>
+<th class="head"><p>CUDA Support</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Linux</p></td>
+<td><p>CUDA 12.4</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p>macOS</p></td>
+<td><p>CPU</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p>Windows</p></td>
+<td><p>CPU</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The platform-specific PyTorch configuration is automatically handled using the <code class="docutils literal notranslate"><span class="pre">uv</span></code> package manager’s source selection mechanism based on your operating system.</p>
+</div>
+<section id="core-dependencies">
+<h3>Core Dependencies<a class="headerlink" href="#core-dependencies" title="Link to this heading">#</a></h3>
+<p>TorchFX requires the following Python packages:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">torch&gt;=2.6.0</span></code> - PyTorch tensor library</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchaudio&gt;=2.6.0</span></code> - Audio I/O and transforms</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">numpy&gt;=2.2.4</span></code> - Numerical computing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scipy&gt;=1.15.2</span></code> - Signal processing algorithms</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">soundfile&gt;=0.13.1</span></code> - Audio file reading/writing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">annotated-types&gt;=0.7.0</span></code> - Type annotation support</p></li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>These dependencies are installed automatically when you install TorchFX via pip or uv.</p>
+</div>
+</section>
+</section>
+<section id="installation-methods">
+<h2>Installation Methods<a class="headerlink" href="#installation-methods" title="Link to this heading">#</a></h2>
+<section id="installing-from-pypi">
+<h3>Installing from PyPI<a class="headerlink" href="#installing-from-pypi" title="Link to this heading">#</a></h3>
+<p>The simplest installation method is through PyPI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx
+</pre></div>
+</div>
+<p>This installs the latest stable release published on PyPI, along with all required dependencies. On Linux systems, this will attempt to install CUDA 12.4-enabled PyTorch; on macOS and Windows, it will install CPU-only versions.</p>
+</section>
+<section id="installing-from-source">
+<h3>Installing from Source<a class="headerlink" href="#installing-from-source" title="Link to this heading">#</a></h3>
+<p>To install the latest development version of TorchFX directly from GitHub, follow these steps:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/matteospanio/torchfx
+<span class="nb">cd</span><span class="w"> </span>torchfx
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+<p>This approach is useful if you plan to contribute to the project or want access to the latest features and updates that may not yet be available on PyPI.</p>
+</section>
+<section id="installation-from-source-with-uv">
+<h3>Installation from Source with uv<a class="headerlink" href="#installation-from-source-with-uv" title="Link to this heading">#</a></h3>
+<p>For development or to use the latest unreleased features with reproducible builds, install from source using the <code class="docutils literal notranslate"><span class="pre">uv</span></code> package manager:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install uv if not already installed</span>
+pip<span class="w"> </span>install<span class="w"> </span>uv
+
+<span class="c1"># Clone the repository</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/matteospanio/torchfx
+<span class="nb">cd</span><span class="w"> </span>torchfx
+
+<span class="c1"># Install in editable mode with all dependencies</span>
+uv<span class="w"> </span>sync
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> command reads <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">uv.lock</span></code> to install all dependencies with exact versions for reproducible builds.</p>
+</section>
+<section id="installation-workflow">
+<h3>Installation Workflow<a class="headerlink" href="#installation-workflow" title="Link to this heading">#</a></h3>
+<p>The following diagram illustrates the complete installation workflow for both PyPI and source-based installations:</p>
+<pre  class="mermaid">
+        graph TB
+    User[&quot;User&quot;]
+
+    subgraph &quot;Installation Methods&quot;
+        PipInstall[&quot;pip install torchfx&quot;]
+        SourceInstall[&quot;Clone + uv sync&quot;]
+    end
+
+    subgraph &quot;PyPI Distribution&quot;
+        PyPI[&quot;PyPI Registry&quot;]
+        Wheel[&quot;torchfx-0.2.1-*.whl&quot;]
+    end
+
+    subgraph &quot;Source Installation&quot;
+        GitRepo[&quot;GitHub Repository&lt;br/&gt;matteospanio/torchfx&quot;]
+        PyProject[&quot;pyproject.toml&lt;br/&gt;Dependencies definition&quot;]
+        UVLock[&quot;uv.lock&lt;br/&gt;Locked versions&quot;]
+        UV[&quot;uv package manager&quot;]
+    end
+
+    subgraph &quot;Dependency Resolution&quot;
+        DepResolver[&quot;Platform Detection&quot;]
+        LinuxPath[&quot;Linux:&lt;br/&gt;pytorch-cu124 index&quot;]
+        NonLinuxPath[&quot;macOS/Windows:&lt;br/&gt;pytorch-cpu index&quot;]
+        PyTorchCUDA[&quot;torch 2.6.0+cu124&quot;]
+        PyTorchCPU[&quot;torch 2.6.0+cpu&quot;]
+        OtherDeps[&quot;numpy, scipy&lt;br/&gt;soundfile, torchaudio&quot;]
+    end
+
+    subgraph &quot;Installed Package&quot;
+        TorchFXPkg[&quot;torchfx package&lt;br/&gt;in site-packages&quot;]
+    end
+
+    User --&gt;|pip install| PipInstall
+    User --&gt;|git clone + uv sync| SourceInstall
+
+    PipInstall --&gt; PyPI
+    PyPI --&gt; Wheel
+    Wheel --&gt; DepResolver
+
+    SourceInstall --&gt; GitRepo
+    GitRepo --&gt; PyProject
+    GitRepo --&gt; UVLock
+    PyProject --&gt; UV
+    UVLock --&gt; UV
+    UV --&gt; DepResolver
+
+    DepResolver --&gt;|sys_platform == 'linux'| LinuxPath
+    DepResolver --&gt;|sys_platform != 'linux'| NonLinuxPath
+
+    LinuxPath --&gt; PyTorchCUDA
+    NonLinuxPath --&gt; PyTorchCPU
+
+    PyTorchCUDA --&gt; TorchFXPkg
+    PyTorchCPU --&gt; TorchFXPkg
+    DepResolver --&gt; OtherDeps
+    OtherDeps --&gt; TorchFXPkg
+    </pre></section>
+</section>
+<section id="platform-specific-pytorch-configuration">
+<h2>Platform-Specific PyTorch Configuration<a class="headerlink" href="#platform-specific-pytorch-configuration" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">uv</span></code> package manager uses <strong>platform markers</strong> to select the appropriate PyTorch distribution. This configuration ensures that Linux users get CUDA-enabled builds while macOS and Windows users receive CPU-only builds.</p>
+<section id="pytorch-source-selection-logic">
+<h3>PyTorch Source Selection Logic<a class="headerlink" href="#pytorch-source-selection-logic" title="Link to this heading">#</a></h3>
+<p>The following diagram shows how PyTorch sources are selected based on the platform:</p>
+<pre  class="mermaid">
+        graph TD
+    Start[&quot;Dependency Resolution Start&quot;]
+
+    PlatformCheck{&quot;sys_platform == 'linux'?&quot;}
+
+    subgraph &quot;Linux Path&quot;
+        CUDAIndex[&quot;[[tool.uv.index]]&lt;br/&gt;name = 'pytorch-cu124'&lt;br/&gt;url = download.pytorch.org/whl/cu124&quot;]
+        CUDASource[&quot;torch source:&lt;br/&gt;index = 'pytorch-cu124'&lt;br/&gt;marker = sys_platform == 'linux'&quot;]
+        CUDAPackage[&quot;torch 2.6.0+cu124&lt;br/&gt;torchaudio 2.6.0+cu124&lt;br/&gt;CUDA 12.4 support&quot;]
+    end
+
+    subgraph &quot;Non-Linux Path&quot;
+        CPUIndex[&quot;[[tool.uv.index]]&lt;br/&gt;name = 'pytorch-cpu'&lt;br/&gt;url = download.pytorch.org/whl/cpu&quot;]
+        CPUSource[&quot;torch source:&lt;br/&gt;index = 'pytorch-cpu'&lt;br/&gt;marker = sys_platform != 'linux'&quot;]
+        CPUPackage[&quot;torch 2.6.0+cpu&lt;br/&gt;torchaudio 2.6.0+cpu&lt;br/&gt;CPU-only&quot;]
+    end
+
+    Result[&quot;Resolved torch package&quot;]
+
+    Start --&gt; PlatformCheck
+    PlatformCheck --&gt;|Yes| CUDASource
+    PlatformCheck --&gt;|No| CPUSource
+
+    CUDASource --&gt; CUDAIndex
+    CUDAIndex --&gt; CUDAPackage
+    CPUSource --&gt; CPUIndex
+    CPUIndex --&gt; CPUPackage
+
+    CUDAPackage --&gt; Result
+    CPUPackage --&gt; Result
+    </pre><p>The platform detection uses Python’s <code class="docutils literal notranslate"><span class="pre">sys_platform</span></code> to determine which PyTorch index to use:</p>
+<ul class="simple">
+<li><p><strong>Linux systems</strong>: Resolves <code class="docutils literal notranslate"><span class="pre">torch</span></code> and <code class="docutils literal notranslate"><span class="pre">torchaudio</span></code> from the <code class="docutils literal notranslate"><span class="pre">pytorch-cu124</span></code> index at <code class="docutils literal notranslate"><span class="pre">https://download.pytorch.org/whl/cu124</span></code>, providing CUDA 12.4 GPU acceleration.</p></li>
+<li><p><strong>macOS and Windows</strong>: Resolves from the <code class="docutils literal notranslate"><span class="pre">pytorch-cpu</span></code> index at <code class="docutils literal notranslate"><span class="pre">https://download.pytorch.org/whl/cpu</span></code>, providing CPU-only builds.</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">explicit</span> <span class="pre">=</span> <span class="pre">true</span></code> flag in the configuration ensures these indices are only used when explicitly specified by the source configuration.</p>
+</section>
+<section id="gpu-support">
+<h3>GPU Support<a class="headerlink" href="#gpu-support" title="Link to this heading">#</a></h3>
+<p>TorchFX is built on top of <strong>PyTorch</strong>, which means GPU support depends on your local PyTorch installation. To enable GPU acceleration:</p>
+<ol class="arabic simple">
+<li><p>Make sure you have a compatible NVIDIA GPU</p></li>
+<li><p>Ensure you’re running on a Linux system (CUDA support is currently Linux-only in the default configuration)</p></li>
+<li><p>Install PyTorch with CUDA support</p></li>
+</ol>
+<p>If you need a specific CUDA version different from 12.4, you can manually install PyTorch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example: Installing PyTorch with CUDA 12.1</span>
+pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>torchvision<span class="w"> </span>torchaudio<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu121
+</pre></div>
+</div>
+<p>Replace <code class="docutils literal notranslate"><span class="pre">cu121</span></code> with the correct CUDA version for your system. Visit the <a class="reference external" href="https://pytorch.org/get-started/locally/">official PyTorch website</a> for the correct installation command for your configuration.</p>
+</section>
+</section>
+<section id="dependency-management-with-uv">
+<h2>Dependency Management with uv<a class="headerlink" href="#dependency-management-with-uv" title="Link to this heading">#</a></h2>
+<p>The project uses <strong>uv</strong> as its primary dependency manager, which provides faster dependency resolution and reproducible builds through lock files.</p>
+<section id="dependency-resolution-components">
+<h3>Dependency Resolution Components<a class="headerlink" href="#dependency-resolution-components" title="Link to this heading">#</a></h3>
+<p>The following diagram illustrates how dependencies are resolved and installed:</p>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;Configuration Files&quot;
+        PyProject[&quot;pyproject.toml&quot;]
+        UVLock[&quot;uv.lock&quot;]
+    end
+
+    subgraph &quot;Dependency Specifications&quot;
+        CoreDeps[&quot;[project.dependencies]&lt;br/&gt;torch&gt;=2.6.0&lt;br/&gt;torchaudio&gt;=2.6.0&lt;br/&gt;numpy&gt;=2.2.4&lt;br/&gt;scipy&gt;=1.15.2&lt;br/&gt;soundfile&gt;=0.13.1&lt;br/&gt;annotated-types&gt;=0.7.0&quot;]
+
+        DevGroups[&quot;[dependency-groups]&lt;br/&gt;cli: typer&lt;br/&gt;dev: black, mypy, pytest, ruff&lt;br/&gt;docs: sphinx, sphinx-immaterial&quot;]
+
+        UVSources[&quot;[tool.uv.sources]&lt;br/&gt;Platform-specific torch sources&quot;]
+
+        UVIndices[&quot;[[tool.uv.index]]&lt;br/&gt;pytorch-cpu&lt;br/&gt;pytorch-cu124&quot;]
+    end
+
+    subgraph &quot;Resolution Process&quot;
+        UVResolver[&quot;uv resolver engine&quot;]
+        PlatformDetect[&quot;Platform detection&lt;br/&gt;sys_platform&quot;]
+        VersionConstraints[&quot;Version constraint solver&quot;]
+    end
+
+    subgraph &quot;Lock File&quot;
+        LockedVersions[&quot;Exact package versions&lt;br/&gt;with hashes&quot;]
+        ResolvedDeps[&quot;Resolved dependency tree&quot;]
+    end
+
+    subgraph &quot;Installation&quot;
+        Download[&quot;Download packages&quot;]
+        Install[&quot;Install to environment&quot;]
+    end
+
+    PyProject --&gt; CoreDeps
+    PyProject --&gt; DevGroups
+    PyProject --&gt; UVSources
+    PyProject --&gt; UVIndices
+
+    CoreDeps --&gt; UVResolver
+    DevGroups --&gt; UVResolver
+    UVSources --&gt; PlatformDetect
+    UVIndices --&gt; PlatformDetect
+
+    UVResolver --&gt; VersionConstraints
+    PlatformDetect --&gt; VersionConstraints
+
+    VersionConstraints --&gt; LockedVersions
+    VersionConstraints --&gt; ResolvedDeps
+
+    LockedVersions --&gt; UVLock
+    ResolvedDeps --&gt; UVLock
+
+    UVLock --&gt; Download
+    Download --&gt; Install
+    </pre></section>
+<section id="dependency-groups">
+<h3>Dependency Groups<a class="headerlink" href="#dependency-groups" title="Link to this heading">#</a></h3>
+<p>The project defines optional dependency groups for different use cases:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Group</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Key Packages</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cli</span></code></p></td>
+<td><p>Command-line interface</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">typer&gt;=0.16.0</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dev</span></code></p></td>
+<td><p>Development tools</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">black</span></code>, <code class="docutils literal notranslate"><span class="pre">mypy</span></code>, <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, <code class="docutils literal notranslate"><span class="pre">ruff</span></code>, <code class="docutils literal notranslate"><span class="pre">coverage</span></code>, <code class="docutils literal notranslate"><span class="pre">scalene</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">docs</span></code></p></td>
+<td><p>Documentation building</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sphinx&gt;=8.1.3</span></code>, <code class="docutils literal notranslate"><span class="pre">sphinx-immaterial&gt;=0.13.5</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>To install with specific groups:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install with dev dependencies</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>dev
+
+<span class="c1"># Install with all groups</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--all-groups
+
+<span class="c1"># Install only docs dependencies</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>docs
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For contributors and developers, we recommend using <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span> <span class="pre">--all-groups</span></code> to install all development dependencies including testing, documentation, and CLI tools.</p>
+</div>
+</section>
+</section>
+<section id="developers">
+<h2>Developers<a class="headerlink" href="#developers" title="Link to this heading">#</a></h2>
+<p>If you are a developer and want to contribute to the TorchFX project, you can set up a development environment by following these steps:</p>
+<ol class="arabic">
+<li><p>Clone the repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/matteospanio/torchfx
+</pre></div>
+</div>
+</li>
+<li><p>Navigate to the project directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>torchfx
+</pre></div>
+</div>
+</li>
+<li><p>Create a virtual environment (optional but recommended). The project is built using <code class="docutils literal notranslate"><span class="pre">uv</span></code>, hence we suggest using it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># The flag --all-groups will install also dev dependencies</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--all-groups
+</pre></div>
+</div>
+</li>
+</ol>
+<p>For more information on the development workflow, see <a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a>.</p>
+</section>
+<section id="build-system">
+<h2>Build System<a class="headerlink" href="#build-system" title="Link to this heading">#</a></h2>
+<p>The project uses <strong>hatchling</strong> as its build backend. The build system configuration is defined in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[build-system]</span>
+<span class="n">requires</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;hatchling&quot;</span><span class="p">]</span>
+<span class="n">build-backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hatchling.build&quot;</span>
+</pre></div>
+</div>
+<p>To build a distribution package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Using uv</span>
+uv<span class="w"> </span>build
+
+<span class="c1"># Or using standard tools</span>
+python<span class="w"> </span>-m<span class="w"> </span>build
+</pre></div>
+</div>
+<p>This produces a wheel file (<code class="docutils literal notranslate"><span class="pre">.whl</span></code>) in the <code class="docutils literal notranslate"><span class="pre">dist/</span></code> directory that can be distributed or installed with pip.</p>
+</section>
+<section id="verification">
+<h2>Verification<a class="headerlink" href="#verification" title="Link to this heading">#</a></h2>
+<p>After installation, verify that TorchFX is correctly installed and can import all core components.</p>
+<section id="basic-installation-check">
+<h3>Basic Installation Check<a class="headerlink" href="#basic-installation-check" title="Link to this heading">#</a></h3>
+<p>To verify that the package has been correctly installed, run the following command in Python:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">torchfx</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>  <span class="c1"># Should print &#39;0.2.1&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="comprehensive-verification">
+<h3>Comprehensive Verification<a class="headerlink" href="#comprehensive-verification" title="Link to this heading">#</a></h3>
+<p>For a more thorough verification, check that all core components can be imported and that PyTorch is correctly configured:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span><span class="p">,</span> <span class="n">FX</span><span class="p">,</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Normalize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Butterworth</span><span class="p">,</span> <span class="n">LowPass</span>
+
+<span class="c1"># Check version</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">torchfx</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>  <span class="c1"># Should print &#39;0.2.1&#39;</span>
+
+<span class="c1"># Verify PyTorch backend</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CUDA available: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PyTorch version: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>On Linux systems with NVIDIA GPUs, <code class="docutils literal notranslate"><span class="pre">torch.cuda.is_available()</span></code> should return <code class="docutils literal notranslate"><span class="pre">True</span></code>. On macOS and Windows, it will return <code class="docutils literal notranslate"><span class="pre">False</span></code>, indicating CPU-only operation.</p>
+</section>
+<section id="audio-i-o-verification">
+<h3>Audio I/O Verification<a class="headerlink" href="#audio-i-o-verification" title="Link to this heading">#</a></h3>
+<p>To verify audio I/O capabilities:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;torchaudio version: </span><span class="si">{</span><span class="n">torchaudio</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Available backends: </span><span class="si">{</span><span class="n">torchaudio</span><span class="o">.</span><span class="n">list_audio_backends</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Expected output should show the available audio backends for your platform (e.g., <code class="docutils literal notranslate"><span class="pre">soundfile</span></code>, <code class="docutils literal notranslate"><span class="pre">sox</span></code>, <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code>).</p>
+</section>
+</section>
+<section id="checking-installation">
+<h2>Checking Installation<a class="headerlink" href="#checking-installation" title="Link to this heading">#</a></h2>
+<p>You can perform a quick functional test to ensure TorchFX is working correctly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Create a simple sine wave</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_function</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">fx</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">fx</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">440</span> <span class="o">*</span> <span class="n">t</span><span class="p">),</span> <span class="n">duration</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+
+<span class="c1"># Apply a gain effect</span>
+<span class="n">gained</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="mf">6.0</span><span class="p">)</span>
+
+<span class="c1"># Verify the operation succeeded</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original wave: </span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed wave: </span><span class="si">{</span><span class="n">gained</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample rate: </span><span class="si">{</span><span class="n">gained</span><span class="o">.</span><span class="n">fs</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If this runs without errors, your installation is working correctly.</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
+<section id="pytorch-cuda-version-mismatch">
+<h3>PyTorch CUDA Version Mismatch<a class="headerlink" href="#pytorch-cuda-version-mismatch" title="Link to this heading">#</a></h3>
+<p>If you have an existing PyTorch installation with a different CUDA version, you may need to uninstall it first:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>uninstall<span class="w"> </span>torch<span class="w"> </span>torchaudio<span class="w"> </span>torchvision
+uv<span class="w"> </span>sync<span class="w"> </span>--reinstall-package<span class="w"> </span>torch
+</pre></div>
+</div>
+<p>This ensures that the correct PyTorch version is installed according to the platform-specific configuration.</p>
+</section>
+<section id="platform-detection-issues">
+<h3>Platform Detection Issues<a class="headerlink" href="#platform-detection-issues" title="Link to this heading">#</a></h3>
+<p>If the wrong PyTorch variant is installed, verify your platform:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Platform: </span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The marker <code class="docutils literal notranslate"><span class="pre">sys_platform</span> <span class="pre">==</span> <span class="pre">'linux'</span></code> should be <code class="docutils literal notranslate"><span class="pre">True</span></code> on Linux systems. If you’re on Linux but getting the CPU-only version, check your Python installation and ensure <code class="docutils literal notranslate"><span class="pre">sys.platform</span></code> returns <code class="docutils literal notranslate"><span class="pre">'linux'</span></code>.</p>
+</section>
+<section id="dependency-conflicts">
+<h3>Dependency Conflicts<a class="headerlink" href="#dependency-conflicts" title="Link to this heading">#</a></h3>
+<p>If you encounter dependency conflicts when using uv, regenerate the lock file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>rm<span class="w"> </span>uv.lock
+uv<span class="w"> </span>lock
+uv<span class="w"> </span>sync
+</pre></div>
+</div>
+<p>This will resolve dependencies from scratch and create a new lock file with compatible versions.</p>
+</section>
+<section id="import-errors">
+<h3>Import Errors<a class="headerlink" href="#import-errors" title="Link to this heading">#</a></h3>
+<p>If you encounter import errors after installation, ensure that:</p>
+<ol class="arabic simple">
+<li><p>You’re using the correct Python environment where TorchFX was installed</p></li>
+<li><p>All dependencies were installed successfully</p></li>
+<li><p>There are no naming conflicts with other packages</p></li>
+</ol>
+<p>You can verify your Python environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>which<span class="w"> </span>python
+pip<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>torchfx
+</pre></div>
+</div>
+</section>
+<section id="audio-backend-issues">
+<h3>Audio Backend Issues<a class="headerlink" href="#audio-backend-issues" title="Link to this heading">#</a></h3>
+<p>If you encounter issues loading audio files, ensure that <code class="docutils literal notranslate"><span class="pre">soundfile</span></code> is properly installed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>soundfile<span class="w"> </span>--upgrade
+</pre></div>
+</div>
+<p>On some systems, you may need to install system-level audio libraries:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Ubuntu/Debian</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>libsndfile1
+
+<span class="c1"># macOS</span>
+brew<span class="w"> </span>install<span class="w"> </span>libsndfile
+
+<span class="c1"># Windows</span>
+<span class="c1"># Usually included with soundfile package</span>
+</pre></div>
+</div>
+<div class="tip admonition">
+<p class="admonition-title">Still Having Issues?</p>
+<p>If you continue to experience problems, please:</p>
+<ul class="simple">
+<li><p>Check the <a class="reference external" href="https://github.com/matteospanio/torchfx/issues">GitHub Issues</a> for similar problems</p></li>
+<li><p>Create a new issue with details about your system, Python version, and the error message</p></li>
+<li><p>Include the output of <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">list</span></code> to show installed packages and versions</p></li>
+</ul>
+</div>
+</section>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading">#</a></h2>
+<p>Now that you have TorchFX installed, you can:</p>
+<ul class="simple">
+<li><p>Follow the <a class="reference internal" href="getting_started.html"><span class="doc">Getting Started</span></a> guide to learn the basics</p></li>
+<li><p>Explore <a class="reference internal" href="../core-concepts/index.html"><span class="doc">Core Concepts</span></a> to understand the fundamental concepts</p></li>
+<li><p>Try the <a class="reference internal" href="../tutorials/index.html"><span class="doc">Tutorials</span></a> for hands-on examples</p></li>
+<li><p>Learn about <a class="reference internal" href="../advanced/gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a> for performance optimization</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="getting_started.html"><span class="doc">Getting Started</span></a> - Your first steps with TorchFX</p></li>
+<li><p><a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a> - Contributing to TorchFX development</p></li>
+<li><p><a class="reference internal" href="../advanced/performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a> - Optimizing performance</p></li>
+</ul>
+</div>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Getting Started</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="getting_started.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Getting Started</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#purpose-and-scope">Purpose and Scope</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#system-requirements">System Requirements</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-dependencies">Core Dependencies</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-methods">Installation Methods</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installing-from-pypi">Installing from PyPI</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installing-from-source">Installing from Source</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-with-uv">Installation from Source with uv</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-workflow">Installation Workflow</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#platform-specific-pytorch-configuration">Platform-Specific PyTorch Configuration</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytorch-source-selection-logic">PyTorch Source Selection Logic</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-support">GPU Support</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-management-with-uv">Dependency Management with uv</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-resolution-components">Dependency Resolution Components</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-groups">Dependency Groups</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#developers">Developers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-system">Build System</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verification">Verification</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-installation-check">Basic Installation Check</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comprehensive-verification">Comprehensive Verification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-i-o-verification">Audio I/O Verification</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#checking-installation">Checking Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytorch-cuda-version-mismatch">PyTorch CUDA Version Mismatch</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#platform-detection-issues">Platform Detection Issues</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-conflicts">Dependency Conflicts</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-errors">Import Errors</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-backend-issues">Audio Backend Issues</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next Steps</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/getting-started/installation.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/getting-started/installation.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,2291 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Multi-Channel Processing &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/advanced/multi-channel';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Performance Optimization and Benchmarking" href="performance.html" />
+    <link rel="prev" title="PyTorch Integration" href="pytorch-integration.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Advanced Topics</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Advanced Topics</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Multi-Channel Processing</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="multi-channel-processing">
+<span id="multi-channel"></span><h1>Multi-Channel Processing<a class="headerlink" href="#multi-channel-processing" title="Link to this heading">#</a></h1>
+<p>Learn how to process multi-channel audio in TorchFX, from simple stereo to complex surround sound configurations. This guide covers tensor shape conventions, per-channel vs. cross-channel processing strategies, and production-ready patterns for building multi-channel effects.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
+<p>Before starting this guide, you should be familiar with:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../core-concepts/wave.html"><span class="doc">Wave - Digital Audio Representation</span></a> - Wave class and tensor handling</p></li>
+<li><p><a class="reference internal" href="../core-concepts/fx.html"><span class="doc">FX - Audio Effect Base Class</span></a> - FX base class for effects</p></li>
+<li><p><a class="reference internal" href="../tutorials/custom-effects.html"><span class="doc">Creating Custom Effects</span></a> - Creating custom effects</p></li>
+<li><p>Basic PyTorch <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> and <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> usage</p></li>
+</ul>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>Multi-channel audio is everywhere in modern audio production—from stereo music to 5.1/7.1 surround sound in film and immersive spatial audio formats. TorchFX provides flexible patterns for handling multi-channel audio with three main processing approaches:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Processing Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example Use Case</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Broadcast</strong></p></td>
+<td><p>Same effect applied to all channels</p></td>
+<td><p>Global EQ, normalization</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Per-channel</strong></p></td>
+<td><p>Different processing for each channel</p></td>
+<td><p>Independent channel EQ, stereo mastering</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Cross-channel</strong></p></td>
+<td><p>Channels interact with each other</p></td>
+<td><p>Ping-pong delay, stereo widening</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;Multi-Channel Processing Strategies&quot;
+        Input[Multi-Channel Input&lt;br/&gt;channels, time]
+
+        subgraph Broadcast[Broadcast Processing]
+            BC[Same filter&lt;br/&gt;applied to all channels]
+        end
+
+        subgraph PerChannel[Per-Channel Processing]
+            PC1[Channel 1: Filter A]
+            PC2[Channel 2: Filter B]
+            PCN[Channel N: Filter C]
+        end
+
+        subgraph CrossChannel[Cross-Channel Processing]
+            CC[Channels interact&lt;br/&gt;e.g., L→R, R→L]
+        end
+
+        Input --&gt; Broadcast
+        Input --&gt; PerChannel
+        Input --&gt; CrossChannel
+
+        Broadcast --&gt; Output1[Output: Same processing]
+        PerChannel --&gt; Output2[Output: Different per channel]
+        CrossChannel --&gt; Output3[Output: Channel interaction]
+    end
+
+    style Input fill:#e1f5ff
+    style Broadcast fill:#e8f5e1
+    style PerChannel fill:#fff5e1
+    style CrossChannel fill:#f5e1ff
+    </pre></section>
+<section id="tensor-shape-conventions">
+<h2>Tensor Shape Conventions<a class="headerlink" href="#tensor-shape-conventions" title="Link to this heading">#</a></h2>
+<p>TorchFX follows standard PyTorch audio conventions where <strong>the last dimension represents time</strong> and earlier dimensions represent channels and/or batches.</p>
+<section id="standard-audio-shapes">
+<h3>Standard Audio Shapes<a class="headerlink" href="#standard-audio-shapes" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Shape</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example Use Case</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">(time,)</span></code></p></td>
+<td><p>Mono audio</p></td>
+<td><p>Single microphone recording</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">time)</span></code></p></td>
+<td><p>Multi-channel audio</p></td>
+<td><p>Stereo (2), 5.1 surround (6), 7.1 surround (8)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">channels,</span> <span class="pre">time)</span></code></p></td>
+<td><p>Batched multi-channel</p></td>
+<td><p>Neural network training batches</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">time)</span></code></p></td>
+<td><p>Arbitrary leading dimensions</p></td>
+<td><p>Generic tensor processing</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>All effects inheriting from <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> accept tensors with these shapes. By default, effects broadcast operations across all dimensions except time, unless they implement channel-specific logic.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The <strong>last dimension is always time</strong>. This is critical for proper tensor handling in TorchFX and PyTorch audio libraries.</p>
+</div>
+</section>
+<section id="shape-convention-examples">
+<h3>Shape Convention Examples<a class="headerlink" href="#shape-convention-examples" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Mono audio: (time,)</span>
+<span class="n">mono</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">44100</span><span class="p">)</span>  <span class="c1"># 1 second at 44.1kHz</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mono shape: </span><span class="si">{</span><span class="n">mono</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># (44100,)</span>
+
+<span class="c1"># Stereo audio: (channels, time)</span>
+<span class="n">stereo</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># 2 channels, 1 second</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stereo shape: </span><span class="si">{</span><span class="n">stereo</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># (2, 44100)</span>
+
+<span class="c1"># 5.1 surround: (channels, time)</span>
+<span class="c1"># Order: Front L, Front R, Center, LFE, Rear L, Rear R</span>
+<span class="n">surround_51</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;5.1 shape: </span><span class="si">{</span><span class="n">surround_51</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># (6, 44100)</span>
+
+<span class="c1"># 7.1 surround: (channels, time)</span>
+<span class="n">surround_71</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;7.1 shape: </span><span class="si">{</span><span class="n">surround_71</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># (8, 44100)</span>
+
+<span class="c1"># Batched stereo for ML: (batch, channels, time)</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># 32 stereo samples</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Batched shape: </span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># (32, 2, 44100)</span>
+</pre></div>
+</div>
+</section>
+<section id="channel-processing-flow">
+<h3>Channel Processing Flow<a class="headerlink" href="#channel-processing-flow" title="Link to this heading">#</a></h3>
+<pre  class="mermaid">
+        graph LR
+    subgraph &quot;Input Tensor Shapes&quot;
+        Mono[&quot;(time,)&lt;br/&gt;Mono&quot;]
+        Stereo[&quot;(2, time)&lt;br/&gt;Stereo&quot;]
+        Multi[&quot;(N, time)&lt;br/&gt;N channels&quot;]
+        Batch[&quot;(B, N, time)&lt;br/&gt;Batched&quot;]
+    end
+
+    subgraph &quot;FX Base Class&quot;
+        FX[&quot;FX.forward(x: Tensor)&lt;br/&gt;All shapes supported&quot;]
+    end
+
+    subgraph &quot;Processing Strategies&quot;
+        Broadcast[&quot;Broadcast&lt;br/&gt;Same to all&quot;]
+        PerCh[&quot;Per-Channel&lt;br/&gt;Independent&quot;]
+        Cross[&quot;Cross-Channel&lt;br/&gt;Interactive&quot;]
+    end
+
+    Mono --&gt; FX
+    Stereo --&gt; FX
+    Multi --&gt; FX
+    Batch --&gt; FX
+
+    FX --&gt; Broadcast
+    FX --&gt; PerCh
+    FX --&gt; Cross
+    </pre></section>
+</section>
+<section id="per-channel-processing-patterns">
+<h2>Per-Channel Processing Patterns<a class="headerlink" href="#per-channel-processing-patterns" title="Link to this heading">#</a></h2>
+<p>Per-channel processing applies different effects to each channel independently. This is the most common pattern for multi-channel effects.</p>
+<section id="pattern-1-fixed-channel-count-with-modulelist">
+<h3>Pattern 1: Fixed Channel Count with ModuleList<a class="headerlink" href="#pattern-1-fixed-channel-count-with-modulelist" title="Link to this heading">#</a></h3>
+<p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to store separate processing chains for each channel:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span><span class="p">,</span> <span class="n">Wave</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StereoProcessor</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply different processing to left and right channels.</span>
+
+<span class="sd">    Left channel: Remove rumble, gentle high-pass</span>
+<span class="sd">    Right channel: Different EQ curve with volume reduction</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fs : int, optional</span>
+<span class="sd">        Sample rate in Hz. Can be set via Wave pipeline.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; wave = Wave.from_file(&quot;stereo.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; processor = StereoProcessor(fs=wave.fs)</span>
+<span class="sd">    &gt;&gt;&gt; processed = wave | processor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+
+        <span class="c1"># Store per-channel processing chains</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">left_channel</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">right_channel</span><span class="p">(),</span>
+        <span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">left_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Processing chain for left channel.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>   <span class="c1"># Remove rumble</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>  <span class="c1"># Gentle rolloff</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">right_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Processing chain for right channel.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>    <span class="c1"># Higher HPF</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>  <span class="c1"># Different LPF</span>
+            <span class="n">T</span><span class="o">.</span><span class="n">Vol</span><span class="p">(</span><span class="mf">0.9</span><span class="p">),</span>  <span class="c1"># Slight volume reduction</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply per-channel processing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : Tensor</span>
+<span class="sd">            Input audio with shape (2, time) for stereo</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tensor</span>
+<span class="sd">            Processed audio with same shape as input</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be set before processing&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Process each channel independently</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">)):</span>
+            <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">x</span>
+
+<span class="c1"># Usage</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo_music.wav&quot;</span><span class="p">)</span>
+<span class="n">processor</span> <span class="o">=</span> <span class="n">StereoProcessor</span><span class="p">(</span><span class="n">fs</span><span class="o">=</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">processor</span>
+<span class="n">processed</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;stereo_processed.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre  class="mermaid">
+        graph TB
+    Input[Stereo Input&lt;br/&gt;2, time]
+
+    subgraph Processor[StereoProcessor]
+        subgraph Left[Left Channel Chain]
+            LH[HiButterworth&lt;br/&gt;100 Hz]
+            LL[LoButterworth&lt;br/&gt;8000 Hz]
+        end
+
+        subgraph Right[Right Channel Chain]
+            RH[HiButterworth&lt;br/&gt;150 Hz]
+            RL[LoButterworth&lt;br/&gt;10000 Hz]
+            RV[Vol 0.9]
+        end
+    end
+
+    Output[Stereo Output&lt;br/&gt;2, time]
+
+    Input --&gt;|x[0]| Left
+    Input --&gt;|x[1]| Right
+
+    LH --&gt; LL
+    RH --&gt; RL --&gt; RV
+
+    Left --&gt;|processed[0]| Output
+    Right --&gt;|processed[1]| Output
+
+    style Input fill:#e1f5ff
+    style Output fill:#e1f5ff
+    style Left fill:#fff5e1
+    style Right fill:#ffe1e1
+    </pre><p><strong>Key implementation details</strong>:</p>
+<ol class="arabic simple">
+<li><p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to properly register submodules</p></li>
+<li><p>Accept <code class="docutils literal notranslate"><span class="pre">fs</span></code> parameter and pass it to filters requiring sample rate</p></li>
+<li><p>Validate <code class="docutils literal notranslate"><span class="pre">fs</span></code> is set before processing</p></li>
+<li><p>Process each channel independently in <code class="docutils literal notranslate"><span class="pre">forward()</span></code></p></li>
+</ol>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../tutorials/custom-effects.html"><span class="doc">Creating Custom Effects</span></a> - General patterns for creating custom effects</p>
+</div>
+</section>
+<section id="pattern-2-dynamic-channel-count">
+<h3>Pattern 2: Dynamic Channel Count<a class="headerlink" href="#pattern-2-dynamic-channel-count" title="Link to this heading">#</a></h3>
+<p>Handle any number of channels dynamically by creating processing chains on the fly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span><span class="p">,</span> <span class="n">Wave</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FlexibleMultiChannel</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Effect that adapts to any number of channels.</span>
+
+<span class="sd">    Creates independent processing chains for each channel,</span>
+<span class="sd">    with frequency ranges scaled based on channel index.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fs : int, optional</span>
+<span class="sd">        Sample rate in Hz</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; # Works with stereo</span>
+<span class="sd">    &gt;&gt;&gt; stereo_wave = Wave.from_file(&quot;stereo.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; fx = FlexibleMultiChannel(fs=stereo_wave.fs)</span>
+<span class="sd">    &gt;&gt;&gt; result = stereo_wave | fx</span>
+
+<span class="sd">    &gt;&gt;&gt; # Also works with 5.1 surround</span>
+<span class="sd">    &gt;&gt;&gt; surround_wave = Wave.from_file(&quot;surround_51.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; result = surround_wave | fx</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Created dynamically on first forward pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create processing chains for given number of channels.</span>
+
+<span class="sd">        Each channel gets a bandpass filter with different frequency range.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+                <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+                <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_channels</span><span class="p">)</span>
+        <span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process audio with dynamic channel adaptation.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be set&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Determine number of channels</span>
+        <span class="n">num_channels</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">else</span> <span class="mi">1</span>
+
+        <span class="c1"># Create channels on first forward pass</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_create_channels</span><span class="p">(</span><span class="n">num_channels</span><span class="p">)</span>
+
+        <span class="c1"># Process each channel</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_channels</span><span class="p">):</span>
+                <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Handle mono input</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">x</span>
+
+<span class="c1"># Usage with different channel counts</span>
+<span class="c1"># Stereo</span>
+<span class="n">stereo</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo.wav&quot;</span><span class="p">)</span>
+<span class="n">fx_stereo</span> <span class="o">=</span> <span class="n">FlexibleMultiChannel</span><span class="p">(</span><span class="n">fs</span><span class="o">=</span><span class="n">stereo</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+<span class="n">result_stereo</span> <span class="o">=</span> <span class="n">stereo</span> <span class="o">|</span> <span class="n">fx_stereo</span>
+
+<span class="c1"># 5.1 Surround</span>
+<span class="n">surround</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;surround_51.wav&quot;</span><span class="p">)</span>
+<span class="n">fx_surround</span> <span class="o">=</span> <span class="n">FlexibleMultiChannel</span><span class="p">(</span><span class="n">fs</span><span class="o">=</span><span class="n">surround</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+<span class="n">result_surround</span> <span class="o">=</span> <span class="n">surround</span> <span class="o">|</span> <span class="n">fx_surround</span>
+</pre></div>
+</div>
+</section>
+<section id="pattern-3-complete-production-example">
+<h3>Pattern 3: Complete Production Example<a class="headerlink" href="#pattern-3-complete-production-example" title="Link to this heading">#</a></h3>
+<p>Here’s a complete, production-ready multi-channel effect based on the TorchFX examples:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span><span class="p">,</span> <span class="n">Wave</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">HiButterworth</span><span class="p">,</span> <span class="n">LoButterworth</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ComplexEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multi-channel effect with different processing per channel.</span>
+
+<span class="sd">    This effect demonstrates a complete production pattern for</span>
+<span class="sd">    multi-channel processing with independent channel chains.</span>
+
+<span class="sd">    Channel 1: Bandpass 1000-2000 Hz (mid-range focus)</span>
+<span class="sd">    Channel 2: Bandpass 2000-4000 Hz with 50% volume (presence range)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    num_channels : int</span>
+<span class="sd">        Number of channels to process (typically 2 for stereo)</span>
+<span class="sd">    fs : int, optional</span>
+<span class="sd">        Sample rate in Hz. Can be set automatically via Wave pipeline.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; # Basic usage with Wave pipeline</span>
+<span class="sd">    &gt;&gt;&gt; wave = Wave.from_file(&quot;stereo.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; fx = ComplexEffect(num_channels=2, fs=wave.fs)</span>
+<span class="sd">    &gt;&gt;&gt; processed = wave | fx</span>
+<span class="sd">    &gt;&gt;&gt; processed.save(&quot;output.wav&quot;)</span>
+
+<span class="sd">    &gt;&gt;&gt; # With GPU acceleration</span>
+<span class="sd">    &gt;&gt;&gt; wave = Wave.from_file(&quot;stereo.wav&quot;).to(&quot;cuda&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; fx = ComplexEffect(num_channels=2, fs=wave.fs).to(&quot;cuda&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; processed = wave | fx</span>
+<span class="sd">    &gt;&gt;&gt; processed.to(&quot;cpu&quot;).save(&quot;output.wav&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_channels</span> <span class="o">=</span> <span class="n">num_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+
+        <span class="c1"># Per-channel processing chains stored in ModuleList</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ch</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel1</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel2</span><span class="p">(),</span>
+        <span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">channel1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Processing chain for channel 1.</span>
+
+<span class="sd">        Creates a bandpass filter focusing on mid-range frequencies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">HiButterworth</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>  <span class="c1"># High-pass at 1 kHz</span>
+            <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>  <span class="c1"># Low-pass at 2 kHz</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">channel2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Processing chain for channel 2.</span>
+
+<span class="sd">        Creates a bandpass filter focusing on presence range</span>
+<span class="sd">        with volume reduction.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>  <span class="c1"># High-pass at 2 kHz</span>
+            <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>  <span class="c1"># Low-pass at 4 kHz</span>
+            <span class="n">T</span><span class="o">.</span><span class="n">Vol</span><span class="p">(</span><span class="mf">0.5</span><span class="p">),</span>  <span class="c1"># Reduce volume by 50%</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply per-channel processing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : Tensor</span>
+<span class="sd">            Input audio with shape (num_channels, time)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tensor</span>
+<span class="sd">            Processed audio with same shape as input</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If sample rate (fs) has not been set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency (fs) must be set&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Process each channel independently</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_channels</span><span class="p">):</span>
+            <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ch</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">x</span>
+
+<span class="c1"># Complete usage example</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Load stereo audio</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;input_stereo.wav&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded: </span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, fs=</span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create and apply effect</span>
+    <span class="n">fx</span> <span class="o">=</span> <span class="n">ComplexEffect</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span>
+
+    <span class="c1"># Save result</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output_processed.wav&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Processing complete!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Use the <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> pattern even if all channels have the same processing. This keeps your code flexible and makes it easy to customize individual channels later.</p>
+</div>
+</section>
+</section>
+<section id="cross-channel-processing-patterns">
+<h2>Cross-Channel Processing Patterns<a class="headerlink" href="#cross-channel-processing-patterns" title="Link to this heading">#</a></h2>
+<p>Cross-channel processing enables channels to interact, creating spatial effects and channel-aware processing.</p>
+<section id="built-in-strategy-ping-pong-delay">
+<h3>Built-in Strategy: Ping-Pong Delay<a class="headerlink" href="#built-in-strategy-ping-pong-delay" title="Link to this heading">#</a></h3>
+<p>The <a class="reference internal" href="../../api/effects.html#torchfx.effect.PingPongDelayStrategy" title="torchfx.effect.PingPongDelayStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PingPongDelayStrategy</span></code></a> creates alternating delays between stereo channels:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Delay</span><span class="p">,</span> <span class="n">PingPongDelayStrategy</span>
+
+<span class="c1"># Load stereo audio</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create ping-pong delay effect</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span>      <span class="c1"># 8th note delay</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>          <span class="c1"># 50% feedback</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>               <span class="c1"># 40% wet signal</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="n">PingPongDelayStrategy</span><span class="p">()</span>
+<span class="p">)</span>
+
+<span class="c1"># Apply effect</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+<span class="n">result</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;pingpong_delayed.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Ping-pong delay pattern</strong>:</p>
+<pre  class="mermaid">
+        sequenceDiagram
+    participant L as Left Channel
+    participant R as Right Channel
+
+    Note over L,R: Original Signal
+    L-&gt;&gt;L: Original left audio
+    R-&gt;&gt;R: Original right audio
+
+    Note over L,R: Tap 1 (100% amplitude)
+    L-&gt;&gt;R: Left delays into Right
+
+    Note over L,R: Tap 2 (feedback^1)
+    R-&gt;&gt;L: Right delays into Left
+
+    Note over L,R: Tap 3 (feedback^2)
+    L-&gt;&gt;R: Left delays into Right
+
+    Note over L,R: Tap 4 (feedback^3)
+    R-&gt;&gt;L: Right delays into Left
+
+    Note over L,R: Result: Ping-pong stereo pattern
+    </pre><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the input is not stereo (not exactly 2 channels), <a class="reference internal" href="../../api/effects.html#torchfx.effect.PingPongDelayStrategy" title="torchfx.effect.PingPongDelayStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PingPongDelayStrategy</span></code></a> automatically falls back to <a class="reference internal" href="../../api/effects.html#torchfx.effect.MonoDelayStrategy" title="torchfx.effect.MonoDelayStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">MonoDelayStrategy</span></code></a>.</p>
+</div>
+</section>
+<section id="custom-cross-channel-effect-stereo-widener">
+<h3>Custom Cross-Channel Effect: Stereo Widener<a class="headerlink" href="#custom-cross-channel-effect-stereo-widener" title="Link to this heading">#</a></h3>
+<p>Create a custom cross-channel effect using Mid/Side processing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span><span class="p">,</span> <span class="n">Wave</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StereoWidener</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Widen stereo image using Mid/Side processing.</span>
+
+<span class="sd">    Converts stereo L/R to Mid/Side, scales the Side component,</span>
+<span class="sd">    then converts back to L/R.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    width : float</span>
+<span class="sd">        Stereo width multiplier:</span>
+<span class="sd">        - 1.0 = no change (original stereo)</span>
+<span class="sd">        - &gt;1.0 = wider stereo image</span>
+<span class="sd">        - &lt;1.0 = narrower stereo image</span>
+<span class="sd">        - 0.0 = pure mono (no stereo)</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; # Widen stereo image by 50%</span>
+<span class="sd">    &gt;&gt;&gt; wave = Wave.from_file(&quot;stereo.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; widener = StereoWidener(width=1.5)</span>
+<span class="sd">    &gt;&gt;&gt; wider = wave | widener</span>
+
+<span class="sd">    &gt;&gt;&gt; # Narrow to 50% stereo width</span>
+<span class="sd">    &gt;&gt;&gt; narrower = wave | StereoWidener(width=0.5)</span>
+
+<span class="sd">    &gt;&gt;&gt; # Convert to mono</span>
+<span class="sd">    &gt;&gt;&gt; mono = wave | StereoWidener(width=0.0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">width</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Width must be non-negative&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply stereo widening.</span>
+
+<span class="sd">        Only processes stereo (2-channel) audio.</span>
+<span class="sd">        Non-stereo audio is returned unchanged.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Only works on stereo audio</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>  <span class="c1"># Return unchanged for non-stereo</span>
+
+        <span class="c1"># Extract left and right channels</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Convert to Mid/Side</span>
+        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>    <span class="c1"># Sum of L+R (mono content)</span>
+        <span class="n">side</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">-</span> <span class="n">right</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>   <span class="c1"># Difference L-R (stereo width)</span>
+
+        <span class="c1"># Widen by scaling Side component</span>
+        <span class="n">side_widened</span> <span class="o">=</span> <span class="n">side</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span>
+
+        <span class="c1"># Convert back to L/R</span>
+        <span class="n">new_left</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">+</span> <span class="n">side_widened</span>
+        <span class="n">new_right</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">-</span> <span class="n">side_widened</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">new_left</span><span class="p">,</span> <span class="n">new_right</span><span class="p">])</span>
+
+<span class="c1"># Usage examples</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo_mix.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Widen stereo image</span>
+<span class="n">widener</span> <span class="o">=</span> <span class="n">StereoWidener</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="n">wider</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">widener</span>
+<span class="n">wider</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;widened_mix.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Narrow stereo image</span>
+<span class="n">narrower</span> <span class="o">=</span> <span class="n">StereoWidener</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">narrow</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">narrower</span>
+<span class="n">narrow</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;narrowed_mix.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<pre  class="mermaid">
+        graph TB
+    Input[Stereo Input&lt;br/&gt;Left, Right]
+
+    subgraph &quot;Mid/Side Conversion&quot;
+        Mid[&quot;Mid = (L + R) / 2&lt;br/&gt;(Mono content)&quot;]
+        Side[&quot;Side = (L - R) / 2&lt;br/&gt;(Stereo width)&quot;]
+    end
+
+    subgraph &quot;Stereo Widening&quot;
+        Scale[&quot;Side × width&lt;br/&gt;(Adjust stereo width)&quot;]
+    end
+
+    subgraph &quot;L/R Conversion&quot;
+        NewL[&quot;New Left = Mid + Side×width&quot;]
+        NewR[&quot;New Right = Mid - Side×width&quot;]
+    end
+
+    Output[Stereo Output&lt;br/&gt;Wider/Narrower]
+
+    Input --&gt; Mid
+    Input --&gt; Side
+    Side --&gt; Scale
+    Mid --&gt; NewL
+    Mid --&gt; NewR
+    Scale --&gt; NewL
+    Scale --&gt; NewR
+    NewL --&gt; Output
+    NewR --&gt; Output
+
+    style Input fill:#e1f5ff
+    style Output fill:#e1f5ff
+    style Scale fill:#fff5e1
+    </pre></section>
+</section>
+<section id="built-in-multi-channel-strategies">
+<h2>Built-in Multi-Channel Strategies<a class="headerlink" href="#built-in-multi-channel-strategies" title="Link to this heading">#</a></h2>
+<p>TorchFX provides several built-in strategies for multi-channel processing.</p>
+<section id="per-channel-normalization">
+<h3>Per-Channel Normalization<a class="headerlink" href="#per-channel-normalization" title="Link to this heading">#</a></h3>
+<p>The <a class="reference internal" href="../../api/effects.html#torchfx.effect.PerChannelNormalizationStrategy" title="torchfx.effect.PerChannelNormalizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PerChannelNormalizationStrategy</span></code></a> normalizes each channel independently to its own peak value:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Normalize</span><span class="p">,</span> <span class="n">PerChannelNormalizationStrategy</span>
+
+<span class="c1"># Create stereo with imbalanced channels</span>
+<span class="n">left_loud</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">44100</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.8</span>    <span class="c1"># Peak ~0.8</span>
+<span class="n">right_quiet</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">44100</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.3</span>  <span class="c1"># Peak ~0.3</span>
+<span class="n">stereo</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">left_loud</span><span class="p">,</span> <span class="n">right_quiet</span><span class="p">])</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">stereo</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+
+<span class="c1"># Global normalization: both channels scaled by same factor</span>
+<span class="n">global_norm</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="c1"># Result: left ~1.0, right ~0.375 (preserves balance)</span>
+
+<span class="c1"># Per-channel normalization: each channel scaled independently</span>
+<span class="n">strategy</span> <span class="o">=</span> <span class="n">PerChannelNormalizationStrategy</span><span class="p">()</span>
+<span class="n">perchannel_norm</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">)</span>
+<span class="c1"># Result: left ~1.0, right ~1.0 (changes balance)</span>
+</pre></div>
+</div>
+<p><strong>Comparison</strong>:</p>
+<pre  class="mermaid">
+        graph TB
+    Input[&quot;Stereo Input&lt;br/&gt;Left peak: 0.8&lt;br/&gt;Right peak: 0.3&quot;]
+
+    subgraph Global[Global Normalization]
+        GMax[&quot;Find global max: 0.8&quot;]
+        GScale[&quot;Scale both by: 1.0/0.8 = 1.25&quot;]
+        GResult[&quot;Left: 1.0, Right: 0.375&quot;]
+    end
+
+    subgraph PerChannel[Per-Channel Normalization]
+        PCMax1[&quot;Left max: 0.8&quot;]
+        PCMax2[&quot;Right max: 0.3&quot;]
+        PCScale[&quot;Scale left: 1.0/0.8&lt;br/&gt;Scale right: 1.0/0.3&quot;]
+        PCResult[&quot;Left: 1.0, Right: 1.0&quot;]
+    end
+
+    Input --&gt; Global
+    Input --&gt; PerChannel
+
+    GMax --&gt; GScale --&gt; GResult
+    PCMax1 --&gt; PCScale
+    PCMax2 --&gt; PCScale
+    PCScale --&gt; PCResult
+
+    style Input fill:#e1f5ff
+    style Global fill:#fff5e1
+    style PerChannel fill:#e8f5e1
+    </pre><p><strong>Implementation details</strong>:</p>
+<ul class="simple">
+<li><p>For 2D tensors <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">time)</span></code>: computes max per channel along <code class="docutils literal notranslate"><span class="pre">dim=1</span></code> with <code class="docutils literal notranslate"><span class="pre">keepdim=True</span></code></p></li>
+<li><p>For 3D tensors <code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">channels,</span> <span class="pre">time)</span></code>: computes max per channel along <code class="docutils literal notranslate"><span class="pre">dim=2</span></code> with <code class="docutils literal notranslate"><span class="pre">keepdim=True</span></code></p></li>
+<li><p>Uses <code class="docutils literal notranslate"><span class="pre">keepdim=True</span></code> to maintain broadcasting compatibility</p></li>
+</ul>
+</section>
+<section id="mono-delay-strategy">
+<h3>Mono Delay Strategy<a class="headerlink" href="#mono-delay-strategy" title="Link to this heading">#</a></h3>
+<p><a class="reference internal" href="../../api/effects.html#torchfx.effect.MonoDelayStrategy" title="torchfx.effect.MonoDelayStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">MonoDelayStrategy</span></code></a> applies identical delay processing to all channels independently:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Delay</span><span class="p">,</span> <span class="n">MonoDelayStrategy</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Mono delay: same delay pattern on both channels</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="n">MonoDelayStrategy</span><span class="p">()</span>  <span class="c1"># Default, can be omitted</span>
+<span class="p">)</span>
+
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="dimension-agnostic-processing">
+<h2>Dimension-Agnostic Processing<a class="headerlink" href="#dimension-agnostic-processing" title="Link to this heading">#</a></h2>
+<p>For effects that should work with any tensor shape, implement dimension detection and handling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DimensionAgnosticEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Effect that handles 1D, 2D, and 3D+ tensors.</span>
+
+<span class="sd">    Automatically detects tensor dimensionality and routes</span>
+<span class="sd">    to appropriate processing method.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; # Works with mono</span>
+<span class="sd">    &gt;&gt;&gt; mono = torch.randn(44100)</span>
+<span class="sd">    &gt;&gt;&gt; fx = DimensionAgnosticEffect()</span>
+<span class="sd">    &gt;&gt;&gt; result = fx(mono)</span>
+
+<span class="sd">    &gt;&gt;&gt; # Works with stereo</span>
+<span class="sd">    &gt;&gt;&gt; stereo = torch.randn(2, 44100)</span>
+<span class="sd">    &gt;&gt;&gt; result = fx(stereo)</span>
+
+<span class="sd">    &gt;&gt;&gt; # Works with batched multi-channel</span>
+<span class="sd">    &gt;&gt;&gt; batch = torch.randn(8, 2, 44100)</span>
+<span class="sd">    &gt;&gt;&gt; result = fx(batch)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process tensor with automatic dimension detection.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Mono: (time,)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_mono</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># Multi-channel: (channels, time)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_multi_channel</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="c1"># Batched: (batch, channels, time)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_batched</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Higher dimensions: flatten, process, reshape</span>
+            <span class="n">original_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">flattened</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># Flatten to (N, time)</span>
+            <span class="n">processed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_multi_channel</span><span class="p">(</span><span class="n">flattened</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">processed</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">original_shape</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_mono</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process single channel.&quot;&quot;&quot;</span>
+        <span class="c1"># Example: reduce volume by 50%</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="mf">0.5</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_multi_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process each channel independently.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_mono</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_batched</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process batched data.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">x</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_multi_channel</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">b</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">x</span>
+</pre></div>
+</div>
+<pre  class="mermaid">
+        graph TD
+    Forward[&quot;forward(waveform)&quot;]
+
+    CheckDim{&quot;waveform.ndim?&quot;}
+
+    Mono[&quot;ndim == 1&lt;br/&gt;(time,)&lt;br/&gt;Process as mono&quot;]
+    MultiCh[&quot;ndim == 2&lt;br/&gt;(channels, time)&lt;br/&gt;Process per channel&quot;]
+    Batched[&quot;ndim == 3&lt;br/&gt;(batch, channels, time)&lt;br/&gt;Process with batch dim&quot;]
+    Higher[&quot;ndim &gt; 3&lt;br/&gt;(..., time)&lt;br/&gt;Flatten → process → reshape&quot;]
+
+    Forward --&gt; CheckDim
+    CheckDim --&gt;|&quot;1&quot;| Mono
+    CheckDim --&gt;|&quot;2&quot;| MultiCh
+    CheckDim --&gt;|&quot;3&quot;| Batched
+    CheckDim --&gt;|&quot;&gt;3&quot;| Higher
+
+    style CheckDim fill:#fff5e1
+    style Mono fill:#e1f5ff
+    style MultiCh fill:#e8f5e1
+    style Batched fill:#f5e1ff
+    style Higher fill:#ffe1e1
+    </pre></section>
+<section id="surround-sound-configurations">
+<h2>Surround Sound Configurations<a class="headerlink" href="#surround-sound-configurations" title="Link to this heading">#</a></h2>
+<p>TorchFX supports standard surround sound channel configurations.</p>
+<section id="surround-sound">
+<h3>5.1 Surround Sound<a class="headerlink" href="#surround-sound" title="Link to this heading">#</a></h3>
+<p>5.1 surround has 6 channels with standard ordering:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
+
+<span class="c1"># 5.1 channel order: FL, FR, FC, LFE, BL, BR</span>
+<span class="c1"># FL = Front Left, FR = Front Right, FC = Front Center</span>
+<span class="c1"># LFE = Low Frequency Effects (subwoofer)</span>
+<span class="c1"># BL = Back Left, BR = Back Right</span>
+
+<span class="n">surround_51</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># 6 channels, 1 second</span>
+<span class="n">wave_51</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span><span class="n">surround_51</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+
+<span class="c1"># Access individual channels</span>
+<span class="n">front_left</span> <span class="o">=</span> <span class="n">surround_51</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">front_right</span> <span class="o">=</span> <span class="n">surround_51</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">center</span> <span class="o">=</span> <span class="n">surround_51</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">lfe</span> <span class="o">=</span> <span class="n">surround_51</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">back_left</span> <span class="o">=</span> <span class="n">surround_51</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+<span class="n">back_right</span> <span class="o">=</span> <span class="n">surround_51</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="id1">
+<h3>7.1 Surround Sound<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>7.1 surround has 8 channels:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 7.1 channel order: FL, FR, FC, LFE, BL, BR, SL, SR</span>
+<span class="c1"># SL = Side Left, SR = Side Right</span>
+
+<span class="n">surround_71</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># 8 channels</span>
+<span class="n">wave_71</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span><span class="n">surround_71</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-surround-effect">
+<h3>Custom Surround Effect<a class="headerlink" href="#custom-surround-effect" title="Link to this heading">#</a></h3>
+<p>Process surround sound with channel-specific effects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span><span class="p">,</span> <span class="n">Wave</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SurroundProcessor</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process 5.1 surround sound with channel-specific effects.</span>
+
+<span class="sd">    - Front channels: Full range processing</span>
+<span class="sd">    - Center: Voice-optimized (bandpass)</span>
+<span class="sd">    - LFE: Low-pass only (subwoofer)</span>
+<span class="sd">    - Rear channels: Ambient processing</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fs : int</span>
+<span class="sd">        Sample rate in Hz</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+
+        <span class="c1"># Channel order: FL, FR, FC, LFE, BL, BR</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">front_lr</span><span class="p">(),</span>    <span class="c1"># 0: Front Left</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">front_lr</span><span class="p">(),</span>    <span class="c1"># 1: Front Right</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">(),</span>      <span class="c1"># 2: Front Center</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lfe</span><span class="p">(),</span>         <span class="c1"># 3: LFE (subwoofer)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rear</span><span class="p">(),</span>        <span class="c1"># 4: Back Left</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rear</span><span class="p">(),</span>        <span class="c1"># 5: Back Right</span>
+        <span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">front_lr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Full-range processing for front L/R.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">18000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">center</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Voice-optimized for center channel.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>   <span class="c1"># Remove rumble</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>  <span class="c1"># Voice range</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">lfe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Subwoofer channel (low-pass only).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>   <span class="c1"># Sharp LPF</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">rear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ambient processing for rear channels.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+            <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">12000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+            <span class="n">T</span><span class="o">.</span><span class="n">Vol</span><span class="p">(</span><span class="mf">0.8</span><span class="p">),</span>  <span class="c1"># Slightly quieter for ambience</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process 5.1 surround audio.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected 6 channels for 5.1, got </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+            <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">x</span>
+
+<span class="c1"># Usage</span>
+<span class="n">surround_wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;movie_51.wav&quot;</span><span class="p">)</span>
+<span class="n">processor</span> <span class="o">=</span> <span class="n">SurroundProcessor</span><span class="p">(</span><span class="n">fs</span><span class="o">=</span><span class="n">surround_wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="n">surround_wave</span> <span class="o">|</span> <span class="n">processor</span>
+<span class="n">processed</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;processed_51.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="integration-with-wave-pipeline">
+<h2>Integration with Wave Pipeline<a class="headerlink" href="#integration-with-wave-pipeline" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> class automatically configures effects with the <code class="docutils literal notranslate"><span class="pre">fs</span></code> (sample rate) parameter when using the pipeline operator (<code class="docutils literal notranslate"><span class="pre">|</span></code>).</p>
+<section id="automatic-sample-rate-configuration">
+<h3>Automatic Sample Rate Configuration<a class="headerlink" href="#automatic-sample-rate-configuration" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create effect without fs</span>
+<span class="n">fx</span> <span class="o">=</span> <span class="n">ComplexEffect</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="c1"># Wave automatically sets fs via __update_config</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo.wav&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span>  <span class="c1"># fx.fs is automatically set to wave.fs</span>
+</pre></div>
+</div>
+<p>The <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> class calls <code class="docutils literal notranslate"><span class="pre">__update_config</span></code> on effects that have an <code class="docutils literal notranslate"><span class="pre">fs</span></code> attribute, automatically setting the sample rate before processing.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../core-concepts/wave.html"><span class="doc">Wave - Digital Audio Representation</span></a> - Wave class architecture and automatic configuration</p>
+</div>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<section id="use-modulelist-for-channel-chains">
+<h3>Use ModuleList for Channel Chains<a class="headerlink" href="#use-modulelist-for-channel-chains" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Proper module registration</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">create_chain</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">create_chain</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="p">])</span>
+
+<span class="c1"># ❌ BAD: Regular list won&#39;t register modules</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">create_chain</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">create_chain</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Using <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> ensures:</p>
+<ul class="simple">
+<li><p>Proper parameter registration for GPU transfer</p></li>
+<li><p>Correct gradient tracking for trainable parameters</p></li>
+<li><p>Integration with PyTorch’s module system</p></li>
+</ul>
+</section>
+<section id="validate-sample-rate">
+<h3>Validate Sample Rate<a class="headerlink" href="#validate-sample-rate" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Clear error messages</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be set before processing&quot;</span><span class="p">)</span>
+    <span class="c1"># Process audio...</span>
+
+<span class="c1"># ❌ BAD: No validation, may fail later</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="c1"># self.fs might be None!</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="handle-variable-channel-counts">
+<h3>Handle Variable Channel Counts<a class="headerlink" href="#handle-variable-channel-counts" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Flexible channel handling</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">num_channels</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">else</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">)</span> <span class="o">!=</span> <span class="n">num_channels</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_channels</span><span class="p">(</span><span class="n">num_channels</span><span class="p">)</span>
+
+    <span class="c1"># Process channels...</span>
+
+<span class="c1"># ❌ BAD: Hardcoded channel count</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_left</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_right</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="c1"># Fails for mono or surround</span>
+</pre></div>
+</div>
+</section>
+<section id="preserve-tensor-properties">
+<h3>Preserve Tensor Properties<a class="headerlink" href="#preserve-tensor-properties" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Preserve device and dtype</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">)</span>
+
+<span class="c1"># ❌ BAD: May create tensor on wrong device</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">input_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="use-keepdim-for-broadcasting">
+<h3>Use keepdim for Broadcasting<a class="headerlink" href="#use-keepdim-for-broadcasting" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ CORRECT: keepdim=True allows broadcasting</span>
+<span class="n">max_per_channel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">waveform</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">normalized</span> <span class="o">=</span> <span class="n">waveform</span> <span class="o">/</span> <span class="n">max_per_channel</span> <span class="o">*</span> <span class="n">peak</span>
+
+<span class="c1"># ❌ WRONG: Shape mismatch</span>
+<span class="n">max_per_channel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">waveform</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">normalized</span> <span class="o">=</span> <span class="n">waveform</span> <span class="o">/</span> <span class="n">max_per_channel</span> <span class="o">*</span> <span class="n">peak</span>  <span class="c1"># Broadcasting error!</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="common-pitfalls">
+<h2>Common Pitfalls<a class="headerlink" href="#common-pitfalls" title="Link to this heading">#</a></h2>
+<section id="pitfall-1-in-place-modifications">
+<h3>Pitfall 1: In-Place Modifications<a class="headerlink" href="#pitfall-1-in-place-modifications" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ WRONG: In-place modification can cause issues</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>  <span class="c1"># Modifies input</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+<span class="c1"># ✅ CORRECT: Create output tensor</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">output</span>
+</pre></div>
+</div>
+</section>
+<section id="pitfall-2-incorrect-channel-validation">
+<h3>Pitfall 2: Incorrect Channel Validation<a class="headerlink" href="#pitfall-2-incorrect-channel-validation" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ WRONG: Doesn&#39;t handle batched input</span>
+<span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Expected stereo&quot;</span><span class="p">)</span>
+
+<span class="c1"># ✅ CORRECT: Check channel dimension properly</span>
+<span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected stereo, got shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pitfall-3-forgetting-output-length">
+<h3>Pitfall 3: Forgetting Output Length<a class="headerlink" href="#pitfall-3-forgetting-output-length" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ WRONG: May truncate delay tails</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Same length as input</span>
+    <span class="c1"># Process with delay... output might be too short!</span>
+
+<span class="c1"># ✅ CORRECT: Account for extended output</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">output_length</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">output_length</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+    <span class="c1"># Process with proper length</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="pytorch-integration">
+<h2>PyTorch Integration<a class="headerlink" href="#pytorch-integration" title="Link to this heading">#</a></h2>
+<p>Multi-channel effects work seamlessly with PyTorch’s data pipeline.</p>
+<section id="using-with-dataloader">
+<h3>Using with DataLoader<a class="headerlink" href="#using-with-dataloader" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AudioDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dataset with multi-channel audio augmentation.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_paths</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span> <span class="o">=</span> <span class="n">file_paths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">transform</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="c1"># Load audio</span>
+        <span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_paths</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+
+        <span class="c1"># Apply multi-channel transform</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">:</span>
+            <span class="n">wave</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span>
+
+        <span class="k">return</span> <span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">,</span> <span class="n">wave</span><span class="o">.</span><span class="n">fs</span>
+
+<span class="c1"># Create dataset with multi-channel effect</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">AudioDataset</span><span class="p">(</span>
+    <span class="n">file_paths</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;song1.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;song2.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;song3.wav&quot;</span><span class="p">],</span>
+    <span class="n">transform</span><span class="o">=</span><span class="n">ComplexEffect</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Use with DataLoader</span>
+<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">batch_audio</span><span class="p">,</span> <span class="n">batch_fs</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
+    <span class="c1"># batch_audio shape: (batch, channels, time)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Batch shape: </span><span class="si">{</span><span class="n">batch_audio</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="gpu-acceleration">
+<h3>GPU Acceleration<a class="headerlink" href="#gpu-acceleration" title="Link to this heading">#</a></h3>
+<p>Multi-channel effects automatically support GPU:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Move to GPU</span>
+<span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Effect runs on GPU</span>
+    <span class="n">fx</span> <span class="o">=</span> <span class="n">ComplexEffect</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+    <span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span>
+
+    <span class="c1"># Move back to CPU for saving</span>
+    <span class="n">processed</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a> - Complete guide to GPU acceleration in TorchFX</p>
+</div>
+</section>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<p>Multi-channel processing in TorchFX follows these key principles:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Principle</p></th>
+<th class="head"><p>Implementation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Tensor conventions</strong></p></td>
+<td><p>Last dimension is time, earlier dimensions are channels/batches</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Default behavior</strong></p></td>
+<td><p>Broadcast operations unless channel-specific logic is implemented</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Strategy pattern</strong></p></td>
+<td><p>Use strategy classes for pluggable channel behavior</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>ModuleList</strong></p></td>
+<td><p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> for per-channel processing chains</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Dimension handling</strong></p></td>
+<td><p>Detect and handle 1D, 2D, 3D+ tensors appropriately</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Cross-channel effects</strong></p></td>
+<td><p>Explicitly access channels via indexing for interaction patterns</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Sample rate</strong></p></td>
+<td><p>Store <code class="docutils literal notranslate"><span class="pre">fs</span></code> attribute for automatic configuration via <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> pipeline</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Architecture Overview</strong>:</p>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;Multi-Channel Architecture&quot;
+        Input[Input Audio&lt;br/&gt;channels, time]
+
+        subgraph FX[FX Base Class]
+            Init[__init__&lt;br/&gt;Set fs, num_channels]
+            Chains[nn.ModuleList&lt;br/&gt;Per-channel chains]
+            Forward[forward&lt;br/&gt;Process channels]
+        end
+
+        subgraph Strategies
+            Broadcast[Broadcast Strategy&lt;br/&gt;Same to all]
+            PerChannel[Per-Channel Strategy&lt;br/&gt;Independent]
+            CrossChannel[Cross-Channel Strategy&lt;br/&gt;Interactive]
+        end
+
+        Output[Output Audio&lt;br/&gt;channels, time]
+    end
+
+    Input --&gt; FX
+    Init --&gt; Chains
+    Chains --&gt; Forward
+    Forward --&gt; Strategies
+    Strategies --&gt; Output
+
+    style Input fill:#e1f5ff
+    style Output fill:#e1f5ff
+    style FX fill:#fff5e1
+    style Strategies fill:#e8f5e1
+    </pre></section>
+<section id="related-concepts">
+<h2>Related Concepts<a class="headerlink" href="#related-concepts" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../core-concepts/wave.html"><span class="doc">Wave - Digital Audio Representation</span></a> - Wave class and tensor handling</p></li>
+<li><p><a class="reference internal" href="../core-concepts/fx.html"><span class="doc">FX - Audio Effect Base Class</span></a> - FX base class for effects</p></li>
+<li><p><a class="reference internal" href="../tutorials/custom-effects.html"><span class="doc">Creating Custom Effects</span></a> - Creating custom effects</p></li>
+<li><p><a class="reference internal" href="gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a> - GPU acceleration for multi-channel audio</p></li>
+<li><p><a class="reference internal" href="../tutorials/ml-batch-processing.html"><span class="doc">ML Batch Processing</span></a> - Batch processing for ML workflows</p></li>
+</ul>
+</section>
+<section id="external-resources">
+<h2>External Resources<a class="headerlink" href="#external-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pytorch.org/audio/stable/index.html">PyTorch Audio Documentation</a> - torchaudio tensor conventions</p></li>
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Surround_sound">Surround Sound on Wikipedia</a> - Multi-channel audio formats</p></li>
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Stereophonic_sound#M/S_technique:_mid/side_stereophony">Mid/Side Processing</a> - Stereo imaging technique</p></li>
+<li><p><a class="reference external" href="https://www.itu.int/rec/R-REC-BS.775/">ITU-R BS.775</a> - Multi-channel audio standard</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<span class="target" id="id2"></span></section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="pytorch-integration.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">PyTorch Integration</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="performance.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Performance Optimization and Benchmarking</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tensor-shape-conventions">Tensor Shape Conventions</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#standard-audio-shapes">Standard Audio Shapes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#shape-convention-examples">Shape Convention Examples</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#channel-processing-flow">Channel Processing Flow</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#per-channel-processing-patterns">Per-Channel Processing Patterns</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pattern-1-fixed-channel-count-with-modulelist">Pattern 1: Fixed Channel Count with ModuleList</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pattern-2-dynamic-channel-count">Pattern 2: Dynamic Channel Count</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pattern-3-complete-production-example">Pattern 3: Complete Production Example</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-channel-processing-patterns">Cross-Channel Processing Patterns</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-strategy-ping-pong-delay">Built-in Strategy: Ping-Pong Delay</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-cross-channel-effect-stereo-widener">Custom Cross-Channel Effect: Stereo Widener</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-multi-channel-strategies">Built-in Multi-Channel Strategies</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#per-channel-normalization">Per-Channel Normalization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mono-delay-strategy">Mono Delay Strategy</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dimension-agnostic-processing">Dimension-Agnostic Processing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surround-sound-configurations">Surround Sound Configurations</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#surround-sound">5.1 Surround Sound</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">7.1 Surround Sound</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-surround-effect">Custom Surround Effect</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-with-wave-pipeline">Integration with Wave Pipeline</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-sample-rate-configuration">Automatic Sample Rate Configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-modulelist-for-channel-chains">Use ModuleList for Channel Chains</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validate-sample-rate">Validate Sample Rate</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#handle-variable-channel-counts">Handle Variable Channel Counts</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preserve-tensor-properties">Preserve Tensor Properties</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-keepdim-for-broadcasting">Use keepdim for Broadcasting</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-pitfalls">Common Pitfalls</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pitfall-1-in-place-modifications">Pitfall 1: In-Place Modifications</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pitfall-2-incorrect-channel-validation">Pitfall 2: Incorrect Channel Validation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pitfall-3-forgetting-output-length">Pitfall 3: Forgetting Output Length</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pytorch-integration">PyTorch Integration</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-with-dataloader">Using with DataLoader</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-acceleration">GPU Acceleration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts">Related Concepts</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-resources">External Resources</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/advanced/multi-channel.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/advanced/multi-channel.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

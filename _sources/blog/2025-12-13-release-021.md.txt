@@ -1,0 +1,39 @@
+---
+blogpost: true
+date: Dec 13, 2025
+author: Matteo Spanio
+category: announcements
+tags: open-source, release
+---
+
+
+# TorchFX 0.2.1 Released 🎉
+
+I’m excited to announce the release of **TorchFX version 0.2.1**! This update brings new functionality, improved documentation, and several important fixes — thanks to contributions from the community.
+
+## ✨ Major Highlights
+
+### Added
+
+- **`Delay` effect** with BPM synchronization option by [https://github.com/itsuzef](https://github.com/itsuzef), supporting multiple delay strategies  
+- New examples in the `examples/` folder:
+  - `delay.py` showcasing the new Delay effect  
+- **Citation file (`CITATION.cff`)** for easy referencing of TorchFX in academic works
+
+### Changed
+
+- Updated **documentation** to include the new Delay effect and refresh existing examples  
+- GitHub workflow updated to **run checks in parallel jobs**, providing faster feedback
+
+### Fixed
+
+- Pre-commit configuration now properly runs `mypy`, `docformatter`, and `black`  
+- Fixed many type hints across the codebase
+
+For full details, check out the **[changelog](https://github.com/matteospanio/torchfx/blob/master/CHANGELOG)**.
+
+---
+
+This release continues the mission of TorchFX: providing **fast, differentiable audio filters**, robust examples, and a strong foundation for research and open-source contributions.  
+
+A big thanks to everyone who contributed, tested, or suggested improvements — your support keeps the project moving forward!

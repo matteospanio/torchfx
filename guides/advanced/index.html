@@ -1,0 +1,758 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Advanced Topics &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/advanced/index';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="GPU Acceleration" href="gpu-acceleration.html" />
+    <link rel="prev" title="BPM-Synced Delay Effects" href="../tutorials/bpm-delay.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Advanced Topics</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Advanced Topics</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="advanced-topics">
+<h1>Advanced Topics<a class="headerlink" href="#advanced-topics" title="Link to this heading">#</a></h1>
+<p>This section covers advanced TorchFX features for experienced users, including GPU acceleration, PyTorch ecosystem integration, multi-channel processing, and performance optimization.</p>
+<section id="who-should-read-this">
+<h2>Who Should Read This<a class="headerlink" href="#who-should-read-this" title="Link to this heading">#</a></h2>
+<p>These guides are for users who:</p>
+<ul class="simple">
+<li><p>Want to maximize performance with GPU acceleration</p></li>
+<li><p>Need to integrate TorchFX with existing PyTorch codebases</p></li>
+<li><p>Process multi-channel or surround sound audio</p></li>
+<li><p>Require detailed performance tuning and optimization</p></li>
+</ul>
+</section>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
+<p>Before diving into advanced topics, ensure you’re familiar with:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../core-concepts/index.html"><span class="doc">Core Concepts</span></a> - Core TorchFX architecture</p></li>
+<li><p><a class="reference internal" href="../tutorials/index.html"><span class="doc">Tutorials</span></a> - Basic usage patterns</p></li>
+<li><p>PyTorch fundamentals - <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, device management, tensors</p></li>
+</ul>
+</section>
+<section id="topics-overview">
+<h2>Topics Overview<a class="headerlink" href="#topics-overview" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gpu-acceleration.html">GPU Acceleration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#device-management-architecture">Device Management Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#moving-wave-objects-to-gpu">Moving Wave Objects to GPU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#filter-and-effect-device-management">Filter and Effect Device Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#device-coordination-in-processing-pipelines">Device Coordination in Processing Pipelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#working-examples">Working Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#common-pitfalls-and-solutions">Common Pitfalls and Solutions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#related-concepts">Related Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#external-resources">External Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpu-acceleration.html#summary">Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pytorch-integration.html">PyTorch Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#core-integration-architecture">Core Integration Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#module-inheritance-benefits">Module Inheritance Benefits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#wave-pipe-operator-with-nn-module">Wave Pipe Operator with nn.Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#using-nn-sequential">Using nn.Sequential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#creating-custom-neural-network-modules">Creating Custom Neural Network Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#gradient-computation-and-differentiability">Gradient Computation and Differentiability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#mixing-with-torchaudio-transforms">Mixing with torchaudio.transforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#complete-working-examples">Complete Working Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#architecture-diagrams">Architecture Diagrams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#common-pitfalls">Common Pitfalls</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#related-concepts">Related Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#external-resources">External Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html#summary">Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="multi-channel.html">Multi-Channel Processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#tensor-shape-conventions">Tensor Shape Conventions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#per-channel-processing-patterns">Per-Channel Processing Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#cross-channel-processing-patterns">Cross-Channel Processing Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#built-in-multi-channel-strategies">Built-in Multi-Channel Strategies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#dimension-agnostic-processing">Dimension-Agnostic Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#surround-sound-configurations">Surround Sound Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#integration-with-wave-pipeline">Integration with Wave Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#common-pitfalls">Common Pitfalls</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#pytorch-integration">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#related-concepts">Related Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#external-resources">External Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance Optimization and Benchmarking</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#benchmark-methodology">Benchmark Methodology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#api-performance-comparison">API Performance Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#fir-filter-performance">FIR Filter Performance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#iir-filter-performance">IIR Filter Performance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#performance-optimization-guidelines">Performance Optimization Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#benchmarking-your-own-pipelines">Benchmarking Your Own Pipelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#complete-benchmarking-examples">Complete Benchmarking Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#related-guides">Related Guides</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#external-resources">External Resources</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="gpu-acceleration">
+<h3><a class="reference internal" href="gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a><a class="headerlink" href="#gpu-acceleration" title="Link to this heading">#</a></h3>
+<p>Learn how to leverage CUDA-enabled GPUs for accelerated audio processing. Covers device management, data transfer strategies, and when GPU acceleration provides the greatest benefits.</p>
+<p><strong>Key concepts</strong>: Device transfer, automatic propagation, performance considerations</p>
+</section>
+<section id="pytorch-integration">
+<h3><a class="reference internal" href="pytorch-integration.html"><span class="doc">PyTorch Integration</span></a><a class="headerlink" href="#pytorch-integration" title="Link to this heading">#</a></h3>
+<p>Discover how TorchFX integrates seamlessly with PyTorch’s neural network ecosystem. Learn to combine TorchFX with <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>, custom modules, torchaudio transforms, and more.</p>
+<p><strong>Key concepts</strong>: Module composition, gradient flow, library mixing</p>
+</section>
+<section id="multi-channel">
+<h3><a class="reference internal" href="multi-channel.html"><span class="doc">Multi-Channel Processing</span></a><a class="headerlink" href="#multi-channel" title="Link to this heading">#</a></h3>
+<p>Master multi-channel audio processing patterns for stereo, surround sound, and custom channel configurations. Understand tensor shape conventions and per-channel vs. cross-channel processing.</p>
+<p><strong>Key concepts</strong>: Tensor shapes, channel strategies, nn.ModuleList patterns</p>
+</section>
+<section id="performance">
+<h3><a class="reference internal" href="performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a><a class="headerlink" href="#performance" title="Link to this heading">#</a></h3>
+<p>Understand TorchFX’s performance characteristics through comprehensive benchmarks. Learn optimization strategies for filters, effects, and processing chains.</p>
+<p><strong>Key concepts</strong>: Benchmarking methodology, GPU vs CPU performance, optimization guidelines</p>
+</section>
+</section>
+<section id="quick-navigation">
+<h2>Quick Navigation<a class="headerlink" href="#quick-navigation" title="Link to this heading">#</a></h2>
+<section id="by-use-case">
+<h3>By Use Case<a class="headerlink" href="#by-use-case" title="Link to this heading">#</a></h3>
+<p><strong>I want to process audio faster</strong>
+→ Start with <a class="reference internal" href="gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a>, then review <a class="reference internal" href="performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a></p>
+<p><strong>I’m building a PyTorch neural network with audio</strong>
+→ Read <a class="reference internal" href="pytorch-integration.html"><span class="doc">PyTorch Integration</span></a> for seamless integration patterns</p>
+<p><strong>I’m working with stereo or surround sound</strong>
+→ Check <a class="reference internal" href="multi-channel.html"><span class="doc">Multi-Channel Processing</span></a> for tensor conventions and processing patterns</p>
+<p><strong>I need to optimize my audio pipeline</strong>
+→ See <a class="reference internal" href="performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a> for benchmarks and optimization guidelines</p>
+</section>
+<section id="by-level">
+<h3>By Level<a class="headerlink" href="#by-level" title="Link to this heading">#</a></h3>
+<p><strong>Intermediate</strong>: <a class="reference internal" href="multi-channel.html"><span class="doc">Multi-Channel Processing</span></a>, <a class="reference internal" href="pytorch-integration.html"><span class="doc">PyTorch Integration</span></a>
+<strong>Advanced</strong>: <a class="reference internal" href="gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a>, <a class="reference internal" href="performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a></p>
+</section>
+</section>
+<section id="additional-resources">
+<h2>Additional Resources<a class="headerlink" href="#additional-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../core-concepts/index.html"><span class="doc">Core Concepts</span></a> - Foundational concepts</p></li>
+<li><p><a class="reference internal" href="../tutorials/index.html"><span class="doc">Tutorials</span></a> - Practical examples</p></li>
+<li><p><a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a> - Contributing and development</p></li>
+</ul>
+</section>
+<section id="external-references">
+<h2>External References<a class="headerlink" href="#external-references" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pytorch.org/docs/stable/index.html">PyTorch Documentation</a> - Official PyTorch docs</p></li>
+<li><p><a class="reference external" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/">CUDA Programming Guide</a> - NVIDIA CUDA documentation</p></li>
+<li><p><a class="reference external" href="https://pytorch.org/audio/stable/index.html">torchaudio Documentation</a> - Audio processing in PyTorch</p></li>
+</ul>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../tutorials/bpm-delay.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">BPM-Synced Delay Effects</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="gpu-acceleration.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">GPU Acceleration</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#who-should-read-this">Who Should Read This</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#topics-overview">Topics Overview</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-acceleration"><span class="xref std std-doc">gpu-acceleration</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytorch-integration"><span class="xref std std-doc">pytorch-integration</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-channel"><span class="xref std std-doc">multi-channel</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance"><span class="xref std std-doc">performance</span></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-navigation">Quick Navigation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#by-use-case">By Use Case</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#by-level">By Level</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#additional-resources">Additional Resources</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-references">External References</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/advanced/index.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/advanced/index.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,1783 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>BPM-Synced Delay Effects &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/tutorials/bpm-delay';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Advanced Topics" href="../advanced/index.html" />
+    <link rel="prev" title="Multi-Channel Audio Processing" href="multi-channel-effects.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">BPM-Synced Delay Effects</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="bpm-synced-delay-effects">
+<h1>BPM-Synced Delay Effects<a class="headerlink" href="#bpm-synced-delay-effects" title="Link to this heading">#</a></h1>
+<p>Learn how to create musically-timed delay effects using TorchFX’s BPM synchronization system. This tutorial covers musical time divisions, tempo-synced delays, and rhythmic echo patterns.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>In music production, delays are often synchronized to the tempo (BPM) rather than specified in milliseconds. This ensures delays stay musically coherent even when the tempo changes. TorchFX’s <a class="reference internal" href="../../api/effects.html#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delay</span></code></a> effect supports:</p>
+<ul class="simple">
+<li><p><strong>Musical time notation</strong>: Quarter notes (<code class="docutils literal notranslate"><span class="pre">1/4</span></code>), eighth notes (<code class="docutils literal notranslate"><span class="pre">1/8</span></code>), etc.</p></li>
+<li><p><strong>BPM synchronization</strong>: Automatic calculation from tempo</p></li>
+<li><p><strong>Dotted and triplet notes</strong>: <code class="docutils literal notranslate"><span class="pre">1/4d</span></code>, <code class="docutils literal notranslate"><span class="pre">1/8t</span></code>, etc.</p></li>
+<li><p><strong>Multiple taps</strong>: Create rhythmic echo patterns</p></li>
+<li><p><strong>Delay strategies</strong>: Mono and ping-pong stereo effects</p></li>
+</ul>
+<pre  class="mermaid">
+        graph LR
+    Input[User Input] --&gt; MT[Musical Time&lt;br/&gt;e.g., 1/8]
+    BPM[BPM&lt;br/&gt;e.g., 120] --&gt; Calc[Calculate&lt;br/&gt;Duration]
+    MT --&gt; Calc
+    FS[Sample Rate&lt;br/&gt;fs=44100] --&gt; Samples[Convert to&lt;br/&gt;Samples]
+    Calc --&gt; Samples
+    Samples --&gt; Delay[Apply Delay&lt;br/&gt;with Taps]
+    Delay --&gt; Output[Delayed Audio]
+
+    style Input fill:#e1f5ff
+    style Output fill:#e1f5ff
+    style MT fill:#fff5e1
+    style BPM fill:#ffe1e1
+    style Calc fill:#e8f5e1
+    </pre></section>
+<section id="musical-time-notation">
+<h2>Musical Time Notation<a class="headerlink" href="#musical-time-notation" title="Link to this heading">#</a></h2>
+<section id="basic-time-divisions">
+<h3>Basic Time Divisions<a class="headerlink" href="#basic-time-divisions" title="Link to this heading">#</a></h3>
+<p>Musical time in TorchFX uses the format <code class="docutils literal notranslate"><span class="pre">n/d[modifier]</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Notation</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Bar Fraction</p></th>
+<th class="head"><p>At 120 BPM (4/4)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">1/1</span></code></p></td>
+<td><p>Whole note</p></td>
+<td><p>1.0 bars</p></td>
+<td><p>2.0 seconds</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">1/2</span></code></p></td>
+<td><p>Half note</p></td>
+<td><p>0.5 bars</p></td>
+<td><p>1.0 seconds</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">1/4</span></code></p></td>
+<td><p>Quarter note</p></td>
+<td><p>0.25 bars</p></td>
+<td><p>0.5 seconds</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">1/8</span></code></p></td>
+<td><p>Eighth note</p></td>
+<td><p>0.125 bars</p></td>
+<td><p>0.25 seconds</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">1/16</span></code></p></td>
+<td><p>Sixteenth note</p></td>
+<td><p>0.0625 bars</p></td>
+<td><p>0.125 seconds</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">3/16</span></code></p></td>
+<td><p>Three sixteenths</p></td>
+<td><p>0.1875 bars</p></td>
+<td><p>0.375 seconds</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="modifiers">
+<h3>Modifiers<a class="headerlink" href="#modifiers" title="Link to this heading">#</a></h3>
+<p>Add modifiers for dotted and triplet notes:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Modifier</p></th>
+<th class="head"><p>Multiplier</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Bar Fraction</p></th>
+<th class="head"><p>At 120 BPM (4/4)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"> </code> (none)</p></td>
+<td><p>×1.0</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1/4</span></code></p></td>
+<td><p>0.25 bars</p></td>
+<td><p>0.5 seconds</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">d</span></code> (dotted)</p></td>
+<td><p>×1.5</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1/4d</span></code></p></td>
+<td><p>0.375 bars</p></td>
+<td><p>0.75 seconds</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">t</span></code> (triplet)</p></td>
+<td><p>×1/3</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1/4t</span></code></p></td>
+<td><p>0.0833 bars</p></td>
+<td><p>0.167 seconds</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Dotted notes</strong>: Add half the original duration (1.5×)
+<strong>Triplet notes</strong>: Fit three notes in the space of two (1/3×)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MusicalTime</span>
+
+<span class="c1"># Parse musical time notation</span>
+<span class="n">quarter</span> <span class="o">=</span> <span class="n">MusicalTime</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="s2">&quot;1/4&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">quarter</span><span class="o">.</span><span class="n">fraction</span><span class="p">())</span>  <span class="c1"># 0.25 bars</span>
+
+<span class="n">dotted_quarter</span> <span class="o">=</span> <span class="n">MusicalTime</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="s2">&quot;1/4d&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dotted_quarter</span><span class="o">.</span><span class="n">fraction</span><span class="p">())</span>  <span class="c1"># 0.375 bars</span>
+
+<span class="n">eighth_triplet</span> <span class="o">=</span> <span class="n">MusicalTime</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="s2">&quot;1/8t&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">eighth_triplet</span><span class="o">.</span><span class="n">fraction</span><span class="p">())</span>  <span class="c1"># 0.0417 bars (1/24)</span>
+
+<span class="c1"># Convert to seconds at specific BPM</span>
+<span class="n">duration</span> <span class="o">=</span> <span class="n">quarter</span><span class="o">.</span><span class="n">duration_seconds</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">beats_per_bar</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duration: </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>  <span class="c1"># 0.5 seconds</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../core-concepts/type-system.html"><span class="doc">Type System - Musical Time and Audio Units</span></a> - Complete type system documentation</p>
+</div>
+</section>
+</section>
+<section id="bpm-to-samples-conversion">
+<h2>BPM-to-Samples Conversion<a class="headerlink" href="#bpm-to-samples-conversion" title="Link to this heading">#</a></h2>
+<p>Understanding how musical time converts to sample-accurate delays:</p>
+<pre  class="mermaid">
+        graph TB
+    Start[Input: BPM=120&lt;br/&gt;delay_time=1/4&lt;br/&gt;fs=44100]
+
+    Parse[Parse Musical Time&lt;br/&gt;MusicalTime.from_string]
+    Fraction[Calculate Bar Fraction&lt;br/&gt;fraction = 0.25]
+    BeatDur[Calculate Beat Duration&lt;br/&gt;60 / 120 = 0.5s]
+    BarDur[Calculate Bar Duration&lt;br/&gt;0.5s × 4 beats = 2.0s]
+    NoteDur[Calculate Note Duration&lt;br/&gt;0.25 bars × 2.0s = 0.5s]
+    Samples[Convert to Samples&lt;br/&gt;0.5s × 44100 Hz = 22050]
+
+    Start --&gt; Parse
+    Parse --&gt; Fraction
+    Start --&gt; BeatDur
+    BeatDur --&gt; BarDur
+    Fraction --&gt; NoteDur
+    BarDur --&gt; NoteDur
+    NoteDur --&gt; Samples
+
+    style Start fill:#e1f5ff
+    style Samples fill:#e1f5ff
+    </pre><p><strong>Formula</strong>:</p>
+<div class="math notranslate nohighlight">
+\[
+\text{samples} = \frac{n}{d} \times m \times \frac{60}{BPM} \times \text{beats\_per\_bar} \times f_s
+\]</div>
+<p>Where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(n/d\)</span> is the note division (e.g., 1/4)</p></li>
+<li><p><span class="math notranslate nohighlight">\(m\)</span> is the modifier (1.0, 1.5, or 1/3)</p></li>
+<li><p><span class="math notranslate nohighlight">\(BPM\)</span> is beats per minute</p></li>
+<li><p><span class="math notranslate nohighlight">\(\text{beats\_per\_bar}\)</span> is typically 4 (for 4/4 time)</p></li>
+<li><p><span class="math notranslate nohighlight">\(f_s\)</span> is the sample rate</p></li>
+</ul>
+</section>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
+<section id="with-wave-pipeline-automatic-fs">
+<h3>With Wave Pipeline (Automatic fs)<a class="headerlink" href="#with-wave-pipeline-automatic-fs" title="Link to this heading">#</a></h3>
+<p>The recommended way—let <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> configure the sample rate:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Load audio</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>  <span class="c1"># fs = 44100</span>
+
+<span class="c1"># Create BPM-synced delay (fs auto-configured)</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>           <span class="c1"># 128 beats per minute</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span>  <span class="c1"># Eighth note delay</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>      <span class="c1"># 30% feedback for echoes</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>           <span class="c1"># 20% wet/dry mix</span>
+    <span class="n">taps</span><span class="o">=</span><span class="mi">3</span>             <span class="c1"># 3 delay taps</span>
+<span class="p">)</span>
+
+<span class="c1"># Apply using pipeline operator</span>
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>  <span class="c1"># fs automatically set to 44100</span>
+
+<span class="n">delayed</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;delayed.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="with-explicit-sample-rate">
+<h3>With Explicit Sample Rate<a class="headerlink" href="#with-explicit-sample-rate" title="Link to this heading">#</a></h3>
+<p>When working directly with tensors:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Create or load waveform</span>
+<span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># Stereo, 1 second</span>
+
+<span class="c1"># Create delay with explicit fs</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span>
+    <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span>  <span class="c1"># Explicit sample rate</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span>
+<span class="p">)</span>
+
+<span class="c1"># Apply to tensor</span>
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="direct-sample-specification">
+<h3>Direct Sample Specification<a class="headerlink" href="#direct-sample-specification" title="Link to this heading">#</a></h3>
+<p>For non-musical delays or precise control:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Delay by exact number of samples</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+    <span class="n">delay_samples</span><span class="o">=</span><span class="mi">2205</span><span class="p">,</span>  <span class="c1"># 50ms at 44.1kHz</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+    <span class="n">taps</span><span class="o">=</span><span class="mi">4</span>
+<span class="p">)</span>
+
+<span class="c1"># No BPM or fs needed when using delay_samples</span>
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="taps-and-feedback">
+<h2>Taps and Feedback<a class="headerlink" href="#taps-and-feedback" title="Link to this heading">#</a></h2>
+<section id="understanding-taps">
+<h3>Understanding Taps<a class="headerlink" href="#understanding-taps" title="Link to this heading">#</a></h3>
+<p><strong>Taps</strong> create multiple echoes of the original signal. Each tap is delayed by <code class="docutils literal notranslate"><span class="pre">tap_number</span> <span class="pre">×</span> <span class="pre">delay_time</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create delay with 4 taps</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span>  <span class="c1"># 0.5s at 120 BPM</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+    <span class="n">taps</span><span class="o">=</span><span class="mi">4</span>
+<span class="p">)</span>
+
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+
+<span class="c1"># Results in echoes at:</span>
+<span class="c1"># Tap 1: 0.5s (amplitude = 1.0)</span>
+<span class="c1"># Tap 2: 1.0s (amplitude = 0.6^1 = 0.6)</span>
+<span class="c1"># Tap 3: 1.5s (amplitude = 0.6^2 = 0.36)</span>
+<span class="c1"># Tap 4: 2.0s (amplitude = 0.6^3 = 0.216)</span>
+</pre></div>
+</div>
+</section>
+<section id="feedback-decay-pattern">
+<h3>Feedback Decay Pattern<a class="headerlink" href="#feedback-decay-pattern" title="Link to this heading">#</a></h3>
+<p>The first tap always has amplitude 1.0. Subsequent taps decay exponentially:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\text{amplitude}_n = \begin{cases}
+1.0 &amp; \text{if } n = 1 \\
+\text{feedback}^{n-1} &amp; \text{if } n &gt; 1
+\end{cases}
+\end{split}\]</div>
+<p><strong>Example visualization</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">feedback</span> <span class="o">=</span> <span class="mf">0.6</span>
+<span class="n">taps</span> <span class="o">=</span> <span class="mi">6</span>
+
+<span class="n">tap_numbers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">taps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">amplitudes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">feedback</span><span class="o">**</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">taps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">stem</span><span class="p">(</span><span class="n">tap_numbers</span><span class="p">,</span> <span class="n">amplitudes</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Tap Number&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Amplitude&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Delay Tap Amplitudes (feedback=</span><span class="si">{</span><span class="n">feedback</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="output-length-extension">
+<h3>Output Length Extension<a class="headerlink" href="#output-length-extension" title="Link to this heading">#</a></h3>
+<p>The output is extended to accommodate all delay taps:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">original_length</span> <span class="o">=</span> <span class="mi">44100</span>  <span class="c1"># 1 second at 44.1kHz</span>
+<span class="n">delay_samples</span> <span class="o">=</span> <span class="mi">22050</span>    <span class="c1"># 0.5 second delay</span>
+<span class="n">taps</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="n">output_length</span> <span class="o">=</span> <span class="n">original_length</span> <span class="o">+</span> <span class="p">(</span><span class="n">delay_samples</span> <span class="o">*</span> <span class="n">taps</span><span class="p">)</span>
+<span class="c1"># output_length = 44100 + (22050 * 3) = 110250 samples (~2.5 seconds)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="delay-strategies">
+<h2>Delay Strategies<a class="headerlink" href="#delay-strategies" title="Link to this heading">#</a></h2>
+<section id="monodelaystrategy-default">
+<h3>MonoDelayStrategy (Default)<a class="headerlink" href="#monodelaystrategy-default" title="Link to this heading">#</a></h3>
+<p>Applies identical delay to all channels:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Delay</span><span class="p">,</span> <span class="n">MonoDelayStrategy</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Mono strategy (default)</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="n">MonoDelayStrategy</span><span class="p">()</span>  <span class="c1"># Optional, this is default</span>
+<span class="p">)</span>
+
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+<p><strong>Behavior</strong>: Each channel receives the same delay pattern independently.</p>
+</section>
+<section id="pingpongdelaystrategy">
+<h3>PingPongDelayStrategy<a class="headerlink" href="#pingpongdelaystrategy" title="Link to this heading">#</a></h3>
+<p>Creates alternating delays between left and right stereo channels:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Delay</span><span class="p">,</span> <span class="n">PingPongDelayStrategy</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo.wav&quot;</span><span class="p">)</span>  <span class="c1"># Must be stereo</span>
+
+<span class="c1"># Ping-pong delay</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+    <span class="n">taps</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="n">PingPongDelayStrategy</span><span class="p">()</span>
+<span class="p">)</span>
+
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+<p><strong>Ping-pong pattern</strong>:</p>
+<ul class="simple">
+<li><p><strong>Odd taps (1, 3, 5)</strong>: Left → Right</p></li>
+<li><p><strong>Even taps (2, 4, 6)</strong>: Right → Left</p></li>
+</ul>
+<pre  class="mermaid">
+        sequenceDiagram
+    participant L as Left Channel
+    participant R as Right Channel
+
+    Note over L,R: Original
+    rect rgb(200, 220, 255)
+        L-&gt;&gt;L: Original left
+        R-&gt;&gt;R: Original right
+    end
+
+    Note over L,R: Tap 1 (amp=1.0)
+    rect rgb(255, 220, 200)
+        L-&gt;&gt;R: L→R
+    end
+
+    Note over L,R: Tap 2 (amp=feedback)
+    rect rgb(200, 255, 220)
+        R-&gt;&gt;L: R→L
+    end
+
+    Note over L,R: Tap 3 (amp=feedback²)
+    rect rgb(255, 220, 200)
+        L-&gt;&gt;R: L→R
+    end
+
+    Note over L,R: Result: Bouncing effect
+    </pre><p><strong>Fallback</strong>: If input is not stereo, automatically uses <a class="reference internal" href="../../api/effects.html#torchfx.effect.MonoDelayStrategy" title="torchfx.effect.MonoDelayStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">MonoDelayStrategy</span></code></a>.</p>
+</section>
+</section>
+<section id="musical-applications">
+<h2>Musical Applications<a class="headerlink" href="#musical-applications" title="Link to this heading">#</a></h2>
+<section id="common-genre-patterns">
+<h3>Common Genre Patterns<a class="headerlink" href="#common-genre-patterns" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Genre</p></th>
+<th class="head"><p>Typical BPM</p></th>
+<th class="head"><p>Common Delays</p></th>
+<th class="head"><p>Use Case</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>House</p></td>
+<td><p>120-130</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1/8</span></code>, <code class="docutils literal notranslate"><span class="pre">1/16</span></code></p></td>
+<td><p>Rhythmic vocal delays</p></td>
+</tr>
+<tr class="row-odd"><td><p>Techno</p></td>
+<td><p>125-135</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1/16</span></code>, <code class="docutils literal notranslate"><span class="pre">1/32</span></code></p></td>
+<td><p>Fast percussion echoes</p></td>
+</tr>
+<tr class="row-even"><td><p>Dubstep</p></td>
+<td><p>140</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1/4d</span></code>, <code class="docutils literal notranslate"><span class="pre">1/8t</span></code></p></td>
+<td><p>Syncopated delays</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hip-Hop</p></td>
+<td><p>80-110</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1/4</span></code>, <code class="docutils literal notranslate"><span class="pre">1/8</span></code></p></td>
+<td><p>Vocal doubling</p></td>
+</tr>
+<tr class="row-even"><td><p>Ambient</p></td>
+<td><p>60-90</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1/2</span></code>, <code class="docutils literal notranslate"><span class="pre">1/4d</span></code></p></td>
+<td><p>Long atmospheric delays</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="dubstep-delay-example">
+<h3>Dubstep Delay Example<a class="headerlink" href="#dubstep-delay-example" title="Link to this heading">#</a></h3>
+<p>Classic dubstep delay using dotted eighth notes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Delay</span><span class="p">,</span> <span class="n">PingPongDelayStrategy</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;synth.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Dotted eighth creates syncopated rhythm</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">140</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8d&quot;</span><span class="p">,</span>  <span class="c1"># Dotted eighth = 0.1875 bars</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+    <span class="n">taps</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="n">PingPongDelayStrategy</span><span class="p">()</span>
+<span class="p">)</span>
+
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+<span class="n">delayed</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;synth_delayed.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Why dotted eighth?</strong> At 140 BPM, a dotted eighth note creates a syncopated rhythm that’s iconic in dubstep.</p>
+</section>
+<section id="vocal-doubling">
+<h3>Vocal Doubling<a class="headerlink" href="#vocal-doubling" title="Link to this heading">#</a></h3>
+<p>Subtle delay for thickening vocals:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;vocal.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Short delay for doubling effect</span>
+<span class="n">doubler</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/16&quot;</span><span class="p">,</span>  <span class="c1"># Very short delay</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>       <span class="c1"># No feedback (single tap)</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>            <span class="c1"># Subtle blend</span>
+    <span class="n">taps</span><span class="o">=</span><span class="mi">1</span>              <span class="c1"># Just one echo</span>
+<span class="p">)</span>
+
+<span class="n">doubled</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">doubler</span>
+</pre></div>
+</div>
+</section>
+<section id="ambient-atmosphere">
+<h3>Ambient Atmosphere<a class="headerlink" href="#ambient-atmosphere" title="Link to this heading">#</a></h3>
+<p>Long delays with high feedback:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;pad.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Long atmospheric delay</span>
+<span class="n">ambient_delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/2&quot;</span><span class="p">,</span>   <span class="c1"># Half note = long delay</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>       <span class="c1"># High feedback for many echoes</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>            <span class="c1"># Prominent effect</span>
+    <span class="n">taps</span><span class="o">=</span><span class="mi">8</span>              <span class="c1"># Many echoes</span>
+<span class="p">)</span>
+
+<span class="n">atmospheric</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">ambient_delay</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="complex-processing-chains">
+<h2>Complex Processing Chains<a class="headerlink" href="#complex-processing-chains" title="Link to this heading">#</a></h2>
+<section id="combining-with-filters">
+<h3>Combining with Filters<a class="headerlink" href="#combining-with-filters" title="Link to this heading">#</a></h3>
+<p>Create frequency-dependent delays:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Pre-filter the delay</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Remove rumble</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+        <span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span>
+        <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span>
+    <span class="p">)</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>  <span class="c1"># Soften delays</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-effect-chain">
+<h3>Multi-Effect Chain<a class="headerlink" href="#multi-effect-chain" title="Link to this heading">#</a></h3>
+<p>Complete production-ready chain:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;vocal.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Professional vocal processing</span>
+<span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="c1"># EQ</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="c1"># Dynamics</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Compressor</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span>
+
+    <span class="c1"># Delay (quarter note at 120 BPM)</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+        <span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+        <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span>
+        <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+        <span class="n">mix</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+        <span class="n">taps</span><span class="o">=</span><span class="mi">3</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Reverb</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+    <span class="c1"># Final normalization</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">processed</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;vocal_processed.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="advanced-techniques">
+<h2>Advanced Techniques<a class="headerlink" href="#advanced-techniques" title="Link to this heading">#</a></h2>
+<section id="tempo-automation">
+<h3>Tempo Automation<a class="headerlink" href="#tempo-automation" title="Link to this heading">#</a></h3>
+<p>Apply different delays for different sections:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;full_track.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Process intro (slow tempo)</span>
+<span class="n">intro_delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+
+<span class="c1"># Process verse (faster tempo)</span>
+<span class="n">verse_delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Split audio and apply different delays</span>
+<span class="c1"># (Manual splitting required)</span>
+<span class="n">intro</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">44100</span><span class="o">*</span><span class="mi">8</span><span class="p">]</span>  <span class="c1"># First 8 seconds</span>
+<span class="n">verse</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">[:,</span> <span class="mi">44100</span><span class="o">*</span><span class="mi">8</span><span class="p">:]</span>  <span class="c1"># Rest</span>
+
+<span class="n">intro_processed</span> <span class="o">=</span> <span class="n">intro_delay</span><span class="p">(</span><span class="n">intro</span><span class="p">)</span>
+<span class="n">verse_processed</span> <span class="o">=</span> <span class="n">verse_delay</span><span class="p">(</span><span class="n">verse</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="creative-feedback-patterns">
+<h3>Creative Feedback Patterns<a class="headerlink" href="#creative-feedback-patterns" title="Link to this heading">#</a></h3>
+<p>Use extreme feedback for creative effects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;drum_loop.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># High feedback creates infinite delays (carefully!)</span>
+<span class="n">infinite_delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/16&quot;</span><span class="p">,</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>  <span class="c1"># Very high feedback (max allowed)</span>
+    <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+    <span class="n">taps</span><span class="o">=</span><span class="mi">16</span>         <span class="c1"># Many taps</span>
+<span class="p">)</span>
+
+<span class="c1"># Result: Long, dense echo tail</span>
+<span class="n">infinite</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">infinite_delay</span>
+</pre></div>
+</div>
+<p>⚠️ <strong>Warning</strong>: Feedback &gt; 0.95 can cause numerical instability and is clamped.</p>
+</section>
+<section id="layered-delays">
+<h3>Layered Delays<a class="headerlink" href="#layered-delays" title="Link to this heading">#</a></h3>
+<p>Stack multiple delays for complex patterns:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Quarter note and dotted eighth</span>
+<span class="n">delay1</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">delay2</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8d&quot;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)</span>
+
+<span class="c1"># Apply both</span>
+<span class="n">layered</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay1</span> <span class="o">|</span> <span class="n">delay2</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="lazy-vs-eager-calculation">
+<h2>Lazy vs Eager Calculation<a class="headerlink" href="#lazy-vs-eager-calculation" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../../api/effects.html#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-class docutils literal notranslate"><span class="pre">Delay</span></code></a> effect supports two calculation modes:</p>
+<section id="eager-calculation">
+<h3>Eager Calculation<a class="headerlink" href="#eager-calculation" title="Link to this heading">#</a></h3>
+<p>When <code class="docutils literal notranslate"><span class="pre">fs</span></code> is provided at initialization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span>
+    <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span>  <span class="c1"># fs provided: calculate immediately</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span>
+<span class="p">)</span>
+
+<span class="c1"># Delay samples already calculated: 22050</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">delay</span><span class="o">.</span><span class="n">delay_samples</span><span class="p">)</span>  <span class="c1"># 22050</span>
+</pre></div>
+</div>
+</section>
+<section id="lazy-calculation">
+<h3>Lazy Calculation<a class="headerlink" href="#lazy-calculation" title="Link to this heading">#</a></h3>
+<p>When <code class="docutils literal notranslate"><span class="pre">fs</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> (deferred until <code class="docutils literal notranslate"><span class="pre">forward()</span></code>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+    <span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+    <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span>
+    <span class="c1"># fs=None: defer calculation</span>
+    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">delay</span><span class="o">.</span><span class="n">_needs_calculation</span><span class="p">)</span>  <span class="c1"># True</span>
+
+<span class="c1"># Wave sets fs automatically</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">delay</span><span class="o">.</span><span class="n">_needs_calculation</span><span class="p">)</span>  <span class="c1"># False (calculated during forward)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">delay</span><span class="o">.</span><span class="n">delay_samples</span><span class="p">)</span>  <span class="c1"># 22050 (at fs=44100)</span>
+</pre></div>
+</div>
+<p><strong>Use lazy calculation</strong> when using the <a class="reference internal" href="../../glossary.html#term-Pipeline-Operator"><span class="xref std std-term">pipeline operator</span></a> with <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a>.</p>
+</section>
+</section>
+<section id="error-handling">
+<h2>Error Handling<a class="headerlink" href="#error-handling" title="Link to this heading">#</a></h2>
+<section id="common-errors">
+<h3>Common Errors<a class="headerlink" href="#common-errors" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># ❌ ERROR: BPM required without delay_samples</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">)</span>
+<span class="c1"># AssertionError: BPM must be provided</span>
+
+<span class="c1"># ❌ ERROR: fs required for lazy calculation</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">)</span>
+<span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+<span class="n">delayed</span> <span class="o">=</span> <span class="n">delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+<span class="c1"># AssertionError: Sample rate (fs) is required</span>
+
+<span class="c1"># ❌ ERROR: Invalid musical time format</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;invalid&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="c1"># ValueError: Invalid musical time string</span>
+
+<span class="c1"># ❌ ERROR: Feedback out of range</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
+<span class="c1"># AssertionError: Feedback must be between 0 and 0.95</span>
+</pre></div>
+</div>
+</section>
+<section id="validation-checklist">
+<h3>Validation Checklist<a class="headerlink" href="#validation-checklist" title="Link to this heading">#</a></h3>
+<p>Before applying delay, ensure:</p>
+<ul class="simple">
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">bpm</span></code> is provided (if using musical time)</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">fs</span></code> is set (either explicitly or via Wave)</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">delay_time</span></code> matches pattern <code class="docutils literal notranslate"><span class="pre">n/d[d|t]</span></code></p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">feedback</span></code> is in [0, 0.95]</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">mix</span></code> is in [0, 1]</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">taps</span></code> &gt;= 1</p></li>
+</ul>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<section id="choose-appropriate-mix-levels">
+<h3>Choose Appropriate Mix Levels<a class="headerlink" href="#choose-appropriate-mix-levels" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Subtle delay (20-30% mix)</span>
+<span class="n">subtle</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+
+<span class="c1"># ✅ GOOD: Prominent delay (40-60% mix)</span>
+<span class="n">prominent</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># ⚠️  USE CAREFULLY: Heavy delay (70-100% mix)</span>
+<span class="n">heavy</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/2&quot;</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="match-delay-to-tempo">
+<h3>Match Delay to Tempo<a class="headerlink" href="#match-delay-to-tempo" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Delay matches song tempo</span>
+<span class="n">song_bpm</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="n">song_bpm</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">)</span>
+
+<span class="c1"># ❌ BAD: Hardcoded delay time (not tempo-aware)</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>  <span class="c1"># What tempo is this?</span>
+</pre></div>
+</div>
+</section>
+<section id="use-feedback-wisely">
+<h3>Use Feedback Wisely<a class="headerlink" href="#use-feedback-wisely" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Moderate feedback (0.3-0.6)</span>
+<span class="n">musical</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+
+<span class="c1"># ⚠️  CAREFUL: High feedback (0.7-0.95)</span>
+<span class="n">dense</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/16&quot;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="c1"># Can create very dense, potentially muddy delays</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="related-concepts">
+<h2>Related Concepts<a class="headerlink" href="#related-concepts" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../core-concepts/type-system.html"><span class="doc">Type System - Musical Time and Audio Units</span></a> - Musical time and type system</p></li>
+<li><p><a class="reference internal" href="custom-effects.html"><span class="doc">Creating Custom Effects</span></a> - Creating custom effects</p></li>
+<li><p><a class="reference internal" href="multi-channel-effects.html"><span class="doc">Multi-Channel Audio Processing</span></a> - Multi-channel processing</p></li>
+<li><p><a class="reference internal" href="../core-concepts/pipeline-operator.html"><span class="doc">Pipeline Operator - Functional Composition</span></a> - Pipeline operator usage</p></li>
+</ul>
+</section>
+<section id="external-resources">
+<h2>External Resources<a class="headerlink" href="#external-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Note_value">Note Values on Wikipedia</a> - Understanding musical note durations</p></li>
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Delay_(audio_effect)">Delay Effect on Wikipedia</a> - Delay effect theory</p></li>
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Tempo">Tempo on Wikipedia</a> - Understanding BPM and tempo</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<span class="target" id="id1"></span></section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="multi-channel-effects.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Multi-Channel Audio Processing</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../advanced/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Advanced Topics</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#musical-time-notation">Musical Time Notation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-time-divisions">Basic Time Divisions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#modifiers">Modifiers</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bpm-to-samples-conversion">BPM-to-Samples Conversion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage">Basic Usage</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#with-wave-pipeline-automatic-fs">With Wave Pipeline (Automatic fs)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#with-explicit-sample-rate">With Explicit Sample Rate</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#direct-sample-specification">Direct Sample Specification</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#taps-and-feedback">Taps and Feedback</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#understanding-taps">Understanding Taps</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feedback-decay-pattern">Feedback Decay Pattern</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-length-extension">Output Length Extension</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#delay-strategies">Delay Strategies</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#monodelaystrategy-default">MonoDelayStrategy (Default)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pingpongdelaystrategy">PingPongDelayStrategy</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#musical-applications">Musical Applications</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-genre-patterns">Common Genre Patterns</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dubstep-delay-example">Dubstep Delay Example</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vocal-doubling">Vocal Doubling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ambient-atmosphere">Ambient Atmosphere</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complex-processing-chains">Complex Processing Chains</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#combining-with-filters">Combining with Filters</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-effect-chain">Multi-Effect Chain</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-techniques">Advanced Techniques</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tempo-automation">Tempo Automation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#creative-feedback-patterns">Creative Feedback Patterns</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#layered-delays">Layered Delays</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lazy-vs-eager-calculation">Lazy vs Eager Calculation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#eager-calculation">Eager Calculation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lazy-calculation">Lazy Calculation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#error-handling">Error Handling</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-errors">Common Errors</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-checklist">Validation Checklist</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#choose-appropriate-mix-levels">Choose Appropriate Mix Levels</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#match-delay-to-tempo">Match Delay to Tempo</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#use-feedback-wisely">Use Feedback Wisely</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts">Related Concepts</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-resources">External Resources</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/tutorials/bpm-delay.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/tutorials/bpm-delay.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

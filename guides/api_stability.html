@@ -1,0 +1,918 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>API Stability and Backward Compatibility &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/api_stability';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Migration Guide" href="migration_guide.html" />
+    <link rel="prev" title="Performance Optimization and Benchmarking" href="advanced/performance.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="developer/index.html">Developer Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer/project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer/benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer/documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer/roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Guides</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">API Stability and Backward Compatibility</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="api-stability-and-backward-compatibility">
+<h1>API Stability and Backward Compatibility<a class="headerlink" href="#api-stability-and-backward-compatibility" title="Link to this heading">#</a></h1>
+<p>This document describes TorchFX’s commitment to API stability and backward compatibility.</p>
+<section id="versioning-policy">
+<h2>Versioning Policy<a class="headerlink" href="#versioning-policy" title="Link to this heading">#</a></h2>
+<p>TorchFX follows <a class="reference external" href="https://semver.org/">Semantic Versioning 2.0.0</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MAJOR</span><span class="o">.</span><span class="n">MINOR</span><span class="o">.</span><span class="n">PATCH</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="p">,</span> <span class="mf">1.2.3</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>MAJOR</strong>: Incompatible API changes</p></li>
+<li><p><strong>MINOR</strong>: Backward-compatible new features</p></li>
+<li><p><strong>PATCH</strong>: Backward-compatible bug fixes</p></li>
+</ul>
+</section>
+<section id="stability-guarantees">
+<h2>Stability Guarantees<a class="headerlink" href="#stability-guarantees" title="Link to this heading">#</a></h2>
+<section id="what-we-guarantee">
+<h3>What We Guarantee<a class="headerlink" href="#what-we-guarantee" title="Link to this heading">#</a></h3>
+<section id="no-breaking-changes-in-minor-versions">
+<h4>1. No Breaking Changes in Minor Versions<a class="headerlink" href="#no-breaking-changes-in-minor-versions" title="Link to this heading">#</a></h4>
+<p>✅ <strong>Your code will continue to work</strong> when upgrading between minor versions (e.g., 1.0.0 → 1.1.0 → 1.2.0)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Code written for 1.0.0 will work in 1.1.0 and 1.2.0</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="n">filtered</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="nb">filter</span>
+</pre></div>
+</div>
+</section>
+<section id="deprecation-period">
+<h4>2. Deprecation Period<a class="headerlink" href="#deprecation-period" title="Link to this heading">#</a></h4>
+<p>✅ <strong>Minimum one minor version</strong> before removal</p>
+<p>APIs will be marked as deprecated for at least one full minor version before removal in the next major version.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Version</span> <span class="mf">1.0.0</span><span class="p">:</span> <span class="n">Feature</span> <span class="n">X</span> <span class="n">introduced</span>
+<span class="n">Version</span> <span class="mf">1.1.0</span><span class="p">:</span> <span class="n">Feature</span> <span class="n">X</span> <span class="n">deprecated</span><span class="p">,</span> <span class="n">Feature</span> <span class="n">Y</span> <span class="n">introduced</span>
+<span class="n">Version</span> <span class="mf">1.2.0</span><span class="p">:</span> <span class="n">Feature</span> <span class="n">X</span> <span class="n">still</span> <span class="n">works</span> <span class="p">(</span><span class="k">with</span> <span class="n">warning</span><span class="p">)</span>
+<span class="n">Version</span> <span class="mf">2.0.0</span><span class="p">:</span> <span class="n">Feature</span> <span class="n">X</span> <span class="n">removed</span><span class="p">,</span> <span class="n">use</span> <span class="n">Feature</span> <span class="n">Y</span>
+</pre></div>
+</div>
+</section>
+<section id="clear-communication">
+<h4>3. Clear Communication<a class="headerlink" href="#clear-communication" title="Link to this heading">#</a></h4>
+<p>✅ <strong>Deprecation warnings</strong> will be clear and actionable</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ne">DeprecationWarning</span><span class="p">:</span> <span class="n">old_method</span><span class="p">()</span> <span class="ow">is</span> <span class="n">deprecated</span> <span class="n">since</span> <span class="n">version</span> <span class="mf">1.1.0</span><span class="o">.</span>
+<span class="n">Use</span> <span class="n">new_method</span><span class="p">()</span> <span class="n">instead</span><span class="o">.</span> <span class="n">It</span> <span class="n">will</span> <span class="n">be</span> <span class="n">removed</span> <span class="ow">in</span> <span class="n">version</span> <span class="mf">2.0.0</span><span class="o">.</span>
+</pre></div>
+</div>
+</section>
+<section id="migration-support">
+<h4>4. Migration Support<a class="headerlink" href="#migration-support" title="Link to this heading">#</a></h4>
+<p>✅ <strong>Documentation and migration guides</strong> for all breaking changes</p>
+<ul class="simple">
+<li><p>Migration guide with step-by-step instructions</p></li>
+<li><p>Code examples showing before/after</p></li>
+<li><p>Rationale for changes</p></li>
+</ul>
+</section>
+</section>
+<section id="what-we-dont-guarantee">
+<h3>What We Don’t Guarantee<a class="headerlink" href="#what-we-dont-guarantee" title="Link to this heading">#</a></h3>
+<p>❌ <strong>Private APIs</strong> (prefixed with <code class="docutils literal notranslate"><span class="pre">_</span></code>) may change without notice</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Public API - Stable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span>
+
+<span class="c1"># Private API - May change</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._internal_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">some_function</span>  <span class="c1"># Not guaranteed</span>
+</pre></div>
+</div>
+<p>❌ <strong>Experimental features</strong> may change until stabilized</p>
+<p>Features marked as “experimental” in the documentation are subject to change.</p>
+<p>❌ <strong>Bug behavior</strong> - Bug fixes may change observable behavior</p>
+<p>If current behavior is a bug, fixing it is not considered a breaking change.</p>
+</section>
+</section>
+<section id="public-api-surface">
+<h2>Public API Surface<a class="headerlink" href="#public-api-surface" title="Link to this heading">#</a></h2>
+<section id="stable-apis-v0-3-0">
+<h3>Stable APIs (v0.3.0+)<a class="headerlink" href="#stable-apis-v0-3-0" title="Link to this heading">#</a></h3>
+<p>These APIs are considered stable and will follow the versioning policy:</p>
+<section id="core-classes">
+<h4>Core Classes<a class="headerlink" href="#core-classes" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Wave</span></code> - Audio waveform representation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FX</span></code> - Base effect class</p></li>
+</ul>
+</section>
+<section id="filters-torchfx-filter">
+<h4>Filters (torchfx.filter)<a class="headerlink" href="#filters-torchfx-filter" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>IIR Filters:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Butterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">HiButterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">LoButterworth</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Chebyshev1</span></code>, <code class="docutils literal notranslate"><span class="pre">HiChebyshev1</span></code>, <code class="docutils literal notranslate"><span class="pre">LoChebyshev1</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Chebyshev2</span></code>, <code class="docutils literal notranslate"><span class="pre">HiChebyshev2</span></code>, <code class="docutils literal notranslate"><span class="pre">LoChebyshev2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elliptic</span></code>, <code class="docutils literal notranslate"><span class="pre">HiElliptic</span></code>, <code class="docutils literal notranslate"><span class="pre">LoElliptic</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LinkwitzRiley</span></code>, <code class="docutils literal notranslate"><span class="pre">HiLinkwitzRiley</span></code>, <code class="docutils literal notranslate"><span class="pre">LoLinkwitzRiley</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HiShelving</span></code>, <code class="docutils literal notranslate"><span class="pre">LoShelving</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Notch</span></code>, <code class="docutils literal notranslate"><span class="pre">AllPass</span></code>, <code class="docutils literal notranslate"><span class="pre">Peaking</span></code></p></li>
+</ul>
+</li>
+<li><p>FIR Filters:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">FIR</span></code>, <code class="docutils literal notranslate"><span class="pre">DesignableFIR</span></code></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="effects-torchfx-effect">
+<h4>Effects (torchfx.effect)<a class="headerlink" href="#effects-torchfx-effect" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Reverb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Delay</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="parameter-stability">
+<h3>Parameter Stability<a class="headerlink" href="#parameter-stability" title="Link to this heading">#</a></h3>
+<section id="stable-parameters">
+<h4>Stable Parameters<a class="headerlink" href="#stable-parameters" title="Link to this heading">#</a></h4>
+<p>These parameter names will not change:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fs</span></code> - Sampling frequency (Hz)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cutoff</span></code> - Cutoff frequency for filters (Hz)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">frequency</span></code> - Center frequency for parametric EQ (Hz)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">order</span></code> - Filter order</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gain</span></code> - Gain value</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gain_scale</span></code> - Gain units (“linear” or “db”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Q</span></code> - Quality factor (uppercase for Peaking, Notch, AllPass)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">q</span></code> - Quality factor (lowercase for Shelving, ParametricEQ)</p></li>
+</ul>
+</section>
+</section>
+<section id="type-signature-stability">
+<h3>Type Signature Stability<a class="headerlink" href="#type-signature-stability" title="Link to this heading">#</a></h3>
+<p>Type signatures in stable APIs will not change in backward-incompatible ways:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Stable signature</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Future additions are OK (backward compatible)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="c1"># This would be breaking (requires major version bump)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">required_param</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># NOT OK</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="how-to-check-api-stability">
+<h2>How to Check API Stability<a class="headerlink" href="#how-to-check-api-stability" title="Link to this heading">#</a></h2>
+<section id="check-documentation">
+<h3>1. Check Documentation<a class="headerlink" href="#check-documentation" title="Link to this heading">#</a></h3>
+<p>All stable APIs are marked in the documentation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">StableClass</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stable since version 1.0.0.</span>
+
+<span class="sd">    This API is considered stable and will follow semantic versioning.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="check-for-deprecation-warnings">
+<h3>2. Check for Deprecation Warnings<a class="headerlink" href="#check-for-deprecation-warnings" title="Link to this heading">#</a></h3>
+<p>Run your code with warnings enabled:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-W<span class="w"> </span>all::DeprecationWarning<span class="w"> </span>your_script.py
+</pre></div>
+</div>
+</section>
+<section id="review-changelog">
+<h3>3. Review CHANGELOG<a class="headerlink" href="#review-changelog" title="Link to this heading">#</a></h3>
+<p>Check <a class="reference external" href="https://github.com/matteospanio/torchfx/CHANGELOG">CHANGELOG.md</a> for:</p>
+<ul class="simple">
+<li><p>New features</p></li>
+<li><p>Deprecations</p></li>
+<li><p>Breaking changes</p></li>
+</ul>
+</section>
+<section id="follow-migration-guide">
+<h3>4. Follow Migration Guide<a class="headerlink" href="#follow-migration-guide" title="Link to this heading">#</a></h3>
+<p>See <a class="reference internal" href="migration_guide.html"><span class="std std-doc">migration guide</span></a> for version-specific migration instructions.</p>
+</section>
+</section>
+<section id="handling-breaking-changes">
+<h2>Handling Breaking Changes<a class="headerlink" href="#handling-breaking-changes" title="Link to this heading">#</a></h2>
+<section id="for-users">
+<h3>For Users<a class="headerlink" href="#for-users" title="Link to this heading">#</a></h3>
+<p>When a breaking change is necessary (major version bump):</p>
+<ol class="arabic simple">
+<li><p><strong>Read the migration guide</strong>: <a class="reference internal" href="migration_guide.html"><span class="std std-doc">migration guide</span></a></p></li>
+<li><p><strong>Update incrementally</strong>: Update to latest minor version first</p></li>
+<li><p><strong>Fix deprecation warnings</strong>: Address all warnings before upgrading</p></li>
+<li><p><strong>Test thoroughly</strong>: Run your test suite</p></li>
+<li><p><strong>Upgrade</strong>: Install the new major version</p></li>
+</ol>
+</section>
+<section id="for-contributors">
+<h3>For Contributors<a class="headerlink" href="#for-contributors" title="Link to this heading">#</a></h3>
+<p>When proposing a breaking change:</p>
+<ol class="arabic simple">
+<li><p><strong>Justify the change</strong>: Why is it necessary?</p></li>
+<li><p><strong>Propose alternatives</strong>: Can it be done without breaking compatibility?</p></li>
+<li><p><strong>Provide migration path</strong>: How will users migrate?</p></li>
+<li><p><strong>Update documentation</strong>: Migration guide, CHANGELOG, etc.</p></li>
+<li><p><strong>Deprecate first</strong>: Add deprecation warnings in current version</p></li>
+</ol>
+</section>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<section id="example-1-adding-optional-parameters-ok">
+<h3>Example 1: Adding Optional Parameters (OK)<a class="headerlink" href="#example-1-adding-optional-parameters-ok" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Version 1.0.0</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Filter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Version 1.1.0 - Backward compatible</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Filter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Old code still works</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">Filter</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>  <span class="c1"># ✅ Works in both versions</span>
+</pre></div>
+</div>
+</section>
+<section id="example-2-renaming-parameters-breaking">
+<h3>Example 2: Renaming Parameters (Breaking)<a class="headerlink" href="#example-2-renaming-parameters-breaking" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Version 1.0.0</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Filter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Version 2.0.0 - Breaking change (requires major bump)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Filter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Migration path with deprecation in 1.x</span>
+<span class="c1"># Version 1.1.0 - Add deprecation warning</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Filter</span><span class="p">:</span>
+    <span class="nd">@deprecated_parameter</span><span class="p">(</span><span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.1.0&quot;</span><span class="p">,</span> <span class="n">alternative</span><span class="o">=</span><span class="s2">&quot;cutoff&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">freq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cutoff</span> <span class="o">=</span> <span class="n">freq</span>  <span class="c1"># Support old parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
+</pre></div>
+</div>
+</section>
+<section id="example-3-adding-required-parameters-breaking">
+<h3>Example 3: Adding Required Parameters (Breaking)<a class="headerlink" href="#example-3-adding-required-parameters-breaking" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Version 1.0.0</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Filter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Version 2.0.0 - Breaking change</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Filter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>  <span class="c1"># fs now required</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Migration: Make it optional with deprecation in 1.x</span>
+<span class="c1"># Version 1.1.0</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Filter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;fs will be required in 2.0.0&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+            <span class="n">fs</span> <span class="o">=</span> <span class="mi">44100</span>  <span class="c1"># Temporary default</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="contact">
+<h2>Contact<a class="headerlink" href="#contact" title="Link to this heading">#</a></h2>
+<p>Questions about API stability?</p>
+<ul class="simple">
+<li><p>Open a <a class="reference external" href="https://github.com/matteospanio/torchfx/issues">GitHub Issue</a> with label <code class="docutils literal notranslate"><span class="pre">api-stability</span></code></p></li>
+<li><p>Start a <a class="reference external" href="https://github.com/matteospanio/torchfx/discussions">GitHub Discussion</a></p></li>
+<li><p>Check <a class="reference external" href="https://github.com/matteospanio/torchfx/CHANGELOG">CHANGELOG.md</a> for latest changes</p></li>
+</ul>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="advanced/performance.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Performance Optimization and Benchmarking</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="migration_guide.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Migration Guide</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#versioning-policy">Versioning Policy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stability-guarantees">Stability Guarantees</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-we-guarantee">What We Guarantee</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#no-breaking-changes-in-minor-versions">1. No Breaking Changes in Minor Versions</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#deprecation-period">2. Deprecation Period</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#clear-communication">3. Clear Communication</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#migration-support">4. Migration Support</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-we-dont-guarantee">What We Don’t Guarantee</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#public-api-surface">Public API Surface</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stable-apis-v0-3-0">Stable APIs (v0.3.0+)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#core-classes">Core Classes</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#filters-torchfx-filter">Filters (torchfx.filter)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#effects-torchfx-effect">Effects (torchfx.effect)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-stability">Parameter Stability</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#stable-parameters">Stable Parameters</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type-signature-stability">Type Signature Stability</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-check-api-stability">How to Check API Stability</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#check-documentation">1. Check Documentation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#check-for-deprecation-warnings">2. Check for Deprecation Warnings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#review-changelog">3. Review CHANGELOG</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#follow-migration-guide">4. Follow Migration Guide</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#handling-breaking-changes">Handling Breaking Changes</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#for-users">For Users</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#for-contributors">For Contributors</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-1-adding-optional-parameters-ok">Example 1: Adding Optional Parameters (OK)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-2-renaming-parameters-breaking">Example 2: Renaming Parameters (Breaking)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-3-adding-required-parameters-breaking">Example 3: Adding Required Parameters (Breaking)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contact">Contact</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/api_stability.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/guides/api_stability.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,2207 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Documentation &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/documentation';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Style Guide" href="style_guide.html" />
+    <link rel="prev" title="Benchmarking" href="benchmarking.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Developer Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Documentation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="documentation">
+<h1>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h1>
+<p>Comprehensive guide to building, contributing to, and maintaining the TorchFX documentation system.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>The TorchFX documentation is built using <strong>Sphinx</strong> with <strong>MyST markdown</strong> support, deployed automatically to GitHub Pages. The documentation system extracts API documentation from Python docstrings, supports Mermaid diagrams, and includes bibliography management via sphinxcontrib.bibtex.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="project-structure.html"><span class="doc">Project Structure</span></a> - Project structure
+<a class="reference internal" href="testing.html"><span class="doc">Testing</span></a> - Testing infrastructure</p>
+</div>
+</section>
+<section id="documentation-system-architecture">
+<h2>Documentation System Architecture<a class="headerlink" href="#documentation-system-architecture" title="Link to this heading">#</a></h2>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;Source Files&quot;
+        MD[&quot;docs/source/**/*.md&lt;br/&gt;MyST markdown files&quot;]
+        RST[&quot;docs/source/**/*.rst&lt;br/&gt;reStructuredText files&quot;]
+        Python[&quot;src/torchfx/*.py&lt;br/&gt;Python docstrings&quot;]
+        Conf[&quot;docs/source/conf.py&lt;br/&gt;Sphinx configuration&quot;]
+        Bib[&quot;docs/source/references.bib&lt;br/&gt;Bibliography database&quot;]
+    end
+
+    subgraph &quot;Build Process&quot;
+        Sphinx[&quot;Sphinx build process&lt;br/&gt;sphinx-build&quot;]
+        Autodoc[&quot;autodoc extension&lt;br/&gt;Extracts docstrings&quot;]
+        MyST[&quot;myst-parser&lt;br/&gt;Markdown support&quot;]
+        Mermaid[&quot;sphinxcontrib-mermaid&lt;br/&gt;Diagram rendering&quot;]
+        BibTeX[&quot;sphinxcontrib-bibtex&lt;br/&gt;Bibliography processing&quot;]
+        Make[&quot;docs/Makefile&lt;br/&gt;make html command&quot;]
+    end
+
+    subgraph &quot;GitHub Actions Workflow&quot;
+        Trigger[&quot;Push to master branch&lt;br/&gt;or workflow_dispatch&quot;]
+        Checkout[&quot;actions/checkout&#64;v4&lt;br/&gt;Clone repository&quot;]
+        UV[&quot;Install uv and sync deps&lt;br/&gt;uv sync --all-groups&quot;]
+        Build[&quot;Build HTML&lt;br/&gt;cd docs &amp;&amp; uv run make html&quot;]
+        NoJekyll[&quot;Create .nojekyll file&lt;br/&gt;Disable Jekyll processing&quot;]
+        Deploy[&quot;peaceiris/actions-gh-pages&#64;v4&lt;br/&gt;Deploy to gh-pages branch&quot;]
+    end
+
+    subgraph &quot;Output&quot;
+        HTML[&quot;docs/build/html/*&lt;br/&gt;Generated HTML files&quot;]
+        GHPages[&quot;gh-pages branch&lt;br/&gt;Deployed documentation&quot;]
+        Site[&quot;GitHub Pages site&lt;br/&gt;https://matteospanio.github.io/torchfx/&quot;]
+    end
+
+    MD --&gt; MyST
+    RST --&gt; Sphinx
+    Python --&gt; Autodoc
+    Conf --&gt; Sphinx
+    Bib --&gt; BibTeX
+    MyST --&gt; Sphinx
+    Autodoc --&gt; Sphinx
+    Mermaid --&gt; Sphinx
+    BibTeX --&gt; Sphinx
+    Make --&gt; Sphinx
+    Sphinx --&gt; HTML
+
+    Trigger --&gt; Checkout
+    Checkout --&gt; UV
+    UV --&gt; Build
+    Build --&gt; Sphinx
+    Sphinx --&gt; NoJekyll
+    NoJekyll --&gt; Deploy
+    Deploy --&gt; GHPages
+    GHPages --&gt; Site
+    </pre></section>
+<section id="documentation-structure">
+<h2>Documentation Structure<a class="headerlink" href="#documentation-structure" title="Link to this heading">#</a></h2>
+<section id="directory-layout">
+<h3>Directory Layout<a class="headerlink" href="#directory-layout" title="Link to this heading">#</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>docs/
+├── source/
+│   ├── conf.py                    # Sphinx configuration
+│   ├── index.md                   # Homepage
+│   ├── api.rst                    # API reference
+│   ├── references.bib             # Bibliography database
+│   ├── guides/
+│   │   ├── index.md
+│   │   ├── getting-started/       # Getting started guides
+│   │   ├── core-concepts/         # Core concepts
+│   │   ├── tutorials/             # Step-by-step tutorials
+│   │   ├── advanced/              # Advanced topics
+│   │   └── developer/             # Developer documentation
+│   ├── blog/                      # Blog posts
+│   └── _static/                   # Static assets
+├── build/                         # Generated HTML (git-ignored)
+├── Makefile                       # Build automation (Unix)
+└── make.bat                       # Build automation (Windows)
+</pre></div>
+</div>
+</section>
+<section id="documentation-types">
+<h3>Documentation Types<a class="headerlink" href="#documentation-types" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Type</p></th>
+<th class="head"><p>Location</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Format</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>API Reference</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">api.rst</span></code></p></td>
+<td><p>Auto-generated from docstrings</p></td>
+<td><p>reStructuredText</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Getting Started</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">guides/getting-started/</span></code></p></td>
+<td><p>Installation and quickstart</p></td>
+<td><p>MyST markdown</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Core Concepts</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">guides/core-concepts/</span></code></p></td>
+<td><p>Fundamental concepts</p></td>
+<td><p>MyST markdown</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Tutorials</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">guides/tutorials/</span></code></p></td>
+<td><p>Step-by-step guides</p></td>
+<td><p>MyST markdown</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Advanced Topics</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">guides/advanced/</span></code></p></td>
+<td><p>In-depth technical guides</p></td>
+<td><p>MyST markdown</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Developer Docs</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">guides/developer/</span></code></p></td>
+<td><p>Contributor documentation</p></td>
+<td><p>MyST markdown</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Blog</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">blog/</span></code></p></td>
+<td><p>Release notes and articles</p></td>
+<td><p>MyST markdown</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="building-documentation-locally">
+<h2>Building Documentation Locally<a class="headerlink" href="#building-documentation-locally" title="Link to this heading">#</a></h2>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
+<p>Install all dependencies including documentation tools:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sync all dependency groups (includes docs dependencies)</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--all-groups
+</pre></div>
+</div>
+</section>
+<section id="build-commands">
+<h3>Build Commands<a class="headerlink" href="#build-commands" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Navigate to docs directory</span>
+<span class="nb">cd</span><span class="w"> </span>docs
+
+<span class="c1"># Build HTML documentation</span>
+uv<span class="w"> </span>run<span class="w"> </span>make<span class="w"> </span>html
+
+<span class="c1"># Clean build artifacts</span>
+uv<span class="w"> </span>run<span class="w"> </span>make<span class="w"> </span>clean
+
+<span class="c1"># Rebuild from scratch</span>
+uv<span class="w"> </span>run<span class="w"> </span>make<span class="w"> </span>clean<span class="w"> </span>html
+</pre></div>
+</div>
+</section>
+<section id="view-generated-documentation">
+<h3>View Generated Documentation<a class="headerlink" href="#view-generated-documentation" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># On Linux/macOS</span>
+open<span class="w"> </span>build/html/index.html
+
+<span class="c1"># On Windows</span>
+start<span class="w"> </span>build/html/index.html
+
+<span class="c1"># Or use Python&#39;s HTTP server</span>
+<span class="nb">cd</span><span class="w"> </span>build/html
+python<span class="w"> </span>-m<span class="w"> </span>http.server<span class="w"> </span><span class="m">8000</span>
+<span class="c1"># Visit http://localhost:8000</span>
+</pre></div>
+</div>
+</section>
+<section id="available-make-targets">
+<h3>Available Make Targets<a class="headerlink" href="#available-make-targets" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Target</p></th>
+<th class="head"><p>Command</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">html</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code></p></td>
+<td><p>Build HTML documentation</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">clean</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span></code></p></td>
+<td><p>Remove build artifacts</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">linkcheck</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">linkcheck</span></code></p></td>
+<td><p>Check for broken links</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">help</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">help</span></code></p></td>
+<td><p>Show available targets</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="docstring-style-guide">
+<h2>Docstring Style Guide<a class="headerlink" href="#docstring-style-guide" title="Link to this heading">#</a></h2>
+<p>TorchFX uses <strong>NumPy-style docstrings</strong> for consistency and compatibility with Sphinx’s Napoleon extension.</p>
+<section id="class-docstrings">
+<h3>Class Docstrings<a class="headerlink" href="#class-docstrings" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Brief one-line description.</span>
+
+<span class="sd">    Longer description providing more context about the effect,</span>
+<span class="sd">    its purpose, and typical use cases.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    param1 : float</span>
+<span class="sd">        Description of param1, including units and valid range.</span>
+<span class="sd">    param2 : int, optional</span>
+<span class="sd">        Description of param2. Default is 10.</span>
+<span class="sd">    strategy : MyStrategy, optional</span>
+<span class="sd">        Strategy for processing. If None, uses default strategy.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    computed_value : torch.Tensor</span>
+<span class="sd">        Description of computed attribute.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Basic usage:</span>
+
+<span class="sd">    &gt;&gt;&gt; effect = MyEffect(param1=1.5, param2=20)</span>
+<span class="sd">    &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; processed = wave | effect</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    RelatedEffect : Related effect class</span>
+<span class="sd">    OtherEffect : Another related effect</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Additional implementation details, mathematical formulas,</span>
+<span class="sd">    or important considerations.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [1] Author, &quot;Title&quot;, Journal, Year.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="method-docstrings">
+<h3>Method Docstrings<a class="headerlink" href="#method-docstrings" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply effect to input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : torch.Tensor</span>
+<span class="sd">        Input audio tensor with shape (channels, samples) or</span>
+<span class="sd">        (batch, channels, samples).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    torch.Tensor</span>
+<span class="sd">        Processed audio tensor with same shape as input.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If input tensor has invalid shape or dtype.</span>
+<span class="sd">    AssertionError</span>
+<span class="sd">        If required parameters are not configured.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; effect = MyEffect(param=1.5)</span>
+<span class="sd">    &gt;&gt;&gt; x = torch.randn(2, 44100)</span>
+<span class="sd">    &gt;&gt;&gt; y = effect(x)</span>
+<span class="sd">    &gt;&gt;&gt; y.shape</span>
+<span class="sd">    torch.Size([2, 44100])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="property-docstrings">
+<h3>Property Docstrings<a class="headerlink" href="#property-docstrings" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">delay_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of delay samples.</span>
+
+<span class="sd">    Computed from BPM, delay_time, and sample rate.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    int</span>
+<span class="sd">        Delay length in samples.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    AssertionError</span>
+<span class="sd">        If sample rate (fs) is not configured.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="docstring-sections">
+<h3>Docstring Sections<a class="headerlink" href="#docstring-sections" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Section</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Brief description</strong></p></td>
+<td><p>One-line summary</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Extended description</strong></p></td>
+<td><p>Detailed explanation</p></td>
+<td><p>Recommended</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Parameters</strong></p></td>
+<td><p>Function/method arguments</p></td>
+<td><p>For functions/methods</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Returns</strong></p></td>
+<td><p>Return value description</p></td>
+<td><p>For functions/methods</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Yields</strong></p></td>
+<td><p>For generators</p></td>
+<td><p>For generators only</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Raises</strong></p></td>
+<td><p>Exceptions that may be raised</p></td>
+<td><p>If applicable</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Attributes</strong></p></td>
+<td><p>Class attributes</p></td>
+<td><p>For classes</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Examples</strong></p></td>
+<td><p>Usage examples</p></td>
+<td><p>Highly recommended</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>See Also</strong></p></td>
+<td><p>Related functions/classes</p></td>
+<td><p>Recommended</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Notes</strong></p></td>
+<td><p>Implementation details</p></td>
+<td><p>If applicable</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>References</strong></p></td>
+<td><p>Academic citations</p></td>
+<td><p>If applicable</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="writing-myst-markdown">
+<h2>Writing MyST Markdown<a class="headerlink" href="#writing-myst-markdown" title="Link to this heading">#</a></h2>
+<section id="basic-syntax">
+<h3>Basic Syntax<a class="headerlink" href="#basic-syntax" title="Link to this heading">#</a></h3>
+<p>TorchFX documentation uses MyST (Markedly Structured Text) markdown, which extends standard markdown with Sphinx capabilities.</p>
+<section id="headers">
+<h4>Headers<a class="headerlink" href="#headers" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># Page Title</span>
+
+Brief introduction to the page.
+
+<span class="gu">## Section Header</span>
+
+Content for this section.
+
+<span class="gu">### Subsection Header</span>
+
+More specific content.
+</pre></div>
+</div>
+</section>
+<section id="code-blocks">
+<h4>Code Blocks<a class="headerlink" href="#code-blocks" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>Standard Python code block:
+
+\`\`\`python
+import torchfx as fx
+
+wave = fx.Wave.from_file(&quot;audio.wav&quot;)
+processed = wave | fx.effect.Gain(gain=2.0)
+\`\`\`
+
+With syntax highlighting and line numbers:
+
+\`\`\`{code-block} python
+:linenos:
+:emphasize-lines: 3
+
+import torchfx as fx
+
+wave = fx.Wave.from_file(&quot;audio.wav&quot;)  # Highlighted line
+processed = wave | fx.effect.Gain(gain=2.0)
+\`\`\`
+</pre></div>
+</div>
+</section>
+<section id="lists">
+<h4>Lists<a class="headerlink" href="#lists" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>Unordered list:
+<span class="k">-</span><span class="w"> </span>Item 1
+<span class="k">-</span><span class="w"> </span>Item 2
+<span class="w">  </span><span class="k">-</span><span class="w"> </span>Nested item
+<span class="w">  </span><span class="k">-</span><span class="w"> </span>Another nested item
+<span class="k">-</span><span class="w"> </span>Item 3
+
+Ordered list:
+<span class="k">1.</span> First step
+<span class="k">2.</span> Second step
+<span class="k">3.</span> Third step
+
+Definition list:
+<span class="gs">**Term 1**</span>
+: Definition of term 1
+
+<span class="gs">**Term 2**</span>
+: Definition of term 2
+</pre></div>
+</div>
+</section>
+<section id="tables">
+<h4>Tables<a class="headerlink" href="#tables" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Row 1    | Data     | More data|
+| Row 2    | Data     | More data|
+
+Or with alignment:
+
+| Left | Center | Right |
+|:-----|:------:|------:|
+| A    | B      | C     |
+| D    | E      | F     |
+</pre></div>
+</div>
+</section>
+</section>
+<section id="cross-references">
+<h3>Cross-References<a class="headerlink" href="#cross-references" title="Link to this heading">#</a></h3>
+<section id="referencing-documentation-pages">
+<h4>Referencing Documentation Pages<a class="headerlink" href="#referencing-documentation-pages" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>See {doc}`/guides/core-concepts/wave` for Wave documentation.
+
+Link to tutorial: {doc}`/guides/tutorials/custom-effects`
+
+Relative reference: {doc}`../tutorials/bpm-delay`
+</pre></div>
+</div>
+</section>
+<section id="referencing-classes-and-functions">
+<h4>Referencing Classes and Functions<a class="headerlink" href="#referencing-classes-and-functions" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>The {class}`~torchfx.Wave` class is the main container.
+
+Use {func}`~torchfx.Wave.from_file` to load audio.
+
+Reference with custom text: {class}`Wave class &lt;torchfx.Wave&gt;`
+
+Module reference: {mod}`torchfx.effect`
+
+Method reference: {meth}`torchfx.Wave.to`
+</pre></div>
+</div>
+<p><strong>Tilde prefix</strong> (<code class="docutils literal notranslate"><span class="pre">~</span></code>): Shows only the last component (e.g., <code class="docutils literal notranslate"><span class="pre">Wave</span></code> instead of <code class="docutils literal notranslate"><span class="pre">torchfx.Wave</span></code>)</p>
+</section>
+<section id="referencing-parameters-and-attributes">
+<h4>Referencing Parameters and Attributes<a class="headerlink" href="#referencing-parameters-and-attributes" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>The {attr}`~torchfx.Wave.fs` attribute stores sample rate.
+
+Parameter {paramref}`gain` controls amplification.
+</pre></div>
+</div>
+</section>
+</section>
+<section id="admonitions">
+<h3>Admonitions<a class="headerlink" href="#admonitions" title="Link to this heading">#</a></h3>
+<p>Use admonitions to highlight important information:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>\`\`\`{note}
+This is a note with general information.
+\`\`\`
+
+\`\`\`{warning}
+⚠️ This is a warning about potential issues.
+\`\`\`
+
+\`\`\`{danger}
+🛑 This is a danger notice for critical issues.
+\`\`\`
+
+\`\`\`{tip}
+💡 This is a helpful tip.
+\`\`\`
+
+\`\`\`{seealso}
+{doc}`/guides/tutorials/custom-effects` - Creating custom effects
+{doc}`/guides/advanced/performance` - Performance optimization
+\`\`\`
+
+\`\`\`{versionadded} 0.2.0
+This feature was added in version 0.2.0.
+\`\`\`
+
+\`\`\`{versionchanged} 0.3.0
+Behavior changed in version 0.3.0.
+\`\`\`
+
+\`\`\`{deprecated} 0.4.0
+This feature is deprecated and will be removed in version 0.5.0.
+Use {class}`~torchfx.NewClass` instead.
+\`\`\`
+</pre></div>
+</div>
+</section>
+<section id="mathematical-formulas">
+<h3>Mathematical Formulas<a class="headerlink" href="#mathematical-formulas" title="Link to this heading">#</a></h3>
+<p>Use LaTeX syntax for mathematical formulas:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>Inline math: $f(x) = x^2 + 2x + 1$
+
+Display math:
+
+$$
+\text{samples} = \frac{n}{d} \times m \times \frac{60}{BPM} \times f_s
+$$
+
+Multi-line equations:
+
+$$
+\begin{aligned}
+y[n] &amp;= x[n] + \alpha \cdot x[n-1] \\
+\alpha &amp;= e^{-1/(f_s \tau)}
+\end{aligned}
+$$
+</pre></div>
+</div>
+</section>
+<section id="mermaid-diagrams">
+<h3>Mermaid Diagrams<a class="headerlink" href="#mermaid-diagrams" title="Link to this heading">#</a></h3>
+<p>TorchFX uses sphinxcontrib-mermaid for diagrams:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>\`\`\`{mermaid}
+graph LR
+    Input[Audio Input] --&gt; Effect[Apply Effect]
+    Effect --&gt; Output[Audio Output]
+
+    style Input fill:#e1f5ff
+    style Output fill:#e1f5ff
+    style Effect fill:#e8f5e1
+\`\`\`
+
+\`\`\`{mermaid}
+sequenceDiagram
+    participant User
+    participant Wave
+    participant Effect
+
+    User-&gt;&gt;Wave: Load audio
+    User-&gt;&gt;Effect: Create effect
+    Wave-&gt;&gt;Effect: Apply using |
+    Effect-&gt;&gt;User: Return processed audio
+\`\`\`
+</pre></div>
+</div>
+<p><strong>Common diagram types</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">graph</span> <span class="pre">TB</span></code>: Top-to-bottom flowchart</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">graph</span> <span class="pre">LR</span></code>: Left-to-right flowchart</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sequenceDiagram</span></code>: Sequence diagram</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">classDiagram</span></code>: Class diagram</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">stateDiagram</span></code>: State diagram</p></li>
+</ul>
+</section>
+<section id="bibliography-and-citations">
+<h3>Bibliography and Citations<a class="headerlink" href="#bibliography-and-citations" title="Link to this heading">#</a></h3>
+<section id="adding-bibliography-entries">
+<h4>Adding Bibliography Entries<a class="headerlink" href="#adding-bibliography-entries" title="Link to this heading">#</a></h4>
+<p>Edit <code class="docutils literal notranslate"><span class="pre">docs/source/references.bib</span></code>:</p>
+<div class="highlight-bibtex notranslate"><div class="highlight"><pre><span></span><span class="nc">@article</span><span class="p">{</span><span class="nl">smith2020audio</span><span class="p">,</span>
+<span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{Audio Processing with Neural Networks}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Smith, John and Doe, Jane}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">journal</span><span class="p">=</span><span class="s">{Journal of Audio Engineering}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">volume</span><span class="p">=</span><span class="s">{68}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">number</span><span class="p">=</span><span class="s">{4}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">pages</span><span class="p">=</span><span class="s">{123--145}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2020}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">publisher</span><span class="p">=</span><span class="s">{Audio Society}</span>
+<span class="p">}</span>
+
+<span class="nc">@book</span><span class="p">{</span><span class="nl">oppenheim1999discrete</span><span class="p">,</span>
+<span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{Discrete-Time Signal Processing}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Oppenheim, Alan V and Schafer, Ronald W}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{1999}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">publisher</span><span class="p">=</span><span class="s">{Prentice Hall}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">edition</span><span class="p">=</span><span class="s">{2nd}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="citing-references">
+<h4>Citing References<a class="headerlink" href="#citing-references" title="Link to this heading">#</a></h4>
+<p>In markdown files:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>According to the literature {cite}`smith2020audio`, neural networks
+can be effective for audio processing.
+
+Multiple citations: {cite}`smith2020audio,oppenheim1999discrete`
+
+Narrative citation: {cite:t}`smith2020audio` demonstrated that...
+</pre></div>
+</div>
+</section>
+<section id="bibliography-section">
+<h4>Bibliography Section<a class="headerlink" href="#bibliography-section" title="Link to this heading">#</a></h4>
+<p>At the end of your document:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gu">## References</span>
+
+\`\`\`{bibliography}
+:filter: docname in docnames
+:style: alpha
+\`\`\`
+</pre></div>
+</div>
+<p><strong>Bibliography styles</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code>: Author-year style (e.g., [Smi20])</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plain</span></code>: Numbered style (e.g., [1])</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">unsrt</span></code>: Unsorted numbered style</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="adding-mermaid-diagrams">
+<h2>Adding Mermaid Diagrams<a class="headerlink" href="#adding-mermaid-diagrams" title="Link to this heading">#</a></h2>
+<section id="diagram-best-practices">
+<h3>Diagram Best Practices<a class="headerlink" href="#diagram-best-practices" title="Link to this heading">#</a></h3>
+<section id="flowcharts">
+<h4>Flowcharts<a class="headerlink" href="#flowcharts" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>\`\`\`{mermaid}
+graph TB
+    Start[Start] --&gt; Process1[Process Step]
+    Process1 --&gt; Decision{Decision?}
+    Decision --&gt;|Yes| Process2[Action A]
+    Decision --&gt;|No| Process3[Action B]
+    Process2 --&gt; End[End]
+    Process3 --&gt; End
+
+    style Start fill:#e1f5ff
+    style End fill:#e1f5ff
+    style Decision fill:#fff5e1
+\`\`\`
+</pre></div>
+</div>
+</section>
+<section id="sequence-diagrams">
+<h4>Sequence Diagrams<a class="headerlink" href="#sequence-diagrams" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>\`\`\`{mermaid}
+sequenceDiagram
+    participant User
+    participant Wave
+    participant Filter
+    participant GPU
+
+    User-&gt;&gt;Wave: Load audio
+    User-&gt;&gt;Filter: Create filter
+    User-&gt;&gt;Wave: wave | filter
+
+    Wave-&gt;&gt;Filter: Apply filter
+    Filter-&gt;&gt;GPU: Transfer to GPU
+    GPU-&gt;&gt;Filter: Process on GPU
+    Filter-&gt;&gt;GPU: Transfer back
+    Filter-&gt;&gt;Wave: Return result
+    Wave-&gt;&gt;User: Processed audio
+\`\`\`
+</pre></div>
+</div>
+</section>
+<section id="component-diagrams">
+<h4>Component Diagrams<a class="headerlink" href="#component-diagrams" title="Link to this heading">#</a></h4>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>\`\`\`{mermaid}
+graph TB
+    subgraph &quot;TorchFX Core&quot;
+        Wave[Wave Class]
+        FX[FX Base Class]
+    end
+
+    subgraph &quot;Effects&quot;
+        Gain[Gain]
+        Normalize[Normalize]
+        Reverb[Reverb]
+        Delay[Delay]
+    end
+
+    subgraph &quot;Filters&quot;
+        IIR[IIR Filters]
+        FIR[FIR Filters]
+    end
+
+    FX --&gt; Gain
+    FX --&gt; Normalize
+    FX --&gt; Reverb
+    FX --&gt; Delay
+    FX --&gt; IIR
+    FX --&gt; FIR
+
+    Wave -.-&gt;|uses| FX
+\`\`\`
+</pre></div>
+</div>
+</section>
+</section>
+<section id="diagram-styling">
+<h3>Diagram Styling<a class="headerlink" href="#diagram-styling" title="Link to this heading">#</a></h3>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>\`\`\`{mermaid}
+graph LR
+    A[Node A] --&gt; B[Node B]
+    B --&gt; C[Node C]
+
+    style A fill:#e1f5ff,stroke:#0066cc,stroke-width:2px
+    style B fill:#e8f5e1,stroke:#00aa00,stroke-width:2px
+    style C fill:#ffe1e1,stroke:#cc0000,stroke-width:2px
+\`\`\`
+</pre></div>
+</div>
+<p><strong>Color scheme</strong>:</p>
+<ul class="simple">
+<li><p>Blue (<code class="docutils literal notranslate"><span class="pre">#e1f5ff</span></code>): Input/Output</p></li>
+<li><p>Green (<code class="docutils literal notranslate"><span class="pre">#e8f5e1</span></code>): Processing steps</p></li>
+<li><p>Yellow (<code class="docutils literal notranslate"><span class="pre">#fff5e1</span></code>): Decisions</p></li>
+<li><p>Red (<code class="docutils literal notranslate"><span class="pre">#ffe1e1</span></code>): Errors/Warnings</p></li>
+</ul>
+</section>
+</section>
+<section id="api-documentation">
+<h2>API Documentation<a class="headerlink" href="#api-documentation" title="Link to this heading">#</a></h2>
+<section id="api-reference-structure">
+<h3>API Reference Structure<a class="headerlink" href="#api-reference-structure" title="Link to this heading">#</a></h3>
+<p>The API reference is defined in <code class="docutils literal notranslate"><span class="pre">docs/source/api.rst</span></code>:</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="gh">API Reference</span>
+<span class="gh">=============</span>
+
+<span class="gh">Wave Class</span>
+<span class="gh">----------</span>
+
+<span class="p">..</span> <span class="ow">autoclass</span><span class="p">::</span> torchfx.Wave
+   <span class="nc">:members:</span>
+   <span class="nc">:show-inheritance:</span>
+   <span class="nc">:exclude-members:</span> __init__, __str__, __repr__, __call__
+
+<span class="gh">FX Base Class</span>
+<span class="gh">-------------</span>
+
+<span class="p">..</span> <span class="ow">autoclass</span><span class="p">::</span> torchfx.FX
+   <span class="nc">:members:</span>
+   <span class="nc">:show-inheritance:</span>
+   <span class="nc">:exclude-members:</span> __init__, __str__, __repr__, __call__
+
+<span class="gh">Filter Module</span>
+<span class="gh">-------------</span>
+
+<span class="p">..</span> <span class="ow">automodule</span><span class="p">::</span> torchfx.filter
+   <span class="nc">:members:</span>
+   <span class="nc">:show-inheritance:</span>
+   <span class="nc">:exclude-members:</span> __init__, __str__, __repr__, __call__
+
+<span class="gh">Effect Module</span>
+<span class="gh">-------------</span>
+
+<span class="p">..</span> <span class="ow">automodule</span><span class="p">::</span> torchfx.effect
+   <span class="nc">:members:</span>
+   <span class="nc">:show-inheritance:</span>
+   <span class="nc">:exclude-members:</span> __init__, __str__, __repr__, __call__
+</pre></div>
+</div>
+</section>
+<section id="autodoc-directives">
+<h3>Autodoc Directives<a class="headerlink" href="#autodoc-directives" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Directive</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">autoclass</span></code></p></td>
+<td><p>Document a class</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">autoclass::</span> <span class="pre">torchfx.Wave</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">autofunction</span></code></p></td>
+<td><p>Document a function</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">autofunction::</span> <span class="pre">torchfx.process_audio</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">automodule</span></code></p></td>
+<td><p>Document entire module</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">automodule::</span> <span class="pre">torchfx.effect</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">automethod</span></code></p></td>
+<td><p>Document a method</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">automethod::</span> <span class="pre">Wave.from_file</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">autoattribute</span></code></p></td>
+<td><p>Document an attribute</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">autoattribute::</span> <span class="pre">Wave.fs</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="autodoc-options">
+<h3>Autodoc Options<a class="headerlink" href="#autodoc-options" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">:members:</span></code></p></td>
+<td><p>Include all members</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">:members:</span> <span class="pre">method1,</span> <span class="pre">method2</span></code></p></td>
+<td><p>Include specific members</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">:exclude-members:</span> <span class="pre">__init__</span></code></p></td>
+<td><p>Exclude specific members</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">:show-inheritance:</span></code></p></td>
+<td><p>Show base classes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">:inherited-members:</span></code></p></td>
+<td><p>Include inherited members</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">:undoc-members:</span></code></p></td>
+<td><p>Include undocumented members</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">:private-members:</span></code></p></td>
+<td><p>Include private members (_method)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">:special-members:</span></code></p></td>
+<td><p>Include special members (<strong>method</strong>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="documentation-testing">
+<h2>Documentation Testing<a class="headerlink" href="#documentation-testing" title="Link to this heading">#</a></h2>
+<section id="doctest">
+<h3>Doctest<a class="headerlink" href="#doctest" title="Link to this heading">#</a></h3>
+<p>Test code examples in docstrings:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add one to input.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; my_function(5)</span>
+<span class="sd">    6</span>
+<span class="sd">    &gt;&gt;&gt; my_function(10)</span>
+<span class="sd">    11</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>Run doctests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Test specific module</span>
+python<span class="w"> </span>-m<span class="w"> </span>doctest<span class="w"> </span>src/torchfx/effect.py<span class="w"> </span>-v
+
+<span class="c1"># Test all modules</span>
+pytest<span class="w"> </span>--doctest-modules<span class="w"> </span>src/
+</pre></div>
+</div>
+</section>
+<section id="link-checking">
+<h3>Link Checking<a class="headerlink" href="#link-checking" title="Link to this heading">#</a></h3>
+<p>Check for broken links:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+uv<span class="w"> </span>run<span class="w"> </span>make<span class="w"> </span>linkcheck
+</pre></div>
+</div>
+<p><strong>Output</strong>: <code class="docutils literal notranslate"><span class="pre">build/linkcheck/output.txt</span></code> contains broken links and their status.</p>
+</section>
+</section>
+<section id="github-actions-deployment">
+<h2>GitHub Actions Deployment<a class="headerlink" href="#github-actions-deployment" title="Link to this heading">#</a></h2>
+<section id="workflow-configuration">
+<h3>Workflow Configuration<a class="headerlink" href="#workflow-configuration" title="Link to this heading">#</a></h3>
+<p>The documentation is automatically deployed via <code class="docutils literal notranslate"><span class="pre">.github/workflows/docs.yml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deploy Sphinx documentation to GitHub Pages</span>
+
+<span class="nt">on</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">push</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">branches</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">master</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">workflow_dispatch</span><span class="p">:</span>
+
+<span class="nt">permissions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">contents</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
+
+<span class="nt">jobs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">build-and-deploy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Checkout repository</span>
+<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install uv</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">curl -Ls https://astral.sh/uv/install.sh | sh</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Sync dependencies</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uv sync --all-groups</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Build documentation</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd docs &amp;&amp; uv run make html</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Create .nojekyll file</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">touch docs/build/html/.nojekyll</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deploy to GitHub Pages</span>
+<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">peaceiris/actions-gh-pages@v4</span>
+<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">github_token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.GITHUB_TOKEN }}</span>
+<span class="w">          </span><span class="nt">publish_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs/build/html</span>
+</pre></div>
+</div>
+</section>
+<section id="workflow-execution">
+<h3>Workflow Execution<a class="headerlink" href="#workflow-execution" title="Link to this heading">#</a></h3>
+<pre  class="mermaid">
+        sequenceDiagram
+    participant Trigger as Workflow Trigger
+    participant Runner as GitHub Runner
+    participant UV as UV Package Manager
+    participant Sphinx as Sphinx Build
+    participant Deploy as GH Pages Action
+    participant Pages as GitHub Pages
+
+    Trigger-&gt;&gt;Runner: Push to master
+    Runner-&gt;&gt;Runner: Checkout repository&lt;br/&gt;actions/checkout&#64;v4
+
+    Runner-&gt;&gt;UV: Install uv
+    Note over Runner,UV: curl -Ls https://astral.sh/uv/install.sh | sh
+
+    UV-&gt;&gt;UV: Sync dependencies
+    Note over UV: uv sync --all-groups
+
+    Runner-&gt;&gt;Sphinx: Build documentation
+    Note over Sphinx: cd docs &amp;&amp; uv run make html
+
+    Sphinx-&gt;&gt;Sphinx: Generate HTML
+    Sphinx-&gt;&gt;Runner: Create .nojekyll file
+    Note over Runner: touch docs/build/html/.nojekyll
+
+    Runner-&gt;&gt;Deploy: Trigger deployment
+    Deploy-&gt;&gt;Deploy: Publish directory&lt;br/&gt;docs/build/html
+    Deploy-&gt;&gt;Pages: Push to gh-pages branch
+    Pages-&gt;&gt;Pages: Update live site
+    </pre></section>
+<section id="nojekyll-file">
+<h3>.nojekyll File<a class="headerlink" href="#nojekyll-file" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">.nojekyll</span></code> file is critical—it prevents GitHub Pages from running Jekyll processing:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>touch<span class="w"> </span>docs/build/html/.nojekyll
+</pre></div>
+</div>
+<p><strong>Why?</strong> Jekyll processing can interfere with Sphinx’s generated structure, causing broken links and missing files.</p>
+</section>
+</section>
+<section id="contributing-to-documentation">
+<h2>Contributing to Documentation<a class="headerlink" href="#contributing-to-documentation" title="Link to this heading">#</a></h2>
+<section id="workflow-for-documentation-changes">
+<h3>Workflow for Documentation Changes<a class="headerlink" href="#workflow-for-documentation-changes" title="Link to this heading">#</a></h3>
+<ol class="arabic">
+<li><p><strong>Create/edit documentation files</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Edit existing file</span>
+vim<span class="w"> </span>docs/source/guides/tutorials/my-tutorial.md
+
+<span class="c1"># Or create new file</span>
+touch<span class="w"> </span>docs/source/guides/tutorials/new-tutorial.md
+</pre></div>
+</div>
+</li>
+<li><p><strong>Build locally to verify</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+uv<span class="w"> </span>run<span class="w"> </span>make<span class="w"> </span>clean<span class="w"> </span>html
+</pre></div>
+</div>
+</li>
+<li><p><strong>Check for errors</strong>:</p>
+<ul class="simple">
+<li><p>Fix any warnings from Sphinx</p></li>
+<li><p>Verify cross-references work</p></li>
+<li><p>Check Mermaid diagrams render correctly</p></li>
+</ul>
+</li>
+<li><p><strong>View in browser</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>open<span class="w"> </span>build/html/index.html
+</pre></div>
+</div>
+</li>
+<li><p><strong>Commit and push</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>add<span class="w"> </span>docs/source/guides/tutorials/new-tutorial.md
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;docs: Add new tutorial on XYZ&quot;</span>
+git<span class="w"> </span>push
+</pre></div>
+</div>
+</li>
+<li><p><strong>Automatic deployment</strong>: Documentation automatically builds and deploys to GitHub Pages</p></li>
+</ol>
+</section>
+<section id="adding-a-new-guide">
+<h3>Adding a New Guide<a class="headerlink" href="#adding-a-new-guide" title="Link to this heading">#</a></h3>
+<ol class="arabic">
+<li><p><strong>Create the markdown file</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>touch<span class="w"> </span>docs/source/guides/tutorials/my-guide.md
+</pre></div>
+</div>
+</li>
+<li><p><strong>Add frontmatter and content</strong>:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># My Guide Title</span>
+
+Brief introduction explaining what this guide covers.
+
+<span class="gu">## Overview</span>
+
+...
+</pre></div>
+</div>
+</li>
+<li><p><strong>Add to table of contents</strong>:</p>
+<p>Edit <code class="docutils literal notranslate"><span class="pre">docs/source/guides/tutorials/index.md</span></code>:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>\`\`\`{toctree}
+:maxdepth: 2
+
+existing-guide
+my-guide
+\`\`\`
+</pre></div>
+</div>
+</li>
+<li><p><strong>Build and verify</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>make<span class="w"> </span>html
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="documentation-checklist">
+<h3>Documentation Checklist<a class="headerlink" href="#documentation-checklist" title="Link to this heading">#</a></h3>
+<p>Before submitting documentation:</p>
+<ul class="simple">
+<li><p>✅ All code examples are tested and work</p></li>
+<li><p>✅ Cross-references use correct syntax (<code class="docutils literal notranslate"><span class="pre">:doc:</span></code>, <code class="docutils literal notranslate"><span class="pre">:class:</span></code>, etc.)</p></li>
+<li><p>✅ Mermaid diagrams render correctly</p></li>
+<li><p>✅ No Sphinx warnings or errors</p></li>
+<li><p>✅ Links are not broken (run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">linkcheck</span></code>)</p></li>
+<li><p>✅ Mathematical formulas render correctly</p></li>
+<li><p>✅ Bibliography citations are valid</p></li>
+<li><p>✅ File is added to appropriate <code class="docutils literal notranslate"><span class="pre">toctree</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<section id="writing-style">
+<h3>Writing Style<a class="headerlink" href="#writing-style" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Be concise</strong>: Use clear, direct language</p></li>
+<li><p><strong>Be consistent</strong>: Follow existing style and terminology</p></li>
+<li><p><strong>Be complete</strong>: Cover edge cases and gotchas</p></li>
+<li><p><strong>Be helpful</strong>: Provide examples and use cases</p></li>
+</ul>
+</section>
+<section id="code-examples">
+<h3>Code Examples<a class="headerlink" href="#code-examples" title="Link to this heading">#</a></h3>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>\`\`\`python
+<span class="gh"># ✅ GOOD: Complete, runnable example</span>
+import torchfx as fx
+
+wave = fx.Wave.from_file(&quot;audio.wav&quot;)
+processed = wave | fx.effect.Gain(gain=2.0)
+processed.save(&quot;output.wav&quot;)
+\`\`\`
+
+\`\`\`python
+<span class="gh"># ❌ BAD: Incomplete, can&#39;t run</span>
+wave | Gain(2.0)  # Where does wave come from?
+\`\`\`
+</pre></div>
+</div>
+</section>
+<section id="id1">
+<h3>Cross-References<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># ✅ GOOD: Use semantic references</span>
+The {class}`~torchfx.Wave` class provides audio I/O.
+See {doc}`/guides/tutorials/custom-effects` for details.
+
+<span class="gh"># ❌ BAD: Hard-coded links</span>
+See <span class="sb">`tutorials/custom-effects.md`</span> for details.
+</pre></div>
+</div>
+</section>
+<section id="diagrams">
+<h3>Diagrams<a class="headerlink" href="#diagrams" title="Link to this heading">#</a></h3>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># ✅ GOOD: Clear, focused diagram</span>
+\`\`\`{mermaid}
+graph LR
+    A[Input] --&gt; B[Process]
+    B --&gt; C[Output]
+\`\`\`
+
+<span class="gh"># ❌ BAD: Overly complex diagram</span>
+\`\`\`{mermaid}
+graph TB
+    A[Input] --&gt; B[Step 1]
+    B --&gt; C[Step 2]
+    C --&gt; D[Step 3]
+    D --&gt; E[Step 4]
+    E --&gt; F[Step 5]
+    F --&gt; G[Step 6]
+    G --&gt; H[Step 7]
+    H --&gt; I[Output]
+\`\`\`
+</pre></div>
+</div>
+</section>
+</section>
+<section id="related-resources">
+<h2>Related Resources<a class="headerlink" href="#related-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="project-structure.html"><span class="doc">Project Structure</span></a> - Project organization</p></li>
+<li><p><a class="reference internal" href="style_guide.html"><span class="doc">Style Guide</span></a> - Coding standards</p></li>
+<li><p><a class="reference internal" href="testing.html"><span class="doc">Testing</span></a> - Testing documentation</p></li>
+<li><p><a class="reference external" href="https://www.sphinx-doc.org/">Sphinx Documentation</a> - Official Sphinx docs</p></li>
+<li><p><a class="reference external" href="https://myst-parser.readthedocs.io/">MyST Parser</a> - MyST markdown syntax</p></li>
+<li><p><a class="reference external" href="https://mermaid-js.github.io/">Mermaid Documentation</a> - Mermaid diagram syntax</p></li>
+</ul>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="benchmarking.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Benchmarking</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="style_guide.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Style Guide</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-system-architecture">Documentation System Architecture</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-structure">Documentation Structure</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-layout">Directory Layout</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-types">Documentation Types</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#building-documentation-locally">Building Documentation Locally</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-commands">Build Commands</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#view-generated-documentation">View Generated Documentation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#available-make-targets">Available Make Targets</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#docstring-style-guide">Docstring Style Guide</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#class-docstrings">Class Docstrings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#method-docstrings">Method Docstrings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#property-docstrings">Property Docstrings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#docstring-sections">Docstring Sections</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#writing-myst-markdown">Writing MyST Markdown</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-syntax">Basic Syntax</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#headers">Headers</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#code-blocks">Code Blocks</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lists">Lists</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#tables">Tables</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-references">Cross-References</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#referencing-documentation-pages">Referencing Documentation Pages</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#referencing-classes-and-functions">Referencing Classes and Functions</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#referencing-parameters-and-attributes">Referencing Parameters and Attributes</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#admonitions">Admonitions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-formulas">Mathematical Formulas</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mermaid-diagrams">Mermaid Diagrams</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bibliography-and-citations">Bibliography and Citations</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-bibliography-entries">Adding Bibliography Entries</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#citing-references">Citing References</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bibliography-section">Bibliography Section</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-mermaid-diagrams">Adding Mermaid Diagrams</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#diagram-best-practices">Diagram Best Practices</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#flowcharts">Flowcharts</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#sequence-diagrams">Sequence Diagrams</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#component-diagrams">Component Diagrams</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#diagram-styling">Diagram Styling</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-documentation">API Documentation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api-reference-structure">API Reference Structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#autodoc-directives">Autodoc Directives</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#autodoc-options">Autodoc Options</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-testing">Documentation Testing</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#doctest">Doctest</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#link-checking">Link Checking</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#github-actions-deployment">GitHub Actions Deployment</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-configuration">Workflow Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-execution">Workflow Execution</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nojekyll-file">.nojekyll File</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contributing-to-documentation">Contributing to Documentation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-for-documentation-changes">Workflow for Documentation Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-a-new-guide">Adding a New Guide</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-checklist">Documentation Checklist</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#writing-style">Writing Style</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-examples">Code Examples</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Cross-References</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#diagrams">Diagrams</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-resources">Related Resources</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/developer/documentation.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/developer/documentation.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

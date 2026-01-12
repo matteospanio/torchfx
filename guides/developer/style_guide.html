@@ -1,0 +1,1143 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Style Guide &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/style_guide';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Roadmap to v1.0.0" href="roadmap.html" />
+    <link rel="prev" title="Documentation" href="documentation.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Developer Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Style Guide</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="style-guide">
+<h1>Style Guide<a class="headerlink" href="#style-guide" title="Link to this heading">#</a></h1>
+<p>This document defines the coding standards, naming conventions, and best practices for TorchFX development.</p>
+<section id="naming-conventions">
+<h2>Naming Conventions<a class="headerlink" href="#naming-conventions" title="Link to this heading">#</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h3>
+<section id="filter-classes">
+<h4>Filter Classes<a class="headerlink" href="#filter-classes" title="Link to this heading">#</a></h4>
+<p><strong>Pattern</strong>: <code class="docutils literal notranslate"><span class="pre">&lt;Type&gt;&lt;FilterName&gt;</span></code></p>
+<ul class="simple">
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">Hi</span></code> prefix for high-pass filters: <code class="docutils literal notranslate"><span class="pre">HiButterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">HiElliptic</span></code></p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">Lo</span></code> prefix for low-pass filters: <code class="docutils literal notranslate"><span class="pre">LoButterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">LoElliptic</span></code></p></li>
+<li><p>Base classes have no prefix: <code class="docutils literal notranslate"><span class="pre">Butterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">Elliptic</span></code></p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HiButterworth</span><span class="p">(</span><span class="n">Butterworth</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;High-pass Butterworth filter.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LoButterworth</span><span class="p">(</span><span class="n">Butterworth</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Low-pass Butterworth filter.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Bad</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HighPassButterworth</span><span class="p">(</span><span class="n">Butterworth</span><span class="p">):</span>  <span class="c1"># Don&#39;t use full words</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ButterworthHP</span><span class="p">(</span><span class="n">Butterworth</span><span class="p">):</span>  <span class="c1"># Don&#39;t use suffix</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+<section id="effect-classes">
+<h4>Effect Classes<a class="headerlink" href="#effect-classes" title="Link to this heading">#</a></h4>
+<p><strong>Pattern</strong>: <code class="docutils literal notranslate"><span class="pre">&lt;EffectName&gt;</span></code></p>
+<ul class="simple">
+<li><p>Use descriptive noun names: <code class="docutils literal notranslate"><span class="pre">Reverb</span></code>, <code class="docutils literal notranslate"><span class="pre">Delay</span></code>, <code class="docutils literal notranslate"><span class="pre">Chorus</span></code></p></li>
+<li><p>No prefix or suffix needed</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Reverb</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reverb effect.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Bad</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReverbEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>  <span class="c1"># Don&#39;t add &quot;Effect&quot; suffix</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h3>
+<section id="frequency-parameters">
+<h4>Frequency Parameters<a class="headerlink" href="#frequency-parameters" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">cutoff</span></code></strong>: For lowpass/highpass/shelving filters (cutoff frequency)</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">frequency</span></code></strong>: For parametric EQ and peaking filters (center frequency)</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good - Lowpass filter</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LoButterworth</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
+
+<span class="c1"># Good - Parametric EQ</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParametricEQ</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="n">frequency</span>
+
+<span class="c1"># Bad - Mixed usage</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LoButterworth</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>  <span class="c1"># Use cutoff for filters</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+<section id="gain-parameters">
+<h4>Gain Parameters<a class="headerlink" href="#gain-parameters" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">gain</span></code></strong>: Always use <code class="docutils literal notranslate"><span class="pre">gain</span></code> as the parameter name</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">gain_scale</span></code></strong>: Specify units with <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;db&quot;</span></code></p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HiShelving</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">gain_scale</span><span class="p">:</span> <span class="n">FilterOrderScale</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span> <span class="k">if</span> <span class="n">gain_scale</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span> <span class="k">else</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">gain</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># Bad - Ambiguous units</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HiShelving</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gain_db</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>  <span class="c1"># Don&#39;t encode units in name</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+<section id="order-parameters">
+<h4>Order Parameters<a class="headerlink" href="#order-parameters" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">order</span></code></strong>: Filter order (always an integer)</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">order_scale</span></code></strong>: Use <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">&quot;octave&quot;</span></code> (order per octave)</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Butterworth</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">btype</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">order_scale</span><span class="p">:</span> <span class="n">FilterOrderScale</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span> <span class="k">if</span> <span class="n">order_scale</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span> <span class="k">else</span> <span class="n">order</span> <span class="o">//</span> <span class="mi">6</span>
+</pre></div>
+</div>
+</section>
+<section id="sample-rate-parameter">
+<h4>Sample Rate Parameter<a class="headerlink" href="#sample-rate-parameter" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">fs</span></code></strong>: Always use <code class="docutils literal notranslate"><span class="pre">fs</span></code> for sampling frequency</p></li>
+<li><p>Always type as <code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span></code> to support lazy initialization</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good</span>
+<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+
+<span class="c1"># Bad</span>
+<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">44100</span><span class="p">):</span>  <span class="c1"># Use fs, make optional</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="methods">
+<h3>Methods<a class="headerlink" href="#methods" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Use descriptive verb names: <code class="docutils literal notranslate"><span class="pre">compute_coefficients()</span></code>, <code class="docutils literal notranslate"><span class="pre">reset_state()</span></code></p></li>
+<li><p>Don’t abbreviate unless the abbreviation is standard: <code class="docutils literal notranslate"><span class="pre">fft()</span></code> OK, <code class="docutils literal notranslate"><span class="pre">comp_coef()</span></code> NOT OK</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="unit-conventions">
+<h2>Unit Conventions<a class="headerlink" href="#unit-conventions" title="Link to this heading">#</a></h2>
+<section id="frequency-units">
+<h3>Frequency Units<a class="headerlink" href="#frequency-units" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Hz</strong>: All frequency parameters are in Hz (not normalized)</p></li>
+<li><p><strong>Nyquist normalization</strong>: Handled internally by filters</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good - User specifies in Hz</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+
+<span class="c1"># Bad - User must normalize</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="o">/</span><span class="mi">22050</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>  <span class="c1"># Don&#39;t do this</span>
+</pre></div>
+</div>
+</section>
+<section id="gain-units">
+<h3>Gain Units<a class="headerlink" href="#gain-units" title="Link to this heading">#</a></h3>
+<p>Two units are supported with explicit specification:</p>
+<ul class="simple">
+<li><p><strong>Linear gain</strong>: Amplitude multiplier (1.0 = unity, 2.0 = 6dB)</p></li>
+<li><p><strong>dB</strong>: Decibel scale (0dB = unity, 6dB = 2x amplitude)</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good - Explicit unit specification</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">HiShelving</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.707</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">gain_scale</span><span class="o">=</span><span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">HiShelving</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.707</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">gain_scale</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+
+<span class="c1"># Bad - Ambiguous units</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">HiShelving</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.707</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>  <span class="c1"># Is this dB or linear?</span>
+</pre></div>
+</div>
+</section>
+<section id="amplitude-level-units">
+<h3>Amplitude/Level Units<a class="headerlink" href="#amplitude-level-units" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Range [0, 1]</strong> for normalized audio: <code class="docutils literal notranslate"><span class="pre">wave.ys</span></code> is typically in [-1, 1]</p></li>
+<li><p><strong>dB</strong>: For levels and gains</p></li>
+<li><p><strong>Linear</strong>: For simple multipliers</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="code-organization-patterns">
+<h2>Code Organization Patterns<a class="headerlink" href="#code-organization-patterns" title="Link to this heading">#</a></h2>
+<section id="filter-implementation-pattern">
+<h3>Filter Implementation Pattern<a class="headerlink" href="#filter-implementation-pattern" title="Link to this heading">#</a></h3>
+<p>All IIR filters should follow this structure:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">NewFilter</span><span class="p">(</span><span class="n">IIR</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One-line description.</span>
+
+<span class="sd">    Detailed description of what the filter does, when to use it,</span>
+<span class="sd">    and any special characteristics.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cutoff : float</span>
+<span class="sd">        The cutoff frequency in Hz.</span>
+<span class="sd">    order : int</span>
+<span class="sd">        The filter order. Default is 4.</span>
+<span class="sd">    fs : int | None</span>
+<span class="sd">        The sampling frequency in Hz.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; filter = NewFilter(cutoff=1000, order=4, fs=44100)</span>
+<span class="sd">    &gt;&gt;&gt; filtered = filter.forward(signal)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Additional technical details about the filter implementation,</span>
+<span class="sd">    references to papers, or usage warnings.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the filter coefficients.&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="c1"># Use scipy or implement custom coefficients</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">some_filter_design</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
+</pre></div>
+</div>
+</section>
+<section id="effect-implementation-pattern">
+<h3>Effect Implementation Pattern<a class="headerlink" href="#effect-implementation-pattern" title="Link to this heading">#</a></h3>
+<p>All effects should follow this structure:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">NewEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One-line description.</span>
+
+<span class="sd">    Detailed description.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    param1 : float</span>
+<span class="sd">        Description with units.</span>
+<span class="sd">    param2 : int</span>
+<span class="sd">        Description with units.</span>
+<span class="sd">    fs : int | None</span>
+<span class="sd">        The sampling frequency in Hz.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; effect = NewEffect(param1=0.5, fs=44100)</span>
+<span class="sd">    &gt;&gt;&gt; processed = effect.forward(signal)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">param1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">param2</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param1</span> <span class="o">=</span> <span class="n">param1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param2</span> <span class="o">=</span> <span class="n">param2</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply the effect to the input tensor.&quot;&quot;&quot;</span>
+        <span class="c1"># Implementation</span>
+        <span class="k">return</span> <span class="n">processed_signal</span>
+</pre></div>
+</div>
+</section>
+<section id="module-organization">
+<h3>Module Organization<a class="headerlink" href="#module-organization" title="Link to this heading">#</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx/
+├── __init__.py          # Public API exports
+├── wave.py              # Wave class
+├── effect.py            # Base FX class and effects
+├── typing.py            # Type aliases
+├── _deprecation.py      # Internal utilities (prefix with _)
+└── filter/
+    ├── __init__.py      # Filter exports
+    ├── __base.py        # Base filter classes
+    ├── iir.py           # IIR filters
+    └── fir.py           # FIR filters
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="documentation-standards">
+<h2>Documentation Standards<a class="headerlink" href="#documentation-standards" title="Link to this heading">#</a></h2>
+<section id="docstring-format">
+<h3>Docstring Format<a class="headerlink" href="#docstring-format" title="Link to this heading">#</a></h3>
+<p>Use NumPy-style docstrings:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">function_name</span><span class="p">(</span><span class="n">param1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">param2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One-line summary (imperative mood).</span>
+
+<span class="sd">    Longer description if needed. Can span multiple paragraphs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    param1 : int</span>
+<span class="sd">        Description of param1 with units if applicable.</span>
+<span class="sd">    param2 : float, optional</span>
+<span class="sd">        Description of param2. Default is 1.0.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Description of return value with units.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If param1 is negative.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; result = function_name(5, 2.0)</span>
+<span class="sd">    &gt;&gt;&gt; print(result)</span>
+<span class="sd">    10.0</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Additional technical details, references, or warnings.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    related_function : Brief description.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+<section id="examples-requirements">
+<h3>Examples Requirements<a class="headerlink" href="#examples-requirements" title="Link to this heading">#</a></h3>
+<p>Every public class and method must have:</p>
+<ol class="arabic simple">
+<li><p>At least one basic usage example</p></li>
+<li><p>Example should be runnable (or clearly marked if not)</p></li>
+<li><p>Use realistic parameter values</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good example</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+<span class="sd">Create a lowpass filter and apply it:</span>
+
+<span class="sd">&gt;&gt;&gt; filter = LoButterworth(cutoff=1000, order=5, fs=44100)</span>
+<span class="sd">&gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">&gt;&gt;&gt; filtered = wave | filter</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Bad example - too abstract</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+<span class="sd">&gt;&gt;&gt; filter = LoButterworth(x, y, z)</span>
+<span class="sd">&gt;&gt;&gt; result = filter(data)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="type-hints">
+<h3>Type Hints<a class="headerlink" href="#type-hints" title="Link to this heading">#</a></h3>
+<p>Always use type hints for:</p>
+<ul class="simple">
+<li><p>Function parameters</p></li>
+<li><p>Return values</p></li>
+<li><p>Class attributes (when clear)</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_audio</span><span class="p">(</span>
+    <span class="n">signal</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Bad - no type hints</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_audio</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="testing-standards">
+<h2>Testing Standards<a class="headerlink" href="#testing-standards" title="Link to this heading">#</a></h2>
+<section id="test-organization">
+<h3>Test Organization<a class="headerlink" href="#test-organization" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TestFilterName</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test suite for FilterName.&quot;&quot;&quot;</span>
+
+    <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_signal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a test signal.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_coefficient_computation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test that coefficients are computed correctly.&quot;&quot;&quot;</span>
+        <span class="nb">filter</span> <span class="o">=</span> <span class="n">FilterName</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+        <span class="nb">filter</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="nb">filter</span><span class="o">.</span><span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="nb">filter</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_forward_pass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_signal</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test that forward pass works.&quot;&quot;&quot;</span>
+        <span class="nb">filter</span> <span class="o">=</span> <span class="n">FilterName</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="nb">filter</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">sample_signal</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">sample_signal</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+</section>
+<section id="test-coverage-requirements">
+<h3>Test Coverage Requirements<a class="headerlink" href="#test-coverage-requirements" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Every public method must have at least one test</p></li>
+<li><p>Edge cases must be tested</p></li>
+<li><p>Error handling must be tested</p></li>
+</ul>
+</section>
+<section id="test-naming">
+<h3>Test Naming<a class="headerlink" href="#test-naming" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Use descriptive test names: <code class="docutils literal notranslate"><span class="pre">test_lowpass_filters_high_frequencies</span></code></p></li>
+<li><p>Start with <code class="docutils literal notranslate"><span class="pre">test_</span></code></p></li>
+<li><p>Use underscores, not camelCase</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="code-quality-tools">
+<h2>Code Quality Tools<a class="headerlink" href="#code-quality-tools" title="Link to this heading">#</a></h2>
+<section id="linters">
+<h3>Linters<a class="headerlink" href="#linters" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>ruff</strong>: Python linter (configured in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>)</p></li>
+<li><p><strong>black</strong>: Code formatter</p></li>
+</ul>
+</section>
+<section id="pre-commit-hooks">
+<h3>Pre-commit Hooks<a class="headerlink" href="#pre-commit-hooks" title="Link to this heading">#</a></h3>
+<p>Configure git hooks for automatic formatting:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run before committing</span>
+ruff<span class="w"> </span>check<span class="w"> </span>src/<span class="w"> </span>tests/
+black<span class="w"> </span>src/<span class="w"> </span>tests/
+pytest<span class="w"> </span>tests/
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="deprecation-guidelines">
+<h2>Deprecation Guidelines<a class="headerlink" href="#deprecation-guidelines" title="Link to this heading">#</a></h2>
+<p>When deprecating an API:</p>
+<ol class="arabic simple">
+<li><p>Use the <code class="docutils literal notranslate"><span class="pre">&#64;deprecated</span></code> decorator</p></li>
+<li><p>Provide clear alternative</p></li>
+<li><p>Set removal version (at least +1 minor version)</p></li>
+<li><p>Update documentation</p></li>
+<li><p>Add migration guide entry</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._deprecation</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
+
+<span class="nd">@deprecated</span><span class="p">(</span>
+    <span class="n">version</span><span class="o">=</span><span class="s2">&quot;0.3.0&quot;</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Renamed for consistency&quot;</span><span class="p">,</span>
+    <span class="n">alternative</span><span class="o">=</span><span class="s2">&quot;new_method()&quot;</span><span class="p">,</span>
+    <span class="n">removal_version</span><span class="o">=</span><span class="s2">&quot;1.0.0&quot;</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">old_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_method</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="questions">
+<h2>Questions?<a class="headerlink" href="#questions" title="Link to this heading">#</a></h2>
+<p>If you have questions about the style guide:</p>
+<ol class="arabic simple">
+<li><p>Check existing code for examples</p></li>
+<li><p>Open a GitHub discussion</p></li>
+<li><p>Ask in code review</p></li>
+</ol>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="documentation.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Documentation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="roadmap.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Roadmap to v1.0.0</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#naming-conventions">Naming Conventions</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#filter-classes">Filter Classes</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#effect-classes">Effect Classes</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters">Parameters</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#frequency-parameters">Frequency Parameters</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gain-parameters">Gain Parameters</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#order-parameters">Order Parameters</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-rate-parameter">Sample Rate Parameter</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#methods">Methods</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unit-conventions">Unit Conventions</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#frequency-units">Frequency Units</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gain-units">Gain Units</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#amplitude-level-units">Amplitude/Level Units</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#code-organization-patterns">Code Organization Patterns</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filter-implementation-pattern">Filter Implementation Pattern</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#effect-implementation-pattern">Effect Implementation Pattern</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-organization">Module Organization</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-standards">Documentation Standards</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#docstring-format">Docstring Format</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#examples-requirements">Examples Requirements</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type-hints">Type Hints</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-standards">Testing Standards</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-organization">Test Organization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-coverage-requirements">Test Coverage Requirements</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-naming">Test Naming</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#code-quality-tools">Code Quality Tools</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linters">Linters</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pre-commit-hooks">Pre-commit Hooks</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deprecation-guidelines">Deprecation Guidelines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#questions">Questions?</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/developer/style_guide.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/developer/style_guide.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

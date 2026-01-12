@@ -1,0 +1,1988 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Benchmarking &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/benchmarking';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Documentation" href="documentation.html" />
+    <link rel="prev" title="Testing" href="testing.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Developer Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Benchmarking</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="benchmarking">
+<h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Link to this heading">#</a></h1>
+<p>Comprehensive guide to the TorchFX benchmarking suite for measuring and comparing performance of audio processing operations.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>The TorchFX benchmarking suite evaluates performance across three key dimensions:</p>
+<ol class="arabic simple">
+<li><p><strong>API patterns</strong>: Comparing different usage patterns (FilterChain, Sequential, pipe operator)</p></li>
+<li><p><strong>FIR filter performance</strong>: GPU vs CPU vs SciPy implementations</p></li>
+<li><p><strong>IIR filter performance</strong>: GPU vs CPU vs SciPy implementations</p></li>
+</ol>
+<p>All benchmarks compare TorchFX implementations against SciPy baselines to validate performance characteristics and identify optimization opportunities.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="testing.html"><span class="doc">Testing</span></a> - Testing infrastructure
+<a class="reference internal" href="../advanced/performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a> - Performance optimization guide
+<a class="reference internal" href="../advanced/gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a> - GPU acceleration usage</p>
+</div>
+</section>
+<section id="benchmark-suite-structure">
+<h2>Benchmark Suite Structure<a class="headerlink" href="#benchmark-suite-structure" title="Link to this heading">#</a></h2>
+<p>The benchmarking suite consists of three independent scripts:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Script</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Comparisons</p></th>
+<th class="head"><p>Output File</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">api_bench.py</span></code></p></td>
+<td><p>API pattern comparison</p></td>
+<td><p>FilterChain, Sequential, pipe operator, SciPy</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">api_bench.out</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fir_bench.py</span></code></p></td>
+<td><p>FIR filter performance</p></td>
+<td><p>GPU vs CPU vs SciPy across varying durations and channels</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fir.out</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">iir_bench.py</span></code></p></td>
+<td><p>IIR filter performance</p></td>
+<td><p>GPU vs CPU vs SciPy across varying durations and channels</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">iir.out</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>All benchmarks use Python’s <code class="docutils literal notranslate"><span class="pre">timeit</span></code> module for precise timing measurements and output results in CSV format for analysis and visualization.</p>
+</section>
+<section id="benchmark-architecture">
+<h2>Benchmark Architecture<a class="headerlink" href="#benchmark-architecture" title="Link to this heading">#</a></h2>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;Benchmark Scripts&quot;
+        API[&quot;api_bench.py&lt;br/&gt;API pattern comparison&quot;]
+        FIR[&quot;fir_bench.py&lt;br/&gt;FIR filter performance&quot;]
+        IIR[&quot;iir_bench.py&lt;br/&gt;IIR filter performance&quot;]
+    end
+
+    subgraph &quot;Test Signal Generation&quot;
+        CreateAudio[&quot;create_audio()&lt;br/&gt;np.random.randn()&lt;br/&gt;Normalized to [-1, 1]&quot;]
+    end
+
+    subgraph &quot;Implementations Under Test&quot;
+        TorchFX_GPU[&quot;torchfx on CUDA&lt;br/&gt;Wave.to('cuda')&lt;br/&gt;filter.to('cuda')&quot;]
+        TorchFX_CPU[&quot;torchfx on CPU&lt;br/&gt;Wave.to('cpu')&lt;br/&gt;filter.to('cpu')&quot;]
+        SciPy_Baseline[&quot;SciPy baseline&lt;br/&gt;scipy.signal.lfilter()&quot;]
+    end
+
+    subgraph &quot;Timing Infrastructure&quot;
+        TimeitModule[&quot;timeit.timeit()&lt;br/&gt;REP=50 repetitions&quot;]
+    end
+
+    subgraph &quot;Output&quot;
+        CSV[&quot;CSV files:&lt;br/&gt;api_bench.out&lt;br/&gt;fir.out&lt;br/&gt;iir.out&quot;]
+        Visualization[&quot;draw3.py&lt;br/&gt;Generates PNG plots&quot;]
+    end
+
+    API --&gt; CreateAudio
+    FIR --&gt; CreateAudio
+    IIR --&gt; CreateAudio
+
+    CreateAudio --&gt; TorchFX_GPU
+    CreateAudio --&gt; TorchFX_CPU
+    CreateAudio --&gt; SciPy_Baseline
+
+    TorchFX_GPU --&gt; TimeitModule
+    TorchFX_CPU --&gt; TimeitModule
+    SciPy_Baseline --&gt; TimeitModule
+
+    TimeitModule --&gt; CSV
+    CSV --&gt; Visualization
+    </pre></section>
+<section id="common-infrastructure">
+<h2>Common Infrastructure<a class="headerlink" href="#common-infrastructure" title="Link to this heading">#</a></h2>
+<p>All benchmark scripts share common infrastructure for test signal generation and timing measurement.</p>
+<section id="test-signal-generation">
+<h3>Test Signal Generation<a class="headerlink" href="#test-signal-generation" title="Link to this heading">#</a></h3>
+<p>Each benchmark uses the <code class="docutils literal notranslate"><span class="pre">create_audio()</span></code> function to generate synthetic test signals:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">create_audio</span><span class="p">(</span><span class="n">duration</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create random audio signal for testing.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    duration : int</span>
+<span class="sd">        Duration in seconds</span>
+<span class="sd">    num_channels : int</span>
+<span class="sd">        Number of audio channels</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Audio signal with shape (num_channels, samples)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">duration</span> <span class="o">*</span> <span class="n">SAMPLE_RATE</span><span class="p">)</span>
+    <span class="n">audio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">num_channels</span><span class="p">,</span> <span class="n">samples</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">audio</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">audio</span><span class="p">))</span>  <span class="c1"># Normalize to [-1, 1]</span>
+</pre></div>
+</div>
+<p><strong>Normalization</strong>: Signals are normalized to the range [-1, 1] to simulate realistic audio levels.</p>
+</section>
+<section id="timing-methodology">
+<h3>Timing Methodology<a class="headerlink" href="#timing-methodology" title="Link to this heading">#</a></h3>
+<p>All benchmarks use Python’s <code class="docutils literal notranslate"><span class="pre">timeit.timeit()</span></code> function with consistent parameters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">REP</span> <span class="o">=</span> <span class="mi">50</span>  <span class="c1"># Number of repetitions</span>
+
+<span class="c1"># Measure execution time</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">function_under_test</span><span class="p">(),</span> <span class="n">number</span><span class="o">=</span><span class="n">REP</span><span class="p">)</span>
+<span class="n">average_time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">/</span> <span class="n">REP</span>
+</pre></div>
+</div>
+<p><strong>Why 50 repetitions?</strong></p>
+<ul class="simple">
+<li><p>Provides stable averages by reducing variance</p></li>
+<li><p>Balances accuracy with total benchmark runtime</p></li>
+<li><p>Minimizes impact of system noise and cache effects</p></li>
+</ul>
+</section>
+<section id="standard-parameters">
+<h3>Standard Parameters<a class="headerlink" href="#standard-parameters" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Value</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SAMPLE_RATE</span></code></p></td>
+<td><p>44100 Hz</p></td>
+<td><p>Standard CD-quality sampling rate</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">REP</span></code></p></td>
+<td><p>50</p></td>
+<td><p>Number of timing repetitions for averaging</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DURATION</span></code></p></td>
+<td><p>Varies</p></td>
+<td><p>Audio duration in seconds (benchmark-specific)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NUM_CHANNELS</span></code></p></td>
+<td><p>Varies</p></td>
+<td><p>Number of audio channels (benchmark-specific)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="api-benchmark">
+<h2>API Benchmark<a class="headerlink" href="#api-benchmark" title="Link to this heading">#</a></h2>
+<p>The API benchmark (<code class="docutils literal notranslate"><span class="pre">benchmark/api_bench.py</span></code>) compares different approaches to chaining filters, evaluating both ergonomics and performance.</p>
+<section id="tested-implementations">
+<h3>Tested Implementations<a class="headerlink" href="#tested-implementations" title="Link to this heading">#</a></h3>
+<pre  class="mermaid">
+        graph LR
+    Signal[&quot;Wave object&lt;br/&gt;8 channels&lt;br/&gt;120 seconds&quot;]
+
+    subgraph &quot;Four API Patterns&quot;
+        Method1[&quot;FilterChain class&lt;br/&gt;nn.Module subclass&lt;br/&gt;explicit forward()&quot;]
+        Method2[&quot;Sequential&lt;br/&gt;torch.nn.Sequential&lt;br/&gt;functional composition&quot;]
+        Method3[&quot;Pipe operator&lt;br/&gt;wave | filter1 | filter2&quot;]
+        Method4[&quot;SciPy baseline&lt;br/&gt;scipy.signal.lfilter()&quot;]
+    end
+
+    Output[&quot;Filtered signal&quot;]
+
+    Signal --&gt; Method1
+    Signal --&gt; Method2
+    Signal --&gt; Method3
+    Signal --&gt; Method4
+
+    Method1 --&gt; Output
+    Method2 --&gt; Output
+    Method3 --&gt; Output
+    Method4 --&gt; Output
+    </pre></section>
+<section id="implementation-patterns">
+<h3>Implementation Patterns<a class="headerlink" href="#implementation-patterns" title="Link to this heading">#</a></h3>
+<section id="filterchain-class-pattern">
+<h4>FilterChain Class Pattern<a class="headerlink" href="#filterchain-class-pattern" title="Link to this heading">#</a></h4>
+<p>Traditional PyTorch module composition with explicit <code class="docutils literal notranslate"><span class="pre">forward()</span></code> method:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">FilterChain</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Custom filter chain implementation.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filters</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+<span class="c1"># Usage</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">FilterChain</span><span class="p">([</span><span class="n">filter1</span><span class="p">,</span> <span class="n">filter2</span><span class="p">,</span> <span class="n">filter3</span><span class="p">])</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Characteristics</strong>:</p>
+<ul class="simple">
+<li><p>Explicit control over execution</p></li>
+<li><p>Standard PyTorch pattern</p></li>
+<li><p>Requires boilerplate code</p></li>
+</ul>
+</section>
+<section id="sequential-pattern">
+<h4>Sequential Pattern<a class="headerlink" href="#sequential-pattern" title="Link to this heading">#</a></h4>
+<p>PyTorch’s built-in sequential container:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+
+<span class="c1"># Create sequential chain</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">filter1</span><span class="p">,</span> <span class="n">filter2</span><span class="p">,</span> <span class="n">filter3</span><span class="p">)</span>
+
+<span class="c1"># Apply to audio</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Characteristics</strong>:</p>
+<ul class="simple">
+<li><p>Built-in PyTorch functionality</p></li>
+<li><p>Minimal boilerplate</p></li>
+<li><p>Standard functional composition</p></li>
+</ul>
+</section>
+<section id="pipe-operator-pattern">
+<h4>Pipe Operator Pattern<a class="headerlink" href="#pipe-operator-pattern" title="Link to this heading">#</a></h4>
+<p>TorchFX’s idiomatic API with automatic configuration:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Chain filters using pipe operator</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter1</span> <span class="o">|</span> <span class="n">filter2</span> <span class="o">|</span> <span class="n">filter3</span>
+</pre></div>
+</div>
+<p><strong>Characteristics</strong>:</p>
+<ul class="simple">
+<li><p>Most ergonomic syntax</p></li>
+<li><p>Automatic sample rate configuration</p></li>
+<li><p>Pythonic and readable</p></li>
+</ul>
+</section>
+<section id="scipy-baseline">
+<h4>SciPy Baseline<a class="headerlink" href="#scipy-baseline" title="Link to this heading">#</a></h4>
+<p>Pure NumPy/SciPy implementation for comparison:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">signal</span>
+
+<span class="c1"># Design filter coefficients</span>
+<span class="n">b1</span><span class="p">,</span> <span class="n">a1</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">Wn</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;high&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+
+<span class="c1"># Apply filter</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">audio</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Characteristics</strong>:</p>
+<ul class="simple">
+<li><p>CPU-only implementation</p></li>
+<li><p>No PyTorch overhead</p></li>
+<li><p>Industry-standard baseline</p></li>
+</ul>
+</section>
+</section>
+<section id="filter-configuration">
+<h3>Filter Configuration<a class="headerlink" href="#filter-configuration" title="Link to this heading">#</a></h3>
+<p>All patterns apply the same six filters in series:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Filter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Cutoff Frequency</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>HiChebyshev1</p></td>
+<td><p>High-pass</p></td>
+<td><p>20 Hz</p></td>
+<td><p>Remove subsonic content</p></td>
+</tr>
+<tr class="row-odd"><td><p>HiChebyshev1</p></td>
+<td><p>High-pass</p></td>
+<td><p>60 Hz</p></td>
+<td><p>Remove hum</p></td>
+</tr>
+<tr class="row-even"><td><p>HiChebyshev1</p></td>
+<td><p>High-pass</p></td>
+<td><p>65 Hz</p></td>
+<td><p>Additional hum removal</p></td>
+</tr>
+<tr class="row-odd"><td><p>LoButterworth</p></td>
+<td><p>Low-pass</p></td>
+<td><p>5000 Hz</p></td>
+<td><p>Anti-aliasing</p></td>
+</tr>
+<tr class="row-even"><td><p>LoButterworth</p></td>
+<td><p>Low-pass</p></td>
+<td><p>4900 Hz</p></td>
+<td><p>Transition band shaping</p></td>
+</tr>
+<tr class="row-odd"><td><p>LoButterworth</p></td>
+<td><p>Low-pass</p></td>
+<td><p>4850 Hz</p></td>
+<td><p>Final rolloff</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="test-parameters">
+<h3>Test Parameters<a class="headerlink" href="#test-parameters" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Duration</strong>: 120 seconds (2 minutes)</p></li>
+<li><p><strong>Channels</strong>: 8</p></li>
+<li><p><strong>Sample Rate</strong>: 44100 Hz</p></li>
+<li><p><strong>Repetitions</strong>: 50</p></li>
+</ul>
+</section>
+<section id="output-format">
+<h3>Output Format<a class="headerlink" href="#output-format" title="Link to this heading">#</a></h3>
+<p>CSV with the following structure:</p>
+<div class="highlight-csv notranslate"><div class="highlight"><pre><span></span>filter_chain,sequential,pipe,scipy
+&lt;class_time&gt;,&lt;seq_time&gt;,&lt;pipe_time&gt;,&lt;scipy_time&gt;
+</pre></div>
+</div>
+<p>Each time value represents average execution time in seconds.</p>
+</section>
+<section id="running-api-benchmark">
+<h3>Running API Benchmark<a class="headerlink" href="#running-api-benchmark" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmark/api_bench.py
+</pre></div>
+</div>
+<p><strong>Expected output</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">API</span> <span class="n">Benchmark</span>
+<span class="n">Duration</span><span class="p">:</span> <span class="mi">120</span><span class="n">s</span><span class="p">,</span> <span class="n">Channels</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="n">Sample</span> <span class="n">Rate</span><span class="p">:</span> <span class="mi">44100</span><span class="n">Hz</span>
+<span class="n">Repetitions</span><span class="p">:</span> <span class="mi">50</span>
+
+<span class="n">FilterChain</span><span class="p">:</span> <span class="mf">1.234</span> <span class="n">seconds</span>
+<span class="n">Sequential</span><span class="p">:</span>  <span class="mf">1.235</span> <span class="n">seconds</span>
+<span class="n">Pipe</span><span class="p">:</span>        <span class="mf">1.236</span> <span class="n">seconds</span>
+<span class="n">SciPy</span><span class="p">:</span>       <span class="mf">1.450</span> <span class="n">seconds</span>
+
+<span class="n">Results</span> <span class="n">saved</span> <span class="n">to</span> <span class="n">api_bench</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="fir-filter-benchmark">
+<h2>FIR Filter Benchmark<a class="headerlink" href="#fir-filter-benchmark" title="Link to this heading">#</a></h2>
+<p>The FIR filter benchmark (<code class="docutils literal notranslate"><span class="pre">benchmark/fir_bench.py</span></code>) evaluates FIR filter performance across different audio durations and channel counts.</p>
+<section id="test-matrix">
+<h3>Test Matrix<a class="headerlink" href="#test-matrix" title="Link to this heading">#</a></h3>
+<p>The benchmark tests across two dimensions:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Dimension</p></th>
+<th class="head"><p>Values</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Durations</strong></p></td>
+<td><p>5, 60, 180, 300, 600 seconds</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Channels</strong></p></td>
+<td><p>1, 2, 4, 8, 12</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Total test cases</strong>: 5 durations × 5 channel counts = 25 data points</p>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;Test Variables&quot;
+        Durations[&quot;Durations (seconds)&lt;br/&gt;5, 60, 180, 300, 600&quot;]
+        Channels[&quot;Channels&lt;br/&gt;1, 2, 4, 8, 12&quot;]
+    end
+
+    subgraph &quot;Filter Chain&quot;
+        F1[&quot;DesignableFIR&lt;br/&gt;101 taps, 1000 Hz&quot;]
+        F2[&quot;DesignableFIR&lt;br/&gt;102 taps, 5000 Hz&quot;]
+        F3[&quot;DesignableFIR&lt;br/&gt;103 taps, 1500 Hz&quot;]
+        F4[&quot;DesignableFIR&lt;br/&gt;104 taps, 1800 Hz&quot;]
+        F5[&quot;DesignableFIR&lt;br/&gt;105 taps, 1850 Hz&quot;]
+    end
+
+    subgraph &quot;Implementations&quot;
+        GPU[&quot;GPU Implementation&lt;br/&gt;wave.to('cuda')&lt;br/&gt;fchain.to('cuda')&quot;]
+        CPU[&quot;CPU Implementation&lt;br/&gt;wave.to('cpu')&lt;br/&gt;fchain.to('cpu')&quot;]
+        SciPy[&quot;SciPy Implementation&lt;br/&gt;scipy.signal.firwin()&lt;br/&gt;scipy.signal.lfilter()&quot;]
+    end
+
+    Durations --&gt; F1
+    Channels --&gt; F1
+
+    F1 --&gt; F2
+    F2 --&gt; F3
+    F3 --&gt; F4
+    F4 --&gt; F5
+
+    F5 --&gt; GPU
+    F5 --&gt; CPU
+    F5 --&gt; SciPy
+    </pre></section>
+<section id="id1">
+<h3>Filter Configuration<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>The benchmark applies five <code class="docutils literal notranslate"><span class="pre">DesignableFIR</span></code> filters in series:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create filter chain</span>
+<span class="n">fchain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">numtaps</span><span class="o">=</span><span class="mi">101</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">),</span>
+    <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">numtaps</span><span class="o">=</span><span class="mi">102</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">),</span>
+    <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">numtaps</span><span class="o">=</span><span class="mi">103</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">),</span>
+    <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">numtaps</span><span class="o">=</span><span class="mi">104</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">1800</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">),</span>
+    <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">numtaps</span><span class="o">=</span><span class="mi">105</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">1850</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Pre-compute coefficients (excluded from timing)</span>
+<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Important</strong>: Filter coefficients are pre-computed before timing to measure only filtering performance, not coefficient design.</p>
+</section>
+<section id="implementation-functions">
+<h3>Implementation Functions<a class="headerlink" href="#implementation-functions" title="Link to this heading">#</a></h3>
+<section id="gpu-fir-function">
+<h4>GPU FIR Function<a class="headerlink" href="#gpu-fir-function" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">gpu_fir</span><span class="p">(</span><span class="n">wave</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply FIR filter chain on GPU.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">wave</span> <span class="o">|</span> <span class="n">fchain</span><span class="p">)</span><span class="o">.</span><span class="n">ys</span>
+</pre></div>
+</div>
+<p>Moves audio to GPU and applies filter chain using pipe operator.</p>
+</section>
+<section id="cpu-fir-function">
+<h4>CPU FIR Function<a class="headerlink" href="#cpu-fir-function" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">cpu_fir</span><span class="p">(</span><span class="n">wave</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply FIR filter chain on CPU.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">wave</span> <span class="o">|</span> <span class="n">fchain</span><span class="p">)</span><span class="o">.</span><span class="n">ys</span>
+</pre></div>
+</div>
+<p>Applies filter chain on CPU.</p>
+</section>
+<section id="scipy-fir-function">
+<h4>SciPy FIR Function<a class="headerlink" href="#scipy-fir-function" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">scipy_fir</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply FIR filters using SciPy.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">coefficients</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">audio</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">audio</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">audio</span>
+</pre></div>
+</div>
+<p>Uses <code class="docutils literal notranslate"><span class="pre">scipy.signal.lfilter()</span></code> for baseline comparison.</p>
+</section>
+</section>
+<section id="test-execution-flow">
+<h3>Test Execution Flow<a class="headerlink" href="#test-execution-flow" title="Link to this heading">#</a></h3>
+<p>For each combination of duration and channel count:</p>
+<ol class="arabic simple">
+<li><p>Generate test signal with <code class="docutils literal notranslate"><span class="pre">create_audio(duration,</span> <span class="pre">channels)</span></code></p></li>
+<li><p>Create <code class="docutils literal notranslate"><span class="pre">Wave</span></code> object from signal</p></li>
+<li><p>Build filter chain with <code class="docutils literal notranslate"><span class="pre">nn.Sequential</span></code></p></li>
+<li><p>Pre-compute all filter coefficients</p></li>
+<li><p>Move to GPU, time GPU execution</p></li>
+<li><p>Move to CPU, time CPU execution</p></li>
+<li><p>Design SciPy coefficients, time SciPy execution</p></li>
+</ol>
+</section>
+<section id="id2">
+<h3>Output Format<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<p>CSV with the following structure:</p>
+<div class="highlight-csv notranslate"><div class="highlight"><pre><span></span>time,channels,gpu,cpu,scipy
+5,1,0.012,0.015,0.018
+5,2,0.013,0.016,0.020
+...
+600,12,1.234,1.567,1.890
+</pre></div>
+</div>
+</section>
+<section id="running-fir-benchmark">
+<h3>Running FIR Benchmark<a class="headerlink" href="#running-fir-benchmark" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmark/fir_bench.py
+</pre></div>
+</div>
+<p><strong>Expected output</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">FIR</span> <span class="n">Filter</span> <span class="n">Benchmark</span>
+<span class="n">Sample</span> <span class="n">Rate</span><span class="p">:</span> <span class="mi">44100</span><span class="n">Hz</span>
+<span class="n">Repetitions</span><span class="p">:</span> <span class="mi">50</span>
+
+<span class="n">Testing</span><span class="p">:</span> <span class="mi">5</span><span class="n">s</span><span class="p">,</span> <span class="mi">1</span> <span class="n">channel</span><span class="o">...</span>
+  <span class="n">GPU</span><span class="p">:</span>   <span class="mf">0.012</span><span class="n">s</span>
+  <span class="n">CPU</span><span class="p">:</span>   <span class="mf">0.015</span><span class="n">s</span>
+  <span class="n">SciPy</span><span class="p">:</span> <span class="mf">0.018</span><span class="n">s</span>
+
+<span class="n">Testing</span><span class="p">:</span> <span class="mi">5</span><span class="n">s</span><span class="p">,</span> <span class="mi">2</span> <span class="n">channels</span><span class="o">...</span>
+  <span class="n">GPU</span><span class="p">:</span>   <span class="mf">0.013</span><span class="n">s</span>
+  <span class="n">CPU</span><span class="p">:</span>   <span class="mf">0.016</span><span class="n">s</span>
+  <span class="n">SciPy</span><span class="p">:</span> <span class="mf">0.020</span><span class="n">s</span>
+
+<span class="o">...</span>
+
+<span class="n">Results</span> <span class="n">saved</span> <span class="n">to</span> <span class="n">fir</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="iir-filter-benchmark">
+<h2>IIR Filter Benchmark<a class="headerlink" href="#iir-filter-benchmark" title="Link to this heading">#</a></h2>
+<p>The IIR filter benchmark (<code class="docutils literal notranslate"><span class="pre">benchmark/iir_bench.py</span></code>) evaluates IIR filter performance with similar methodology to the FIR benchmark.</p>
+<section id="id3">
+<h3>Test Matrix<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Dimension</p></th>
+<th class="head"><p>Values</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Durations</strong></p></td>
+<td><p>1, 5, 180, 300, 600 seconds</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Channels</strong></p></td>
+<td><p>1, 2, 4, 8, 12</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Total test cases</strong>: 5 durations × 5 channel counts = 25 data points</p>
+</section>
+<section id="id4">
+<h3>Filter Configuration<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<p>The benchmark applies four IIR filters in series:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fchain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">),</span>
+    <span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">),</span>
+    <span class="n">HiChebyshev1</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ripple</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">),</span>
+    <span class="n">LoChebyshev1</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1800</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ripple</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Filter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Cutoff</p></th>
+<th class="head"><p>Order</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HiButterworth</span></code></p></td>
+<td><p>High-pass</p></td>
+<td><p>1000 Hz</p></td>
+<td><p>2</p></td>
+<td><p>Remove low frequencies</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LoButterworth</span></code></p></td>
+<td><p>Low-pass</p></td>
+<td><p>5000 Hz</p></td>
+<td><p>2</p></td>
+<td><p>Remove high frequencies</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HiChebyshev1</span></code></p></td>
+<td><p>High-pass</p></td>
+<td><p>1500 Hz</p></td>
+<td><p>2</p></td>
+<td><p>Additional high-pass</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LoChebyshev1</span></code></p></td>
+<td><p>Low-pass</p></td>
+<td><p>1800 Hz</p></td>
+<td><p>2</p></td>
+<td><p>Additional low-pass</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="implementation-details">
+<h3>Implementation Details<a class="headerlink" href="#implementation-details" title="Link to this heading">#</a></h3>
+<pre  class="mermaid">
+        graph TB
+    subgraph &quot;GPU Execution Path&quot;
+        GPU_Wave[&quot;Wave.to('cuda')&quot;]
+        GPU_Chain[&quot;fchain.to('cuda')&quot;]
+        GPU_Coeff[&quot;f.compute_coefficients()&lt;br/&gt;f.move_coeff('cuda')&lt;br/&gt;for each filter&quot;]
+        GPU_Execute[&quot;fchain(wave.ys)&quot;]
+
+        GPU_Wave --&gt; GPU_Chain
+        GPU_Chain --&gt; GPU_Coeff
+        GPU_Coeff --&gt; GPU_Execute
+    end
+
+    subgraph &quot;CPU Execution Path&quot;
+        CPU_Wave[&quot;Wave.to('cpu')&quot;]
+        CPU_Chain[&quot;fchain.to('cpu')&quot;]
+        CPU_Coeff[&quot;f.move_coeff('cpu')&lt;br/&gt;for each filter&quot;]
+        CPU_Execute[&quot;fchain(wave.ys)&quot;]
+
+        CPU_Wave --&gt; CPU_Chain
+        CPU_Chain --&gt; CPU_Coeff
+        CPU_Coeff --&gt; CPU_Execute
+    end
+
+    subgraph &quot;SciPy Execution Path&quot;
+        SciPy_Design[&quot;butter() / cheby1()&lt;br/&gt;Design filter coefficients&quot;]
+        SciPy_Filter[&quot;lfilter()&lt;br/&gt;Apply filters&quot;]
+
+        SciPy_Design --&gt; SciPy_Filter
+    end
+    </pre><section id="gpu-filter-function">
+<h4>GPU Filter Function<a class="headerlink" href="#gpu-filter-function" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">gpu_iir</span><span class="p">(</span><span class="n">wave</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply IIR filter chain on GPU.&quot;&quot;&quot;</span>
+    <span class="c1"># CRITICAL: Move both module and coefficients to GPU</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">wave</span> <span class="o">|</span> <span class="n">fchain</span><span class="p">)</span><span class="o">.</span><span class="n">ys</span>
+</pre></div>
+</div>
+<p><strong>Important</strong>: IIR filters require explicit coefficient movement to GPU.</p>
+</section>
+<section id="cpu-filter-function">
+<h4>CPU Filter Function<a class="headerlink" href="#cpu-filter-function" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">cpu_iir</span><span class="p">(</span><span class="n">wave</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply IIR filter chain on CPU.&quot;&quot;&quot;</span>
+    <span class="c1"># Move coefficients back to CPU</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">wave</span> <span class="o">|</span> <span class="n">fchain</span><span class="p">)</span><span class="o">.</span><span class="n">ys</span>
+</pre></div>
+</div>
+</section>
+<section id="scipy-filter-function">
+<h4>SciPy Filter Function<a class="headerlink" href="#scipy-filter-function" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">scipy_iir</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply IIR filters using SciPy.&quot;&quot;&quot;</span>
+    <span class="c1"># Design Butterworth coefficients</span>
+    <span class="n">b1</span><span class="p">,</span> <span class="n">a1</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">Wn</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;high&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+    <span class="c1"># ... design other filters ...</span>
+
+    <span class="c1"># Apply filters sequentially</span>
+    <span class="n">audio</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">audio</span><span class="p">)</span>
+    <span class="c1"># ... apply other filters ...</span>
+    <span class="k">return</span> <span class="n">audio</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id5">
+<h3>Output Format<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<p>CSV with the following structure:</p>
+<div class="highlight-csv notranslate"><div class="highlight"><pre><span></span>time,channels,gpu,cpu,scipy
+1,1,0.005,0.008,0.010
+1,2,0.006,0.009,0.012
+...
+600,12,0.987,1.234,1.567
+</pre></div>
+</div>
+</section>
+<section id="running-iir-benchmark">
+<h3>Running IIR Benchmark<a class="headerlink" href="#running-iir-benchmark" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmark/iir_bench.py
+</pre></div>
+</div>
+<p><strong>Expected output</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IIR</span> <span class="n">Filter</span> <span class="n">Benchmark</span>
+<span class="n">Sample</span> <span class="n">Rate</span><span class="p">:</span> <span class="mi">44100</span><span class="n">Hz</span>
+<span class="n">Repetitions</span><span class="p">:</span> <span class="mi">50</span>
+
+<span class="n">Testing</span><span class="p">:</span> <span class="mi">1</span><span class="n">s</span><span class="p">,</span> <span class="mi">1</span> <span class="n">channel</span><span class="o">...</span>
+  <span class="n">GPU</span><span class="p">:</span>   <span class="mf">0.005</span><span class="n">s</span>
+  <span class="n">CPU</span><span class="p">:</span>   <span class="mf">0.008</span><span class="n">s</span>
+  <span class="n">SciPy</span><span class="p">:</span> <span class="mf">0.010</span><span class="n">s</span>
+
+<span class="n">Testing</span><span class="p">:</span> <span class="mi">1</span><span class="n">s</span><span class="p">,</span> <span class="mi">2</span> <span class="n">channels</span><span class="o">...</span>
+  <span class="n">GPU</span><span class="p">:</span>   <span class="mf">0.006</span><span class="n">s</span>
+  <span class="n">CPU</span><span class="p">:</span>   <span class="mf">0.009</span><span class="n">s</span>
+  <span class="n">SciPy</span><span class="p">:</span> <span class="mf">0.012</span><span class="n">s</span>
+
+<span class="o">...</span>
+
+<span class="n">Results</span> <span class="n">saved</span> <span class="n">to</span> <span class="n">iir</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="interpreting-results">
+<h2>Interpreting Results<a class="headerlink" href="#interpreting-results" title="Link to this heading">#</a></h2>
+<section id="performance-metrics">
+<h3>Performance Metrics<a class="headerlink" href="#performance-metrics" title="Link to this heading">#</a></h3>
+<p>All timing values are reported in <strong>seconds</strong>, representing average execution time over 50 repetitions. <strong>Lower values indicate better performance</strong>.</p>
+</section>
+<section id="expected-performance-characteristics">
+<h3>Expected Performance Characteristics<a class="headerlink" href="#expected-performance-characteristics" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scenario</p></th>
+<th class="head"><p>Expected Behavior</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Short audio, few channels</strong></p></td>
+<td><p>CPU may outperform GPU due to transfer overhead</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Long audio, many channels</strong></p></td>
+<td><p>GPU should significantly outperform CPU</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Simple operations</strong></p></td>
+<td><p>SciPy may be competitive with CPU implementation</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Complex filter chains</strong></p></td>
+<td><p>TorchFX benefits from vectorization and batching</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="api-benchmark-interpretation">
+<h3>API Benchmark Interpretation<a class="headerlink" href="#api-benchmark-interpretation" title="Link to this heading">#</a></h3>
+<p>The API benchmark compares ergonomics and performance:</p>
+<ul class="simple">
+<li><p><strong>FilterChain</strong>: Traditional PyTorch pattern with explicit control</p></li>
+<li><p><strong>Sequential</strong>: Standard PyTorch composition with automatic forwarding</p></li>
+<li><p><strong>Pipe operator</strong>: Most ergonomic with automatic configuration</p></li>
+<li><p><strong>SciPy</strong>: CPU-only baseline</p></li>
+</ul>
+<p><strong>Expected results</strong>:</p>
+<ul class="simple">
+<li><p>Performance differences between FilterChain, Sequential, and Pipe should be minimal (same underlying operations)</p></li>
+<li><p>Pipe operator provides automatic sampling rate configuration</p></li>
+<li><p>SciPy may be slower due to lack of GPU acceleration</p></li>
+</ul>
+</section>
+<section id="fir-iir-benchmark-interpretation">
+<h3>FIR/IIR Benchmark Interpretation<a class="headerlink" href="#fir-iir-benchmark-interpretation" title="Link to this heading">#</a></h3>
+<p>These benchmarks generate multi-dimensional data for analysis:</p>
+<ol class="arabic simple">
+<li><p><strong>Duration scaling</strong>: How performance scales with audio length</p>
+<ul class="simple">
+<li><p>Linear scaling expected for both CPU and GPU</p></li>
+<li><p>GPU overhead amortized over longer durations</p></li>
+</ul>
+</li>
+<li><p><strong>Channel scaling</strong>: How performance scales with channel count</p>
+<ul class="simple">
+<li><p>GPU should show better scaling for many channels</p></li>
+<li><p>CPU performance degrades more with channel count</p></li>
+</ul>
+</li>
+<li><p><strong>GPU vs CPU</strong>: When GPU acceleration provides benefits</p>
+<ul class="simple">
+<li><p>Crossover point varies by filter complexity</p></li>
+<li><p>Generally favorable for &gt;2 channels and &gt;60s duration</p></li>
+</ul>
+</li>
+<li><p><strong>TorchFX vs SciPy</strong>: Overhead of PyTorch abstraction</p>
+<ul class="simple">
+<li><p>TorchFX CPU should be competitive with SciPy</p></li>
+<li><p>GPU should outperform SciPy for suitable workloads</p></li>
+</ul>
+</li>
+</ol>
+</section>
+</section>
+<section id="visualization">
+<h2>Visualization<a class="headerlink" href="#visualization" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">draw3.py</span></code> script generates PNG plots from CSV output files:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmark/draw3.py
+</pre></div>
+</div>
+<p><strong>Generated plots</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">api_bench.png</span></code>: Bar chart comparing API patterns</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fir_bench.png</span></code>: Performance curves across durations/channels</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">iir_bench.png</span></code>: Performance curves across durations/channels</p></li>
+</ul>
+</section>
+<section id="running-all-benchmarks">
+<h2>Running All Benchmarks<a class="headerlink" href="#running-all-benchmarks" title="Link to this heading">#</a></h2>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
+<p>Ensure development environment is set up:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sync dependencies</span>
+uv<span class="w"> </span>sync
+
+<span class="c1"># Verify CUDA availability (for GPU benchmarks)</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import torch; print(torch.cuda.is_available())&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="execution-script">
+<h3>Execution Script<a class="headerlink" href="#execution-script" title="Link to this heading">#</a></h3>
+<p>Run all benchmarks sequentially:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run individual benchmarks</span>
+python<span class="w"> </span>benchmark/api_bench.py
+python<span class="w"> </span>benchmark/fir_bench.py
+python<span class="w"> </span>benchmark/iir_bench.py
+
+<span class="c1"># Generate visualizations</span>
+python<span class="w"> </span>benchmark/draw3.py
+</pre></div>
+</div>
+</section>
+<section id="gpu-configuration">
+<h3>GPU Configuration<a class="headerlink" href="#gpu-configuration" title="Link to this heading">#</a></h3>
+<p>To disable GPU benchmarks, comment out CUDA calls:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># In benchmark script</span>
+<span class="c1"># wave.to(&quot;cuda&quot;)  # Comment to disable GPU</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="benchmark-maintenance">
+<h2>Benchmark Maintenance<a class="headerlink" href="#benchmark-maintenance" title="Link to this heading">#</a></h2>
+<section id="adding-new-benchmarks">
+<h3>Adding New Benchmarks<a class="headerlink" href="#adding-new-benchmarks" title="Link to this heading">#</a></h3>
+<p>To add a new benchmark:</p>
+<ol class="arabic simple">
+<li><p>Create new Python file in <code class="docutils literal notranslate"><span class="pre">benchmark/</span></code> directory</p></li>
+<li><p>Implement <code class="docutils literal notranslate"><span class="pre">create_audio()</span></code> for test signal generation</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">timeit.timeit()</span></code> with <code class="docutils literal notranslate"><span class="pre">REP=50</span></code> for timing</p></li>
+<li><p>Compare against SciPy baseline when applicable</p></li>
+<li><p>Output results in CSV format</p></li>
+<li><p>Update this documentation</p></li>
+</ol>
+<p><strong>Template</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">timeit</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">SAMPLE_RATE</span> <span class="o">=</span> <span class="mi">44100</span>
+<span class="n">REP</span> <span class="o">=</span> <span class="mi">50</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_audio</span><span class="p">(</span><span class="n">duration</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">):</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">duration</span> <span class="o">*</span> <span class="n">SAMPLE_RATE</span><span class="p">)</span>
+    <span class="n">audio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">num_channels</span><span class="p">,</span> <span class="n">samples</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">audio</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">audio</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">():</span>
+    <span class="c1"># Setup</span>
+    <span class="n">audio</span> <span class="o">=</span> <span class="n">create_audio</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">num_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Time execution</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">():</span>
+        <span class="c1"># Code to benchmark</span>
+        <span class="k">pass</span>
+
+    <span class="n">time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="n">run</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="n">REP</span><span class="p">)</span>
+    <span class="n">avg_time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">/</span> <span class="n">REP</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Average time: </span><span class="si">{</span><span class="n">avg_time</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">benchmark</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="modifying-test-parameters">
+<h3>Modifying Test Parameters<a class="headerlink" href="#modifying-test-parameters" title="Link to this heading">#</a></h3>
+<p>Common parameters to adjust:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sample rate (default: 44100 Hz)</span>
+<span class="n">SAMPLE_RATE</span> <span class="o">=</span> <span class="mi">48000</span>  <span class="c1"># Change to 48kHz</span>
+
+<span class="c1"># Repetitions (default: 50)</span>
+<span class="n">REP</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># Increase for more stable results</span>
+
+<span class="c1"># Duration range (default varies by benchmark)</span>
+<span class="n">DURATIONS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">120</span><span class="p">]</span>  <span class="c1"># Custom duration range</span>
+
+<span class="c1"># Channel counts (default varies by benchmark)</span>
+<span class="n">CHANNELS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">]</span>  <span class="c1"># Custom channel counts</span>
+</pre></div>
+</div>
+</section>
+<section id="coefficient-pre-computation">
+<h3>Coefficient Pre-computation<a class="headerlink" href="#coefficient-pre-computation" title="Link to this heading">#</a></h3>
+<p>For fair comparison, filter coefficients should be pre-computed:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Pre-compute coefficients before timing</span>
+<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+
+<span class="c1"># Now time only the filtering operation</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">fchain</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">),</span> <span class="n">number</span><span class="o">=</span><span class="n">REP</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This ensures timing measures filtering performance, not coefficient design.</p>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<section id="fair-comparisons">
+<h3>Fair Comparisons<a class="headerlink" href="#fair-comparisons" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Pre-compute coefficients</span>
+<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">fchain</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">),</span> <span class="n">number</span><span class="o">=</span><span class="n">REP</span><span class="p">)</span>
+
+<span class="c1"># ❌ BAD: Include coefficient design in timing</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">fchain</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">),</span> <span class="n">number</span><span class="o">=</span><span class="n">REP</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="sufficient-repetitions">
+<h3>Sufficient Repetitions<a class="headerlink" href="#sufficient-repetitions" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Use 50+ repetitions</span>
+<span class="n">REP</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="n">REP</span><span class="p">)</span> <span class="o">/</span> <span class="n">REP</span>
+
+<span class="c1"># ❌ BAD: Too few repetitions (high variance)</span>
+<span class="n">REP</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="n">REP</span><span class="p">)</span> <span class="o">/</span> <span class="n">REP</span>
+</pre></div>
+</div>
+</section>
+<section id="realistic-test-data">
+<h3>Realistic Test Data<a class="headerlink" href="#realistic-test-data" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ GOOD: Normalized random noise</span>
+<span class="n">audio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">samples</span><span class="p">)</span>
+<span class="n">audio</span> <span class="o">=</span> <span class="n">audio</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">audio</span><span class="p">))</span>  <span class="c1"># [-1, 1]</span>
+
+<span class="c1"># ❌ BAD: Unrealistic data</span>
+<span class="n">audio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">channels</span><span class="p">,</span> <span class="n">samples</span><span class="p">))</span>  <span class="c1"># All ones</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="related-resources">
+<h2>Related Resources<a class="headerlink" href="#related-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="testing.html"><span class="doc">Testing</span></a> - Testing infrastructure</p></li>
+<li><p><a class="reference internal" href="../advanced/performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a> - Performance optimization</p></li>
+<li><p><a class="reference internal" href="../advanced/gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a> - GPU acceleration guide</p></li>
+<li><p><a class="reference internal" href="project-structure.html"><span class="doc">Project Structure</span></a> - Project organization</p></li>
+</ul>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="testing.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Testing</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="documentation.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Documentation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmark-suite-structure">Benchmark Suite Structure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmark-architecture">Benchmark Architecture</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-infrastructure">Common Infrastructure</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-signal-generation">Test Signal Generation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#timing-methodology">Timing Methodology</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#standard-parameters">Standard Parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-benchmark">API Benchmark</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tested-implementations">Tested Implementations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-patterns">Implementation Patterns</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#filterchain-class-pattern">FilterChain Class Pattern</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#sequential-pattern">Sequential Pattern</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#pipe-operator-pattern">Pipe Operator Pattern</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scipy-baseline">SciPy Baseline</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filter-configuration">Filter Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-parameters">Test Parameters</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-format">Output Format</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-api-benchmark">Running API Benchmark</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fir-filter-benchmark">FIR Filter Benchmark</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-matrix">Test Matrix</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Filter Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-functions">Implementation Functions</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-fir-function">GPU FIR Function</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-fir-function">CPU FIR Function</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scipy-fir-function">SciPy FIR Function</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#test-execution-flow">Test Execution Flow</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Output Format</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-fir-benchmark">Running FIR Benchmark</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#iir-filter-benchmark">IIR Filter Benchmark</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Test Matrix</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Filter Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-details">Implementation Details</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-filter-function">GPU Filter Function</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-filter-function">CPU Filter Function</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#scipy-filter-function">SciPy Filter Function</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Output Format</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-iir-benchmark">Running IIR Benchmark</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-results">Interpreting Results</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-metrics">Performance Metrics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#expected-performance-characteristics">Expected Performance Characteristics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api-benchmark-interpretation">API Benchmark Interpretation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fir-iir-benchmark-interpretation">FIR/IIR Benchmark Interpretation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualization">Visualization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-all-benchmarks">Running All Benchmarks</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#execution-script">Execution Script</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-configuration">GPU Configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmark-maintenance">Benchmark Maintenance</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-new-benchmarks">Adding New Benchmarks</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#modifying-test-parameters">Modifying Test Parameters</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#coefficient-pre-computation">Coefficient Pre-computation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fair-comparisons">Fair Comparisons</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sufficient-repetitions">Sufficient Repetitions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#realistic-test-data">Realistic Test Data</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-resources">Related Resources</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/developer/benchmarking.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/developer/benchmarking.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

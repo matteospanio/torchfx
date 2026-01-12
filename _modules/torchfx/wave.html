@@ -1,414 +1,808 @@
 
+<!DOCTYPE html>
 
 
-<!doctype html>
-<html lang="en" class="no-js">
+<html lang="en" data-content_root="../../" >
+
   <head>
-    
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      
-      
-      
-      
-      
-      
-      <link rel="icon" href="">
-    
-    
-      
-        <title>torchfx.wave - TorchFX</title>
-      
-    
-    
-      
-        
-      
-      
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>torchfx.wave &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
 
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    
-    
-      
-    
-    
-      
-        
-        
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
-      
-    
-        <link rel="stylesheet" type="text/css" href="../../_static/sphinx_immaterial_theme.acf80fe7f4d9ef9e2.min.css?v=9e56d0d2" />
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
-    
-      
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    
-    
-    
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/torchfx/wave';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
   </head>
   
   
-    
-    
-      
-    
-    
-    
-    
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
-  
-    
-    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
-    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
-    <div data-md-component="skip">
-      
-    </div>
-    <div data-md-component="announce">
-      
-    </div>
-    
-    
-      
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
   
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
-<header class="md-header md-header--shadow" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../index.html" title="TorchFX" class="md-header__button md-logo" aria-label="TorchFX" data-md-component="logo">
-      <img src="../../_static/tfx.svg" alt="logo">
-    </a>
-    <label class="md-header__button md-icon" for="__drawer">
-      
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
-    </label>
-    <div class="md-header__title" data-md-component="header-title">
-      <div class="md-header__ellipsis">
-        <div class="md-header__topic">
-          <span class="md-ellipsis">
-            TorchFX
-          </span>
-        </div>
-        <div class="md-header__topic" data-md-component="header-topic">
-          <span class="md-ellipsis">
-            
-              torchfx.wave
-            
-          </span>
-        </div>
-      </div>
-    </div>
-    
-      
-        <form class="md-header__option" data-md-component="palette">
   
+  <dialog id="pst-search-dialog">
     
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
 </form>
-      
-    
-    
-      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
-    
-    
-    
-      <label class="md-header__button md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-      </label>
-      <div class="md-search" data-md-component="search" role="dialog">
-  <label class="md-search__overlay" for="__search"></label>
-  <div class="md-search__inner" role="search">
-    <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
-      <label class="md-search__icon md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-      </label>
-      <nav class="md-search__options" aria-label="Search">
-        
-          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
-            
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
-          </a>
-        
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
-          
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-      </nav>
-      
-        <div class="md-search__suggest" data-md-component="search-suggest"></div>
-      
-    </form>
-    <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="search-result">
-          <div class="md-search-result__meta">
-            Initializing search
-          </div>
-          <ol class="md-search-result__list" role="presentation"></ol>
-        </div>
-      </div>
-    </div>
-  </div>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
-    
-    
-      <div class="md-header__source">
-        <a href="https://github.com/matteospanio/torchfx/" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
-  </div>
-  <div class="md-source__repository">
-    torchfx
-  </div>
-</a>
-      </div>
-    
-  </nav>
+
   
-</header>
-    
-    <div class="md-container" data-md-component="container">
-      
-      
-      
-      
-        
-          
-        
-      
-      <main class="md-main" data-md-component="main">
-        <div class="md-main__inner md-grid">
-          
-            
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-
-
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
-  <label class="md-nav__title" for="__drawer">
-    <a href="../../index.html" title="TorchFX" class="md-nav__button md-logo" aria-label="TorchFX" data-md-component="logo">
-      <img src="../../_static/tfx.svg" alt="logo">
-    </a>
-    TorchFX
-  </label>
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
   
-    <div class="md-nav__source">
-      <a href="https://github.com/matteospanio/torchfx/" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
+  
+  <div class=" navbar-header-items__start">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
   </div>
-  <div class="md-source__repository">
-    torchfx
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
   </div>
-</a>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
     </div>
   
-  <ul class="md-nav__list" data-md-scrollfix>
-    
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
       
       
-  
-  
-  
-  
-    
-    
       
         
-        
       
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
+      <div class="sidebar-header-items__center">
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
-        
           
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    Contents:<wbr>
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
     
-  </span>
-  
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../guides/index.html">
+    Guides
+  </a>
+</li>
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1">
-            <span class="md-nav__icon md-icon"></span>
-            Contents:<wbr>
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../installation.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Installation
+      </div>
     
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting_started.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Getting Started
     
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    API
     
-  </span>
-  
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
 
-      </a>
-    </li>
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
   
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
 
-              
-            
-          </ul>
-        </nav>
+
+      </div>
       
-    </li>
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
   
-  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
 
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
     
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">torchfx.wave</span></li>
   </ul>
 </nav>
-                  </div>
-                </div>
-              </div>
-            
-            
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
               
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
-          
-          
-            <div class="md-content" data-md-component="content">
-              <article class="md-content__inner md-typeset" role="main">
+              
+              
                 
-                
-                  
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <h1>Source code for torchfx.wave</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Wave class for discrete-time audio signal processing.</span>
 
+<span class="sd">This module provides the Wave class, the core data container for audio signals in</span>
+<span class="sd">torchfx. The Wave class encapsulates a PyTorch tensor representing multi-channel audio</span>
+<span class="sd">samples along with its sampling frequency, enabling PyTorch-compatible audio processing</span>
+<span class="sd">with support for GPU acceleration and functional transformations.</span>
 
-<h1>Source code for torchfx.wave</h1><div class="highlight"><pre>
-<span></span><code><span class="sd">&quot;&quot;&quot;Module containing the Wave class.</span>
+<span class="sd">Tensor Shape Convention</span>
+<span class="sd">-----------------------</span>
+<span class="sd">Audio signals are represented as 2D tensors with shape (channels, samples):</span>
+<span class="sd">- Mono audio: (1, N) where N is the sample count</span>
+<span class="sd">- Stereo audio: (2, N)</span>
+<span class="sd">- Multi-channel: (C, N) where C is the channel count</span>
 
-<span class="sd">Digital signal is usually represented as a 2D tensor, where the first dimension is the</span>
-<span class="sd">channel and the second dimension is the time. Of course the signal is discrete, so the</span>
-<span class="sd">time is represented as a sequence of samples. The sampling frequency is the number of</span>
-<span class="sd">samples per second. The sampling frequency is usually represented as `fs`.</span>
-<span class="sd">The Wave class is a wrapper around the 2D tensor that represents the signal. It</span>
-<span class="sd">provides methods to manipulate the signal, such as applying filters, transforming the</span>
-<span class="sd">signal, and saving the signal to a file.</span>
+<span class="sd">This convention is consistent with torchaudio and PyTorch audio processing standards.</span>
+
+<span class="sd">Typical Usage Pattern</span>
+<span class="sd">---------------------</span>
+<span class="sd">The Wave class supports a functional pipeline approach for audio processing:</span>
+
+<span class="sd">    &gt;&gt;&gt; import torch</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx import Wave</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx.filter import iir</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # Load audio file</span>
+<span class="sd">    &gt;&gt;&gt; wave = Wave.from_file(&quot;input.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # Move to GPU if available</span>
+<span class="sd">    &gt;&gt;&gt; wave = wave.to(&quot;cuda&quot; if torch.cuda.is_available() else &quot;cpu&quot;)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # Apply effects using pipeline operator</span>
+<span class="sd">    &gt;&gt;&gt; result = (wave</span>
+<span class="sd">    ...     | iir.LoButterworth(100, order=2)</span>
+<span class="sd">    ...     | iir.HiButterworth(2000, order=2))</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # Save result</span>
+<span class="sd">    &gt;&gt;&gt; result.save(&quot;output.wav&quot;)</span>
+
+<span class="sd">See Also</span>
+<span class="sd">--------</span>
+<span class="sd">torchfx.effect.FX : Base class for audio effects and filters</span>
+<span class="sd">torchfx.filter.AbstractFilter : Base class for digital filters</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 
@@ -424,30 +818,145 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.__base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractFilter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Device</span><span class="p">,</span> <span class="n">Millisecond</span><span class="p">,</span> <span class="n">Second</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">BitRate</span><span class="p">,</span> <span class="n">Device</span><span class="p">,</span> <span class="n">Millisecond</span><span class="p">,</span> <span class="n">Second</span>
 
 
 <div class="viewcode-block" id="Wave">
-<a class="viewcode-back" href="../../api.html#torchfx.Wave">[docs]</a>
+<a class="viewcode-back" href="../../api/core.html#torchfx.Wave">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Wave</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A discrete time waveform.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A discrete-time waveform representing multi-channel audio signals.</span>
+
+<span class="sd">    The Wave class is the fundamental data structure in torchfx, wrapping a PyTorch</span>
+<span class="sd">    tensor containing audio samples along with its sampling frequency. It provides</span>
+<span class="sd">    device management (CPU/CUDA), file I/O integration with torchaudio, functional</span>
+<span class="sd">    transformations, and a pipeline operator for chaining effects and filters.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    ys : Tensor</span>
-<span class="sd">        The signal.</span>
+<span class="sd">        Audio signal tensor with shape (channels, samples). Each row represents a</span>
+<span class="sd">        channel, and each column represents a time sample.</span>
 <span class="sd">    fs : int</span>
-<span class="sd">        The sampling frequency.</span>
+<span class="sd">        Sampling frequency in Hz (samples per second). Used by filters and effects</span>
+<span class="sd">        to compute time-domain parameters.</span>
+<span class="sd">    metadata : dict</span>
+<span class="sd">        Optional metadata dictionary containing audio file information such as</span>
+<span class="sd">        num_frames, num_channels, bits_per_sample, and encoding.</span>
+<span class="sd">    device : Device</span>
+<span class="sd">        Current device location (&quot;cpu&quot; or &quot;cuda&quot;) where the tensor resides.</span>
+<span class="sd">        Read-only property; use the setter or to() method to move devices.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Create a Wave from an array:</span>
+
+<span class="sd">    &gt;&gt;&gt; import torch</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx import Wave</span>
+<span class="sd">    &gt;&gt;&gt; samples = torch.randn(1, 44100)  # 1 second of mono audio at 44.1kHz</span>
+<span class="sd">    &gt;&gt;&gt; wave = Wave(samples, fs=44100)</span>
+
+<span class="sd">    Load from an audio file:</span>
+
+<span class="sd">    &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; print(f&quot;Channels: {wave.channels()}, Duration: {wave.duration(&#39;sec&#39;)}s&quot;)</span>
+
+<span class="sd">    Process on GPU with pipeline operator:</span>
+
+<span class="sd">    &gt;&gt;&gt; from torchfx.filter import iir</span>
+<span class="sd">    &gt;&gt;&gt; wave = Wave.from_file(&quot;input.wav&quot;).to(&quot;cuda&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; result = wave | iir.LoButterworth(1000, order=4)</span>
+
+<span class="sd">    Multi-channel processing:</span>
+
+<span class="sd">    &gt;&gt;&gt; stereo = Wave.from_file(&quot;stereo.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; left = stereo.get_channel(0)</span>
+<span class="sd">    &gt;&gt;&gt; right = stereo.get_channel(1)</span>
+<span class="sd">    &gt;&gt;&gt; # Process channels independently</span>
+<span class="sd">    &gt;&gt;&gt; processed_left = left | some_effect</span>
+<span class="sd">    &gt;&gt;&gt; processed_right = right | other_effect</span>
+<span class="sd">    &gt;&gt;&gt; result = Wave.merge([processed_left, processed_right], split_channels=True)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The Wave class follows an immutability pattern for most operations. Methods like</span>
+<span class="sd">    transform(), __or__(), and get_channel() return new Wave objects rather than</span>
+<span class="sd">    modifying in place. Only device management methods (to(), device setter) modify</span>
+<span class="sd">    the Wave in place while returning self for method chaining.</span>
+
+<span class="sd">    The pipe operator (|) automatically configures FX modules by setting the sampling</span>
+<span class="sd">    frequency if not already set and computing filter coefficients before first use.</span>
+<span class="sd">    This eliminates boilerplate and prevents common configuration errors.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    from_file : Load a Wave from an audio file</span>
+<span class="sd">    merge : Combine multiple Wave objects into one</span>
+<span class="sd">    transform : Apply functional transformations to the signal</span>
+<span class="sd">    to : Move the Wave to a different device</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">ys</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">__device</span><span class="p">:</span> <span class="n">Device</span>  <span class="c1"># private field</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tp</span><span class="o">.</span><span class="n">Any</span><span class="p">]</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ys</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ys</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Device</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tp</span><span class="o">.</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>  <span class="c1"># noqa: B006</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a Wave object from array-like audio data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ys : ArrayLike</span>
+<span class="sd">            Audio signal data as an array-like object (NumPy array, list, or PyTorch</span>
+<span class="sd">            tensor) with shape (channels, samples). Will be converted to a PyTorch</span>
+<span class="sd">            Tensor if not already.</span>
+<span class="sd">        fs : int</span>
+<span class="sd">            Sampling frequency in Hz (samples per second).</span>
+<span class="sd">        device : {&quot;cpu&quot;, &quot;cuda&quot;}, optional</span>
+<span class="sd">            Target device for the audio tensor. Default is &quot;cpu&quot;.</span>
+<span class="sd">        metadata : dict, optional</span>
+<span class="sd">            Optional metadata dictionary for storing audio file information.</span>
+<span class="sd">            Default is an empty dict.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Create from a NumPy array:</span>
+
+<span class="sd">        &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">        &gt;&gt;&gt; from torchfx import Wave</span>
+<span class="sd">        &gt;&gt;&gt; audio_data = np.random.randn(2, 44100)  # 1 second stereo at 44.1kHz</span>
+<span class="sd">        &gt;&gt;&gt; wave = Wave(audio_data, fs=44100)</span>
+
+<span class="sd">        Create on GPU:</span>
+
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; audio_data = torch.randn(1, 48000)  # 1 second mono at 48kHz</span>
+<span class="sd">        &gt;&gt;&gt; wave = Wave(audio_data, fs=48000, device=&quot;cuda&quot;)</span>
+
+<span class="sd">        Create with metadata:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave(audio_data, fs=44100, metadata={&quot;source&quot;: &quot;microphone&quot;})</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The constructor automatically converts the input data to a PyTorch Tensor</span>
+<span class="sd">        and immediately moves it to the specified device.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        from_file : Alternative constructor that loads audio from a file</span>
+<span class="sd">        to : Method to move the Wave to a different device after creation</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ys</span> <span class="o">=</span> <span class="n">Tensor</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -467,24 +976,59 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Wave.to">
-<a class="viewcode-back" href="../../api.html#torchfx.Wave.to">[docs]</a>
+<a class="viewcode-back" href="../../api/core.html#torchfx.Wave.to">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Move the wave object to a specific device (`cpu` or `cuda`).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Move the Wave object to a specific device (CPU or CUDA).</span>
+
+<span class="sd">        This method transfers the internal audio tensor to the specified device and</span>
+<span class="sd">        returns self to enable method chaining. The device transfer uses PyTorch&#39;s</span>
+<span class="sd">        standard tensor movement mechanism.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        device : {&quot;cpu&quot;, &quot;cuda&quot;}</span>
-<span class="sd">            The device to move the wave object to.</span>
+<span class="sd">            Target device to move the Wave object to.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Wave</span>
-<span class="sd">            The wave object.</span>
+<span class="sd">            Returns self for method chaining support.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;path/to/file.wav&quot;)</span>
+<span class="sd">        Move to GPU:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
 <span class="sd">        &gt;&gt;&gt; wave.to(&quot;cuda&quot;)</span>
+
+<span class="sd">        Conditional device selection:</span>
+
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; device = &quot;cuda&quot; if torch.cuda.is_available() else &quot;cpu&quot;</span>
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;).to(device)</span>
+
+<span class="sd">        Method chaining pattern:</span>
+
+<span class="sd">        &gt;&gt;&gt; from torchfx.filter import iir</span>
+<span class="sd">        &gt;&gt;&gt; result = (Wave.from_file(&quot;input.wav&quot;)</span>
+<span class="sd">        ...     .to(&quot;cuda&quot;)</span>
+<span class="sd">        ...     | iir.LoButterworth(1000))</span>
+
+<span class="sd">        Process on GPU, then move back to CPU:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; result = (wave.to(&quot;cuda&quot;) | some_filter).to(&quot;cpu&quot;)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Unlike most Wave methods, to() modifies the Wave in place but returns self</span>
+<span class="sd">        to support fluent interface patterns. Effects and filters applied via the</span>
+<span class="sd">        pipeline operator will automatically inherit the Wave&#39;s device location.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        device : Property for getting or setting the current device</span>
+<span class="sd">        save : Method that automatically moves to CPU before saving</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__device</span> <span class="o">=</span> <span class="n">device</span>
@@ -493,85 +1037,357 @@
 
 
 <div class="viewcode-block" id="Wave.transform">
-<a class="viewcode-back" href="../../api.html#torchfx.Wave.transform">[docs]</a>
+<a class="viewcode-back" href="../../api/core.html#torchfx.Wave.transform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Wave&quot;</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a functional transformation to the signal.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a functional transformation to the audio signal tensor.</span>
+
+<span class="sd">        This method applies an arbitrary function to the audio tensor, creating a new</span>
+<span class="sd">        Wave object with the transformed signal while preserving the sampling frequency.</span>
+<span class="sd">        The original Wave object remains unchanged, following an immutability pattern.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        func : Callable[..., Tensor]</span>
-<span class="sd">            The function to apply to the signal.</span>
+<span class="sd">            Function that takes a tensor as its first argument and returns a tensor.</span>
+<span class="sd">            Can be any PyTorch or torchaudio function, or a custom callable.</span>
+<span class="sd">        *args</span>
+<span class="sd">            Additional positional arguments passed to func after the tensor.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional keyword arguments passed to func.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Wave</span>
-<span class="sd">            A new wave object with the transformed signal.</span>
+<span class="sd">            New Wave object with the transformed signal and the same sampling frequency.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;path/to/file.wav&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; wave.transform(torch.fft.fft)</span>
+<span class="sd">        Apply FFT transformation:</span>
+
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; freq_domain = wave.transform(torch.fft.fft)</span>
+
+<span class="sd">        Apply normalization:</span>
+
+<span class="sd">        &gt;&gt;&gt; def normalize_peak(tensor):</span>
+<span class="sd">        ...     return tensor / tensor.abs().max()</span>
+<span class="sd">        &gt;&gt;&gt; normalized = wave.transform(normalize_peak)</span>
+
+<span class="sd">        Apply torchaudio transforms with parameters:</span>
+
+<span class="sd">        &gt;&gt;&gt; import torchaudio.transforms as T</span>
+<span class="sd">        &gt;&gt;&gt; # Resample to 16kHz (requires passing sample rate)</span>
+<span class="sd">        &gt;&gt;&gt; resampled = wave.transform(</span>
+<span class="sd">        ...     T.Resample(wave.fs, 16000).forward</span>
+<span class="sd">        ... )</span>
+
+<span class="sd">        Apply custom function with arguments:</span>
+
+<span class="sd">        &gt;&gt;&gt; def add_noise(tensor, noise_level=0.01):</span>
+<span class="sd">        ...     noise = torch.randn_like(tensor) * noise_level</span>
+<span class="sd">        ...     return tensor + noise</span>
+<span class="sd">        &gt;&gt;&gt; noisy = wave.transform(add_noise, noise_level=0.05)</span>
+
+<span class="sd">        Chain transformations:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; result = (wave</span>
+<span class="sd">        ...     .transform(lambda x: x / x.abs().max())  # Normalize</span>
+<span class="sd">        ...     .transform(torch.fft.fft)                # FFT</span>
+<span class="sd">        ...     .transform(torch.fft.ifft)               # IFFT</span>
+<span class="sd">        ...     .transform(torch.real))                  # Extract real part</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The transform method creates a new Wave object rather than modifying in place,</span>
+<span class="sd">        supporting functional programming patterns. The original Wave is unchanged.</span>
+
+<span class="sd">        The function must accept a tensor as its first argument and return a tensor.</span>
+<span class="sd">        The returned tensor shape should maintain the (channels, samples) convention,</span>
+<span class="sd">        though the number of samples may change.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        __or__ : Pipeline operator for applying nn.Module effects and filters</span>
+<span class="sd">        to : Move the Wave to a different device before transformation</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Wave</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Wave.from_file">
-<a class="viewcode-back" href="../../api.html#torchfx.Wave.from_file">[docs]</a>
+<a class="viewcode-back" href="../../api/core.html#torchfx.Wave.from_file">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Wave&quot;</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate a wave from an audio file.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a Wave object from an audio file.</span>
+
+<span class="sd">        This classmethod uses torchaudio.load to read audio files, automatically</span>
+<span class="sd">        detecting the format and extracting metadata. Supported formats include WAV,</span>
+<span class="sd">        MP3, FLAC, OGG, and others depending on the available torchaudio backend.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        path : str or Path</span>
-<span class="sd">            The path to the audio file.</span>
+<span class="sd">            Path to the audio file to load. Can be a string or pathlib.Path object.</span>
 <span class="sd">        *args</span>
-<span class="sd">            Additional arguments to pass to `torchaudio.load`.</span>
+<span class="sd">            Additional positional arguments passed to torchaudio.load.</span>
 <span class="sd">        **kwargs</span>
-<span class="sd">            Additional keyword arguments to pass to `torchaudio.load`.</span>
+<span class="sd">            Additional keyword arguments passed to torchaudio.load. Common options</span>
+<span class="sd">            include frame_offset, num_frames, normalize, channels_first, and format.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Wave</span>
-<span class="sd">            The wave object.</span>
+<span class="sd">            New Wave object containing the loaded audio data, sampling frequency,</span>
+<span class="sd">            and extracted metadata.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;path/to/file.wav&quot;)</span>
+<span class="sd">        Load a WAV file:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; print(f&quot;Loaded {wave.channels()} channels at {wave.fs}Hz&quot;)</span>
+
+<span class="sd">        Load a specific portion of a file:</span>
+
+<span class="sd">        &gt;&gt;&gt; # Load 1 second starting at 2 seconds</span>
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;long_audio.wav&quot;, frame_offset=88200, num_frames=44100)</span>
+
+<span class="sd">        Load and check metadata:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.flac&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; print(wave.metadata)</span>
+<span class="sd">        {&#39;num_frames&#39;: 220500, &#39;num_channels&#39;: 2, &#39;bits_per_sample&#39;: 16, ...}</span>
+
+<span class="sd">        Load different formats:</span>
+
+<span class="sd">        &gt;&gt;&gt; wav_wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; mp3_wave = Wave.from_file(&quot;audio.mp3&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; flac_wave = Wave.from_file(&quot;audio.flac&quot;)</span>
+
+<span class="sd">        Load with normalization:</span>
+
+<span class="sd">        &gt;&gt;&gt; # Normalize to [-1, 1] range</span>
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;, normalize=True)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The method automatically extracts metadata including num_frames, num_channels,</span>
+<span class="sd">        bits_per_sample, and encoding when available. If metadata extraction fails,</span>
+<span class="sd">        an empty metadata dictionary is used instead.</span>
+
+<span class="sd">        The loaded audio tensor will be on CPU by default. Use the to() method or</span>
+<span class="sd">        device parameter in subsequent processing to move to GPU:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;).to(&quot;cuda&quot;)</span>
+
+<span class="sd">        Format support depends on the torchaudio backend (SoX or FFmpeg). Check</span>
+<span class="sd">        torchaudio documentation for your installation&#39;s supported formats.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        __init__ : Direct constructor for creating Wave from array data</span>
+<span class="sd">        save : Save a Wave object to an audio file</span>
+<span class="sd">        torchaudio.load : Underlying function used for loading</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data</span><span class="p">,</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">torchaudio</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span></div>
+
+        <span class="c1"># Extract metadata from the file</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">torchaudio</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;num_frames&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">num_frames</span><span class="p">,</span>
+                <span class="s2">&quot;num_channels&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">num_channels</span><span class="p">,</span>
+                <span class="s2">&quot;bits_per_sample&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">bits_per_sample</span><span class="p">,</span>
+                <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">encoding</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c1"># If metadata extraction fails, continue without it</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Wave.save">
+<a class="viewcode-back" href="../../api/core.html#torchfx.Wave.save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
+        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bits_per_sample</span><span class="p">:</span> <span class="n">BitRate</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">tp</span><span class="o">.</span><span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save the wave to an audio file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        path : str or Path</span>
+<span class="sd">            The path where to save the audio file.</span>
+<span class="sd">        format : str, optional</span>
+<span class="sd">            Override the audio format. If not specified, the format is inferred</span>
+<span class="sd">            from the file extension. Valid values include: &quot;wav&quot;, &quot;flac&quot;.</span>
+<span class="sd">        encoding : str, optional</span>
+<span class="sd">            Changes the encoding for supported formats (wav, flac).</span>
+<span class="sd">            Valid values: &quot;PCM_S&quot; (signed int), &quot;PCM_U&quot; (unsigned int),</span>
+<span class="sd">            &quot;PCM_F&quot; (float), &quot;ULAW&quot;, &quot;ALAW&quot;.</span>
+<span class="sd">        bits_per_sample : int, optional</span>
+<span class="sd">            Changes the bit depth for supported formats.</span>
+<span class="sd">            Valid values: 8, 16, 24, 32, 64.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional keyword arguments to pass to `torchaudio.save`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Save as WAV file:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;input.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; wave.save(&quot;output.wav&quot;)</span>
+
+<span class="sd">        Save as FLAC with specific encoding:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave.save(&quot;output.flac&quot;, encoding=&quot;PCM_S&quot;, bits_per_sample=24)</span>
+
+<span class="sd">        Save with high bit depth:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave.save(&quot;output.wav&quot;, encoding=&quot;PCM_F&quot;, bits_per_sample=32)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - The method automatically creates parent directories if they don&#39;t exist.</span>
+<span class="sd">        - The audio data is moved to CPU before saving.</span>
+<span class="sd">        - Supported formats depend on the available torchaudio backend.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        from_file : Load a wave from an audio file.</span>
+<span class="sd">        torchaudio.save : Underlying function used for saving.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert path to Path object for easier manipulation</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># Create parent directories if they don&#39;t exist</span>
+        <span class="n">output_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Move tensor to CPU for saving (torchaudio requires CPU tensors)</span>
+        <span class="n">audio_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+
+        <span class="c1"># Save using torchaudio</span>
+        <span class="n">torchaudio</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">uri</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">),</span>
+            <span class="n">src</span><span class="o">=</span><span class="n">audio_data</span><span class="p">,</span>
+            <span class="n">sample_rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
+            <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span>
+            <span class="n">bits_per_sample</span><span class="o">=</span><span class="n">bits_per_sample</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__or__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Wave&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a module to the wave through the pipeline operator: `|`.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply effects and filters using the pipeline operator (|).</span>
+
+<span class="sd">        The pipe operator provides a clean, readable syntax for chaining audio effects</span>
+<span class="sd">        and filters. It automatically configures FX modules by setting their sampling</span>
+<span class="sd">        frequency and computing filter coefficients before application, eliminating</span>
+<span class="sd">        boilerplate and preventing configuration errors.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        f : nn.Module</span>
-<span class="sd">            The module to apply to the wave.</span>
+<span class="sd">            PyTorch module to apply to the wave. Typically an FX subclass (effect or</span>
+<span class="sd">            filter) or nn.Sequential containing multiple effects.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Wave</span>
-<span class="sd">            The wave object.</span>
+<span class="sd">            New Wave object with the effect/filter applied.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            If f is not an instance of nn.Module.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;path/to/file.wav&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; wave | iir.HiButterworth(1000) | iir.LoButterworth(2000)</span>
-<span class="sd">        &gt;&gt;&gt; wave | nn.Sequential(iir.HiButterworth(1000), iir.LoButterworth(2000))</span>
+<span class="sd">        Apply a single filter:</span>
+
+<span class="sd">        &gt;&gt;&gt; from torchfx import Wave</span>
+<span class="sd">        &gt;&gt;&gt; from torchfx.filter import iir</span>
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; filtered = wave | iir.LoButterworth(cutoff=1000, order=4)</span>
+
+<span class="sd">        Chain multiple filters:</span>
+
+<span class="sd">        &gt;&gt;&gt; result = (wave</span>
+<span class="sd">        ...     | iir.HiButterworth(100, order=2)</span>
+<span class="sd">        ...     | iir.LoButterworth(5000, order=2))</span>
+
+<span class="sd">        Use with nn.Sequential:</span>
+
+<span class="sd">        &gt;&gt;&gt; import torch.nn as nn</span>
+<span class="sd">        &gt;&gt;&gt; from torchfx.filter import iir</span>
+<span class="sd">        &gt;&gt;&gt; chain = nn.Sequential(</span>
+<span class="sd">        ...     iir.HiButterworth(100),</span>
+<span class="sd">        ...     iir.LoButterworth(5000)</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; result = wave | chain</span>
+
+<span class="sd">        Combine with other operations:</span>
+
+<span class="sd">        &gt;&gt;&gt; from torchfx.effect import transform as T</span>
+<span class="sd">        &gt;&gt;&gt; result = (Wave.from_file(&quot;input.wav&quot;)</span>
+<span class="sd">        ...     .to(&quot;cuda&quot;)</span>
+<span class="sd">        ...     | iir.LoButterworth(1000)</span>
+<span class="sd">        ...     | T.Vol(0.5)</span>
+<span class="sd">        ...     .to(&quot;cpu&quot;))</span>
+
+<span class="sd">        Parallel filter combination (using + operator from FX):</span>
+
+<span class="sd">        &gt;&gt;&gt; from torchfx.filter import iir</span>
+<span class="sd">        &gt;&gt;&gt; # Apply two filters in parallel and sum results</span>
+<span class="sd">        &gt;&gt;&gt; result = wave | (iir.HiButterworth(2000) + iir.HiChebyshev1(2000))</span>
 
 <span class="sd">        Notes</span>
 <span class="sd">        -----</span>
-<span class="sd">        The module must have a `forward` method that takes a tensor as input and</span>
-<span class="sd">        returns a tensor as output. The module must also have a `fs` attribute that</span>
-<span class="sd">        specifies the sampling frequency of the filter. If the module is a sequential</span>
-<span class="sd">        module, the `fs` attribute will be set for each module in the sequence.</span>
-<span class="sd">        The `fs` attribute of the wave object will be set to the `fs` attribute of the</span>
-<span class="sd">        module.</span>
+<span class="sd">        The pipeline operator performs automatic configuration in the following order:</span>
+
+<span class="sd">        1. **Type Validation**: Ensures f is an nn.Module instance</span>
+<span class="sd">        2. **FX Configuration**: For FX instances:</span>
+<span class="sd">           - Sets f.fs to wave.fs if f.fs is None</span>
+<span class="sd">           - Computes filter coefficients for AbstractFilter instances</span>
+<span class="sd">        3. **Sequential Handling**: For nn.Sequential or nn.ModuleList:</span>
+<span class="sd">           - Recursively configures each contained FX module</span>
+<span class="sd">        4. **Application**: Calls f.forward() via transform() method</span>
+
+<span class="sd">        This automatic configuration means you can write:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave | iir.LoButterworth(1000)</span>
+
+<span class="sd">        Instead of the more verbose:</span>
+
+<span class="sd">        &gt;&gt;&gt; filter = iir.LoButterworth(1000)</span>
+<span class="sd">        &gt;&gt;&gt; filter.fs = wave.fs</span>
+<span class="sd">        &gt;&gt;&gt; filter.compute_coefficients()</span>
+<span class="sd">        &gt;&gt;&gt; wave.transform(filter.forward)</span>
+
+<span class="sd">        The module&#39;s forward method must accept a tensor and return a tensor. The</span>
+<span class="sd">        returned tensor shape should maintain the (channels, samples) convention.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        transform : Apply arbitrary functions to the signal</span>
+<span class="sd">        to : Move Wave to different device before applying effects</span>
+<span class="sd">        FX : Base class for effects and filters</span>
+<span class="sd">        AbstractFilter : Base class for digital filters</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected nn.Module, but got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> instead.&quot;</span><span class="p">)</span>
@@ -599,94 +1415,310 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
 <div class="viewcode-block" id="Wave.channels">
-<a class="viewcode-back" href="../../api.html#torchfx.Wave.channels">[docs]</a>
+<a class="viewcode-back" href="../../api/core.html#torchfx.Wave.channels">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">channels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of channels of the wave.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of audio channels in the wave.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        int</span>
-<span class="sd">            The number of channels of the wave.</span>
+<span class="sd">            Number of channels. Returns 1 for mono, 2 for stereo, or higher values</span>
+<span class="sd">            for multi-channel audio.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Check channel count:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; print(f&quot;This file has {wave.channels()} channel(s)&quot;)</span>
+
+<span class="sd">        Process based on channel count:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; if wave.channels() == 1:</span>
+<span class="sd">        ...     print(&quot;Mono audio&quot;)</span>
+<span class="sd">        ... elif wave.channels() == 2:</span>
+<span class="sd">        ...     print(&quot;Stereo audio&quot;)</span>
+<span class="sd">        ... else:</span>
+<span class="sd">        ...     print(f&quot;Multi-channel audio with {wave.channels()} channels&quot;)</span>
+
+<span class="sd">        Extract all channels:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;multichannel.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; channel_list = [wave.get_channel(i) for i in range(wave.channels())]</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        This method returns the first dimension of the ys tensor shape. The tensor</span>
+<span class="sd">        follows the convention (channels, samples), so channels() returns ys.shape[0].</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        get_channel : Extract a specific channel as a new Wave object</span>
+<span class="sd">        merge : Combine multiple Wave objects with different merge strategies</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="Wave.get_channel">
-<a class="viewcode-back" href="../../api.html#torchfx.Wave.get_channel">[docs]</a>
+<a class="viewcode-back" href="../../api/core.html#torchfx.Wave.get_channel">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Wave&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a specific channel of the wave.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract a specific channel as a new Wave object.</span>
+
+<span class="sd">        This method creates a new Wave containing only the specified channel from</span>
+<span class="sd">        the original multi-channel audio. The new Wave has the same sampling frequency</span>
+<span class="sd">        and can be processed independently.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        index : int</span>
-<span class="sd">            The index of the channel to return.</span>
+<span class="sd">            Zero-based index of the channel to extract. For stereo audio, use 0 for</span>
+<span class="sd">            left channel and 1 for right channel.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Wave</span>
-<span class="sd">            The wave object with only the specified channel.</span>
+<span class="sd">            New Wave object containing only the specified channel with shape (1, samples).</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;path/to/file.wav&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; wave.get_channel(0)</span>
+<span class="sd">        Extract left and right channels from stereo:</span>
+
+<span class="sd">        &gt;&gt;&gt; stereo = Wave.from_file(&quot;stereo.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; left_channel = stereo.get_channel(0)</span>
+<span class="sd">        &gt;&gt;&gt; right_channel = stereo.get_channel(1)</span>
+
+<span class="sd">        Process channels independently:</span>
+
+<span class="sd">        &gt;&gt;&gt; from torchfx.filter import iir</span>
+<span class="sd">        &gt;&gt;&gt; stereo = Wave.from_file(&quot;stereo.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; # Apply different filters to each channel</span>
+<span class="sd">        &gt;&gt;&gt; left = stereo.get_channel(0) | iir.LoButterworth(1000)</span>
+<span class="sd">        &gt;&gt;&gt; right = stereo.get_channel(1) | iir.HiButterworth(1000)</span>
+<span class="sd">        &gt;&gt;&gt; # Merge back to stereo</span>
+<span class="sd">        &gt;&gt;&gt; result = Wave.merge([left, right], split_channels=True)</span>
+
+<span class="sd">        Extract all channels as a list:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;multichannel.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; channels = [wave.get_channel(i) for i in range(wave.channels())]</span>
+
+<span class="sd">        Process mono from stereo by averaging:</span>
+
+<span class="sd">        &gt;&gt;&gt; stereo = Wave.from_file(&quot;stereo.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; left = stereo.get_channel(0)</span>
+<span class="sd">        &gt;&gt;&gt; right = stereo.get_channel(1)</span>
+<span class="sd">        &gt;&gt;&gt; # Mix to mono (this uses merge to sum channels)</span>
+<span class="sd">        &gt;&gt;&gt; mono = Wave.merge([left, right], split_channels=False)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The returned Wave object is independent of the original. Modifications to</span>
+<span class="sd">        the returned Wave do not affect the original multi-channel Wave.</span>
+
+<span class="sd">        The index must be within the valid range [0, channels()-1]. Python&#39;s standard</span>
+<span class="sd">        indexing rules apply, so negative indices are supported (e.g., -1 for the</span>
+<span class="sd">        last channel).</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        channels : Get the total number of channels</span>
+<span class="sd">        merge : Combine multiple Wave objects back into multi-channel audio</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Wave</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Wave.duration">
-<a class="viewcode-back" href="../../api.html#torchfx.Wave.duration">[docs]</a>
+<a class="viewcode-back" href="../../api/core.html#torchfx.Wave.duration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="n">tp</span><span class="o">.</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;sec&quot;</span><span class="p">,</span> <span class="s2">&quot;ms&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Second</span> <span class="o">|</span> <span class="n">Millisecond</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the length of the wave in seconds or milliseconds.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the duration of the audio signal.</span>
+
+<span class="sd">        Computes the time length of the audio based on the number of samples and</span>
+<span class="sd">        the sampling frequency. The duration can be returned in either seconds or</span>
+<span class="sd">        milliseconds.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        unit : {&quot;sec&quot;, &quot;ms&quot;}</span>
-<span class="sd">            The unit of time to return the duration in.</span>
+<span class="sd">            Unit for the returned duration. Use &quot;sec&quot; for seconds or &quot;ms&quot; for</span>
+<span class="sd">            milliseconds.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        float</span>
-<span class="sd">            The duration of the wave in the specified unit of time.</span>
+<span class="sd">            Duration in the specified time unit. The return type is annotated as</span>
+<span class="sd">            Second (float) when unit=&quot;sec&quot; or Millisecond (float) when unit=&quot;ms&quot;.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;path/to/file.wav&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; wave.duration(&quot;sec&quot;)</span>
-<span class="sd">        3.0</span>
-<span class="sd">        &gt;&gt;&gt; wave.duration(&quot;ms&quot;)</span>
-<span class="sd">        3000.0</span>
+<span class="sd">        Get duration in seconds:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; duration_sec = wave.duration(&quot;sec&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; print(f&quot;Duration: {duration_sec:.2f} seconds&quot;)</span>
+
+<span class="sd">        Get duration in milliseconds:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; duration_ms = wave.duration(&quot;ms&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; print(f&quot;Duration: {duration_ms:.0f} ms&quot;)</span>
+
+<span class="sd">        Compare durations:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave1 = Wave.from_file(&quot;short.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; wave2 = Wave.from_file(&quot;long.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; if wave1.duration(&quot;sec&quot;) &lt; wave2.duration(&quot;sec&quot;):</span>
+<span class="sd">        ...     print(&quot;wave1 is shorter&quot;)</span>
+
+<span class="sd">        Calculate processing time estimate:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; duration = wave.duration(&quot;sec&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; # Estimate processing time (example: 10x realtime)</span>
+<span class="sd">        &gt;&gt;&gt; estimated_time = duration * 10</span>
+<span class="sd">        &gt;&gt;&gt; print(f&quot;Estimated processing: {estimated_time:.2f} seconds&quot;)</span>
+
+<span class="sd">        Use in validation:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; max_duration_sec = 60.0</span>
+<span class="sd">        &gt;&gt;&gt; if wave.duration(&quot;sec&quot;) &gt; max_duration_sec:</span>
+<span class="sd">        ...     print(&quot;Audio file is too long&quot;)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The duration is calculated using the formula:</span>
+
+<span class="sd">            duration = (number_of_samples / sampling_frequency) * multiplier</span>
+
+<span class="sd">        Where:</span>
+<span class="sd">        - number_of_samples = len(self) = self.ys.shape[1]</span>
+<span class="sd">        - sampling_frequency = self.fs</span>
+<span class="sd">        - multiplier = 1000 for milliseconds, 1 for seconds</span>
+
+<span class="sd">        For example, a Wave with 44100 samples at 44100 Hz has a duration of:</span>
+<span class="sd">        - 1.0 second (44100 / 44100 * 1)</span>
+<span class="sd">        - 1000.0 milliseconds (44100 / 44100 * 1000)</span>
+
+<span class="sd">        The duration is independent of the number of channels; it represents the</span>
+<span class="sd">        time length of the audio signal.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        __len__ : Get the number of samples in the wave</span>
+<span class="sd">        channels : Get the number of channels</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1000</span> <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;ms&quot;</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Wave.merge">
-<a class="viewcode-back" href="../../api.html#torchfx.Wave.merge">[docs]</a>
+<a class="viewcode-back" href="../../api/core.html#torchfx.Wave.merge">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">waves</span><span class="p">:</span> <span class="n">tp</span><span class="o">.</span><span class="n">Sequence</span><span class="p">[</span><span class="s2">&quot;Wave&quot;</span><span class="p">],</span> <span class="n">split_channels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Wave&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge multiple waves into a single wave.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Combine multiple Wave objects into a single Wave.</span>
+
+<span class="sd">        This classmethod provides two merging strategies: mixing (summing waveforms</span>
+<span class="sd">        element-wise) or channel concatenation (preserving each wave as separate</span>
+<span class="sd">        channels). All waves must have the same sampling frequency.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        waves : Sequence[Wave]</span>
-<span class="sd">            The waves to merge.</span>
+<span class="sd">            Sequence of Wave objects to merge. Must contain at least one wave.</span>
 <span class="sd">        split_channels : bool, optional</span>
-<span class="sd">            If False, the channels of the waves will be merged into a single channel.</span>
-<span class="sd">            If True, the channels will be merged into multiple channels. Default is False.</span>
+<span class="sd">            Determines the merge strategy:</span>
+<span class="sd">            - False (default): Mix waves by summing them element-wise</span>
+<span class="sd">            - True: Concatenate waves along the channel dimension</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Wave</span>
-<span class="sd">            The merged wave object.</span>
+<span class="sd">            New Wave object containing the merged audio with the same sampling</span>
+<span class="sd">            frequency as the input waves.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If no waves are provided or if waves have different sampling frequencies.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; wave1 = Wave.from_file(&quot;path/to/file1.wav&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; wave2 = Wave.from_file(&quot;path/to/file2.wav&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; merged_wave = wave1.merge([wave2])</span>
+<span class="sd">        Mix two mono waves into one (sum strategy):</span>
+
+<span class="sd">        &gt;&gt;&gt; wave1 = Wave.from_file(&quot;voice.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; wave2 = Wave.from_file(&quot;music.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; mixed = Wave.merge([wave1, wave2], split_channels=False)</span>
+<span class="sd">        &gt;&gt;&gt; # Result: mono wave with voice and music mixed together</span>
+
+<span class="sd">        Combine two mono waves into stereo (concatenate strategy):</span>
+
+<span class="sd">        &gt;&gt;&gt; left = Wave.from_file(&quot;left.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; right = Wave.from_file(&quot;right.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; stereo = Wave.merge([left, right], split_channels=True)</span>
+<span class="sd">        &gt;&gt;&gt; # Result: stereo wave with left and right channels</span>
+
+<span class="sd">        Merge after independent processing:</span>
+
+<span class="sd">        &gt;&gt;&gt; from torchfx.filter import iir</span>
+<span class="sd">        &gt;&gt;&gt; stereo = Wave.from_file(&quot;stereo.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; left = stereo.get_channel(0) | iir.LoButterworth(1000)</span>
+<span class="sd">        &gt;&gt;&gt; right = stereo.get_channel(1) | iir.HiButterworth(1000)</span>
+<span class="sd">        &gt;&gt;&gt; result = Wave.merge([left, right], split_channels=True)</span>
+
+<span class="sd">        Mix multiple sources with different effects:</span>
+
+<span class="sd">        &gt;&gt;&gt; wave1 = Wave.from_file(&quot;track1.wav&quot;) | effect1</span>
+<span class="sd">        &gt;&gt;&gt; wave2 = Wave.from_file(&quot;track2.wav&quot;) | effect2</span>
+<span class="sd">        &gt;&gt;&gt; wave3 = Wave.from_file(&quot;track3.wav&quot;) | effect3</span>
+<span class="sd">        &gt;&gt;&gt; final_mix = Wave.merge([wave1, wave2, wave3], split_channels=False)</span>
+
+<span class="sd">        Create multi-channel output from mono sources:</span>
+
+<span class="sd">        &gt;&gt;&gt; channels = [Wave.from_file(f&quot;channel_{i}.wav&quot;) for i in range(8)]</span>
+<span class="sd">        &gt;&gt;&gt; multichannel = Wave.merge(channels, split_channels=True)</span>
+<span class="sd">        &gt;&gt;&gt; print(f&quot;Created {multichannel.channels()} channel audio&quot;)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        **Merge Strategy Comparison:**</span>
+
+<span class="sd">        When split_channels=False (mixing):</span>
+<span class="sd">        - Waves are summed element-wise</span>
+<span class="sd">        - If waves have different lengths, shorter ones are zero-padded</span>
+<span class="sd">        - Result has same number of channels as input waves</span>
+<span class="sd">        - Use for: audio mixing, layering multiple sounds</span>
+
+<span class="sd">        When split_channels=True (concatenation):</span>
+<span class="sd">        - Waves are concatenated along channel dimension</span>
+<span class="sd">        - Each input wave becomes a separate channel in output</span>
+<span class="sd">        - Result channel count = sum of all input channel counts</span>
+<span class="sd">        - Use for: creating stereo/multichannel from mono sources</span>
+
+<span class="sd">        **Length Handling:**</span>
+
+<span class="sd">        When merging waves of different lengths:</span>
+<span class="sd">        - The output length is the maximum length among all input waves</span>
+<span class="sd">        - Shorter waves are zero-padded to match the longest wave</span>
+
+<span class="sd">        **Validation:**</span>
+
+<span class="sd">        All input waves must have identical sampling frequencies. This is enforced</span>
+<span class="sd">        because merging waves with different sampling rates would be technically</span>
+<span class="sd">        invalid.</span>
+
+<span class="sd">        **Device Compatibility:**</span>
+
+<span class="sd">        All waves should be on the same device. The merged Wave will be on the</span>
+<span class="sd">        device of the first input wave.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        get_channel : Extract individual channels from multi-channel audio</span>
+<span class="sd">        channels : Get the number of channels in a Wave</span>
+<span class="sd">        __init__ : Constructor for creating Wave from array data</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -704,109 +1736,96 @@
         <span class="k">if</span> <span class="n">split_channels</span><span class="p">:</span>
             <span class="n">ys</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">w</span><span class="o">.</span><span class="n">ys</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Get the maximum length and number of channels</span>
+            <span class="n">max_length</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">)</span>
+            <span class="n">num_channels</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
             <span class="n">ys</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
-                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waves</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">ys</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">)),</span>
+                <span class="p">(</span><span class="n">num_channels</span><span class="p">,</span> <span class="n">max_length</span><span class="p">),</span>
                 <span class="n">dtype</span><span class="o">=</span><span class="n">waves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                 <span class="n">device</span><span class="o">=</span><span class="n">waves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">:</span>
-                <span class="n">ys</span> <span class="o">+=</span> <span class="n">s</span><span class="o">.</span><span class="n">ys</span>
+            <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">:</span>
+                <span class="c1"># Add each wave, handling different lengths</span>
+                <span class="n">ys</span><span class="p">[:,</span> <span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">w</span><span class="o">.</span><span class="n">ys</span>
 
         <span class="k">return</span> <span class="n">Wave</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span></div>
 </div>
 
-</code></pre></div>
+</pre></div>
+<div class="section ablog__blog_comments">
+   
+</div>
 
-
-
-
-
-
-
-  
-  
-
-
-
-
-
-
-                
-              </article>
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
             </div>
-          
-          
-  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
-
-        </div>
-        
-          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
-  Back to top
-</button>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
         
       </main>
-      
-        <footer class="md-footer">
-  
-    
-  
-  
-  
-  <div class="md-footer-meta md-typeset">
-    
-    <div class="md-footer-meta__inner md-grid">
-      <div class="md-copyright">
-  
-    <div class="md-footer-copyright__highlight">
-        &#169; Copyright 2025, Matteo Spanio.
-        
     </div>
-  
-    Created using
-    <a href="https://www.sphinx-doc.org/" target="_blank" rel="noopener">Sphinx</a>
-    8.1.3.
-     and
-    <a href="https://github.com/jbms/sphinx-immaterial/" target="_blank" rel="noopener">Sphinx-Immaterial</a>
-  
-</div>
-      
-        <div class="md-social">
-  
-    
-    
-    
-    
-    <a href="https://github.com/matteospanio/torchfx" target="_blank" rel="noopener" title="Source on github.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
-    </a>
-  
-    
-    
-    
-    
-    <a href="https://pypi.org/project/torchfx/" target="_blank" rel="noopener" title="PyPI package" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 404c11.1 0 20.1 9.1 20.1 20.3 0 11.3-9 20.4-20.1 20.4-11 0-20.1-9.2-20.1-20.4.1-11.3 9.1-20.3 20.1-20.3M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.7-142.6c-11.1 0-20.1-9.1-20.1-20.3.1-11.3 9-20.4 20.1-20.4 11 0 20.1 9.2 20.1 20.4s-9 20.3-20.1 20.3"/></svg>
-    </a>
-  
-</div>
-      
-    </div>
-    
   </div>
-</footer>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
       
     </div>
-    <div class="md-dialog" data-md-component="dialog">
-      <div class="md-dialog__inner md-typeset"></div>
-    </div>
-    
-    
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.expand", "navigation.sections", "navigation.top", "navigation.footer", "search.share", "search.suggest", "toc.follow", "toc.sticky", "content.tabs.link", "content.code.copy", "content.action.edit", "content.action.view", "content.tooltips", "announce.dismiss"], "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
-    
+  
+  
+  
+    <div class="footer-items__end">
       
-        <script src="../../_static/sphinx_immaterial_theme.32136f45f91ae6956.min.js?v=a7a9472a"></script>
-    
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
   </body>
 </html>

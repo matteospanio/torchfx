@@ -1,0 +1,1963 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>GPU Acceleration &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+const defaultStyle = document.createElement('style');
+defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+`;
+document.head.appendChild(defaultStyle);
+
+const fullscreenStyle = document.createElement('style');
+fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+document.head.appendChild(fullscreenStyle);
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness < 128;
+    }
+    return false;
+};
+
+const load = async () => {
+    await mermaid.run();
+
+    const all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(load, 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(load, 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(load, 200);
+        return;
+    }
+
+    const darkTheme = isDarkTheme();
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    const modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    let previousScrollOffset = [window.scrollX, window.scrollY];
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    const allButtons = [];
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        container.appendChild(fullscreenBtn);
+        allButtons.push(fullscreenBtn);
+    });
+
+    // Update theme classes when theme changes
+    const updateTheme = () => {
+        const dark = isDarkTheme();
+        allButtons.forEach(btn => {
+            if (dark) {
+                btn.classList.add('dark-theme');
+            } else {
+                btn.classList.remove('dark-theme');
+            }
+        });
+        if (dark) {
+            modal.classList.add('dark-theme');
+            modalContent.classList.add('dark-theme');
+            closeBtn.classList.add('dark-theme');
+        } else {
+            modal.classList.remove('dark-theme');
+            modalContent.classList.remove('dark-theme');
+            closeBtn.classList.remove('dark-theme');
+        }
+    };
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+};
+
+window.addEventListener("load", load);
+</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/advanced/gpu-acceleration';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="PyTorch Integration" href="pytorch-integration.html" />
+    <link rel="prev" title="Advanced Topics" href="index.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Advanced Topics</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Advanced Topics</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">GPU Acceleration</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="gpu-acceleration">
+<span id="id1"></span><h1>GPU Acceleration<a class="headerlink" href="#gpu-acceleration" title="Link to this heading">#</a></h1>
+<p>Learn how to leverage CUDA-enabled GPUs for accelerated audio processing in TorchFX. This tutorial covers device management, performance optimization, and best practices for moving audio processing workflows to the GPU.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
+<p>Before starting this tutorial, you should be familiar with:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../core-concepts/wave.html"><span class="doc">Wave - Digital Audio Representation</span></a> - Wave class fundamentals</p></li>
+<li><p><a class="reference internal" href="../core-concepts/pipeline-operator.html"><span class="doc">Pipeline Operator - Functional Composition</span></a> - Pipeline operator basics</p></li>
+<li><p><a class="reference external" href="https://pytorch.org/docs/stable/notes/cuda.html">PyTorch CUDA Semantics</a> - PyTorch device management</p></li>
+<li><p>Basic understanding of GPU computing concepts</p></li>
+</ul>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>TorchFX leverages PyTorch’s device management system to enable GPU acceleration for audio processing. All audio data (<a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> objects) and filter coefficients can be seamlessly moved between CPU and GPU memory using standard PyTorch device APIs.</p>
+<section id="when-to-use-gpu-acceleration">
+<h3>When to Use GPU Acceleration<a class="headerlink" href="#when-to-use-gpu-acceleration" title="Link to this heading">#</a></h3>
+<p>GPU acceleration provides significant performance benefits in specific scenarios:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scenario</p></th>
+<th class="head"><p>GPU Advantage</p></th>
+<th class="head"><p>Reason</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Long audio files (&gt;60 seconds)</p></td>
+<td><p><strong>High</strong></p></td>
+<td><p>Amortizes data transfer overhead</p></td>
+</tr>
+<tr class="row-odd"><td><p>Multi-channel audio (≥4 channels)</p></td>
+<td><p><strong>High</strong></p></td>
+<td><p>Parallel processing across channels</p></td>
+</tr>
+<tr class="row-even"><td><p>Complex filter chains (≥3 filters)</p></td>
+<td><p><strong>Medium-High</strong></p></td>
+<td><p>Accumulated compute savings</p></td>
+</tr>
+<tr class="row-odd"><td><p>Short audio (&lt;5 seconds)</p></td>
+<td><p><strong>Low</strong></p></td>
+<td><p>Data transfer overhead dominates</p></td>
+</tr>
+<tr class="row-even"><td><p>Single channel, simple processing</p></td>
+<td><p><strong>Low-Medium</strong></p></td>
+<td><p>Insufficient parallelism</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>For batch processing of many audio files, GPU acceleration can provide substantial speedups even for shorter files, as the overhead is amortized across the entire batch.</p>
+</div>
+</section>
+</section>
+<section id="device-management-architecture">
+<h2>Device Management Architecture<a class="headerlink" href="#device-management-architecture" title="Link to this heading">#</a></h2>
+<p>TorchFX uses PyTorch’s device management system for both <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> objects and filter modules.</p>
+<pre  class="mermaid">
+        graph TB
+    subgraph CPU[&quot;CPU Memory Space&quot;]
+        WaveCPU[&quot;Wave Object&lt;br/&gt;ys: Tensor (CPU)&lt;br/&gt;fs: int&lt;br/&gt;device: 'cpu'&quot;]
+        FilterCPU[&quot;Filter Modules&lt;br/&gt;coefficients on CPU&quot;]
+    end
+
+    subgraph GPU[&quot;GPU Memory Space (CUDA)&quot;]
+        WaveGPU[&quot;Wave Object&lt;br/&gt;ys: Tensor (CUDA)&lt;br/&gt;fs: int&lt;br/&gt;device: 'cuda'&quot;]
+        FilterGPU[&quot;Filter Modules&lt;br/&gt;coefficients on CUDA&quot;]
+    end
+
+    subgraph API[&quot;Device Management API&quot;]
+        ToMethod[&quot;Wave.to(device)&quot;]
+        DeviceProp[&quot;Wave.device property&quot;]
+        ModuleTo[&quot;nn.Module.to(device)&quot;]
+    end
+
+    WaveCPU --&gt;|&quot;wave.to('cuda')&quot;| ToMethod
+    ToMethod --&gt;|&quot;moves ys tensor&quot;| WaveGPU
+
+    WaveGPU --&gt;|&quot;wave.to('cpu')&quot;| ToMethod
+    ToMethod --&gt;|&quot;moves ys tensor&quot;| WaveCPU
+
+    DeviceProp --&gt;|&quot;setter calls to()&quot;| ToMethod
+
+    FilterCPU --&gt;|&quot;filter.to('cuda')&quot;| ModuleTo
+    ModuleTo --&gt;|&quot;moves parameters&quot;| FilterGPU
+
+    FilterGPU --&gt;|&quot;filter.to('cpu')&quot;| ModuleTo
+    ModuleTo --&gt;|&quot;moves parameters&quot;| FilterCPU
+
+    style WaveCPU fill:#e1f5ff
+    style WaveGPU fill:#e1ffe1
+    style FilterCPU fill:#fff5e1
+    style FilterGPU fill:#fff5e1
+    </pre><p><strong>Device Transfer Architecture</strong> - Wave objects and filters can be moved between CPU and GPU memory using standard PyTorch APIs.</p>
+</section>
+<section id="moving-wave-objects-to-gpu">
+<h2>Moving Wave Objects to GPU<a class="headerlink" href="#moving-wave-objects-to-gpu" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> class provides two methods for device management: the <code class="docutils literal notranslate"><span class="pre">to()</span></code> method and the <code class="docutils literal notranslate"><span class="pre">device</span></code> property setter.</p>
+<section id="the-to-method">
+<h3>The <code class="docutils literal notranslate"><span class="pre">to()</span></code> Method<a class="headerlink" href="#the-to-method" title="Link to this heading">#</a></h3>
+<p>The primary method for moving a <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> object between devices is <a class="reference internal" href="../../api/core.html#torchfx.Wave.to" title="torchfx.Wave.to"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to()</span></code></a>, which returns the modified <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> object for method chaining:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Load audio file (defaults to CPU)</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># &#39;cpu&#39;</span>
+
+<span class="c1"># Move to GPU</span>
+<span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># &#39;cuda&#39;</span>
+
+<span class="c1"># Move back to CPU</span>
+<span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># &#39;cpu&#39;</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">to()</span></code> method performs two operations:</p>
+<ol class="arabic simple">
+<li><p>Updates the internal <code class="docutils literal notranslate"><span class="pre">__device</span></code> field to track the current device</p></li>
+<li><p>Moves the underlying <code class="docutils literal notranslate"><span class="pre">ys</span></code> tensor using PyTorch’s <code class="docutils literal notranslate"><span class="pre">Tensor.to(device)</span></code> method</p></li>
+</ol>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../../api/core.html#torchfx.Wave.to" title="torchfx.Wave.to"><code class="xref py py-meth docutils literal notranslate"><span class="pre">torchfx.Wave.to()</span></code></a> - API documentation for the <code class="docutils literal notranslate"><span class="pre">to()</span></code> method</p>
+</div>
+</section>
+<section id="the-device-property">
+<h3>The <code class="docutils literal notranslate"><span class="pre">device</span></code> Property<a class="headerlink" href="#the-device-property" title="Link to this heading">#</a></h3>
+<p>The <a class="reference internal" href="../../api/core.html#id0" title="torchfx.Wave.device"><code class="xref py py-attr docutils literal notranslate"><span class="pre">device</span></code></a> property provides both getter and setter functionality:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Reading current device</span>
+<span class="n">current_device</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">device</span>  <span class="c1"># Returns &quot;cpu&quot; or &quot;cuda&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wave is on: </span><span class="si">{</span><span class="n">current_device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Setting device via property (equivalent to wave.to(&quot;cuda&quot;))</span>
+<span class="n">wave</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wave moved to: </span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The property setter internally calls <code class="docutils literal notranslate"><span class="pre">to()</span></code>, so both approaches are equivalent. Use whichever is more readable in your code.</p>
+</section>
+<section id="method-chaining">
+<h3>Method Chaining<a class="headerlink" href="#method-chaining" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">to()</span></code> method returns <code class="docutils literal notranslate"><span class="pre">self</span></code>, enabling method chaining with other <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> operations:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Method chaining with device transfer</span>
+<span class="n">result</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>  <span class="c1"># Move to GPU</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Save result (automatically on same device as input)</span>
+<span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="filter-and-effect-device-management">
+<h2>Filter and Effect Device Management<a class="headerlink" href="#filter-and-effect-device-management" title="Link to this heading">#</a></h2>
+<p>All filters and effects in TorchFX inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, enabling standard PyTorch device management for their parameters and buffers.</p>
+<section id="moving-filters-to-gpu">
+<h3>Moving Filters to GPU<a class="headerlink" href="#moving-filters-to-gpu" title="Link to this heading">#</a></h3>
+<p>Filters store their coefficients as PyTorch tensors or buffers. To enable GPU-accelerated filtering, move these coefficients to the GPU:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Create and configure filter</span>
+<span class="n">lowpass</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="n">lowpass</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>  <span class="c1"># Compute coefficients on CPU</span>
+
+<span class="c1"># Move filter to GPU</span>
+<span class="n">lowpass</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+
+<span class="c1"># Now the filter is ready for GPU processing</span>
+</pre></div>
+</div>
+</section>
+<section id="moving-filter-chains-to-gpu">
+<h3>Moving Filter Chains to GPU<a class="headerlink" href="#moving-filter-chains-to-gpu" title="Link to this heading">#</a></h3>
+<p>When using <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> or other PyTorch containers, all modules in the chain are moved together:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Create filter chain</span>
+<span class="n">filter_chain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Move entire chain to GPU</span>
+<span class="n">filter_chain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>  <span class="c1"># All filters and effects now on CUDA</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">to()</span></code> method propagates through all child modules, ensuring consistent device placement.</p>
+</section>
+</section>
+<section id="device-coordination-in-processing-pipelines">
+<h2>Device Coordination in Processing Pipelines<a class="headerlink" href="#device-coordination-in-processing-pipelines" title="Link to this heading">#</a></h2>
+<p>When using the <a class="reference internal" href="../../glossary.html#term-Pipeline-Operator"><span class="xref std std-term">pipeline operator</span></a> (<code class="docutils literal notranslate"><span class="pre">|</span></code>), device compatibility is the user’s responsibility. Both the <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> object and the filter/effect must be on the same device.</p>
+<pre  class="mermaid">
+        sequenceDiagram
+    participant User
+    participant Wave as &quot;Wave Object&quot;
+    participant Filter as &quot;Filter Module&quot;
+    participant GPU as &quot;CUDA Device&quot;
+
+    User-&gt;&gt;Wave: Wave.from_file(&quot;audio.wav&quot;)
+    Note over Wave: ys on CPU&lt;br/&gt;device = &quot;cpu&quot;
+
+    User-&gt;&gt;Wave: wave.to(&quot;cuda&quot;)
+    Wave-&gt;&gt;GPU: Transfer ys tensor
+    Note over Wave: ys on CUDA&lt;br/&gt;device = &quot;cuda&quot;
+
+    User-&gt;&gt;Filter: filter.to(&quot;cuda&quot;)
+    Filter-&gt;&gt;GPU: Transfer coefficients
+    Note over Filter: coefficients on CUDA
+
+    User-&gt;&gt;Wave: wave | filter
+    Note over Wave,Filter: Both on same device ✓
+    Wave-&gt;&gt;Filter: forward(ys)
+    Filter-&gt;&gt;GPU: Execute convolution on GPU
+    GPU--&gt;&gt;Filter: Result tensor (CUDA)
+    Filter--&gt;&gt;Wave: Return new Wave (CUDA)
+    Note over Wave: New Wave object&lt;br/&gt;ys on CUDA
+    </pre><p><strong>Pipeline Processing Flow with GPU</strong> - Shows the sequence of device transfers and processing operations.</p>
+<section id="device-compatibility-rules">
+<h3>Device Compatibility Rules<a class="headerlink" href="#device-compatibility-rules" title="Link to this heading">#</a></h3>
+<p>The pipeline operator validates device compatibility at runtime:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Wave Device</p></th>
+<th class="head"><p>Filter/Effect Device</p></th>
+<th class="head"><p>Result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;cuda&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;cuda&quot;</span></code></p></td>
+<td><p>✅ Processing on GPU</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code></p></td>
+<td><p>✅ Processing on CPU</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;cuda&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code></p></td>
+<td><p>❌ Runtime error</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;cuda&quot;</span></code></p></td>
+<td><p>❌ Runtime error</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Device mismatches will raise a runtime error from PyTorch. Always ensure the <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> object and all filters/effects in the pipeline are on the same device.</p>
+</div>
+</section>
+<section id="automatic-device-propagation-pattern">
+<h3>Automatic Device Propagation Pattern<a class="headerlink" href="#automatic-device-propagation-pattern" title="Link to this heading">#</a></h3>
+<p>While TorchFX doesn’t automatically move filters to match the Wave’s device, you can establish a consistent pattern:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Determine device</span>
+<span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+
+<span class="c1"># Load and move Wave to device</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Create filters (they start on CPU by default)</span>
+<span class="n">lowpass</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">highpass</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Move filters to match Wave&#39;s device</span>
+<span class="n">lowpass</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">highpass</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Now processing works on the selected device</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">lowpass</span> <span class="o">|</span> <span class="n">highpass</span>
+</pre></div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The tensor returned by the filter’s <code class="docutils literal notranslate"><span class="pre">forward()</span></code> method maintains the same device as the input tensor, so all intermediate <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> objects in a pipeline chain stay on the same device.</p>
+</div>
+</section>
+</section>
+<section id="performance-considerations">
+<h2>Performance Considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading">#</a></h2>
+<p>GPU acceleration provides the greatest benefits when data transfer overhead is amortized by significant computation.</p>
+<section id="data-transfer-overhead">
+<h3>Data Transfer Overhead<a class="headerlink" href="#data-transfer-overhead" title="Link to this heading">#</a></h3>
+<p>Moving data between CPU and GPU incurs overhead from PCIe bus transfers:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Operation</p></th>
+<th class="head"><p>Cost</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Wave.to(&quot;cuda&quot;)</span></code></p></td>
+<td><p>O(n) where n = sample count</p></td>
+<td><p>Transfer audio data to GPU</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">nn.Module.to(&quot;cuda&quot;)</span></code></p></td>
+<td><p>O(p) where p = parameter count</p></td>
+<td><p>Transfer filter coefficients</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Tensor.cpu()</span></code></p></td>
+<td><p>O(n) where n = tensor size</p></td>
+<td><p>Transfer results back to CPU</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Optimization Strategy</strong>: Minimize device transfers by:</p>
+<ol class="arabic simple">
+<li><p>Loading and moving to GPU <strong>once</strong> at the start</p></li>
+<li><p>Performing <strong>all processing</strong> on GPU</p></li>
+<li><p>Moving back to CPU <strong>only</strong> for final I/O operations</p></li>
+</ol>
+</section>
+<section id="benchmarking-example">
+<h3>Benchmarking Example<a class="headerlink" href="#benchmarking-example" title="Link to this heading">#</a></h3>
+<p>The following example demonstrates proper device management for performance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">DesignableFIR</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">timeit</span>
+
+<span class="c1"># Configuration</span>
+<span class="n">SAMPLE_RATE</span> <span class="o">=</span> <span class="mi">44100</span>
+<span class="n">DURATION</span> <span class="o">=</span> <span class="mi">60</span>  <span class="c1"># seconds</span>
+<span class="n">NUM_CHANNELS</span> <span class="o">=</span> <span class="mi">4</span>
+
+<span class="c1"># Create test audio</span>
+<span class="n">signal</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">NUM_CHANNELS</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">SAMPLE_RATE</span> <span class="o">*</span> <span class="n">DURATION</span><span class="p">))</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">SAMPLE_RATE</span><span class="p">)</span>
+
+<span class="c1"># Create filter chain</span>
+<span class="n">filter_chain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">num_taps</span><span class="o">=</span><span class="mi">101</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">SAMPLE_RATE</span><span class="p">),</span>
+    <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">num_taps</span><span class="o">=</span><span class="mi">102</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">SAMPLE_RATE</span><span class="p">),</span>
+    <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">num_taps</span><span class="o">=</span><span class="mi">103</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">SAMPLE_RATE</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Compute coefficients before moving to GPU</span>
+<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">filter_chain</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+
+<span class="c1"># Benchmark GPU processing</span>
+<span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="n">filter_chain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="n">gpu_time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter_chain</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># Benchmark CPU processing</span>
+<span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="n">filter_chain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="n">cpu_time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter_chain</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GPU time: </span><span class="si">{</span><span class="n">gpu_time</span><span class="o">/</span><span class="mi">10</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CPU time: </span><span class="si">{</span><span class="n">cpu_time</span><span class="o">/</span><span class="mi">10</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Speedup: </span><span class="si">{</span><span class="n">cpu_time</span><span class="o">/</span><span class="n">gpu_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">x&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="when-gpu-provides-maximum-benefit">
+<h3>When GPU Provides Maximum Benefit<a class="headerlink" href="#when-gpu-provides-maximum-benefit" title="Link to this heading">#</a></h3>
+<p>Based on empirical benchmarking, GPU acceleration is most beneficial when:</p>
+<p><strong>Audio Duration</strong></p>
+<ul class="simple">
+<li><p>Files longer than 60 seconds see significant speedups</p></li>
+<li><p>Transfer overhead is amortized over longer computation time</p></li>
+</ul>
+<p><strong>Number of Channels</strong></p>
+<ul class="simple">
+<li><p>4+ channels leverage GPU’s parallel processing capabilities</p></li>
+<li><p>Single-channel audio sees modest gains</p></li>
+</ul>
+<p><strong>Filter Complexity</strong></p>
+<ul class="simple">
+<li><p>FIR filters with &gt;100 taps benefit significantly</p></li>
+<li><p>IIR filter chains (3+ cascaded stages) show good speedups</p></li>
+<li><p>Parallel filter combinations (<span class="xref std std-doc">series-parallel-filters</span>) see excellent performance</p></li>
+</ul>
+<p><strong>Batch Processing</strong></p>
+<ul class="simple">
+<li><p>Processing multiple files in a batch maximizes GPU utilization</p></li>
+<li><p>Transfer overhead amortized across entire batch</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a> - Comprehensive performance benchmarks and optimization guidelines</p>
+</div>
+</section>
+<section id="memory-considerations">
+<h3>Memory Considerations<a class="headerlink" href="#memory-considerations" title="Link to this heading">#</a></h3>
+<p>GPU memory is typically more limited than system RAM:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Constraint</p></th>
+<th class="head"><p>Typical Limit</p></th>
+<th class="head"><p>Mitigation Strategy</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>GPU VRAM capacity</p></td>
+<td><p>4-24 GB (consumer GPUs)</p></td>
+<td><p>Process audio in chunks</p></td>
+</tr>
+<tr class="row-odd"><td><p>Audio file size</p></td>
+<td><p>Limited by VRAM</p></td>
+<td><p>Stream processing for very long files</p></td>
+</tr>
+<tr class="row-even"><td><p>Filter coefficient storage</p></td>
+<td><p>Usually negligible</p></td>
+<td><p>Pre-compute coefficients before transfer</p></td>
+</tr>
+<tr class="row-odd"><td><p>Batch size</p></td>
+<td><p>Limited by VRAM</p></td>
+<td><p>Reduce batch size if OOM errors occur</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>For very long audio files (e.g., &gt;1 hour), consider chunked processing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process_in_chunks</span><span class="p">(</span><span class="n">wave</span><span class="p">,</span> <span class="n">filter_chain</span><span class="p">,</span> <span class="n">chunk_duration</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process audio in chunks to manage GPU memory.&quot;&quot;&quot;</span>
+    <span class="n">chunk_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">chunk_duration</span> <span class="o">*</span> <span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+    <span class="n">num_chunks</span> <span class="o">=</span> <span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">chunk_samples</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">chunk_samples</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_chunks</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">chunk_samples</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">chunk_samples</span><span class="p">,</span> <span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Extract chunk</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">],</span> <span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+        <span class="n">chunk</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Process chunk</span>
+        <span class="n">processed_chunk</span> <span class="o">=</span> <span class="n">chunk</span> <span class="o">|</span> <span class="n">filter_chain</span>
+
+        <span class="c1"># Move back to CPU and store</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processed_chunk</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">cpu</span><span class="p">())</span>
+
+    <span class="c1"># Concatenate results</span>
+    <span class="k">return</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+
+<span class="c1"># Usage</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;very_long_audio.wav&quot;</span><span class="p">)</span>
+<span class="n">filter_chain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+<span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">process_in_chunks</span><span class="p">(</span><span class="n">wave</span><span class="p">,</span> <span class="n">filter_chain</span><span class="p">,</span> <span class="n">chunk_duration</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<span class="n">result</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;processed.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<section id="conditional-device-selection">
+<h3>Conditional Device Selection<a class="headerlink" href="#conditional-device-selection" title="Link to this heading">#</a></h3>
+<p>Production code should handle systems without CUDA support gracefully:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Conditional device selection</span>
+<span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Load and move to selected device</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Create and move filters</span>
+<span class="n">filter_chain</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+<span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Process on appropriate device</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter_chain</span>
+</pre></div>
+</div>
+<p>This pattern:</p>
+<ul class="simple">
+<li><p>Checks for CUDA availability at runtime</p></li>
+<li><p>Falls back to CPU if CUDA is unavailable</p></li>
+<li><p>Enables cross-platform compatibility</p></li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>For multi-GPU systems, you can specify a specific GPU using <code class="docutils literal notranslate"><span class="pre">&quot;cuda:0&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cuda:1&quot;</span></code>, etc. Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.cuda.device_count.html#torch.cuda.device_count" title="(in PyTorch v2.9)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.cuda.device_count()</span></code></a> to check available GPUs.</p>
+</div>
+</section>
+<section id="cpu-transfer-for-i-o-operations">
+<h3>CPU Transfer for I/O Operations<a class="headerlink" href="#cpu-transfer-for-i-o-operations" title="Link to this heading">#</a></h3>
+<p>File I/O operations require CPU tensors. Always move tensors to CPU before saving:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
+
+<span class="c1"># Process on GPU</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter_chain</span>  <span class="c1"># Processing on GPU</span>
+
+<span class="c1"># Option 1: Use ys.cpu() for saving</span>
+<span class="n">torchaudio</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">result</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+
+<span class="c1"># Option 2: Move entire Wave to CPU</span>
+<span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">Tensor.cpu()</span></code> method creates a copy on CPU without modifying the original GPU tensor, while <code class="docutils literal notranslate"><span class="pre">Wave.to(&quot;cpu&quot;)</span></code> moves the Wave object’s internal state.</p>
+</section>
+<section id="complete-processing-pipeline-pattern">
+<h3>Complete Processing Pipeline Pattern<a class="headerlink" href="#complete-processing-pipeline-pattern" title="Link to this heading">#</a></h3>
+<p>Here’s a complete example demonstrating best practices for GPU-accelerated audio processing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process_audio_gpu</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process audio with GPU acceleration and proper device management.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Step 1: Determine device</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Step 2: Load audio</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded audio: </span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, fs=</span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Step 3: Create processing chain</span>
+    <span class="n">processing_chain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+        <span class="c1"># Pre-processing: remove rumble and noise</span>
+        <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+        <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">15000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+
+        <span class="c1"># Main processing: EQ and dynamics</span>
+        <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Step 4: Move to selected device</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">processing_chain</span> <span class="o">=</span> <span class="n">processing_chain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Step 5: Process audio (all on same device)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">processing_chain</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing completed on </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Step 6: Save result (move to CPU if needed)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;cuda&quot;</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+
+    <span class="n">result</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved to: </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Usage</span>
+<span class="n">process_audio_gpu</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="processing-pipeline-visualization">
+<h3>Processing Pipeline Visualization<a class="headerlink" href="#processing-pipeline-visualization" title="Link to this heading">#</a></h3>
+<pre  class="mermaid">
+        graph TD
+    Start([Start]) --&gt; CheckGPU{torch.cuda&lt;br/&gt;.is_available?}
+
+    CheckGPU --&gt;|Yes| SetCUDA[&quot;device = 'cuda'&quot;]
+    CheckGPU --&gt;|No| SetCPU[&quot;device = 'cpu'&quot;]
+
+    SetCUDA --&gt; Load[Load Audio&lt;br/&gt;Wave.from_file]
+    SetCPU --&gt; Load
+
+    Load --&gt; CreateChain[Create Processing Chain&lt;br/&gt;nn.Sequential]
+
+    CreateChain --&gt; MoveData[&quot;Move to Device&lt;br/&gt;wave.to(device)&lt;br/&gt;chain.to(device)&quot;]
+
+    MoveData --&gt; Process[Process Audio&lt;br/&gt;wave | chain]
+
+    Process --&gt; CheckDevice{result.device&lt;br/&gt;== 'cuda'?}
+
+    CheckDevice --&gt;|Yes| MoveCPU[&quot;Move to CPU&lt;br/&gt;result.to('cpu')&quot;]
+    CheckDevice --&gt;|No| Save
+
+    MoveCPU --&gt; Save[Save to File&lt;br/&gt;result.save]
+
+    Save --&gt; End([End])
+
+    style Start fill:#e1f5ff
+    style End fill:#e1f5ff
+    style Process fill:#e1ffe1
+    style CheckGPU fill:#fff5e1
+    style CheckDevice fill:#fff5e1
+    </pre><p><strong>Complete GPU Processing Workflow</strong> - Shows the full lifecycle from device selection to final output.</p>
+</section>
+<section id="reusable-device-management-wrapper">
+<h3>Reusable Device Management Wrapper<a class="headerlink" href="#reusable-device-management-wrapper" title="Link to this heading">#</a></h3>
+<p>For production code, consider creating a wrapper class:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GPUAudioProcessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper for GPU-accelerated audio processing.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">processing_chain</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize processor with a processing chain.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        processing_chain : nn.Module</span>
+<span class="sd">            PyTorch module for audio processing</span>
+<span class="sd">        device : str or None</span>
+<span class="sd">            Device to use (&#39;cuda&#39;, &#39;cpu&#39;, or None for auto-detect)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processing_chain</span> <span class="o">=</span> <span class="n">processing_chain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initialized on device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process a single audio file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_path : str or Path</span>
+<span class="sd">            Path to input audio file</span>
+<span class="sd">        output_path : str or Path</span>
+<span class="sd">            Path to save processed audio</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Load and move to device</span>
+        <span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Process</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">processing_chain</span>
+
+        <span class="c1"># Save (automatically moves to CPU)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_files</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process multiple audio files.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_files : list of str or Path</span>
+<span class="sd">            List of input audio files</span>
+<span class="sd">        output_dir : str or Path</span>
+<span class="sd">            Directory to save processed files</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">output_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="n">output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">input_path</span> <span class="ow">in</span> <span class="n">input_files</span><span class="p">:</span>
+            <span class="n">input_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span>
+            <span class="n">output_path</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;processed_</span><span class="si">{</span><span class="n">input_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing: </span><span class="si">{</span><span class="n">input_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_file</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+
+<span class="c1"># Usage</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+<span class="c1"># Create processing chain</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">12000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Create processor (auto-detects GPU)</span>
+<span class="n">processor</span> <span class="o">=</span> <span class="n">GPUAudioProcessor</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
+
+<span class="c1"># Process single file</span>
+<span class="n">processor</span><span class="o">.</span><span class="n">process_file</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># Process batch</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;song1.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;song2.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;song3.wav&quot;</span><span class="p">]</span>
+<span class="n">processor</span><span class="o">.</span><span class="n">process_batch</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="s2">&quot;processed/&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="working-examples">
+<h2>Working Examples<a class="headerlink" href="#working-examples" title="Link to this heading">#</a></h2>
+<section id="example-1-basic-gpu-processing">
+<h3>Example 1: Basic GPU Processing<a class="headerlink" href="#example-1-basic-gpu-processing" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="c1"># Check GPU availability</span>
+<span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GPU available: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">get_device_name</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No GPU available, using CPU&quot;</span><span class="p">)</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+
+<span class="c1"># Load audio and move to GPU</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Create and move filter to GPU</span>
+<span class="n">lowpass</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Process on GPU</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">lowpass</span>
+
+<span class="c1"># Save (move to CPU first)</span>
+<span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;filtered.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-2-multi-stage-pipeline">
+<h3>Example 2: Multi-Stage Pipeline<a class="headerlink" href="#example-2-multi-stage-pipeline" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+
+<span class="c1"># Load audio</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;vocal.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Create complex processing chain</span>
+<span class="n">processing</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="c1"># Stage 1: Remove rumble</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+
+    <span class="c1"># Stage 2: Parallel filters for thickness</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiChebyshev1</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+
+    <span class="c1"># Stage 3: Normalize</span>
+    <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
+<span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Process</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">processing</span>
+
+<span class="c1"># Save</span>
+<span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;processed_vocal.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-3-batch-processing-with-progress">
+<h3>Example 3: Batch Processing with Progress<a class="headerlink" href="#example-3-batch-processing-with-progress" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">batch_process_gpu</span><span class="p">(</span><span class="n">input_files</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">filter_chain</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process multiple audio files on GPU with progress bar.&quot;&quot;&quot;</span>
+
+    <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+    <span class="n">filter_chain</span> <span class="o">=</span> <span class="n">filter_chain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">input_path</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">input_files</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Processing&quot;</span><span class="p">):</span>
+        <span class="c1"># Load and process</span>
+        <span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter_chain</span>
+
+        <span class="c1"># Save</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="n">Path</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+
+<span class="c1"># Usage</span>
+<span class="n">files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;audio_dataset&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.wav&quot;</span><span class="p">))</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">batch_process_gpu</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="s2">&quot;processed_dataset&quot;</span><span class="p">,</span> <span class="n">chain</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-4-memory-efficient-chunked-processing">
+<h3>Example 4: Memory-Efficient Chunked Processing<a class="headerlink" href="#example-4-memory-efficient-chunked-processing" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process_long_audio</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">filter_chain</span><span class="p">,</span> <span class="n">chunk_seconds</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process very long audio files in chunks to manage GPU memory.&quot;&quot;&quot;</span>
+
+    <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+    <span class="n">filter_chain</span> <span class="o">=</span> <span class="n">filter_chain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Load entire audio on CPU</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span>
+    <span class="n">chunk_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">chunk_seconds</span> <span class="o">*</span> <span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+
+    <span class="n">processed_chunks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">num_chunks</span> <span class="o">=</span> <span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">chunk_samples</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">chunk_samples</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">num_chunks</span><span class="si">}</span><span class="s2"> chunks on </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_chunks</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">chunk_samples</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">chunk_samples</span><span class="p">,</span> <span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Extract, process, and move back to CPU</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">],</span> <span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+        <span class="n">chunk</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="n">processed</span> <span class="o">=</span> <span class="n">chunk</span> <span class="o">|</span> <span class="n">filter_chain</span>
+        <span class="n">processed_chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processed</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">cpu</span><span class="p">())</span>
+
+        <span class="c1"># Clear GPU cache periodically</span>
+        <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;cuda&quot;</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">empty_cache</span><span class="p">()</span>
+
+    <span class="c1"># Combine chunks and save</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">processed_chunks</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved to </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Usage</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">process_long_audio</span><span class="p">(</span><span class="s2">&quot;long_recording.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;processed.wav&quot;</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">chunk_seconds</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="common-pitfalls-and-solutions">
+<h2>Common Pitfalls and Solutions<a class="headerlink" href="#common-pitfalls-and-solutions" title="Link to this heading">#</a></h2>
+<section id="pitfall-1-device-mismatch-errors">
+<h3>Pitfall 1: Device Mismatch Errors<a class="headerlink" href="#pitfall-1-device-mismatch-errors" title="Link to this heading">#</a></h3>
+<p><strong>Problem</strong>: RuntimeError when Wave and filter are on different devices</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ WRONG: Device mismatch</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>  <span class="c1"># CPU</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>  <span class="c1"># GPU</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="nb">filter</span>  <span class="c1"># RuntimeError!</span>
+</pre></div>
+</div>
+<p><strong>Solution</strong>: Ensure both are on the same device</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ CORRECT: Both on same device</span>
+<span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="nb">filter</span>  <span class="c1"># Works!</span>
+</pre></div>
+</div>
+</section>
+<section id="pitfall-2-forgetting-to-move-back-to-cpu-for-i-o">
+<h3>Pitfall 2: Forgetting to Move Back to CPU for I/O<a class="headerlink" href="#pitfall-2-forgetting-to-move-back-to-cpu-for-i-o" title="Link to this heading">#</a></h3>
+<p><strong>Problem</strong>: Error when trying to save GPU tensors</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ WRONG: Trying to save GPU tensor</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter_chain</span>
+<span class="n">result</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>  <span class="c1"># May fail depending on backend</span>
+</pre></div>
+</div>
+<p><strong>Solution</strong>: Always move to CPU before saving</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ CORRECT: Move to CPU before saving</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter_chain</span>
+<span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>  <span class="c1"># Works!</span>
+
+<span class="c1"># Or use ys.cpu() directly with torchaudio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
+<span class="n">torchaudio</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">result</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pitfall-3-inefficient-repeated-transfers">
+<h3>Pitfall 3: Inefficient Repeated Transfers<a class="headerlink" href="#pitfall-3-inefficient-repeated-transfers" title="Link to this heading">#</a></h3>
+<p><strong>Problem</strong>: Moving data back and forth unnecessarily</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ WRONG: Inefficient transfers</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="n">result1</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span> <span class="o">|</span> <span class="n">filter1</span>  <span class="c1"># CPU</span>
+<span class="n">result2</span> <span class="o">=</span> <span class="n">result1</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span> <span class="o">|</span> <span class="n">filter2</span>  <span class="c1"># GPU</span>
+<span class="n">result3</span> <span class="o">=</span> <span class="n">result2</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span> <span class="o">|</span> <span class="n">filter3</span>  <span class="c1"># CPU</span>
+</pre></div>
+</div>
+<p><strong>Solution</strong>: Do all processing on one device</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ CORRECT: Single device for entire pipeline</span>
+<span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">filter1</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">filter2</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">filter3</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter1</span> <span class="o">|</span> <span class="n">filter2</span> <span class="o">|</span> <span class="n">filter3</span>  <span class="c1"># All on same device</span>
+</pre></div>
+</div>
+</section>
+<section id="pitfall-4-out-of-memory-on-gpu">
+<h3>Pitfall 4: Out of Memory on GPU<a class="headerlink" href="#pitfall-4-out-of-memory-on-gpu" title="Link to this heading">#</a></h3>
+<p><strong>Problem</strong>: CUDA out of memory error with large audio files</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ WRONG: Loading entire 2-hour file on GPU</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;2_hour_recording.wav&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>  <span class="c1"># OOM!</span>
+</pre></div>
+</div>
+<p><strong>Solution</strong>: Use chunked processing (see Example 4 above) or reduce batch size</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ CORRECT: Process in chunks</span>
+<span class="n">process_long_audio</span><span class="p">(</span><span class="s2">&quot;2_hour_recording.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;output.wav&quot;</span><span class="p">,</span> <span class="n">filter_chain</span><span class="p">,</span> <span class="n">chunk_seconds</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="related-concepts">
+<h2>Related Concepts<a class="headerlink" href="#related-concepts" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../core-concepts/wave.html"><span class="doc">Wave - Digital Audio Representation</span></a> - Wave class architecture and methods</p></li>
+<li><p><span class="xref std std-doc">series-parallel-filters</span> - Combining filters in complex chains</p></li>
+<li><p><a class="reference internal" href="performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a> - Performance benchmarks and optimization</p></li>
+<li><p><a class="reference internal" href="pytorch-integration.html"><span class="doc">PyTorch Integration</span></a> - Integration with PyTorch ecosystem</p></li>
+</ul>
+</section>
+<section id="external-resources">
+<h2>External Resources<a class="headerlink" href="#external-resources" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pytorch.org/docs/stable/notes/cuda.html">PyTorch CUDA Semantics</a> - Official PyTorch CUDA documentation</p></li>
+<li><p><a class="reference external" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/">NVIDIA CUDA Programming Guide</a> - CUDA programming fundamentals</p></li>
+<li><p><a class="reference external" href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.device">PyTorch Device Management</a> - Device attribute documentation</p></li>
+<li><p><a class="reference external" href="https://pytorch.org/audio/stable/tutorials/device_avsr.html">torchaudio GPU Tutorial</a> - GPU acceleration in torchaudio</p></li>
+</ul>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<p>Key takeaways for GPU acceleration in TorchFX:</p>
+<ol class="arabic simple">
+<li><p><strong>Device Management</strong>: Use <code class="docutils literal notranslate"><span class="pre">Wave.to(device)</span></code> and <code class="docutils literal notranslate"><span class="pre">Module.to(device)</span></code> for consistent device placement</p></li>
+<li><p><strong>Compatibility</strong>: Ensure Wave objects and filters are on the same device</p></li>
+<li><p><strong>Performance</strong>: GPU acceleration is most beneficial for long audio, multi-channel files, and complex filter chains</p></li>
+<li><p><strong>I/O Operations</strong>: Always move tensors to CPU before saving to disk</p></li>
+<li><p><strong>Best Practices</strong>: Use conditional device selection and minimize data transfers</p></li>
+</ol>
+<p>GPU acceleration can provide significant speedups for audio processing workflows when used correctly. Follow the patterns and best practices in this tutorial to leverage CUDA-enabled GPUs effectively in your TorchFX pipelines.</p>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Advanced Topics</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="pytorch-integration.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">PyTorch Integration</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#when-to-use-gpu-acceleration">When to Use GPU Acceleration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#device-management-architecture">Device Management Architecture</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-wave-objects-to-gpu">Moving Wave Objects to GPU</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-to-method">The <code class="docutils literal notranslate"><span class="pre">to()</span></code> Method</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-device-property">The <code class="docutils literal notranslate"><span class="pre">device</span></code> Property</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#method-chaining">Method Chaining</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#filter-and-effect-device-management">Filter and Effect Device Management</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-filters-to-gpu">Moving Filters to GPU</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-filter-chains-to-gpu">Moving Filter Chains to GPU</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#device-coordination-in-processing-pipelines">Device Coordination in Processing Pipelines</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#device-compatibility-rules">Device Compatibility Rules</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-device-propagation-pattern">Automatic Device Propagation Pattern</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-considerations">Performance Considerations</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-transfer-overhead">Data Transfer Overhead</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmarking-example">Benchmarking Example</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#when-gpu-provides-maximum-benefit">When GPU Provides Maximum Benefit</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#memory-considerations">Memory Considerations</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#conditional-device-selection">Conditional Device Selection</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-transfer-for-i-o-operations">CPU Transfer for I/O Operations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-processing-pipeline-pattern">Complete Processing Pipeline Pattern</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#processing-pipeline-visualization">Processing Pipeline Visualization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reusable-device-management-wrapper">Reusable Device Management Wrapper</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#working-examples">Working Examples</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-1-basic-gpu-processing">Example 1: Basic GPU Processing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-2-multi-stage-pipeline">Example 2: Multi-Stage Pipeline</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-3-batch-processing-with-progress">Example 3: Batch Processing with Progress</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-4-memory-efficient-chunked-processing">Example 4: Memory-Efficient Chunked Processing</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-pitfalls-and-solutions">Common Pitfalls and Solutions</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pitfall-1-device-mismatch-errors">Pitfall 1: Device Mismatch Errors</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pitfall-2-forgetting-to-move-back-to-cpu-for-i-o">Pitfall 2: Forgetting to Move Back to CPU for I/O</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pitfall-3-inefficient-repeated-transfers">Pitfall 3: Inefficient Repeated Transfers</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pitfall-4-out-of-memory-on-gpu">Pitfall 4: Out of Memory on GPU</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts">Related Concepts</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-resources">External Resources</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/advanced/gpu-acceleration.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/advanced/gpu-acceleration.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,1666 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Effects &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/effects';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Blog" href="../blog/index.html" />
+    <link rel="prev" title="Filters" href="filters.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="core.html">Core Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Effects</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">API Reference</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Effects</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="effects">
+<h1>Effects<a class="headerlink" href="#effects" title="Link to this heading">#</a></h1>
+<p>TorchFX provides built-in audio effects for processing audio signals.</p>
+<section id="gain-and-normalization">
+<h2>Gain and Normalization<a class="headerlink" href="#gain-and-normalization" title="Link to this heading">#</a></h2>
+<section id="gain">
+<h3>Gain<a class="headerlink" href="#gain" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.Gain">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">Gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'amplitude'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clamp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Gain" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="core.html#torchfx.FX" title="torchfx.effect.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
+<p>Adjust volume of audio waveforms with multiple gain modes and optional clamping.</p>
+<p>The Gain effect modifies waveform amplitude using three different gain
+representations: direct amplitude multiplication, decibel (dB) adjustment,
+or power scaling. An optional clamping parameter prevents clipping artifacts
+by limiting output values to [-1.0, 1.0].</p>
+<p>This effect extends torchaudio.transforms.Vol by adding the clamp parameter
+for better control over output dynamic range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gain</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The gain factor to apply to the waveform. Must be positive for
+“amplitude” and “power” gain types. Can be negative for “db” type.</p></li>
+<li><p><strong>gain_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – <p>The type of gain to apply. Default is “amplitude”.</p>
+<ul>
+<li><p>”amplitude”: Direct multiplication by gain factor</p></li>
+<li><p>”db”: Decibel-based gain using torchaudio.functional.gain</p></li>
+<li><p>”power”: Power-based gain converted to dB internally</p></li>
+</ul>
+</p></li>
+<li><p><strong>clamp</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, clamps the output waveform to the range [-1.0, 1.0] to
+prevent clipping. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If gain is negative when gain_type is “amplitude” or “power”.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">torchaudio.transforms.Vol</span></code></dt><dd><p>Original transform this effect is based on</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.Normalize" title="torchfx.effect.Normalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Normalize</span></code></a></dt><dd><p>Amplitude normalization with multiple strategies</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">torchaudio.functional.gain</span></code></dt><dd><p>Function used for dB and power gain</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p><strong>Gain Type Formulas:</strong></p>
+<ul class="simple">
+<li><p>Amplitude: <span class="math notranslate nohighlight">\(y[n] = x[n] \cdot \text{gain}\)</span></p></li>
+<li><p>Decibel: <span class="math notranslate nohighlight">\(y[n] = x[n] \cdot 10^{\text{gain}/20}\)</span></p></li>
+<li><p>Power: <span class="math notranslate nohighlight">\(y[n] = x[n] \cdot 10^{(10 \log_{10}(\text{gain}))/20}\)</span></p></li>
+</ul>
+<p><strong>Clamping:</strong></p>
+<p>When clamp=True, the final output is constrained:
+<span class="math notranslate nohighlight">\(y[n] = \text{clip}(y[n], -1.0, 1.0)\)</span></p>
+<p>The &#64;torch.no_grad() decorator disables gradient computation for efficiency
+during inference-only operations.</p>
+<p>This class is based on torchaudio.transforms.Vol, licensed under the
+BSD 2-Clause License. See licenses.torchaudio.BSD-2-Clause.txt for details.</p>
+<p class="rubric">Examples</p>
+<p>Basic amplitude gain to double volume:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">louder</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">gain</span>
+</pre></div>
+</div>
+<p>Increase volume by 6 dB with clamping:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="n">clamp</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">louder</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">gain</span>
+</pre></div>
+</div>
+<p>Increase power by 4x (equivalent to +6 dB or 2x amplitude):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;power&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">louder</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">gain</span>
+</pre></div>
+</div>
+<p>Reduce volume by 50% without clamping:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">quieter</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">gain</span>
+</pre></div>
+</div>
+<p>Direct tensor processing:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># (channels, samples)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="n">clamp</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">quieter</span> <span class="o">=</span> <span class="n">gain</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Negative dB for attenuation:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">gain</span><span class="o">=-</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;db&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">quieter</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">gain</span>
+</pre></div>
+</div>
+<p>Chain with other effects:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.effect.Gain.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Gain.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Gain.forward" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waveform</strong> (<em>Tensor</em>) – Tensor of audio of dimension <cite>(…, time)</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor of audio of dimension <cite>(…, time)</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="normalize">
+<h3>Normalize<a class="headerlink" href="#normalize" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.Normalize">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">Normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">peak</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Normalize" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="core.html#torchfx.FX" title="torchfx.effect.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
+<p>Normalize waveform amplitude to a target peak value using pluggable strategies.</p>
+<p>The Normalize effect adjusts waveform amplitude to achieve a specified peak value
+using different normalization algorithms. The normalization strategy can be
+selected from built-in options (peak, RMS, percentile, per-channel) or provided
+as a custom callable function.</p>
+<p>This effect uses the strategy pattern to support multiple normalization algorithms
+while maintaining a clean interface. If no strategy is specified, peak normalization
+is used by default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>peak</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – The target peak value to normalize to. Must be positive. Default is 1.0.</p></li>
+<li><p><strong>strategy</strong> (<a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy"><em>NormalizationStrategy</em></a><em> or </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em><em>, </em><em>Tensor</em><em>] or </em><em>None</em><em>, </em><em>optional</em>) – <p>The normalization strategy to use. Can be:</p>
+<ul>
+<li><p>None (default): Uses PeakNormalizationStrategy</p></li>
+<li><p>NormalizationStrategy instance: Uses the specified strategy</p></li>
+<li><p>Callable: Custom function wrapped in CustomNormalizationStrategy</p></li>
+</ul>
+<p>Built-in strategies:</p>
+<ul>
+<li><p>PeakNormalizationStrategy: Normalize to absolute maximum value</p></li>
+<li><p>RMSNormalizationStrategy: Normalize to RMS energy level</p></li>
+<li><p>PercentileNormalizationStrategy: Normalize to a percentile threshold</p></li>
+<li><p>PerChannelNormalizationStrategy: Normalize each channel independently</p></li>
+</ul>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.14)"><strong>AssertionError</strong></a> – If peak is not positive.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If strategy is not an instance of NormalizationStrategy.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#torchfx.effect.PeakNormalizationStrategy" title="torchfx.effect.PeakNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PeakNormalizationStrategy</span></code></a></dt><dd><p>Normalize to absolute maximum value</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.RMSNormalizationStrategy" title="torchfx.effect.RMSNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RMSNormalizationStrategy</span></code></a></dt><dd><p>Normalize to RMS energy</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.PercentileNormalizationStrategy" title="torchfx.effect.PercentileNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PercentileNormalizationStrategy</span></code></a></dt><dd><p>Normalize to percentile threshold</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.PerChannelNormalizationStrategy" title="torchfx.effect.PerChannelNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PerChannelNormalizationStrategy</span></code></a></dt><dd><p>Independent per-channel normalization</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.CustomNormalizationStrategy" title="torchfx.effect.CustomNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomNormalizationStrategy</span></code></a></dt><dd><p>Wrapper for custom normalization functions</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.Gain" title="torchfx.effect.Gain"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gain</span></code></a></dt><dd><p>Volume adjustment with multiple gain modes</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p><strong>Strategy Pattern:</strong></p>
+<p>The Normalize effect delegates processing to a strategy object, allowing
+different normalization algorithms to be used without modifying the core
+effect implementation. This design pattern promotes extensibility and
+clean separation of concerns.</p>
+<p><strong>Automatic Strategy Wrapping:</strong></p>
+<p>If a callable function is passed as the strategy parameter, it is
+automatically wrapped in a CustomNormalizationStrategy instance. The
+function must have the signature: <code class="docutils literal notranslate"><span class="pre">func(waveform:</span> <span class="pre">Tensor,</span> <span class="pre">peak:</span> <span class="pre">float)</span> <span class="pre">-&gt;</span> <span class="pre">Tensor</span></code></p>
+<p><strong>Processing with &#64;torch.no_grad():</strong></p>
+<p>The forward method is decorated with &#64;torch.no_grad() for efficient
+inference-only operation. If gradients are needed for training, subclass
+this effect and remove the decorator.</p>
+<p class="rubric">Examples</p>
+<p>Basic peak normalization to default peak of 1.0:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">normalize</span>
+</pre></div>
+</div>
+<p>Normalize to a specific peak value:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">normalize</span>
+</pre></div>
+</div>
+<p>Use RMS normalization strategy:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">RMSNormalizationStrategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">RMSNormalizationStrategy</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">normalize</span>
+</pre></div>
+</div>
+<p>Use percentile normalization (99th percentile):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">PercentileNormalizationStrategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">PercentileNormalizationStrategy</span><span class="p">(</span><span class="n">percentile</span><span class="o">=</span><span class="mf">99.0</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">normalize</span>
+</pre></div>
+</div>
+<p>Per-channel normalization for stereo audio:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerChannelNormalizationStrategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">PerChannelNormalizationStrategy</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">normalize</span>
+</pre></div>
+</div>
+<p>Custom normalization with a callable function:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">custom_normalize</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">peak</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="c1"># Normalize based on standard deviation</span>
+<span class="gp">... </span>    <span class="n">std</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="p">(</span><span class="n">waveform</span> <span class="o">/</span> <span class="n">std</span> <span class="o">*</span> <span class="n">peak</span><span class="p">)</span> <span class="k">if</span> <span class="n">std</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">waveform</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">custom_normalize</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">normalize</span>
+</pre></div>
+</div>
+<p>Direct tensor processing:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># (channels, samples)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Chain with other effects:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">References</p>
+<p>For detailed information about creating custom normalization strategies and
+the strategy pattern, see wiki page “3.5 Creating Custom Effects”.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.effect.Normalize.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Normalize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Normalize.forward" title="Link to this definition">#</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waveform</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.9)"><em>Tensor</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.9)"><em>Tensor</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<section id="normalization-strategies">
+<h4>Normalization Strategies<a class="headerlink" href="#normalization-strategies" title="Link to this heading">#</a></h4>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.NormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">NormalizationStrategy</span></span><a class="reference internal" href="../_modules/torchfx/effect.html#NormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.NormalizationStrategy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<p>Abstract base class for normalization strategies.</p>
+<p>NormalizationStrategy defines the interface for all normalization algorithms
+used by the Normalize effect. Concrete implementations must implement the
+__call__ method to provide specific normalization logic.</p>
+<p>This class is part of the strategy pattern implementation, allowing the
+Normalize effect to support multiple normalization algorithms without
+modifying its core implementation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.effect.NormalizationStrategy.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="../_modules/torchfx/effect.html#NormalizationStrategy.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.NormalizationStrategy.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Normalize the waveform to the given peak value using the strategy’s
+specific algorithm.</p>
+</dd></dl>
+
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#torchfx.effect.Normalize" title="torchfx.effect.Normalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Normalize</span></code></a></dt><dd><p>The effect that uses normalization strategies</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.PeakNormalizationStrategy" title="torchfx.effect.PeakNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PeakNormalizationStrategy</span></code></a></dt><dd><p>Normalize to absolute maximum value</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.RMSNormalizationStrategy" title="torchfx.effect.RMSNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RMSNormalizationStrategy</span></code></a></dt><dd><p>Normalize to RMS energy</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.PercentileNormalizationStrategy" title="torchfx.effect.PercentileNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PercentileNormalizationStrategy</span></code></a></dt><dd><p>Normalize to percentile threshold</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.PerChannelNormalizationStrategy" title="torchfx.effect.PerChannelNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PerChannelNormalizationStrategy</span></code></a></dt><dd><p>Independent per-channel normalization</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.CustomNormalizationStrategy" title="torchfx.effect.CustomNormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomNormalizationStrategy</span></code></a></dt><dd><p>Wrapper for custom functions</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p>When implementing a custom normalization strategy, ensure that:</p>
+<ol class="arabic simple">
+<li><p>The __call__ method handles edge cases (e.g., silent audio)</p></li>
+<li><p>The returned tensor has the same shape and dtype as the input</p></li>
+<li><p>The strategy preserves the device of the input tensor</p></li>
+</ol>
+<p class="rubric">Examples</p>
+<p>Implement a custom normalization strategy:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalizationStrategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">MedianNormalizationStrategy</span><span class="p">(</span><span class="n">NormalizationStrategy</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">peak</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">median</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">waveform</span><span class="p">))</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">waveform</span> <span class="o">/</span> <span class="n">median</span> <span class="o">*</span> <span class="n">peak</span> <span class="k">if</span> <span class="n">median</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">waveform</span>
+</pre></div>
+</div>
+<p>Use the custom strategy:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">MedianNormalizationStrategy</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">normalize</span>
+</pre></div>
+</div>
+<p class="rubric">References</p>
+<p>For more information about the strategy pattern and creating custom
+strategies, see wiki page “3.5 Creating Custom Effects”.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.PeakNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">PeakNormalizationStrategy</span></span><a class="reference internal" href="../_modules/torchfx/effect.html#PeakNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.PeakNormalizationStrategy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<p>Normalization to the absolute peak value.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}y[n] =
+\begin{cases}
+    \frac{x[n]}{max(|x[n]|)} \cdot peak, &amp; \text{if } max(|x[n]|) &gt; 0 \\
+    x[n], &amp; \text{otherwise}
+\end{cases}\end{split}\]</div>
+<dl class="simple">
+<dt>where:</dt><dd><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(x[n]\)</span> is the input signal,</p></li>
+<li><p><span class="math notranslate nohighlight">\(y[n]\)</span> is the output signal,</p></li>
+<li><p><span class="math notranslate nohighlight">\(peak\)</span> is the target peak value.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.RMSNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">RMSNormalizationStrategy</span></span><a class="reference internal" href="../_modules/torchfx/effect.html#RMSNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.RMSNormalizationStrategy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<p>Normalization to Root Mean Square (RMS) energy.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}y[n] =
+\begin{cases}
+    \frac{x[n]}{RMS(x[n])} \cdot peak, &amp; \text{if } RMS(x[n]) &gt; 0 \\
+    x[n], &amp; \text{otherwise}
+\end{cases}\end{split}\]</div>
+<dl class="simple">
+<dt>where:</dt><dd><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(x[n]\)</span> is the input signal,</p></li>
+<li><p><span class="math notranslate nohighlight">\(y[n]\)</span> is the output signal,</p></li>
+<li><p><span class="math notranslate nohighlight">\(RMS(x[n])\)</span> is the root mean square of the signal,</p></li>
+<li><p><span class="math notranslate nohighlight">\(peak\)</span> is the target peak value.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.PercentileNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">PercentileNormalizationStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">percentile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">99.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#PercentileNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.PercentileNormalizationStrategy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<p>Normalization using a percentile of absolute values.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}y[n] =
+\begin{cases}
+    \frac{x[n]}{P_p(|x[n]|)} \cdot peak, &amp; \text{if } P_p(|x[n]|) &gt; 0 \\
+    x[n], &amp; \text{otherwise}
+\end{cases}\end{split}\]</div>
+<dl class="simple">
+<dt>where:</dt><dd><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(x[n]\)</span> is the input signal,</p></li>
+<li><p><span class="math notranslate nohighlight">\(y[n]\)</span> is the output signal,</p></li>
+<li><p><span class="math notranslate nohighlight">\(P_p(|x[n]|)\)</span> is the p-th percentile of the absolute values of the signal,</p></li>
+<li><p><span class="math notranslate nohighlight">\(peak\)</span> is the target peak value,</p></li>
+<li><p><span class="math notranslate nohighlight">\(p\)</span> is the specified percentile (<span class="math notranslate nohighlight">\(0 &lt; p \leqslant 100\)</span>).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>percentile</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.effect.PercentileNormalizationStrategy.percentile">
+<span class="sig-name descname"><span class="pre">percentile</span></span><a class="headerlink" href="#torchfx.effect.PercentileNormalizationStrategy.percentile" title="Link to this definition">#</a></dt>
+<dd><p>The percentile <span class="math notranslate nohighlight">\(p\)</span> to use for normalization (<span class="math notranslate nohighlight">\(0 &lt; p \leqslant 100\)</span>). Default is 99.0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.PerChannelNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">PerChannelNormalizationStrategy</span></span><a class="reference internal" href="../_modules/torchfx/effect.html#PerChannelNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.PerChannelNormalizationStrategy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<p>Normalize each channel independently to its own peak.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}y_c[n] =
+\begin{cases}
+    \frac{x_c[n]}{max(|x_c[n]|)} \cdot peak, &amp; \text{if } max(|x_c[n]|) &gt; 0 \\
+    x_c[n], &amp; \text{otherwise}
+\end{cases}\end{split}\]</div>
+<dl class="simple">
+<dt>where:</dt><dd><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(x_c[n]\)</span> is the input signal for channel c,</p></li>
+<li><p><span class="math notranslate nohighlight">\(y_c[n]\)</span> is the output signal for channel c,</p></li>
+<li><p><span class="math notranslate nohighlight">\(peak\)</span> is the target peak value.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.CustomNormalizationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">CustomNormalizationStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#CustomNormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.CustomNormalizationStrategy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></p>
+<p>Normalization using a custom user-provided function.</p>
+<p>This strategy wraps a user-provided callable function to make it compatible
+with the NormalizationStrategy interface. It is automatically used when a
+callable is passed to the Normalize effect’s strategy parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – Custom normalization function with signature:
+func(waveform: Tensor, peak: float) -&gt; Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.14)"><strong>AssertionError</strong></a> – If func is not callable.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#torchfx.effect.Normalize" title="torchfx.effect.Normalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Normalize</span></code></a></dt><dd><p>Effect that uses this strategy wrapper</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a></dt><dd><p>Abstract base class for strategies</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p>The custom function must:</p>
+<ul class="simple">
+<li><p>Accept two parameters: waveform (Tensor) and peak (float)</p></li>
+<li><p>Return a normalized Tensor with the same shape and dtype as input</p></li>
+<li><p>Preserve the device of the input tensor</p></li>
+<li><p>Handle edge cases (e.g., silent audio with all zeros)</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<p>Define a custom normalization function:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">std_normalize</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">peak</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">std</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="p">(</span><span class="n">waveform</span> <span class="o">/</span> <span class="n">std</span> <span class="o">*</span> <span class="n">peak</span><span class="p">)</span> <span class="k">if</span> <span class="n">std</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">waveform</span>
+</pre></div>
+</div>
+<p>Use directly with Normalize (automatically wrapped):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">std_normalize</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">normalize</span>
+</pre></div>
+</div>
+<p>Or explicitly instantiate the strategy:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">CustomNormalizationStrategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">strategy</span> <span class="o">=</span> <span class="n">CustomNormalizationStrategy</span><span class="p">(</span><span class="n">std_normalize</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+</section>
+<section id="time-based-effects">
+<h2>Time-based Effects<a class="headerlink" href="#time-based-effects" title="Link to this heading">#</a></h2>
+<section id="reverb">
+<h3>Reverb<a class="headerlink" href="#reverb" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.Reverb">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">Reverb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4410</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Reverb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Reverb" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="core.html#torchfx.FX" title="torchfx.effect.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
+<p>Apply reverb effect using a feedback delay network for spatial ambiance.</p>
+<p>The Reverb effect creates spatial ambiance by simulating sound reflections
+in an acoustic space. It uses a simple feedback comb filter (feedback delay
+network) to produce reverb-like effects with controllable decay time and
+wet/dry mix.</p>
+<p>This is a basic reverb implementation suitable for adding spatial depth to
+audio signals. For more complex reverb algorithms, consider using convolution
+reverbs with impulse responses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>delay</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Delay time in samples for the feedback comb filter. Determines the
+apparent size of the simulated space. Default is 4410 samples, which
+corresponds to approximately 100ms at 44.1kHz sample rate.</p></li>
+<li><p><strong>decay</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – Feedback decay factor controlling how quickly the reverb tail fades.
+Must be in the range (0, 1). Higher values create longer reverb tails.
+Default is 0.5.</p></li>
+<li><p><strong>mix</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – <p>Wet/dry mix controlling the balance between processed (wet) and
+original (dry) signals. Range is [0, 1] where:</p>
+<ul>
+<li><p>0.0 = fully dry (no reverb)</p></li>
+<li><p>1.0 = fully wet (only reverb)</p></li>
+<li><p>0.5 = equal mix</p></li>
+</ul>
+<p>Default is 0.5.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.14)"><strong>AssertionError</strong></a> – If delay is not positive, decay is not in (0, 1), or mix is not in [0, 1].</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Delay</span></code></a></dt><dd><p>Multi-tap delay effect with BPM synchronization</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.Gain" title="torchfx.effect.Gain"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gain</span></code></a></dt><dd><p>Volume adjustment effect</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p><strong>Algorithm:</strong></p>
+<p>The reverb is computed using a feedback comb filter:</p>
+<div class="math notranslate nohighlight">
+\[y[n] = (1 - mix) \cdot x[n] + mix \cdot (x[n] + decay \cdot x[n - delay])\]</div>
+<dl class="simple">
+<dt>where:</dt><dd><ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(x[n]\)</span> is the input signal</p></li>
+<li><p><span class="math notranslate nohighlight">\(y[n]\)</span> is the output signal</p></li>
+<li><p><span class="math notranslate nohighlight">\(delay\)</span> is the delay time in samples</p></li>
+<li><p><span class="math notranslate nohighlight">\(decay\)</span> is the feedback decay factor</p></li>
+<li><p><span class="math notranslate nohighlight">\(mix\)</span> is the wet/dry mix parameter</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Processing Details:</strong></p>
+<ul class="simple">
+<li><p>If the input waveform is shorter than the delay time, the input is returned
+unchanged.</p></li>
+<li><p>The effect processes tensors of arbitrary shape (…, time).</p></li>
+<li><p>Uses &#64;torch.no_grad() decorator for efficient inference-only operation.</p></li>
+<li><p>Padding is applied using torch.nn.functional.pad for the delay buffer.</p></li>
+</ul>
+<p><strong>Delay Time Calculation:</strong></p>
+<p>To convert time in milliseconds to samples:</p>
+<div class="math notranslate nohighlight">
+\[delay_{samples} = \frac{time_{ms}}{1000} \cdot sample\_rate\]</div>
+<dl class="simple">
+<dt>For example, at 44.1kHz:</dt><dd><ul class="simple">
+<li><p>50ms = 2205 samples</p></li>
+<li><p>100ms = 4410 samples (default)</p></li>
+<li><p>200ms = 8820 samples</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Basic reverb with default parameters:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
+</pre></div>
+</div>
+<p>Short room reverb (50ms delay):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">2205</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
+</pre></div>
+</div>
+<p>Long hall reverb (200ms delay):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">8820</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
+</pre></div>
+</div>
+<p>Subtle reverb with low mix:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
+</pre></div>
+</div>
+<p>Direct tensor processing:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># (channels, samples)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reverberated</span> <span class="o">=</span> <span class="n">reverb</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Chain with other effects:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>GPU processing:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.effect.Reverb.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Reverb.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Reverb.forward" title="Link to this definition">#</a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waveform</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.9)"><em>Tensor</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.9)"><em>Tensor</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="delay">
+<h3>Delay<a class="headerlink" href="#delay" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.Delay">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">Delay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delay_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bpm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'1/8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feedback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Delay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Delay" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="core.html#torchfx.FX" title="torchfx.effect.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
+<p>Apply a delay effect with BPM-synced musical time divisions.</p>
+<p>The delay effect creates echoes of the input signal with configurable feedback.
+Supports BPM-synced delay times for musical applications.</p>
+<p>The delay effect is computed as:</p>
+<div class="math notranslate nohighlight">
+\[delayed[n] = \sum_{i=1}^{taps} feedback^{i-1} \cdot x[n - i \cdot delay]
+y[n] = (1 - mix) x[n] + mix \cdot delayed[n]\]</div>
+<dl class="simple">
+<dt>where:</dt><dd><ul class="simple">
+<li><p>x[n] is the input signal,</p></li>
+<li><p>y[n] is the output signal,</p></li>
+<li><p>delay is the delay time in samples,</p></li>
+<li><p>feedback is the feedback amount (0-0.95) affecting taps 2 and beyond,</p></li>
+<li><p>taps is the number of delay taps,</p></li>
+<li><p>mix is the wet/dry mix parameter.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Delay time in samples. If provided, this is used directly.
+Default is None (requires bpm and delay_time).</p></li>
+<li><p><strong>bpm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Beats per minute for BPM-synced delay. Required if delay_samples is None.</p></li>
+<li><p><strong>delay_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Musical time division for BPM-synced delay. Should be a string in the format <code class="code docutils literal notranslate"><span class="pre">n/d[modifier]</span></code>, where:</p>
+<ul>
+<li><p><code class="code docutils literal notranslate"><span class="pre">n/d</span></code> represents the note division (e.g., <code class="code docutils literal notranslate"><span class="pre">1/4</span></code> for quarter note).</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">modifier</span></code> is optional and can be <code class="code docutils literal notranslate"><span class="pre">d</span></code> for dotted notes or <code class="code docutils literal notranslate"><span class="pre">t</span></code> for triplets.</p></li>
+</ul>
+<p>Valid examples include:</p>
+<ul>
+<li><p><code class="code docutils literal notranslate"><span class="pre">1/4</span></code>: Quarter note</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">1/8</span></code>: Eighth note</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">1/16</span></code>: Sixteenth note</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">1/8d</span></code>: Dotted eighth note</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">1/4d</span></code>: Dotted quarter note</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">1/8t</span></code>: Eighth note triplet</p></li>
+</ul>
+<p>Default is <code class="code docutils literal notranslate"><span class="pre">1/8</span></code>.</p>
+</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Sample frequency (sample rate) in Hz. Required if using BPM-synced delay
+without Wave pipeline. When None (default), fs will be automatically inferred
+from the Wave object when used with the pipeline operator (wave | delay).
+Must be positive if provided. Default is None.</p></li>
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Feedback amount (0-0.95). Controls amplitude of taps 2 and beyond.
+First tap always has amplitude 1.0. Higher values create more prominent echoes.
+Default is 0.3.</p></li>
+<li><p><strong>mix</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Wet/dry mix. 0 = dry (original signal only), 1 = wet (delayed echoes only).
+Default is 0.2.</p></li>
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of delay taps (echoes). Each tap is delayed by delay_samples * tap_number.
+Default is 3.</p></li>
+<li><p><strong>strategy</strong> (<a class="reference internal" href="#torchfx.effect.DelayStrategy" title="torchfx.effect.DelayStrategy"><em>DelayStrategy</em></a><em> | </em><em>None</em>) – Delay processing strategy. If None, defaults to MonoDelayStrategy.
+Use PingPongDelayStrategy for stereo ping-pong effect, or provide a custom
+strategy extending DelayStrategy. Default is None.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># BPM-synced delay with auto fs inference from Wave</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s1">&#39;1/8&#39;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delayed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>  <span class="c1"># fs automatically inferred from wave</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># BPM-synced delay with explicit fs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># (channels, samples)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s1">&#39;1/8&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delayed</span> <span class="o">=</span> <span class="n">delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Direct delay in samples (no fs needed)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">2205</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delayed</span> <span class="o">=</span> <span class="n">delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Ping-pong delay with strategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s1">&#39;1/4&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">PingPongDelayStrategy</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delayed</span> <span class="o">=</span> <span class="n">delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="author">
+<h4>Author<a class="headerlink" href="#author" title="Link to this heading">#</a></h4>
+<p>Uzef &lt;&#64;itsuzef&gt;</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.effect.Delay.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Delay.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Delay.forward" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waveform</strong> (<em>Tensor</em>) – Tensor of audio of dimension <cite>(…, time)</cite> or <cite>(channels, time)</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor of delayed audio. Output length is extended to accommodate delayed echoes.
+The output will be longer than the input by up to <cite>delay_samples * taps</cite> samples.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<section id="delay-strategies">
+<h4>Delay Strategies<a class="headerlink" href="#delay-strategies" title="Link to this heading">#</a></h4>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.DelayStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">DelayStrategy</span></span><a class="reference internal" href="../_modules/torchfx/effect.html#DelayStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.DelayStrategy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<p>Abstract base class for delay processing strategies.</p>
+<p>DelayStrategy defines the interface for different delay processing behaviors
+used by the Delay effect. Concrete implementations provide specific delay
+algorithms such as mono delay (uniform across all channels) or ping-pong
+delay (alternating between stereo channels).</p>
+<p>This class is part of the strategy pattern implementation, allowing the
+Delay effect to support multiple processing behaviors without modifying
+its core implementation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.effect.DelayStrategy.apply_delay">
+<span class="sig-name descname"><span class="pre">apply_delay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feedback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="../_modules/torchfx/effect.html#DelayStrategy.apply_delay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.DelayStrategy.apply_delay" title="Link to this definition">#</a></dt>
+<dd><p>Apply the delay effect to the waveform using the strategy’s specific
+algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waveform</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.9)"><em>Tensor</em></a>)</p></li>
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.9)"><em>Tensor</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Delay</span></code></a></dt><dd><p>The effect that uses delay strategies</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.MonoDelayStrategy" title="torchfx.effect.MonoDelayStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MonoDelayStrategy</span></code></a></dt><dd><p>Uniform delay for all channels</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.PingPongDelayStrategy" title="torchfx.effect.PingPongDelayStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PingPongDelayStrategy</span></code></a></dt><dd><p>Alternating stereo delay</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p>When implementing a custom delay strategy:</p>
+<ol class="arabic simple">
+<li><p>The output length should be extended to accommodate all delayed taps:
+<code class="docutils literal notranslate"><span class="pre">output_length</span> <span class="pre">=</span> <span class="pre">input_length</span> <span class="pre">+</span> <span class="pre">(delay_samples</span> <span class="pre">*</span> <span class="pre">taps)</span></code></p></li>
+<li><p>The first tap always has amplitude 1.0, subsequent taps use feedback
+scaling: <code class="docutils literal notranslate"><span class="pre">feedback^(tap-1)</span></code></p></li>
+<li><p>The returned tensor should preserve the device and dtype of the input</p></li>
+<li><p>Handle different tensor dimensions: 1D (mono), 2D (multi-channel),
+and higher dimensions</p></li>
+</ol>
+<p class="rubric">Examples</p>
+<p>Implement a custom delay strategy:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">DelayStrategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">CrossChannelDelayStrategy</span><span class="p">(</span><span class="n">DelayStrategy</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Apply delay from each channel to all other channels.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">def</span><span class="w"> </span><span class="nf">apply_delay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">,</span> <span class="n">delay_samples</span><span class="p">,</span> <span class="n">taps</span><span class="p">,</span> <span class="n">feedback</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="c1"># Custom cross-channel delay logic</span>
+<span class="gp">... </span>        <span class="n">original_length</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="n">output_length</span> <span class="o">=</span> <span class="n">original_length</span> <span class="o">+</span> <span class="n">delay_samples</span> <span class="o">*</span> <span class="n">taps</span>
+<span class="gp">... </span>        <span class="c1"># ... implementation ...</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">delayed_waveform</span>
+</pre></div>
+</div>
+<p>Use with Delay effect:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">2205</span><span class="p">,</span> <span class="n">taps</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+<span class="gp">... </span>                 <span class="n">strategy</span><span class="o">=</span><span class="n">CrossChannelDelayStrategy</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+<p class="rubric">References</p>
+<p>For more information about the strategy pattern and creating custom
+strategies, see wiki page “3.5 Creating Custom Effects”.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">apply_delay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feedback</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#DelayStrategy.apply_delay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
+<dd><p>Apply delay processing to the waveform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waveform</strong> (<em>Tensor</em>) – Input audio tensor of shape (…, time) or (channels, time).</p></li>
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Delay time in samples for each tap.</p></li>
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of delay taps (echoes). Each tap is delayed by
+delay_samples * tap_number.</p></li>
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Feedback amount in range [0, 0.95]. Controls the amplitude of
+taps 2 and beyond. First tap always has amplitude 1.0, subsequent
+taps use feedback^(tap-1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Delayed audio with extended length to accommodate all taps.
+Output length is: input_length + (delay_samples * taps).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.MonoDelayStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">MonoDelayStrategy</span></span><a class="reference internal" href="../_modules/torchfx/effect.html#MonoDelayStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.MonoDelayStrategy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.DelayStrategy" title="torchfx.effect.DelayStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">DelayStrategy</span></code></a></p>
+<p>Apply uniform delay to all channels with multiple taps and feedback.</p>
+<p>MonoDelayStrategy applies the same delay pattern to all audio channels,
+creating identical echoes across the stereo field. This is the default
+delay strategy used by the Delay effect.</p>
+<p>The strategy creates multiple delay taps (echoes), each delayed by an
+integer multiple of the base delay time. The first tap has full amplitude,
+and subsequent taps decay exponentially based on the feedback parameter.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#torchfx.effect.DelayStrategy" title="torchfx.effect.DelayStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DelayStrategy</span></code></a></dt><dd><p>Abstract base class for delay strategies</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.PingPongDelayStrategy" title="torchfx.effect.PingPongDelayStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PingPongDelayStrategy</span></code></a></dt><dd><p>Alternating stereo delay</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Delay</span></code></a></dt><dd><p>The effect that uses this strategy</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p><strong>Output Length:</strong></p>
+<p>The output is extended to accommodate all delayed taps:
+<code class="docutils literal notranslate"><span class="pre">output_length</span> <span class="pre">=</span> <span class="pre">input_length</span> <span class="pre">+</span> <span class="pre">(delay_samples</span> <span class="pre">*</span> <span class="pre">taps)</span></code></p>
+<p><strong>Tap Amplitude:</strong></p>
+<ul class="simple">
+<li><p>Tap 1: amplitude = 1.0</p></li>
+<li><p>Tap n (n &gt; 1): amplitude = feedback^(n-1)</p></li>
+</ul>
+<p><strong>Multi-dimensional Support:</strong></p>
+<p>The strategy handles tensors of various shapes:</p>
+<ul class="simple">
+<li><p>1D: (time,) - Mono audio</p></li>
+<li><p>2D: (channels, time) - Multi-channel audio</p></li>
+<li><p>Higher dimensions: (…, time) - Batched or complex audio</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<p>Use mono delay strategy explicitly:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonoDelayStrategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">2205</span><span class="p">,</span> <span class="n">taps</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+<span class="gp">... </span>                 <span class="n">strategy</span><span class="o">=</span><span class="n">MonoDelayStrategy</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+<p>MonoDelayStrategy is the default, so this is equivalent:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">2205</span><span class="p">,</span> <span class="n">taps</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.effect.MonoDelayStrategy.apply_delay">
+<span class="sig-name descname"><span class="pre">apply_delay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feedback</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#MonoDelayStrategy.apply_delay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.MonoDelayStrategy.apply_delay" title="Link to this definition">#</a></dt>
+<dd><p>Apply mono delay with multiple taps and feedback.</p>
+<p>Output length is extended to accommodate all delayed taps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waveform</strong> (<em>Tensor</em>) – Input audio tensor of shape (time,), (channels, time), or (…, time).</p></li>
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Delay time in samples for each tap.</p></li>
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of delay taps (echoes).</p></li>
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Feedback amount for taps 2 and beyond.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Delayed audio with shape matching input except extended time dimension.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.effect.PingPongDelayStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">PingPongDelayStrategy</span></span><a class="reference internal" href="../_modules/torchfx/effect.html#PingPongDelayStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.PingPongDelayStrategy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.effect.DelayStrategy" title="torchfx.effect.DelayStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">DelayStrategy</span></code></a></p>
+<p>Apply ping-pong delay alternating between left and right channels.</p>
+<p>PingPongDelayStrategy creates a stereo delay effect where echoes alternate
+between the left and right channels, producing a “bouncing” or “ping-pong”
+spatial effect. This is commonly used in music production for creating
+wide, spacious delay effects.</p>
+<p>The strategy requires stereo (2-channel) input. For non-stereo audio, it
+automatically falls back to MonoDelayStrategy.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#torchfx.effect.DelayStrategy" title="torchfx.effect.DelayStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DelayStrategy</span></code></a></dt><dd><p>Abstract base class for delay strategies</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.MonoDelayStrategy" title="torchfx.effect.MonoDelayStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MonoDelayStrategy</span></code></a></dt><dd><p>Uniform delay for all channels</p>
+</dd>
+<dt><a class="reference internal" href="#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Delay</span></code></a></dt><dd><p>The effect that uses this strategy</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p><strong>Ping-Pong Pattern:</strong></p>
+<ul class="simple">
+<li><p>Odd taps (1, 3, 5, …): Left channel → Right channel</p></li>
+<li><p>Even taps (2, 4, 6, …): Right channel → Left channel</p></li>
+</ul>
+<p>This creates the characteristic bouncing effect where the delay appears to
+move back and forth between the left and right speakers.</p>
+<p><strong>Fallback Behavior:</strong></p>
+<p>If the input is not stereo (2 channels), the strategy automatically falls
+back to MonoDelayStrategy to process the audio.</p>
+<p><strong>Output Length:</strong></p>
+<p>The output is extended to accommodate all delayed taps:
+<code class="docutils literal notranslate"><span class="pre">output_length</span> <span class="pre">=</span> <span class="pre">input_length</span> <span class="pre">+</span> <span class="pre">(delay_samples</span> <span class="pre">*</span> <span class="pre">taps)</span></code></p>
+<p><strong>Tap Amplitude:</strong></p>
+<p>Same as MonoDelayStrategy:</p>
+<ul class="simple">
+<li><p>Tap 1: amplitude = 1.0</p></li>
+<li><p>Tap n (n &gt; 1): amplitude = feedback^(n-1)</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<p>Create ping-pong delay effect:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">PingPongDelayStrategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;stereo_audio.wav&quot;</span><span class="p">)</span>  <span class="c1"># Must be stereo</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">delay_samples</span><span class="o">=</span><span class="mi">2205</span><span class="p">,</span> <span class="n">taps</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+<span class="gp">... </span>                 <span class="n">strategy</span><span class="o">=</span><span class="n">PingPongDelayStrategy</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+<p>BPM-synced ping-pong delay:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/8&quot;</span><span class="p">,</span> <span class="n">taps</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+<span class="gp">... </span>                 <span class="n">strategy</span><span class="o">=</span><span class="n">PingPongDelayStrategy</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+<p>Combine with reverb for spacious effect:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delay</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">delay_time</span><span class="o">=</span><span class="s2">&quot;1/4&quot;</span><span class="p">,</span> <span class="n">taps</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+<span class="gp">... </span>                 <span class="n">strategy</span><span class="o">=</span><span class="n">PingPongDelayStrategy</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span> <span class="o">|</span> <span class="n">delay</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.effect.PingPongDelayStrategy.apply_delay">
+<span class="sig-name descname"><span class="pre">apply_delay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feedback</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#PingPongDelayStrategy.apply_delay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.PingPongDelayStrategy.apply_delay" title="Link to this definition">#</a></dt>
+<dd><p>Apply ping-pong delay (alternates between channels).</p>
+<p>Output length is extended to accommodate all delayed taps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waveform</strong> (<em>Tensor</em>) – Input audio tensor. Should be stereo with shape (2, time) or
+(…, 2, time). For non-stereo input, falls back to MonoDelayStrategy.</p></li>
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Delay time in samples for each tap.</p></li>
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of delay taps (echoes).</p></li>
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Feedback amount for taps 2 and beyond.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Delayed audio with ping-pong effect. Shape matches input except
+extended time dimension.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="filters.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Filters</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../blog/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Blog</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gain-and-normalization">Gain and Normalization</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gain">Gain</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Gain"><code class="docutils literal notranslate"><span class="pre">Gain</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Gain.forward"><code class="docutils literal notranslate"><span class="pre">Gain.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normalize">Normalize</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Normalize"><code class="docutils literal notranslate"><span class="pre">Normalize</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Normalize.forward"><code class="docutils literal notranslate"><span class="pre">Normalize.forward()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normalization-strategies">Normalization Strategies</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.NormalizationStrategy"><code class="docutils literal notranslate"><span class="pre">NormalizationStrategy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.NormalizationStrategy.__call__"><code class="docutils literal notranslate"><span class="pre">NormalizationStrategy.__call__()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.PeakNormalizationStrategy"><code class="docutils literal notranslate"><span class="pre">PeakNormalizationStrategy</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.RMSNormalizationStrategy"><code class="docutils literal notranslate"><span class="pre">RMSNormalizationStrategy</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.PercentileNormalizationStrategy"><code class="docutils literal notranslate"><span class="pre">PercentileNormalizationStrategy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.PercentileNormalizationStrategy.percentile"><code class="docutils literal notranslate"><span class="pre">PercentileNormalizationStrategy.percentile</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.PerChannelNormalizationStrategy"><code class="docutils literal notranslate"><span class="pre">PerChannelNormalizationStrategy</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.CustomNormalizationStrategy"><code class="docutils literal notranslate"><span class="pre">CustomNormalizationStrategy</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#time-based-effects">Time-based Effects</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reverb">Reverb</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Reverb"><code class="docutils literal notranslate"><span class="pre">Reverb</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Reverb.forward"><code class="docutils literal notranslate"><span class="pre">Reverb.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#delay">Delay</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Delay"><code class="docutils literal notranslate"><span class="pre">Delay</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Delay.forward"><code class="docutils literal notranslate"><span class="pre">Delay.forward()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#delay-strategies">Delay Strategies</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.DelayStrategy"><code class="docutils literal notranslate"><span class="pre">DelayStrategy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.DelayStrategy.apply_delay"><code class="docutils literal notranslate"><span class="pre">DelayStrategy.apply_delay()</span></code></a></li>
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">DelayStrategy.apply_delay()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.MonoDelayStrategy"><code class="docutils literal notranslate"><span class="pre">MonoDelayStrategy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.MonoDelayStrategy.apply_delay"><code class="docutils literal notranslate"><span class="pre">MonoDelayStrategy.apply_delay()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.PingPongDelayStrategy"><code class="docutils literal notranslate"><span class="pre">PingPongDelayStrategy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.PingPongDelayStrategy.apply_delay"><code class="docutils literal notranslate"><span class="pre">PingPongDelayStrategy.apply_delay()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/api/effects.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/effects.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
