@@ -6,6 +6,9 @@ on:
 
 jobs:
   label:
+    permissions:
+      contents: read
+      issues: write
     runs-on: ubuntu-latest
     steps:
       - name: Apply labels based on issue content
