@@ -1,0 +1,110 @@
+name: 🐞 Bug Report
+description: Report a bug or unexpected behavior in TorchFX
+title: "[Bug]: "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug in **TorchFX** 🚀
+        Please fill out the form below to help us reproduce and fix the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      description: Clearly describe what the bug is.
+      placeholder: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproducible example
+      description: Provide a minimal code snippet that reproduces the issue.
+      placeholder: |
+        ```python
+        import torch
+        import torchfx
+        ...
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ### Environment
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: e.g. Ubuntu 22.04
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: e.g. 3.10.12
+    validations:
+      required: true
+
+  - type: input
+    id: pytorch
+    attributes:
+      label: PyTorch version
+      placeholder: e.g. 2.2.0
+    validations:
+      required: true
+
+  - type: input
+    id: cuda
+    attributes:
+      label: CUDA version
+      placeholder: e.g. 12.1 or CPU-only
+    validations:
+      required: true
+
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU model
+      placeholder: e.g. NVIDIA A40 / RTX 3090 / None
+    validations:
+      required: true
+
+  - type: input
+    id: torchfx
+    attributes:
+      label: TorchFX version
+      placeholder: e.g. 0.1.0 or commit hash
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        📖 Please make sure you have read:
+        - [Contributing Guidelines](https://github.com/matteospanio/torchfx/blob/master/CONTRIBUTING.md)
+        - [Code of Conduct](https://github.com/matteospanio/torchfx/blob/master/CODE_OF_CONDUCT.md)

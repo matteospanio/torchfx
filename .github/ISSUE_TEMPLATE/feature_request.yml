@@ -1,0 +1,46 @@
+name: ✨ Feature Request
+description: Suggest a new feature or improvement for TorchFX
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        TorchFX is a modern Python library for **high-performance digital signal processing**
+        built on PyTorch and GPU acceleration.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation / use case
+      description: Why is this feature useful? What problem does it solve?
+      placeholder: Describe the real-world use case.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution (optional)
+      description: If you have an idea for the implementation or API, describe it here.
+      placeholder: |
+        Example API or pseudocode...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to help implement this feature?
+      options:
+        - label: I am willing to contribute to this feature
+          required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        📖 Please check:
+        - [Contributing Guidelines](https://github.com/matteospanio/torchfx/blob/master/CONTRIBUTING.md)
+        - [Code of Conduct](https://github.com/matteospanio/torchfx/blob/master/CODE_OF_CONDUCT.md)

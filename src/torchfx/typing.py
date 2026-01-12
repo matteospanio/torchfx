@@ -10,7 +10,7 @@ from annotated_types import Ge, Le
 Decibel = tp.Annotated[float, Le(0)]
 Millisecond = tp.Annotated[float, Ge(0)]
 Second = tp.Annotated[float, Ge(0)]
-BitRate = tp.Literal[16, 24, 32]
+BitRate = tp.Literal[8, 16, 24, 32]
 
 # Type of spectrogram to compute.
 # It can be either "mel", "linear", or "log".

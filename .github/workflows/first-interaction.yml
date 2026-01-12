@@ -1,0 +1,38 @@
+name: First Interaction
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome first-time contributors
+        uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            👋 Hi and welcome to **TorchFX**!
+
+            Thanks for opening your first issue 🎉
+            We really appreciate your interest in the project.
+
+            Please make sure you have filled in all the required fields.
+            If possible, include a minimal reproducible example — it helps a lot!
+
+          pr-message: |
+            🚀 Welcome to **TorchFX**!
+
+            Thank you for your first pull request 🎉
+            We really appreciate your contribution.
+
+            A maintainer will review it soon.
+            If you have any questions, feel free to ask!

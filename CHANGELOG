@@ -5,7 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
->    The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
+> The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
+
+## [0.3.0] - 2026-01-12
+
+### Added
+
+- method `Wave.save` to save audio files with custom format, encoding and bits per sample
+- LoShelving filter implementation based on Audio EQ Cookbook
+- ParametricEQ
+- Elliptic filters (HiElliptic, LoElliptic)
+- deprecation logic to improve code maintainability and backward compatibility
+- migration guide to help users transition between versions
+- style guidelines for contributors to maintain code quality and consistency
+- documentation blog section for project updates and announcements
+- contribution guidelines to facilitate community involvement
+
+### Changed
+
+- type hint `BitRate` to include 8 bits per sample option
+- uniform q naming across all filters (changed from Q to q), this is a breaking change!
+- documentation theme to pydata-sphinx-theme for better readability and navigation
+
+### Fixed
+
+- `Wave.merge` had a bug due to incorrect tensor concatenation along the channel dimension
 
 ## [0.2.1] - 2025-12-13
 

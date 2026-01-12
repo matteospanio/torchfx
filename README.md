@@ -1,27 +1,42 @@
-# torchfx
+<div align="center">
+
+# TorchFX
+
+### GPU-Accelerated Audio DSP with PyTorch
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![arXiv](https://img.shields.io/badge/arXiv-2504.08624-b31b1b.svg)](https://arxiv.org/abs/2504.08624)
 [![PyPI version](https://badge.fury.io/py/torchfx.svg)](https://badge.fury.io/py/torchfx)
 ![PyPI - Status](https://img.shields.io/pypi/status/torchfx)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/matteospanio/torchfx)
 
-TorchFX is a Python library that provides a modern approach to audio digital signal processing (DSP) using PyTorch. It allows you to create and manipulate audio processing pipelines in a flexible and efficient way, leveraging the power of PyTorch for GPU acceleration.
-TorchFX is designed to be easy to use and integrate with existing PyTorch workflows, making it a great choice for researchers and developers working in the field of audio processing.
+**[Documentation](https://matteospanio.github.io/torchfx/)** | **[Getting Started](https://matteospanio.github.io/torchfx/guides/getting-started/getting_started.html)** | **[API Reference](https://matteospanio.github.io/torchfx/api/index.html)** | **[Blog](https://matteospanio.github.io/torchfx/blog/index.html)**
 
-## Features
-- **GPU Acceleration**: Leverage the power of GPUs for real-time audio processing.
-- **Flexible Pipelines**: Create complex audio processing pipelines using a simple and intuitive API.
-- **Pytorch Integration**: Seamlessly integrate with existing PyTorch workflows and models.
-- **Pipe operator**: Use the pipe operator (`|`) to create and manipulate audio processing pipelines in a more readable and concise way.
+</div>
 
-## Installation
+---
 
-To install TorchFX, you can use pip:
+TorchFX is a modern Python library for **high-performance digital signal processing** in audio, leveraging PyTorch and GPU acceleration. Built for researchers, engineers, and developers who need fast, flexible, and differentiable audio processing.
+
+## ✨ Key Features
+
+- ⚡ **GPU Acceleration** - Built on PyTorch for high-performance audio processing on CUDA-enabled devices
+- 🔗 **Composable Pipelines** - Chain filters with the pipe operator (`|`) for sequential processing
+- ➕ **Parallel Processing** - Combine filters with the add operator (`+`) for parallel filter combination
+- 🧠 **PyTorch Native** - All filters are `torch.nn.Module` subclasses, enabling gradient-based optimization
+- 🎯 **Simple & Intuitive** - Clean, object-oriented API designed for ease of use
+- ⚙️ **Highly Extensible** - Create custom filters and effects by extending base classes
+- 📊 **Performance Optimized** - Substantial performance gains over SciPy for long and multichannel signals
+
+## 🚀 Quick Start
+
+### Installation
 
 ```bash
 pip install torchfx
 ```
-or clone the repository and install it manually:
+
+Or install from source:
 
 ```bash
 git clone https://github.com/matteospanio/torchfx
@@ -29,50 +44,62 @@ cd torchfx
 pip install -e .
 ```
 
-## Usage
-
-TorchFX provides a simple and intuitive API for creating and manipulating audio processing pipelines. Here is a basic example of how to use TorchFX:
+### Basic Example
 
 ```python
 import torch
-import torchfx as fx
+from torchfx import Wave
+from torchfx.filter import LoButterworth, ParametricEQ
 
-# Create a simple audio processing pipeline
-filtered_out = (
-    fx.Wave.from_file("path_to_audio.wav")
-    | fx.filter.LoButterworth(8000)
-    | fx.filter.HiShelving(2000)
-    | fx.effect.Reverb()
-)
+# Load audio
+wave = Wave.from_file("audio.wav")
+
+# Create filters
+lowpass = LoButterworth(cutoff=5000, order=4, fs=wave.fs)
+eq = ParametricEQ(frequency=1000, q=2.0, gain=3.0, fs=wave.fs)
+
+# Sequential processing with pipe operator (|)
+processed = wave | lowpass | eq
+
+# Parallel processing with add operator (+)
+stereo_enhancer = lowpass + eq
+enhanced = wave | stereo_enhancer
+
+# Save result
+processed.save("output.wav")
 ```
 
-This example demonstrates how to create a simple audio processing pipeline using the `|` operator. The pipeline reads an audio file, applies a low-pass Butterworth filter, and then applies a high-shelving filter.
-`torchfx` provides a `Wave` class that embeds the audio signal and its sampling rate in a single object. This allows you to easily manipulate the audio signal and apply various transformations using the provided filters. This class provides the bitwise or operator overloading, which allows you to chain multiple filters (and any kind of nn.Module) together in a single pipeline.
+## 📚 Documentation
 
-## API
+- **[Full Documentation](https://matteospanio.github.io/torchfx/)** - Complete guides and API reference
+- **[Getting Started](https://matteospanio.github.io/torchfx/guides/getting-started/getting_started.html)** - Installation and first steps
+- **[Tutorials](https://matteospanio.github.io/torchfx/guides/tutorials/index.html)** - Practical examples and use cases
+- **[API Reference](https://matteospanio.github.io/torchfx/api/index.html)** - Detailed API documentation
+- **[Blog](https://matteospanio.github.io/torchfx/blog/index.html)** - Updates, releases, and insights
 
-At the moment the API is not fully documented, but you can find the list of available filters in the [filter](src/torchfx/filter/__init__.py) module.
+## 🛠️ Development
 
-## How to cite
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to TorchFX
+- **[Style Guide](https://matteospanio.github.io/torchfx/guides/developer/style_guide.html)** - Coding standards and conventions
+- **[Roadmap](https://matteospanio.github.io/torchfx/guides/developer/roadmap.html)** - Future plans and priorities
 
-If you use this code in your research, please cite the following paper:
+We welcome contributions from everyone! Please read our [Contributing Guide](CONTRIBUTING.md) to get started.
 
-```
+## 📖 Citation
+
+If you use TorchFX in your research, please cite our paper:
+
+```bibtex
 @misc{spanio2025torchfxmodernapproachaudio,
-      title={TorchFX: A modern approach to Audio DSP with PyTorch and GPU acceleration},
-      author={Matteo Spanio and Antonio Rodà},
-      year={2025},
-      eprint={2504.08624},
-      archivePrefix={arXiv},
-      primaryClass={eess.AS},
-      url={https://arxiv.org/abs/2504.08624},
+  title={TorchFX: A modern approach to Audio DSP with PyTorch and GPU acceleration},
+  author={Matteo Spanio and Antonio Rodà},
+  year={2025},
+  eprint={2504.08624},
+  archivePrefix={arXiv},
+  primaryClass={eess.AS},
+  url={https://arxiv.org/abs/2504.08624},
 }
 ```
-
-## TODO
-
-- [ ] add realtime input support
-- [ ] add more examples
 
 ## License
 
