@@ -287,11 +287,95 @@ torchfx/
 ├── effect.py            # Base FX class and effects
 ├── typing.py            # Type aliases
 ├── _deprecation.py      # Internal utilities (prefix with _)
-└── filter/
-    ├── __init__.py      # Filter exports
-    ├── __base.py        # Base filter classes
-    ├── iir.py           # IIR filters
-    └── fir.py           # FIR filters
+├── filter/
+│   ├── __init__.py      # Filter exports
+│   ├── __base.py        # Base filter classes
+│   ├── iir.py           # IIR filters
+│   └── fir.py           # FIR filters
+└── validation/
+    ├── __init__.py      # Validation exports
+    ├── exceptions.py    # Custom exception hierarchy
+    └── validators.py    # Validator functions
+```
+
+---
+
+## Validation Patterns
+
+### When to Use Validators
+
+Use the validation module for user-facing parameter validation in `__init__` methods:
+
+```python
+from torchfx.validation import (
+    validate_positive,
+    validate_range,
+    validate_sample_rate,
+    validate_in_set,
+)
+
+class NewEffect(FX):
+    def __init__(
+        self,
+        gain: float,
+        mix: float = 0.5,
+        gain_type: str = "amplitude",
+        fs: int | None = None,
+    ) -> None:
+        super().__init__()
+
+        # Validate parameters using validation module
+        validate_positive(gain, "gain")
+        validate_range(mix, "mix", min_value=0, max_value=1)
+        validate_in_set(gain_type, "gain_type", ["amplitude", "db", "power"])
+        validate_sample_rate(fs, allow_none=True)
+
+        self.gain = gain
+        self.mix = mix
+        self.gain_type = gain_type
+        self.fs = fs
+```
+
+### Assertions vs Custom Exceptions
+
+- **Use assertions** for internal invariants and developer-facing checks
+- **Use validation functions** for user-facing parameter validation
+
+```python
+# Good - Internal check uses assertion
+def compute_coefficients(self) -> None:
+    assert self.fs is not None, "fs must be set before computing coefficients"
+    # ...
+
+# Good - User-facing validation uses validator
+def __init__(self, cutoff: float, fs: int | None = None) -> None:
+    validate_positive(cutoff, "cutoff")
+    validate_sample_rate(fs, allow_none=True)
+```
+
+### Exception Hierarchy
+
+When raising custom exceptions, use the appropriate level:
+
+```python
+from torchfx.validation import (
+    InvalidParameterError,
+    InvalidRangeError,
+    AudioProcessingError,
+    CoefficientComputationError,
+)
+
+# For parameter validation - use specific exception
+raise InvalidRangeError("decay", 1.5, min_value=0, max_value=1)
+
+# For processing errors
+raise AudioProcessingError("Failed to process audio buffer")
+
+# For filter coefficient errors
+raise CoefficientComputationError(
+    filter_type="LoButterworth",
+    reason="Cutoff frequency exceeds Nyquist",
+)
 ```
 
 ---

@@ -103,9 +103,14 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 
 ### 1.3 Error Handling & Validation
 
-- [ ] **Input validation layer**
-  - Validate sample rates, tensor shapes, parameter ranges
-  - Custom exception hierarchy: `TorchFXError`, `InvalidParameterError`, `AudioProcessingError`
+- [x] **Input validation layer**
+  - ✅ Validate sample rates, tensor shapes, parameter ranges
+  - ✅ Custom exception hierarchy: `TorchFXError`, `InvalidParameterError`, `AudioProcessingError`
+  - Implementation details:
+    - New `torchfx.validation` subpackage with exceptions and validators
+    - Exception hierarchy: `TorchFXError` (base), `InvalidParameterError`, `InvalidSampleRateError`, `InvalidRangeError`, `InvalidShapeError`, `InvalidTypeError`, `AudioProcessingError`, `CoefficientComputationError`, `FilterInstabilityError`
+    - Validators: `validate_sample_rate`, `validate_positive`, `validate_range`, `validate_in_set`, `validate_tensor_ndim`, `validate_audio_tensor`, `validate_type`, `validate_cutoff_frequency`, `validate_filter_order`, `validate_q_factor`
+    - Full test coverage (76 tests)
 
 - [ ] **Improved error messages**
   - Context-aware messages with actual vs. expected values

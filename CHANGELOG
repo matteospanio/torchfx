@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [Unreleased]
+
+### Added
+
+- Input validation layer with custom exception hierarchy (`torchfx.validation` module)
+  - Base exception `TorchFXError` for catching all library errors
+  - Specific exceptions: `InvalidParameterError`, `InvalidSampleRateError`, `InvalidRangeError`, `InvalidShapeError`, `InvalidTypeError`, `AudioProcessingError`, `CoefficientComputationError`, `FilterInstabilityError`
+  - Validator functions for sample rates, parameter ranges, tensor shapes, types, and audio-specific validation (cutoff frequency, filter order, Q factor)
+
 ## [0.3.0] - 2026-01-12
 
 ### Added
