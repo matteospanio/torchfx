@@ -292,10 +292,14 @@ torchfx/
 │   ├── __base.py        # Base filter classes
 │   ├── iir.py           # IIR filters
 │   └── fir.py           # FIR filters
-└── validation/
-    ├── __init__.py      # Validation exports
-    ├── exceptions.py    # Custom exception hierarchy
-    └── validators.py    # Validator functions
+├── validation/
+│   ├── __init__.py      # Validation exports
+│   ├── exceptions.py    # Custom exception hierarchy
+│   └── validators.py    # Validator functions
+└── logging/
+    ├── __init__.py      # Logging exports
+    ├── config.py        # Logger configuration
+    └── performance.py   # Performance timing utilities
 ```
 
 ---

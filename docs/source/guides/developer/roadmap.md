@@ -112,14 +112,24 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
     - Validators: `validate_sample_rate`, `validate_positive`, `validate_range`, `validate_in_set`, `validate_tensor_ndim`, `validate_audio_tensor`, `validate_type`, `validate_cutoff_frequency`, `validate_filter_order`, `validate_q_factor`
     - Full test coverage (76 tests)
 
-- [ ] **Improved error messages**
-  - Context-aware messages with actual vs. expected values
-  - Suggestions for fixes
+- [x] **Improved error messages**
+  - ✅ Context-aware messages with actual vs. expected values
+  - ✅ Suggestions for fixes
+  - Implementation details:
+    - Built into the validation exception classes (parameter_name, actual_value, expected, suggestion fields)
+    - All exceptions format messages with full context automatically
 
-- [ ] **Logging infrastructure**
-  - Structured logging with Python's `logging` module
-  - Log levels: DEBUG, INFO, WARNING, ERROR
-  - Performance logging (optional)
+- [x] **Logging infrastructure**
+  - ✅ Structured logging with Python's `logging` module
+  - ✅ Log levels: DEBUG, INFO, WARNING, ERROR
+  - ✅ Performance logging (optional)
+  - Implementation details:
+    - New `torchfx.logging` subpackage
+    - NullHandler by default (opt-in logging per Python guidelines)
+    - Convenience functions: `enable_logging()`, `enable_debug_logging()`, `disable_logging()`, `get_logger()`
+    - Performance utilities: `log_performance()` context manager, `LogPerformance` decorator
+    - Hierarchical loggers: `torchfx`, `torchfx.performance`, `torchfx.<module>`
+    - Full test coverage (25 tests)
 
 ---
 

@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Base exception `TorchFXError` for catching all library errors
   - Specific exceptions: `InvalidParameterError`, `InvalidSampleRateError`, `InvalidRangeError`, `InvalidShapeError`, `InvalidTypeError`, `AudioProcessingError`, `CoefficientComputationError`, `FilterInstabilityError`
   - Validator functions for sample rates, parameter ranges, tensor shapes, types, and audio-specific validation (cutoff frequency, filter order, Q factor)
+- Logging infrastructure (`torchfx.logging` module)
+  - Structured logging following Python best practices (NullHandler by default)
+  - Convenience functions: `enable_logging()`, `enable_debug_logging()`, `disable_logging()`, `get_logger()`
+  - Performance profiling: `log_performance()` context manager and `LogPerformance` decorator
+  - Hierarchical logger support for fine-grained control
 
 ## [0.3.0] - 2026-01-12
 
