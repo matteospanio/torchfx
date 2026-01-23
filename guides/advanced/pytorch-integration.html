@@ -819,7 +819,7 @@ window.addEventListener("load", load);
                 <article class="bd-article">
                    <section id="pytorch-integration">
 <span id="id1"></span><h1>PyTorch Integration<a class="headerlink" href="#pytorch-integration" title="Link to this heading">#</a></h1>
-<p>Learn how TorchFX seamlessly integrates with PyTorch’s neural network ecosystem. This guide covers using TorchFX modules with <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>, creating custom modules, gradient computation, and mixing with torchaudio transforms.</p>
+<p>Learn how TorchFX seamlessly integrates with PyTorch’s neural network ecosystem. This guide covers using TorchFX modules with <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>, creating custom modules, gradient computation, and mixing with torchaudio transforms.</p>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
 <p>Before starting this tutorial, you should be familiar with:</p>
@@ -833,13 +833,13 @@ window.addEventListener("load", load);
 </section>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>All TorchFX audio effects and filters are implemented as subclasses of <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, making them fully compatible with PyTorch’s neural network ecosystem. This design enables:</p>
+<p>All TorchFX audio effects and filters are implemented as subclasses of <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, making them fully compatible with PyTorch’s neural network ecosystem. This design enables:</p>
 <ul class="simple">
 <li><p><strong>Seamless composition</strong> with other PyTorch modules</p></li>
 <li><p><strong>Integration</strong> into neural network training pipelines</p></li>
 <li><p><strong>Automatic gradient computation</strong> for differentiable operations</p></li>
 <li><p><strong>Device management</strong> through PyTorch’s standard API</p></li>
-<li><p><strong>Compatibility</strong> with PyTorch utilities like <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> and <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a></p></li>
+<li><p><strong>Compatibility</strong> with PyTorch utilities like <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> and <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a></p></li>
 </ul>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
@@ -848,7 +848,7 @@ window.addEventListener("load", load);
 </section>
 <section id="core-integration-architecture">
 <h2>Core Integration Architecture<a class="headerlink" href="#core-integration-architecture" title="Link to this heading">#</a></h2>
-<p>TorchFX’s integration with PyTorch is built on inheritance from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>. Understanding this architecture helps you leverage the full power of both libraries.</p>
+<p>TorchFX’s integration with PyTorch is built on inheritance from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>. Understanding this architecture helps you leverage the full power of both libraries.</p>
 <pre  class="mermaid">
         graph TB
     subgraph &quot;PyTorch Framework&quot;
@@ -901,11 +901,11 @@ window.addEventListener("load", load);
     style Module fill:#e1f5ff
     style FX fill:#fff5e1
     style Wave fill:#e1ffe1
-    </pre><p><strong>TorchFX Module Hierarchy</strong> - All TorchFX effects and filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, enabling seamless integration with the PyTorch ecosystem.</p>
+    </pre><p><strong>TorchFX Module Hierarchy</strong> - All TorchFX effects and filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, enabling seamless integration with the PyTorch ecosystem.</p>
 </section>
 <section id="module-inheritance-benefits">
 <h2>Module Inheritance Benefits<a class="headerlink" href="#module-inheritance-benefits" title="Link to this heading">#</a></h2>
-<p>Because TorchFX modules inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, they automatically gain all PyTorch module capabilities:</p>
+<p>Because TorchFX modules inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, they automatically gain all PyTorch module capabilities:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Feature</p></th>
@@ -948,7 +948,7 @@ window.addEventListener("load", load);
 </section>
 <section id="wave-pipe-operator-with-nn-module">
 <h2>Wave Pipe Operator with nn.Module<a class="headerlink" href="#wave-pipe-operator-with-nn-module" title="Link to this heading">#</a></h2>
-<p>The <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> class implements the <a class="reference internal" href="../../glossary.html#term-Pipeline-Operator"><span class="xref std std-term">pipeline operator</span></a> (<code class="docutils literal notranslate"><span class="pre">|</span></code>) to accept <strong>any</strong> <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, not just TorchFX-specific effects and filters. This design choice enables integration with the entire PyTorch ecosystem.</p>
+<p>The <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> class implements the <a class="reference internal" href="../../glossary.html#term-Pipeline-Operator"><span class="xref std std-term">pipeline operator</span></a> (<code class="docutils literal notranslate"><span class="pre">|</span></code>) to accept <strong>any</strong> <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, not just TorchFX-specific effects and filters. This design choice enables integration with the entire PyTorch ecosystem.</p>
 <section id="implementation-details">
 <h3>Implementation Details<a class="headerlink" href="#implementation-details" title="Link to this heading">#</a></h3>
 <p>The pipe operator performs the following steps:</p>
@@ -983,7 +983,7 @@ window.addEventListener("load", load);
     Module--&gt;&gt;Wave: Return processed tensor
     Wave-&gt;&gt;Wave: Create new Wave(result, fs)
     Wave--&gt;&gt;User: Return new Wave
-    </pre><p><strong>Pipeline Operator Flow</strong> - Shows how the pipe operator processes any <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>.</p>
+    </pre><p><strong>Pipeline Operator Flow</strong> - Shows how the pipe operator processes any <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>.</p>
 </section>
 <section id="type-validation-and-configuration">
 <h3>Type Validation and Configuration<a class="headerlink" href="#type-validation-and-configuration" title="Link to this heading">#</a></h3>
@@ -996,7 +996,7 @@ window.addEventListener("load", load);
 </thead>
 <tbody>
 <tr class="row-even"><td><p>1. Type validation</p></td>
-<td><p>Checks if right operand is <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a></p></td>
+<td><p>Checks if right operand is <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">src/torchfx/wave.py:163-164</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>2. FX configuration</p></td>
@@ -1053,10 +1053,10 @@ window.addEventListener("load", load);
 </section>
 <section id="using-nn-sequential">
 <h2>Using nn.Sequential<a class="headerlink" href="#using-nn-sequential" title="Link to this heading">#</a></h2>
-<p>TorchFX filters and effects can be composed using <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>, providing an alternative to the pipeline operator for creating processing chains.</p>
+<p>TorchFX filters and effects can be composed using <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>, providing an alternative to the pipeline operator for creating processing chains.</p>
 <section id="sequential-composition-pattern">
 <h3>Sequential Composition Pattern<a class="headerlink" href="#sequential-composition-pattern" title="Link to this heading">#</a></h3>
-<p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> creates a container that applies modules in order:</p>
+<p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> creates a container that applies modules in order:</p>
 <pre  class="mermaid">
         graph LR
     Input[&quot;Input Tensor&lt;br/&gt;(C, T)&quot;]
@@ -1180,13 +1180,13 @@ window.addEventListener("load", load);
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>Use the pipe operator for exploration and scripts. Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> or custom modules when building larger systems or when you need to integrate with PyTorch training pipelines.</p>
+<p>Use the pipe operator for exploration and scripts. Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> or custom modules when building larger systems or when you need to integrate with PyTorch training pipelines.</p>
 </div>
 </section>
 </section>
 <section id="creating-custom-neural-network-modules">
 <h2>Creating Custom Neural Network Modules<a class="headerlink" href="#creating-custom-neural-network-modules" title="Link to this heading">#</a></h2>
-<p>TorchFX filters and effects can be embedded in custom <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> classes to create reusable processing blocks with custom logic.</p>
+<p>TorchFX filters and effects can be embedded in custom <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> classes to create reusable processing blocks with custom logic.</p>
 <section id="pattern-1-audio-preprocessing-module">
 <h3>Pattern 1: Audio Preprocessing Module<a class="headerlink" href="#pattern-1-audio-preprocessing-module" title="Link to this heading">#</a></h3>
 <p>Create a preprocessing module for machine learning pipelines:</p>
@@ -1618,7 +1618,7 @@ window.addEventListener("load", load);
 </section>
 <section id="module-compatibility-requirements">
 <h3>Module Compatibility Requirements<a class="headerlink" href="#module-compatibility-requirements" title="Link to this heading">#</a></h3>
-<p>Any <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> is compatible with TorchFX’s pipe operator if it:</p>
+<p>Any <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> is compatible with TorchFX’s pipe operator if it:</p>
 <ol class="arabic simple">
 <li><p><strong>Implements</strong> a <code class="docutils literal notranslate"><span class="pre">forward</span></code> method</p></li>
 <li><p><strong>Accepts</strong> a tensor as input with shape <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">time)</span></code> for audio</p></li>
@@ -2091,9 +2091,9 @@ window.addEventListener("load", load);
 <h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
 <p>Key takeaways for PyTorch integration:</p>
 <ol class="arabic simple">
-<li><p><strong>Module Inheritance</strong>: All TorchFX effects and filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, enabling full PyTorch compatibility</p></li>
-<li><p><strong>Pipe Operator</strong>: The <code class="docutils literal notranslate"><span class="pre">|</span></code> operator accepts any <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, not just TorchFX components</p></li>
-<li><p><strong>Sequential Composition</strong>: Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> for standard PyTorch-style chains</p></li>
+<li><p><strong>Module Inheritance</strong>: All TorchFX effects and filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, enabling full PyTorch compatibility</p></li>
+<li><p><strong>Pipe Operator</strong>: The <code class="docutils literal notranslate"><span class="pre">|</span></code> operator accepts any <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, not just TorchFX components</p></li>
+<li><p><strong>Sequential Composition</strong>: Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> for standard PyTorch-style chains</p></li>
 <li><p><strong>Custom Modules</strong>: Embed TorchFX filters in custom modules for reusable processing blocks</p></li>
 <li><p><strong>Gradient Flow</strong>: Gradients flow through TorchFX operations, but filter coefficients are fixed (non-learnable)</p></li>
 <li><p><strong>Library Mixing</strong>: Seamlessly combine TorchFX with torchaudio transforms and custom modules</p></li>

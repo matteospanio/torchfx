@@ -928,7 +928,7 @@ window.addEventListener("load", load);
 <h3>Automatic Configuration<a class="headerlink" href="#automatic-configuration" title="Link to this heading">#</a></h3>
 <p>When you use the pipeline operator, TorchFX automatically:</p>
 <ol class="arabic simple">
-<li><p><strong>Validates the effect</strong>: Ensures it’s a <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a></p></li>
+<li><p><strong>Validates the effect</strong>: Ensures it’s a <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a></p></li>
 <li><p><strong>Sets the sample rate</strong>: Configures the effect’s <code class="docutils literal notranslate"><span class="pre">fs</span></code> attribute from the wave</p></li>
 <li><p><strong>Computes coefficients</strong>: For filters, calls <code class="docutils literal notranslate"><span class="pre">compute_coefficients()</span></code> if needed</p></li>
 <li><p><strong>Applies the effect</strong>: Calls the effect’s <code class="docutils literal notranslate"><span class="pre">forward()</span></code> method on the audio tensor</p></li>
@@ -981,7 +981,7 @@ window.addEventListener("load", load);
 <h2>Advanced Patterns<a class="headerlink" href="#advanced-patterns" title="Link to this heading">#</a></h2>
 <section id="combining-with-pytorch-modules">
 <h3>Combining with PyTorch Modules<a class="headerlink" href="#combining-with-pytorch-modules" title="Link to this heading">#</a></h3>
-<p>The pipeline operator works with any <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, not just <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> effects:</p>
+<p>The pipeline operator works with any <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, not just <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> effects:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
 
@@ -1179,7 +1179,7 @@ window.addEventListener("load", load);
 </section>
 <section id="extract-complex-chains">
 <h3>Extract Complex Chains<a class="headerlink" href="#extract-complex-chains" title="Link to this heading">#</a></h3>
-<p>For reusable or complex chains, use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>:</p>
+<p>For reusable or complex chains, use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
 

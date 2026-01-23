@@ -827,7 +827,7 @@ window.addEventListener("load", load);
 <li><p><a class="reference internal" href="../core-concepts/wave.html"><span class="doc">Wave - Digital Audio Representation</span></a> - Wave class and tensor handling</p></li>
 <li><p><a class="reference internal" href="../core-concepts/fx.html"><span class="doc">FX - Audio Effect Base Class</span></a> - FX base class for effects</p></li>
 <li><p><a class="reference internal" href="../tutorials/custom-effects.html"><span class="doc">Creating Custom Effects</span></a> - Creating custom effects</p></li>
-<li><p>Basic PyTorch <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> and <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> usage</p></li>
+<li><p>Basic PyTorch <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> and <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> usage</p></li>
 </ul>
 </section>
 <section id="overview">
@@ -991,7 +991,7 @@ window.addEventListener("load", load);
 <p>Per-channel processing applies different effects to each channel independently. This is the most common pattern for multi-channel effects.</p>
 <section id="pattern-1-fixed-channel-count-with-modulelist">
 <h3>Pattern 1: Fixed Channel Count with ModuleList<a class="headerlink" href="#pattern-1-fixed-channel-count-with-modulelist" title="Link to this heading">#</a></h3>
-<p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to store separate processing chains for each channel:</p>
+<p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to store separate processing chains for each channel:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
@@ -1104,7 +1104,7 @@ window.addEventListener("load", load);
     style Right fill:#ffe1e1
     </pre><p><strong>Key implementation details</strong>:</p>
 <ol class="arabic simple">
-<li><p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to properly register submodules</p></li>
+<li><p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to properly register submodules</p></li>
 <li><p>Accept <code class="docutils literal notranslate"><span class="pre">fs</span></code> parameter and pass it to filters requiring sample rate</p></li>
 <li><p>Validate <code class="docutils literal notranslate"><span class="pre">fs</span></code> is set before processing</p></li>
 <li><p>Process each channel independently in <code class="docutils literal notranslate"><span class="pre">forward()</span></code></p></li>
@@ -1315,7 +1315,7 @@ window.addEventListener("load", load);
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>Use the <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> pattern even if all channels have the same processing. This keeps your code flexible and makes it easy to customize individual channels later.</p>
+<p>Use the <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> pattern even if all channels have the same processing. This keeps your code flexible and makes it easy to customize individual channels later.</p>
 </div>
 </section>
 </section>
@@ -1824,7 +1824,7 @@ window.addEventListener("load", load);
 <span class="p">]</span>
 </pre></div>
 </div>
-<p>Using <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> ensures:</p>
+<p>Using <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> ensures:</p>
 <ul class="simple">
 <li><p>Proper parameter registration for GPU transfer</p></li>
 <li><p>Correct gradient tracking for trainable parameters</p></li>
@@ -2025,7 +2025,7 @@ window.addEventListener("load", load);
 <td><p>Use strategy classes for pluggable channel behavior</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>ModuleList</strong></p></td>
-<td><p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> for per-channel processing chains</p></td>
+<td><p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> for per-channel processing chains</p></td>
 </tr>
 <tr class="row-even"><td><p><strong>Dimension handling</strong></p></td>
 <td><p>Detect and handle 1D, 2D, 3D+ tensors appropriately</p></td>

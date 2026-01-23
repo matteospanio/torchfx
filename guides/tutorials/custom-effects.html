@@ -837,7 +837,7 @@ window.addEventListener("load", load);
 </section>
 <section id="understanding-the-fx-base-class">
 <h2>Understanding the FX Base Class<a class="headerlink" href="#understanding-the-fx-base-class" title="Link to this heading">#</a></h2>
-<p>All effects in TorchFX must inherit from the <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> abstract base class, which itself inherits from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>. This design ensures effects are compatible with PyTorch’s module system and can use standard PyTorch features like <a class="reference internal" href="../../glossary.html#term-Device"><span class="xref std std-term">device</span></a> management, gradient computation, and serialization.</p>
+<p>All effects in TorchFX must inherit from the <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> abstract base class, which itself inherits from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>. This design ensures effects are compatible with PyTorch’s module system and can use standard PyTorch features like <a class="reference internal" href="../../glossary.html#term-Device"><span class="xref std std-term">device</span></a> management, gradient computation, and serialization.</p>
 <section id="class-hierarchy">
 <h3>Class Hierarchy<a class="headerlink" href="#class-hierarchy" title="Link to this heading">#</a></h3>
 <pre  class="mermaid">
@@ -1342,7 +1342,7 @@ window.addEventListener("load", load);
 </section>
 <section id="multi-channel-effects">
 <h2>Multi-Channel Effects<a class="headerlink" href="#multi-channel-effects" title="Link to this heading">#</a></h2>
-<p>Multi-channel effects process each audio channel independently or with channel-specific processing chains. TorchFX provides the <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> pattern for implementing per-channel processing.</p>
+<p>Multi-channel effects process each audio channel independently or with channel-specific processing chains. TorchFX provides the <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> pattern for implementing per-channel processing.</p>
 <section id="multi-channel-architecture">
 <h3>Multi-Channel Architecture<a class="headerlink" href="#multi-channel-architecture" title="Link to this heading">#</a></h3>
 <pre  class="mermaid">
@@ -1485,7 +1485,7 @@ window.addEventListener("load", load);
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>For processing that affects all channels equally, you don’t need <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a>. Simply process the entire tensor at once:</p>
+<p>For processing that affects all channels equally, you don’t need <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a>. Simply process the entire tensor at once:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="c1"># Process all channels identically</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>
@@ -1561,7 +1561,7 @@ window.addEventListener("load", load);
 </section>
 <section id="device-handling">
 <h3>Device Handling<a class="headerlink" href="#device-handling" title="Link to this heading">#</a></h3>
-<p>Custom effects automatically inherit <a class="reference internal" href="../../glossary.html#term-Device"><span class="xref std std-term">device</span></a> management from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>. Effects can be moved to <a class="reference internal" href="../../glossary.html#term-GPU"><span class="xref std std-term">GPU</span></a> using <code class="docutils literal notranslate"><span class="pre">.to()</span></code>:</p>
+<p>Custom effects automatically inherit <a class="reference internal" href="../../glossary.html#term-Device"><span class="xref std std-term">device</span></a> management from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>. Effects can be moved to <a class="reference internal" href="../../glossary.html#term-GPU"><span class="xref std std-term">GPU</span></a> using <code class="docutils literal notranslate"><span class="pre">.to()</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create effect</span>
 <span class="n">custom_effect</span> <span class="o">=</span> <span class="n">CustomEffect</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 

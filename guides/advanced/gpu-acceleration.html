@@ -984,7 +984,7 @@ window.addEventListener("load", load);
 </section>
 <section id="filter-and-effect-device-management">
 <h2>Filter and Effect Device Management<a class="headerlink" href="#filter-and-effect-device-management" title="Link to this heading">#</a></h2>
-<p>All filters and effects in TorchFX inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, enabling standard PyTorch device management for their parameters and buffers.</p>
+<p>All filters and effects in TorchFX inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, enabling standard PyTorch device management for their parameters and buffers.</p>
 <section id="moving-filters-to-gpu">
 <h3>Moving Filters to GPU<a class="headerlink" href="#moving-filters-to-gpu" title="Link to this heading">#</a></h3>
 <p>Filters store their coefficients as PyTorch tensors or buffers. To enable GPU-accelerated filtering, move these coefficients to the GPU:</p>
@@ -1003,7 +1003,7 @@ window.addEventListener("load", load);
 </section>
 <section id="moving-filter-chains-to-gpu">
 <h3>Moving Filter Chains to GPU<a class="headerlink" href="#moving-filter-chains-to-gpu" title="Link to this heading">#</a></h3>
-<p>When using <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> or other PyTorch containers, all modules in the chain are moved together:</p>
+<p>When using <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> or other PyTorch containers, all modules in the chain are moved together:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
 
@@ -1328,7 +1328,7 @@ window.addEventListener("load", load);
 </ul>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>For multi-GPU systems, you can specify a specific GPU using <code class="docutils literal notranslate"><span class="pre">&quot;cuda:0&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cuda:1&quot;</span></code>, etc. Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.cuda.device_count.html#torch.cuda.device_count" title="(in PyTorch v2.9)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.cuda.device_count()</span></code></a> to check available GPUs.</p>
+<p>For multi-GPU systems, you can specify a specific GPU using <code class="docutils literal notranslate"><span class="pre">&quot;cuda:0&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cuda:1&quot;</span></code>, etc. Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.cuda.device_count.html#torch.cuda.device_count" title="(in PyTorch v2.10)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.cuda.device_count()</span></code></a> to check available GPUs.</p>
 </div>
 </section>
 <section id="cpu-transfer-for-i-o-operations">

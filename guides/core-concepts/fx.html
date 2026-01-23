@@ -822,12 +822,12 @@ window.addEventListener("load", load);
 <p>The <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> class is the abstract base class for all audio effects and filters in TorchFX. It defines the interface that all effects must implement and provides the foundation for building custom audio processors.</p>
 <section id="what-is-fx">
 <h2>What is FX?<a class="headerlink" href="#what-is-fx" title="Link to this heading">#</a></h2>
-<p><a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> inherits from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, making all TorchFX effects compatible with PyTorch’s neural network ecosystem. This design choice enables:</p>
+<p><a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> inherits from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, making all TorchFX effects compatible with PyTorch’s neural network ecosystem. This design choice enables:</p>
 <ul class="simple">
 <li><p><strong>Gradient Computation</strong>: Effects can be used in differentiable audio processing pipelines</p></li>
 <li><p><strong>Parameter Management</strong>: Automatic device handling and parameter tracking</p></li>
 <li><p><strong>Modularity</strong>: Effects can be combined with neural networks</p></li>
-<li><p><strong>Composability</strong>: Easy integration with <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> and other PyTorch containers</p></li>
+<li><p><strong>Composability</strong>: Easy integration with <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> and other PyTorch containers</p></li>
 </ul>
 <pre  class="mermaid">
         classDiagram
@@ -1431,7 +1431,7 @@ window.addEventListener("load", load);
 </section>
 <section id="per-channel-processing">
 <h3>Per-Channel Processing<a class="headerlink" href="#per-channel-processing" title="Link to this heading">#</a></h3>
-<p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> for per-channel effects:</p>
+<p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> for per-channel effects:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PerChannelEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>

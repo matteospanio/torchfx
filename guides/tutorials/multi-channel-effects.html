@@ -1028,7 +1028,7 @@ window.addEventListener("load", load);
 <h2>Creating Per-Channel Effects<a class="headerlink" href="#creating-per-channel-effects" title="Link to this heading">#</a></h2>
 <section id="pattern-1-independent-channel-processing">
 <h3>Pattern 1: Independent Channel Processing<a class="headerlink" href="#pattern-1-independent-channel-processing" title="Link to this heading">#</a></h3>
-<p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to store per-channel processing chains:</p>
+<p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to store per-channel processing chains:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span><span class="p">,</span> <span class="n">Wave</span>
@@ -1083,7 +1083,7 @@ window.addEventListener("load", load);
 </div>
 <p><strong>Key points</strong>:</p>
 <ul class="simple">
-<li><p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to register submodules</p></li>
+<li><p>Use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.ModuleList</span></code></a> to register submodules</p></li>
 <li><p>Pass <code class="docutils literal notranslate"><span class="pre">fs</span></code> to filters that need sample rate</p></li>
 <li><p>Process each channel independently in <code class="docutils literal notranslate"><span class="pre">forward()</span></code></p></li>
 <li><p>Each channel can have completely different processing</p></li>

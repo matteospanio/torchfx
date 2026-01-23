@@ -873,7 +873,7 @@ window.addEventListener("load", load);
 <h3>FX - Effect Base Class<a class="headerlink" href="#fx-effect-base-class" title="Link to this heading">#</a></h3>
 <p>The <a class="reference internal" href="../../api/core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a> abstract base class defines the interface for all audio effects and filters. It:</p>
 <ul class="simple">
-<li><p>Inherits from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> for PyTorch integration</p></li>
+<li><p>Inherits from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> for PyTorch integration</p></li>
 <li><p>Provides automatic <a class="reference internal" href="../../glossary.html#term-Sample-Rate"><span class="xref std std-term">sample rate</span></a> configuration</p></li>
 <li><p>Enables gradient computation when needed</p></li>
 <li><p>Supports both real-time and batch processing</p></li>
@@ -916,7 +916,7 @@ window.addEventListener("load", load);
 <h2>Design Philosophy<a class="headerlink" href="#design-philosophy" title="Link to this heading">#</a></h2>
 <p>TorchFX follows these design principles:</p>
 <ol class="arabic simple">
-<li><p><strong>PyTorch Native</strong>: Built on <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.Tensor</span></code></a> and <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> for seamless integration</p></li>
+<li><p><strong>PyTorch Native</strong>: Built on <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.Tensor</span></code></a> and <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> for seamless integration</p></li>
 <li><p><strong>Functional Style</strong>: Immutable operations that return new objects</p></li>
 <li><p><strong>Readable Code</strong>: Pipeline operator creates self-documenting effect chains</p></li>
 <li><p><strong>Musical Thinking</strong>: Time represented in musical terms (BPM, note divisions) not just samples</p></li>

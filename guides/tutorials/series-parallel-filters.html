@@ -1225,8 +1225,8 @@ window.addEventListener("load", load);
 </div>
 <p>The device is automatically propagated because:</p>
 <ul class="simple">
-<li><p>Filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a></p></li>
-<li><p>Filter coefficients are stored as <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.Tensor</span></code></a></p></li>
+<li><p>Filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a></p></li>
+<li><p>Filter coefficients are stored as <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.Tensor</span></code></a></p></li>
 <li><p>The <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> tensor carries device information</p></li>
 </ul>
 <div class="admonition seealso">
@@ -1250,7 +1250,7 @@ window.addEventListener("load", load);
 </section>
 <section id="mixing-with-pytorch-modules">
 <h2>Mixing with PyTorch Modules<a class="headerlink" href="#mixing-with-pytorch-modules" title="Link to this heading">#</a></h2>
-<p>Since filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, they work with standard PyTorch containers:</p>
+<p>Since filters inherit from <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>, they work with standard PyTorch containers:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
