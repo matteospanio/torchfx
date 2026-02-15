@@ -1,0 +1,1030 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-02-15-cli-interface';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__postcard">
+   
+  <h2>
+     
+    <i class="fa fa-calendar"></i>
+    
+    <span>15 February 2026</span>
+    
+  </h2>
+  <ul>
+    <div class="ablog-sidebar-item ablog__postcard2">
+   
+  <li id="ablog-sidebar-item author ablog__author">
+    <span>
+      
+      <i class="fa-fw fa fa-user"></i>
+      
+    </span>
+     
+    <a href="index/author/matteo-spanio.html">Matteo Spanio</a>
+      
+  </li>
+     
+  <li id="ablog-sidebar-item category ablog__category">
+    <span>
+      
+      <i class="fa-fw fa fa-folder-open"></i>
+      
+    </span>
+     
+    <a href="index/category/features.html">features</a>
+      
+  </li>
+   
+  <li id="ablog-sidebar-item tags ablog__tags">
+    <span>
+       
+      <i class="fa-fw fa fa-tags"></i>
+       
+    </span>
+     
+    <a href="index/tag/cli.html">cli</a>
+        
+    <a href="index/tag/tools.html">tools</a>
+        
+    <a href="index/tag/workflow.html">workflow</a>
+      
+  </li>
+   
+</div>
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__recentposts">
+  <h3>
+    <a href="index.html">Recent Posts</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="2026-02-15-release-040.html">
+        15 February - TorchFX 0.4.0: Production-Ready Audio DSP 🚀
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-02-15-repl-live-performance.html">
+        15 February - Interactive Audio Magic: The TorchFX REPL
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-01-11-new-docs.html">
+        11 January - TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-01-06-deepwiki.html">
+        06 January - TorchFX is now indexed on DeepWiki
+      </a>
+    </li>
+    
+    <li>
+      <a href="2025-12-13-release-021.html">
+        13 December - TorchFX 0.2.1 Released 🎉
+      </a>
+    </li>
+    
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__tagcloud">
+  <link
+    rel="stylesheet"
+    href="../_static/ablog/tagcloud.css"
+    type="text/css"
+  />
+  <h3><a href="index/tag.html">Tags</a></h3>
+  <ul class="ablog-cloud">
+     
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/cli.html">cli</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/dafx.html">dafx</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/documentation.html">documentation</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/interactive.html">interactive</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/live-performance.html">live-performance</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/logging.html">logging</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-5">
+      <a href="index/tag/open-source.html">open-source</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/real-time.html">real-time</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-5">
+      <a href="index/tag/release.html">release</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/repl.html">repl</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/tools.html">tools</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/validation.html">validation</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/welcome.html">welcome</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/workflow.html">workflow</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__categories">
+  <h3>
+    <a href="index/category.html">Categories</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="index/category/announcements.html">announcements (4)</a>
+    </li>
+      
+    <li>
+      <a href="index/category/features.html">features (2)</a>
+    </li>
+      
+    <li>
+      <a href="index/category/releases.html">releases (1)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__authors">
+  <h3>
+    <a href="index/author.html">Authors</a>
+  </h3>
+  <ul>
+       
+    <li>
+      <a href="index/author/matteo-spanio.html">Matteo Spanio (7)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__archives">
+  <h3>
+    <a href="index/archive.html">Archives</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="index/2026.html">2026 (5)</a>
+    </li>
+      
+    <li>
+      <a href="index/2025.html">2025 (2)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="torchfx-cli-gpu-accelerated-audio-processing-from-the-terminal">
+<h1>TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal<a class="headerlink" href="#torchfx-cli-gpu-accelerated-audio-processing-from-the-terminal" title="Link to this heading">#</a></h1>
+<p>One of the most requested features for TorchFX has finally arrived: a <strong>full-featured command-line interface</strong> that brings GPU-accelerated audio processing directly to your terminal. Whether you’re a music producer, sound designer, or audio engineer, the new <code class="docutils literal notranslate"><span class="pre">torchfx</span></code> CLI tool streamlines your workflow with familiar commands and powerful new capabilities.</p>
+<section id="from-library-to-tool">
+<h2>From Library to Tool<a class="headerlink" href="#from-library-to-tool" title="Link to this heading">#</a></h2>
+<p>While TorchFX started as a Python library for audio DSP research, we recognized that many users need quick, scriptable audio processing without writing Python code. The CLI bridges this gap, offering:</p>
+<ul class="simple">
+<li><p><strong>Sox-compatible commands</strong> for easy migration from existing workflows</p></li>
+<li><p><strong>GPU acceleration</strong> for batch processing hundreds of files</p></li>
+<li><p><strong>Unix pipe support</strong> for integrating with existing audio pipelines</p></li>
+<li><p><strong>TOML configuration files</strong> for reproducible effect chains</p></li>
+<li><p><strong>Preset management</strong> for reusable processing templates</p></li>
+</ul>
+</section>
+<section id="core-commands">
+<h2>Core Commands<a class="headerlink" href="#core-commands" title="Link to this heading">#</a></h2>
+<section id="process-audio-files">
+<h3>Process Audio Files<a class="headerlink" href="#process-audio-files" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">process</span></code> command is your workhorse for applying effects:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Single file with effects</span>
+torchfx<span class="w"> </span>process<span class="w"> </span>input.wav<span class="w"> </span>output.wav<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.6,mix=0.3&quot;</span>
+
+<span class="c1"># Batch processing with GPU acceleration</span>
+torchfx<span class="w"> </span>process<span class="w"> </span><span class="s2">&quot;*.wav&quot;</span><span class="w"> </span>--output-dir<span class="w"> </span>./mastered/<span class="w"> </span>--device<span class="w"> </span>cuda<span class="w"> </span>-e<span class="w"> </span>normalize
+
+<span class="c1"># Unix pipes for integration</span>
+cat<span class="w"> </span>raw.wav<span class="w"> </span><span class="p">|</span><span class="w"> </span>torchfx<span class="w"> </span>process<span class="w"> </span>-<span class="w"> </span>-<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span><span class="p">|</span><span class="w"> </span>aplay
+</pre></div>
+</div>
+<p>The effect syntax is intuitive: <code class="docutils literal notranslate"><span class="pre">name:param1=val1,param2=val2</span></code>. With 30+ built-in effects and filters registered (from <code class="docutils literal notranslate"><span class="pre">gain</span></code> to <code class="docutils literal notranslate"><span class="pre">parametriceq</span></code>), you have a complete DSP toolkit at your fingertips.</p>
+</section>
+<section id="file-information">
+<h3>File Information<a class="headerlink" href="#file-information" title="Link to this heading">#</a></h3>
+<p>Quickly inspect audio metadata with rich table output:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>info<span class="w"> </span>recording.wav
+</pre></div>
+</div>
+<p>This displays sample rate, channels, duration, encoding, and file size in a clean, formatted table — perfect for scripts that need to validate audio properties.</p>
+</section>
+<section id="playback-recording">
+<h3>Playback &amp; Recording<a class="headerlink" href="#playback-recording" title="Link to this heading">#</a></h3>
+<p>Preview your processing with direct playback:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Play with effects applied on-the-fly</span>
+torchfx<span class="w"> </span>play<span class="w"> </span>song.wav<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.4&quot;</span>
+
+<span class="c1"># Record from microphone</span>
+torchfx<span class="w"> </span>record<span class="w"> </span>output.wav<span class="w"> </span>--duration<span class="w"> </span><span class="m">10</span><span class="w"> </span>-r<span class="w"> </span><span class="m">48000</span><span class="w"> </span>-C<span class="w"> </span><span class="m">2</span>
+</pre></div>
+</div>
+<p>Both commands require the optional <code class="docutils literal notranslate"><span class="pre">sounddevice</span></code> package (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchfx[realtime]</span></code>), giving you instant audio I/O without leaving the terminal.</p>
+</section>
+</section>
+<section id="sox-compatible-commands">
+<h2>Sox-Compatible Commands<a class="headerlink" href="#sox-compatible-commands" title="Link to this heading">#</a></h2>
+<p>For users migrating from SoX or needing familiar tools, we’ve implemented a subset of sox commands with GPU acceleration:</p>
+<section id="convert">
+<h3>Convert<a class="headerlink" href="#convert" title="Link to this heading">#</a></h3>
+<p>Format, sample rate, and channel conversion:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>convert<span class="w"> </span>input.wav<span class="w"> </span>output.flac
+torchfx<span class="w"> </span>convert<span class="w"> </span>hi-res.wav<span class="w"> </span>cd-quality.wav<span class="w"> </span>-r<span class="w"> </span><span class="m">44100</span><span class="w"> </span>-b<span class="w"> </span><span class="m">16</span>
+torchfx<span class="w"> </span>convert<span class="w"> </span>stereo.wav<span class="w"> </span>mono.wav<span class="w"> </span>--channels<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+<section id="trim">
+<h3>Trim<a class="headerlink" href="#trim" title="Link to this heading">#</a></h3>
+<p>Extract time ranges with precision:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>trim<span class="w"> </span>input.wav<span class="w"> </span>clip.wav<span class="w"> </span>--start<span class="w"> </span><span class="m">1</span>.5<span class="w"> </span>--end<span class="w"> </span><span class="m">4</span>.0
+torchfx<span class="w"> </span>trim<span class="w"> </span>long.wav<span class="w"> </span>first-30s.wav<span class="w"> </span>--duration<span class="w"> </span><span class="m">30</span>
+</pre></div>
+</div>
+</section>
+<section id="concat">
+<h3>Concat<a class="headerlink" href="#concat" title="Link to this heading">#</a></h3>
+<p>Join multiple files seamlessly:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>concat<span class="w"> </span>part1.wav<span class="w"> </span>part2.wav<span class="w"> </span>part3.wav<span class="w"> </span>-o<span class="w"> </span>full.wav
+</pre></div>
+</div>
+</section>
+<section id="stats">
+<h3>Stats<a class="headerlink" href="#stats" title="Link to this heading">#</a></h3>
+<p>Analyze signal characteristics:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>stats<span class="w"> </span>recording.wav
+</pre></div>
+</div>
+<p>Get detailed statistics including peak/RMS levels in dBFS, crest factor, DC offset, dynamic range, and per-channel breakdowns — all in a beautifully formatted table.</p>
+</section>
+</section>
+<section id="configuration-files-presets">
+<h2>Configuration Files &amp; Presets<a class="headerlink" href="#configuration-files-presets" title="Link to this heading">#</a></h2>
+<p>For complex effect chains, TOML configuration files provide reproducibility:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># mastering.toml</span>
+<span class="n">device</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;cuda&quot;</span>
+
+<span class="k">[[effects]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;normalize&quot;</span>
+<span class="n">peak</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.9</span>
+
+<span class="k">[[effects]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;parametriceq&quot;</span>
+<span class="n">frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2000</span>
+<span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.5</span>
+<span class="n">gain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
+
+<span class="k">[[effects]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;reverb&quot;</span>
+<span class="n">decay</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span>
+<span class="n">mix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.15</span>
+</pre></div>
+</div>
+<p>Use it with any command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>process<span class="w"> </span>input.wav<span class="w"> </span>output.wav<span class="w"> </span>--config<span class="w"> </span>mastering.toml
+</pre></div>
+</div>
+<section id="preset-management">
+<h3>Preset Management<a class="headerlink" href="#preset-management" title="Link to this heading">#</a></h3>
+<p>Save and reuse your favorite chains:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Save a preset</span>
+torchfx<span class="w"> </span>preset<span class="w"> </span>save<span class="w"> </span>mastering<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.5,mix=0.2&quot;</span>
+
+<span class="c1"># List all presets</span>
+torchfx<span class="w"> </span>preset<span class="w"> </span>list
+
+<span class="c1"># Apply a preset</span>
+torchfx<span class="w"> </span>preset<span class="w"> </span>apply<span class="w"> </span>mastering<span class="w"> </span>input.wav<span class="w"> </span>output.wav
+
+<span class="c1"># View preset contents</span>
+torchfx<span class="w"> </span>preset<span class="w"> </span>show<span class="w"> </span>mastering
+</pre></div>
+</div>
+<p>Presets are stored as TOML files in <code class="docutils literal notranslate"><span class="pre">~/.config/torchfx/presets/</span></code>, making them easy to share and version control.</p>
+</section>
+</section>
+<section id="watch-mode-daw-integration">
+<h2>Watch Mode: DAW Integration<a class="headerlink" href="#watch-mode-daw-integration" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">watch</span></code> command monitors directories for new or modified audio files and automatically applies your effect chain:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Monitor export folder</span>
+torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span class="w"> </span>./mastered/<span class="w"> </span>--preset<span class="w"> </span>mastering
+
+<span class="c1"># Recursive watching with real-time updates</span>
+torchfx<span class="w"> </span>watch<span class="w"> </span>./input/<span class="w"> </span>./output/<span class="w"> </span>--recursive<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.4&quot;</span>
+</pre></div>
+</div>
+<p>This is perfect for DAW workflows: export your tracks to a watched folder and get instant mastered versions. The watch mode runs continuously, showing rich status updates as files are processed.</p>
+</section>
+<section id="batch-processing-at-scale">
+<h2>Batch Processing at Scale<a class="headerlink" href="#batch-processing-at-scale" title="Link to this heading">#</a></h2>
+<p>One of the CLI’s killer features is GPU-accelerated batch processing. When processing hundreds of files, the difference is dramatic:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Process an entire album on GPU</span>
+torchfx<span class="w"> </span>--device<span class="w"> </span>cuda<span class="w"> </span>process<span class="w"> </span><span class="s2">&quot;album/*.wav&quot;</span><span class="w"> </span>-O<span class="w"> </span>./mastered/<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.5&quot;</span>
+</pre></div>
+</div>
+<p>You get a beautiful progress bar with ETA, per-file success/failure reporting, and processing speeds that scale with your GPU. On modern hardware, expect &gt;100x real-time throughput.</p>
+</section>
+<section id="global-options">
+<h2>Global Options<a class="headerlink" href="#global-options" title="Link to this heading">#</a></h2>
+<p>Every command supports global flags:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--device</span> <span class="pre">cuda</span></code> — GPU acceleration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--verbose</span></code> — DEBUG-level logging</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--config</span></code> — Global configuration file</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--version</span></code> — Show version</p></li>
+</ul>
+</section>
+<section id="design-philosophy">
+<h2>Design Philosophy<a class="headerlink" href="#design-philosophy" title="Link to this heading">#</a></h2>
+<p>The CLI follows Unix philosophy:</p>
+<ul class="simple">
+<li><p><strong>Do one thing well</strong>: Each command has a clear, focused purpose</p></li>
+<li><p><strong>Composable</strong>: Pipe commands together for complex workflows</p></li>
+<li><p><strong>Scriptable</strong>: Predictable output formats for automation</p></li>
+<li><p><strong>Fast</strong>: GPU acceleration where it matters</p></li>
+</ul>
+<p>But it also brings modern conveniences:</p>
+<ul class="simple">
+<li><p><strong>Rich output</strong>: Beautiful tables and progress bars</p></li>
+<li><p><strong>Smart defaults</strong>: Sensible parameter values</p></li>
+<li><p><strong>Helpful errors</strong>: Clear messages with suggestions</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<p>Get started in seconds:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli<span class="o">]</span>
+</pre></div>
+</div>
+<p>This installs all CLI dependencies (<code class="docutils literal notranslate"><span class="pre">typer</span></code>, <code class="docutils literal notranslate"><span class="pre">rich</span></code>, <code class="docutils literal notranslate"><span class="pre">tomli</span></code> for Python &lt;3.11). For playback and recording:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>realtime<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="real-world-workflows">
+<h2>Real-World Workflows<a class="headerlink" href="#real-world-workflows" title="Link to this heading">#</a></h2>
+<section id="podcast-cleanup">
+<h3>Podcast Cleanup<a class="headerlink" href="#podcast-cleanup" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="c1"># podcast-cleanup.sh</span>
+
+torchfx<span class="w"> </span>process<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="p">%.wav</span><span class="si">}</span><span class="s2">_cleaned.wav&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span>normalize<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;highpass:cutoff=80&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;lowpass:cutoff=15000&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="batch-album-mastering">
+<h3>Batch Album Mastering<a class="headerlink" href="#batch-album-mastering" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>--device<span class="w"> </span>cuda<span class="w"> </span>process<span class="w"> </span><span class="s2">&quot;album/*.wav&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-O<span class="w"> </span>./mastered/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--config<span class="w"> </span>mastering-chain.toml
+</pre></div>
+</div>
+</section>
+<section id="daw-export-monitor">
+<h3>DAW Export Monitor<a class="headerlink" href="#daw-export-monitor" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>watch<span class="w"> </span>~/Music/Exports/<span class="w"> </span>~/Music/Mastered/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--preset<span class="w"> </span>vocal-cleanup<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--recursive
+</pre></div>
+</div>
+</section>
+</section>
+<section id="whats-next">
+<h2>What’s Next?<a class="headerlink" href="#whats-next" title="Link to this heading">#</a></h2>
+<p>The CLI is just the beginning. Future releases will add:</p>
+<ul class="simple">
+<li><p>Real-time parameter visualization</p></li>
+<li><p>Spectrum analyzer integration</p></li>
+<li><p>A/B comparison mode</p></li>
+<li><p>Waveform preview in terminal</p></li>
+</ul>
+</section>
+<section id="try-it-today">
+<h2>Try It Today<a class="headerlink" href="#try-it-today" title="Link to this heading">#</a></h2>
+<p>The TorchFX CLI is available now in version 0.4.0. Install it, explore the commands, and let us know what you think!</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli<span class="o">]</span>
+torchfx<span class="w"> </span>--help
+</pre></div>
+</div>
+<p>For complete documentation, see the <a class="reference internal" href="../guides/tutorials/cli-guide.html"><span class="std std-doc">CLI Guide</span></a>.</p>
+<hr class="docutils" />
+<p><em>Have questions or feature requests? Open an issue on <a class="reference external" href="https://github.com/matteospanio/torchfx">GitHub</a> or start a discussion!</em></p>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+     
+<div class="section ablog__prev-next">
+  <span class="ablog__prev">
+     
+    <a href="2026-02-15-release-040.html">
+      
+      <i class="fa fa-arrow-circle-left"></i>
+      
+      <span>TorchFX 0.4.0: Production-Ready Audio DSP 🚀</span>
+    </a>
+    
+  </span>
+  <span class="ablog__spacer">&nbsp;</span>
+  <span class="ablog__next">
+    
+  </span>
+</div>
+  
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#from-library-to-tool">From Library to Tool</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-commands">Core Commands</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#process-audio-files">Process Audio Files</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file-information">File Information</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#playback-recording">Playback &amp; Recording</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sox-compatible-commands">Sox-Compatible Commands</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convert">Convert</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#trim">Trim</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#concat">Concat</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stats">Stats</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-files-presets">Configuration Files &amp; Presets</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preset-management">Preset Management</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watch-mode-daw-integration">Watch Mode: DAW Integration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-processing-at-scale">Batch Processing at Scale</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-options">Global Options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy">Design Philosophy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#real-world-workflows">Real-World Workflows</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#podcast-cleanup">Podcast Cleanup</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-album-mastering">Batch Album Mastering</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#daw-export-monitor">DAW Export Monitor</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whats-next">What’s Next?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#try-it-today">Try It Today</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-02-15-cli-interface.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/blog/2026-02-15-cli-interface.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

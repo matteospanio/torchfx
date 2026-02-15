@@ -1,0 +1,1131 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Interactive Audio Magic: The TorchFX REPL &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-02-15-repl-live-performance';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__postcard">
+   
+  <h2>
+     
+    <i class="fa fa-calendar"></i>
+    
+    <span>15 February 2026</span>
+    
+  </h2>
+  <ul>
+    <div class="ablog-sidebar-item ablog__postcard2">
+   
+  <li id="ablog-sidebar-item author ablog__author">
+    <span>
+      
+      <i class="fa-fw fa fa-user"></i>
+      
+    </span>
+     
+    <a href="index/author/matteo-spanio.html">Matteo Spanio</a>
+      
+  </li>
+     
+  <li id="ablog-sidebar-item category ablog__category">
+    <span>
+      
+      <i class="fa-fw fa fa-folder-open"></i>
+      
+    </span>
+     
+    <a href="index/category/features.html">features</a>
+      
+  </li>
+   
+  <li id="ablog-sidebar-item tags ablog__tags">
+    <span>
+       
+      <i class="fa-fw fa fa-tags"></i>
+       
+    </span>
+     
+    <a href="index/tag/repl.html">repl</a>
+        
+    <a href="index/tag/interactive.html">interactive</a>
+        
+    <a href="index/tag/live-performance.html">live-performance</a>
+        
+    <a href="index/tag/real-time.html">real-time</a>
+      
+  </li>
+   
+</div>
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__recentposts">
+  <h3>
+    <a href="index.html">Recent Posts</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="2026-02-15-cli-interface.html">
+        15 February - TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-02-15-release-040.html">
+        15 February - TorchFX 0.4.0: Production-Ready Audio DSP 🚀
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-01-11-new-docs.html">
+        11 January - TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-01-06-deepwiki.html">
+        06 January - TorchFX is now indexed on DeepWiki
+      </a>
+    </li>
+    
+    <li>
+      <a href="2025-12-13-release-021.html">
+        13 December - TorchFX 0.2.1 Released 🎉
+      </a>
+    </li>
+    
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__tagcloud">
+  <link
+    rel="stylesheet"
+    href="../_static/ablog/tagcloud.css"
+    type="text/css"
+  />
+  <h3><a href="index/tag.html">Tags</a></h3>
+  <ul class="ablog-cloud">
+     
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/cli.html">cli</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/dafx.html">dafx</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/documentation.html">documentation</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/interactive.html">interactive</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/live-performance.html">live-performance</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/logging.html">logging</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-5">
+      <a href="index/tag/open-source.html">open-source</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/real-time.html">real-time</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-5">
+      <a href="index/tag/release.html">release</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/repl.html">repl</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/tools.html">tools</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/validation.html">validation</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/welcome.html">welcome</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/workflow.html">workflow</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__categories">
+  <h3>
+    <a href="index/category.html">Categories</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="index/category/announcements.html">announcements (4)</a>
+    </li>
+      
+    <li>
+      <a href="index/category/features.html">features (2)</a>
+    </li>
+      
+    <li>
+      <a href="index/category/releases.html">releases (1)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__authors">
+  <h3>
+    <a href="index/author.html">Authors</a>
+  </h3>
+  <ul>
+       
+    <li>
+      <a href="index/author/matteo-spanio.html">Matteo Spanio (7)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__archives">
+  <h3>
+    <a href="index/archive.html">Archives</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="index/2026.html">2026 (5)</a>
+    </li>
+      
+    <li>
+      <a href="index/2025.html">2025 (2)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Interactive Audio Magic: The TorchFX REPL</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="interactive-audio-magic-the-torchfx-repl">
+<h1>Interactive Audio Magic: The TorchFX REPL<a class="headerlink" href="#interactive-audio-magic-the-torchfx-repl" title="Link to this heading">#</a></h1>
+<p>Imagine tweaking a reverb decay parameter and hearing the change <em>instantly</em> while your audio loops continuously. No stopping, no reprocessing, no waiting. Just <strong>live, real-time effect manipulation</strong>. That’s the power of the new TorchFX REPL.</p>
+<section id="beyond-batch-processing">
+<h2>Beyond Batch Processing<a class="headerlink" href="#beyond-batch-processing" title="Link to this heading">#</a></h2>
+<p>While command-line audio tools excel at batch processing, they fall short for iterative sound design. You typically write a command, run it, listen to the output, adjust parameters, and repeat. This cycle breaks creative flow.</p>
+<p>The TorchFX REPL changes the game by providing an <strong>interactive shell</strong> where you can:</p>
+<ul class="simple">
+<li><p>Load audio files</p></li>
+<li><p>Build effect chains incrementally</p></li>
+<li><p>Preview changes in real-time</p></li>
+<li><p>Save your work as presets</p></li>
+<li><p>Experiment freely without scripts</p></li>
+</ul>
+<p>Think of it as a <strong>live coding environment for audio DSP</strong>, powered by PyTorch and GPU acceleration.</p>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h2>
+<p>Launch the REPL with a single command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>interactive
+</pre></div>
+</div>
+<p>You’re greeted with a prompt and tab completion:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TorchFX</span> <span class="n">Interactive</span> <span class="n">REPL</span>
+<span class="n">Type</span> <span class="s1">&#39;help&#39;</span> <span class="k">for</span> <span class="n">commands</span><span class="p">,</span> <span class="s1">&#39;exit&#39;</span> <span class="n">to</span> <span class="n">quit</span><span class="o">.</span>
+
+<span class="n">torchfx</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<section id="loading-audio">
+<h3>Loading Audio<a class="headerlink" href="#loading-audio" title="Link to this heading">#</a></h3>
+<p>Start by loading a file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; load song.wav
+✓ Loaded song.wav  (2 ch, 44100 Hz, 180.50s)
+</pre></div>
+</div>
+<p>The REPL shows you key metadata immediately — channels, sample rate, and duration.</p>
+</section>
+<section id="building-effect-chains">
+<h3>Building Effect Chains<a class="headerlink" href="#building-effect-chains" title="Link to this heading">#</a></h3>
+<p>Add effects one at a time:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; add normalize
+✓ [1] Added normalize
+
+torchfx&gt; add reverb:decay=0.5,mix=0.2
+✓ [2] Added reverb:decay=0.5,mix=0.2
+
+torchfx&gt; list
+Effect Chain:
+  1. normalize
+  2. reverb:decay=0.5,mix=0.2
+</pre></div>
+</div>
+<p>Each effect gets an index, making it easy to manage complex chains.</p>
+</section>
+<section id="preview-your-work">
+<h3>Preview Your Work<a class="headerlink" href="#preview-your-work" title="Link to this heading">#</a></h3>
+<p>Play the processed audio:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; play
+▶ Playback complete (processed).
+</pre></div>
+</div>
+<p>Want to compare with the original?</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; play raw
+▶ Playback complete (raw).
+</pre></div>
+</div>
+</section>
+</section>
+<section id="live-performance-mode-the-game-changer">
+<h2>Live Performance Mode: The Game Changer<a class="headerlink" href="#live-performance-mode-the-game-changer" title="Link to this heading">#</a></h2>
+<p>Here’s where it gets exciting. Traditional audio tools process files offline — load, process, save. The REPL introduces <strong>live playback mode</strong> where audio loops continuously and effect changes apply <strong>immediately</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; live
+▶ Live playback started  (2 ch, 44100 Hz, looping)
+Change effects with &#39;add&#39;, &#39;remove&#39;, or &#39;preset load&#39; — changes apply immediately!
+Use &#39;live stop&#39; to end playback.
+</pre></div>
+</div>
+<p>Now, while the audio is playing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; add reverb:decay=0.8,mix=0.5
+✓ [1] Added reverb:decay=0.8,mix=0.5
+</pre></div>
+</div>
+<p><strong>The reverb starts INSTANTLY.</strong> No stopping, no reprocessing. The effect integrates seamlessly into the ongoing playback.</p>
+<section id="hot-swapping-effect-chains">
+<h3>Hot-Swapping Effect Chains<a class="headerlink" href="#hot-swapping-effect-chains" title="Link to this heading">#</a></h3>
+<p>The real power emerges when you swap entire chains mid-playback:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; preset load vocal-cleanup
+✓ Loaded preset &#39;vocal-cleanup&#39; (3 effects).
+</pre></div>
+</div>
+<p>Your audio transitions to the new chain at the next buffer boundary (~46ms latency). It’s like switching between guitar pedals — instant and glitch-free.</p>
+</section>
+<section id="removing-effects-live">
+<h3>Removing Effects Live<a class="headerlink" href="#removing-effects-live" title="Link to this heading">#</a></h3>
+<p>Made a mistake? Remove it in real-time:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; remove 2
+✗ Removed [2] lowpass:cutoff=8000
+</pre></div>
+</div>
+<p>The filter disappears from the audio stream immediately.</p>
+</section>
+<section id="stop-when-youre-done">
+<h3>Stop When You’re Done<a class="headerlink" href="#stop-when-youre-done" title="Link to this heading">#</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; live stop
+⏹ Live playback stopped.
+</pre></div>
+</div>
+</section>
+</section>
+<section id="technical-deep-dive-lock-free-audio">
+<h2>Technical Deep Dive: Lock-Free Audio<a class="headerlink" href="#technical-deep-dive-lock-free-audio" title="Link to this heading">#</a></h2>
+<p>How does the REPL achieve glitch-free, real-time effect switching? The secret is a <strong>lock-free circular buffer pattern</strong> inspired by professional audio software:</p>
+<ol class="arabic simple">
+<li><p><strong>Audio Thread</strong>: Runs in real-time, reading chunks from the file and passing them through the effect chain</p></li>
+<li><p><strong>REPL Thread</strong>: Handles user commands, modifying the effect list</p></li>
+<li><p><strong>Lock-Free Reads</strong>: The audio thread reads the effect list without locks, seeing a consistent snapshot</p></li>
+<li><p><strong>Buffer Boundaries</strong>: Changes apply atomically at buffer boundaries (~46ms &#64; 2048 samples, 44.1kHz)</p></li>
+</ol>
+<p>This architecture ensures:</p>
+<ul class="simple">
+<li><p><strong>Zero dropouts</strong> during effect changes</p></li>
+<li><p><strong>Immediate response</strong> (one buffer latency)</p></li>
+<li><p><strong>Thread safety</strong> without blocking the audio path</p></li>
+<li><p><strong>Graceful degradation</strong> (broken effects are skipped)</p></li>
+</ul>
+<p>It’s the same pattern used in <code class="docutils literal notranslate"><span class="pre">RealtimeProcessor</span></code> for live microphone input, adapted here for file-based playback.</p>
+</section>
+<section id="complete-command-reference">
+<h2>Complete Command Reference<a class="headerlink" href="#complete-command-reference" title="Link to this heading">#</a></h2>
+<section id="file-operations">
+<h3>File Operations<a class="headerlink" href="#file-operations" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">load</span> <span class="pre">&lt;file&gt;</span></code> — Load an audio file</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">info</span></code> — Show loaded file metadata</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save</span> <span class="pre">&lt;file&gt;</span></code> — Save processed audio</p></li>
+</ul>
+</section>
+<section id="effect-chain-management">
+<h3>Effect Chain Management<a class="headerlink" href="#effect-chain-management" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">add</span> <span class="pre">&lt;spec&gt;</span></code> — Add effect (e.g., <code class="docutils literal notranslate"><span class="pre">add</span> <span class="pre">reverb:decay=0.5</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">remove</span> <span class="pre">&lt;n&gt;</span></code> — Remove effect at index (1-based)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list</span></code> — Show current effect chain</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">clear</span></code> — Clear all effects</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">effects</span></code> — List all available effect names</p></li>
+</ul>
+</section>
+<section id="playback">
+<h3>Playback<a class="headerlink" href="#playback" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">play</span></code> — Play processed audio (blocks until complete)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">play</span> <span class="pre">raw</span></code> — Play original unprocessed audio</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">live</span></code> — <strong>Start live playback (non-blocking, loops)</strong></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">live</span> <span class="pre">stop</span></code> — <strong>Stop live playback</strong></p></li>
+</ul>
+</section>
+<section id="preset-management">
+<h3>Preset Management<a class="headerlink" href="#preset-management" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">save</span> <span class="pre">&lt;name&gt;</span></code> — Save chain as preset</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">load</span> <span class="pre">&lt;name&gt;</span></code> — Load preset into chain</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">list</span></code> — List saved presets</p></li>
+</ul>
+</section>
+<section id="utility">
+<h3>Utility<a class="headerlink" href="#utility" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">help</span></code> — Show command reference</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exit</span></code> / <code class="docutils literal notranslate"><span class="pre">quit</span></code> — Exit REPL</p></li>
+</ul>
+</section>
+</section>
+<section id="real-world-use-cases">
+<h2>Real-World Use Cases<a class="headerlink" href="#real-world-use-cases" title="Link to this heading">#</a></h2>
+<section id="sound-design-iteration">
+<h3>Sound Design Iteration<a class="headerlink" href="#sound-design-iteration" title="Link to this heading">#</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">load</span> <span class="n">synth</span><span class="o">-</span><span class="n">pad</span><span class="o">.</span><span class="n">wav</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">live</span>
+
+<span class="c1"># Try different reverb settings</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">add</span> <span class="n">reverb</span><span class="p">:</span><span class="n">decay</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span><span class="n">mix</span><span class="o">=</span><span class="mf">0.1</span>
+<span class="c1"># Too dry...</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">remove</span> <span class="mi">1</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">add</span> <span class="n">reverb</span><span class="p">:</span><span class="n">decay</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span><span class="n">mix</span><span class="o">=</span><span class="mf">0.4</span>
+<span class="c1"># Perfect!</span>
+
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">preset</span> <span class="n">save</span> <span class="n">lush</span><span class="o">-</span><span class="n">pad</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">live</span> <span class="n">stop</span>
+</pre></div>
+</div>
+</section>
+<section id="mastering-chain-development">
+<h3>Mastering Chain Development<a class="headerlink" href="#mastering-chain-development" title="Link to this heading">#</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">load</span> <span class="n">mix</span><span class="o">.</span><span class="n">wav</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">add</span> <span class="n">normalize</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">add</span> <span class="n">parametriceq</span><span class="p">:</span><span class="n">frequency</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span><span class="n">q</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span><span class="n">gain</span><span class="o">=</span><span class="mi">3</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">add</span> <span class="n">reverb</span><span class="p">:</span><span class="n">decay</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="n">mix</span><span class="o">=</span><span class="mf">0.1</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">play</span>
+
+<span class="c1"># Tweak until satisfied</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">preset</span> <span class="n">save</span> <span class="n">mastering</span><span class="o">-</span><span class="n">v1</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">save</span> <span class="n">mastered</span><span class="o">.</span><span class="n">wav</span>
+</pre></div>
+</div>
+</section>
+<section id="dj-set-preparation">
+<h3>DJ Set Preparation<a class="headerlink" href="#dj-set-preparation" title="Link to this heading">#</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">load</span> <span class="n">track</span><span class="o">.</span><span class="n">wav</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">live</span>
+
+<span class="c1"># Test different combinations rapidly</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">preset</span> <span class="n">load</span> <span class="nb">filter</span><span class="o">-</span><span class="n">sweep</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">preset</span> <span class="n">load</span> <span class="n">heavy</span><span class="o">-</span><span class="n">reverb</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">preset</span> <span class="n">load</span> <span class="n">clean</span>
+
+<span class="c1"># Find the winner</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">save</span> <span class="n">processed</span><span class="o">-</span><span class="n">track</span><span class="o">.</span><span class="n">wav</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">live</span> <span class="n">stop</span>
+</pre></div>
+</div>
+</section>
+<section id="educational-demos">
+<h3>Educational Demos<a class="headerlink" href="#educational-demos" title="Link to this heading">#</a></h3>
+<p>The REPL is perfect for teaching audio DSP. Students can hear parameter changes instantly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">load</span> <span class="n">tone</span><span class="o">.</span><span class="n">wav</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">live</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">add</span> <span class="n">lowpass</span><span class="p">:</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span>
+<span class="c1"># Hear the filtering</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">remove</span> <span class="mi">1</span>
+<span class="n">torchfx</span><span class="o">&gt;</span> <span class="n">add</span> <span class="n">lowpass</span><span class="p">:</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">500</span>
+<span class="c1"># Hear the difference</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="advanced-features">
+<h2>Advanced Features<a class="headerlink" href="#advanced-features" title="Link to this heading">#</a></h2>
+<section id="tab-completion">
+<h3>Tab Completion<a class="headerlink" href="#tab-completion" title="Link to this heading">#</a></h3>
+<p>Press Tab to complete:</p>
+<ul class="simple">
+<li><p>Command names</p></li>
+<li><p>Effect names</p></li>
+<li><p>File paths</p></li>
+<li><p>Preset names</p></li>
+</ul>
+</section>
+<section id="command-history">
+<h3>Command History<a class="headerlink" href="#command-history" title="Link to this heading">#</a></h3>
+<p>Navigate previous commands with ↑/↓ arrows. History is persistent across sessions in <code class="docutils literal notranslate"><span class="pre">~/.config/torchfx/repl_history</span></code>.</p>
+</section>
+<section id="rich-formatting">
+<h3>Rich Formatting<a class="headerlink" href="#rich-formatting" title="Link to this heading">#</a></h3>
+<p>All output uses Rich markup for beautiful, colorful formatting:</p>
+<ul class="simple">
+<li><p>Green for success messages</p></li>
+<li><p>Red for errors</p></li>
+<li><p>Yellow for warnings</p></li>
+<li><p>Cyan for highlights</p></li>
+<li><p>Dim for hints</p></li>
+</ul>
+</section>
+<section id="error-resilience">
+<h3>Error Resilience<a class="headerlink" href="#error-resilience" title="Link to this heading">#</a></h3>
+<p>During live playback, if an effect throws an error, it’s silently skipped to prevent audio dropouts. You’ll see errors when adding effects, but playback stays robust.</p>
+</section>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<p>The REPL is included with the CLI package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli<span class="o">]</span>
+</pre></div>
+</div>
+<p>For playback (required for <code class="docutils literal notranslate"><span class="pre">play</span></code> and <code class="docutils literal notranslate"><span class="pre">live</span></code> commands):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>realtime<span class="o">]</span>
+</pre></div>
+</div>
+<p>Then just run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>interactive
+</pre></div>
+</div>
+</section>
+<section id="performance-notes">
+<h2>Performance Notes<a class="headerlink" href="#performance-notes" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>Latency</strong>: ~46ms at default buffer size (2048 samples &#64; 44.1kHz)</p></li>
+<li><p><strong>Loop Performance</strong>: File reads are lock-protected; effect application is lock-free</p></li>
+<li><p><strong>Effect Count</strong>: Tested with 10+ effects in real-time without issues</p></li>
+<li><p><strong>GPU Support</strong>: Not currently used in REPL (CPU is plenty fast for real-time with reasonable chains)</p></li>
+</ul>
+</section>
+<section id="future-enhancements">
+<h2>Future Enhancements<a class="headerlink" href="#future-enhancements" title="Link to this heading">#</a></h2>
+<p>We’re exploring additions for future versions:</p>
+<ul class="simple">
+<li><p><strong>Waveform visualization</strong> in the terminal</p></li>
+<li><p><strong>Spectrum analyzer</strong> with ASCII/Unicode rendering</p></li>
+<li><p><strong>Parameter automation</strong> over time</p></li>
+<li><p><strong>MIDI controller support</strong> for live parameter changes</p></li>
+<li><p><strong>Multi-file session management</strong></p></li>
+<li><p><strong>Recording mode</strong> (mic → live effects → disk)</p></li>
+</ul>
+</section>
+<section id="philosophy-flow-state-for-audio">
+<h2>Philosophy: Flow State for Audio<a class="headerlink" href="#philosophy-flow-state-for-audio" title="Link to this heading">#</a></h2>
+<p>The REPL isn’t just a tool — it’s designed to <strong>enable flow states</strong> in audio work. By removing friction between idea and sound, it lets you:</p>
+<ul class="simple">
+<li><p>Explore creatively without breaking concentration</p></li>
+<li><p>Iterate faster than ever before</p></li>
+<li><p>Learn DSP concepts through immediate feedback</p></li>
+<li><p>Perform live with confidence</p></li>
+</ul>
+</section>
+<section id="try-it-now">
+<h2>Try It Now<a class="headerlink" href="#try-it-now" title="Link to this heading">#</a></h2>
+<p>Experience the magic of real-time audio manipulation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli,realtime<span class="o">]</span>
+torchfx<span class="w"> </span>interactive
+</pre></div>
+</div>
+<p>Load a file, type <code class="docutils literal notranslate"><span class="pre">live</span></code>, and start experimenting. You’ll never go back to batch processing for creative work.</p>
+<hr class="docutils" />
+<p><em>Questions? Join the discussion on <a class="reference external" href="https://github.com/matteospanio/torchfx">GitHub</a>!</em></p>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+     
+<div class="section ablog__prev-next">
+  <span class="ablog__prev">
+     
+    <a href="2026-01-11-new-docs.html">
+      
+      <i class="fa fa-arrow-circle-left"></i>
+      
+      <span>TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉</span>
+    </a>
+    
+  </span>
+  <span class="ablog__spacer">&nbsp;</span>
+  <span class="ablog__next">
+     
+    <a href="2026-02-15-release-040.html">
+      <span>TorchFX 0.4.0: Production-Ready Audio DSP 🚀</span>
+      
+      <i class="fa fa-arrow-circle-right"></i>
+      
+    </a>
+    
+  </span>
+</div>
+  
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beyond-batch-processing">Beyond Batch Processing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-started">Getting Started</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#loading-audio">Loading Audio</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-effect-chains">Building Effect Chains</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preview-your-work">Preview Your Work</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#live-performance-mode-the-game-changer">Live Performance Mode: The Game Changer</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hot-swapping-effect-chains">Hot-Swapping Effect Chains</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#removing-effects-live">Removing Effects Live</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stop-when-youre-done">Stop When You’re Done</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#technical-deep-dive-lock-free-audio">Technical Deep Dive: Lock-Free Audio</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-command-reference">Complete Command Reference</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file-operations">File Operations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#effect-chain-management">Effect Chain Management</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#playback">Playback</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preset-management">Preset Management</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#utility">Utility</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#real-world-use-cases">Real-World Use Cases</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sound-design-iteration">Sound Design Iteration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mastering-chain-development">Mastering Chain Development</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dj-set-preparation">DJ Set Preparation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#educational-demos">Educational Demos</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-features">Advanced Features</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tab-completion">Tab Completion</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-history">Command History</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rich-formatting">Rich Formatting</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#error-resilience">Error Resilience</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-notes">Performance Notes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#future-enhancements">Future Enhancements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#philosophy-flow-state-for-audio">Philosophy: Flow State for Audio</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#try-it-now">Try It Now</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-02-15-repl-live-performance.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/blog/2026-02-15-repl-live-performance.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

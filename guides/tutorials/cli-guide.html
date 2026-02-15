@@ -1,0 +1,1148 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Command-Line Interface &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/tutorials/cli-guide';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Creating Custom Filters" href="custom-filters.html" />
+    <link rel="prev" title="Tutorials" href="index.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting-started/getting_started.html">Getting Started</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core-concepts/index.html">Core Concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/wave.html">Wave - Digital Audio Representation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/fx.html">FX - Audio Effect Base Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/pipeline-operator.html">Pipeline Operator - Functional Composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-concepts/type-system.html">Type System - Musical Time and Audio Units</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Command-Line Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom-filters.html">Creating Custom Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom-effects.html">Creating Custom Effects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi-channel-effects.html">Multi-Channel Audio Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bpm-delay.html">BPM-Synced Delay Effects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../advanced/index.html">Advanced Topics</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/gpu-acceleration.html">GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/pytorch-integration.html">PyTorch Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/multi-channel.html">Multi-Channel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/performance.html">Performance Optimization and Benchmarking</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/project-structure.html">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Command-Line Interface</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="command-line-interface">
+<h1>Command-Line Interface<a class="headerlink" href="#command-line-interface" title="Link to this heading">#</a></h1>
+<p>TorchFX includes a full-featured CLI for audio processing directly from your
+terminal. Install the CLI dependencies with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli<span class="o">]</span>
+</pre></div>
+</div>
+<p>All commands are available under the <code class="docutils literal notranslate"><span class="pre">torchfx</span></code> entry-point.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>--help
+</pre></div>
+</div>
+<nav class="contents local" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#global-options" id="id1">Global Options</a></p></li>
+<li><p><a class="reference internal" href="#effect-specifications" id="id2">Effect Specifications</a></p></li>
+<li><p><a class="reference internal" href="#core-commands" id="id3">Core Commands</a></p>
+<ul>
+<li><p><a class="reference internal" href="#process" id="id4"><code class="docutils literal notranslate"><span class="pre">process</span></code></a></p></li>
+<li><p><a class="reference internal" href="#info" id="id5"><code class="docutils literal notranslate"><span class="pre">info</span></code></a></p></li>
+<li><p><a class="reference internal" href="#play" id="id6"><code class="docutils literal notranslate"><span class="pre">play</span></code></a></p></li>
+<li><p><a class="reference internal" href="#record" id="id7"><code class="docutils literal notranslate"><span class="pre">record</span></code></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#sox-compatible-commands" id="id8">Sox-Compatible Commands</a></p>
+<ul>
+<li><p><a class="reference internal" href="#convert" id="id9"><code class="docutils literal notranslate"><span class="pre">convert</span></code></a></p></li>
+<li><p><a class="reference internal" href="#trim" id="id10"><code class="docutils literal notranslate"><span class="pre">trim</span></code></a></p></li>
+<li><p><a class="reference internal" href="#concat" id="id11"><code class="docutils literal notranslate"><span class="pre">concat</span></code></a></p></li>
+<li><p><a class="reference internal" href="#stats" id="id12"><code class="docutils literal notranslate"><span class="pre">stats</span></code></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#preset-management" id="id13">Preset Management</a></p>
+<ul>
+<li><p><a class="reference internal" href="#preset-save" id="id14"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">save</span></code></a></p></li>
+<li><p><a class="reference internal" href="#preset-list" id="id15"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">list</span></code></a></p></li>
+<li><p><a class="reference internal" href="#preset-show" id="id16"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">show</span></code></a></p></li>
+<li><p><a class="reference internal" href="#preset-apply" id="id17"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">apply</span></code></a></p></li>
+<li><p><a class="reference internal" href="#preset-delete" id="id18"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">delete</span></code></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#interactive-repl" id="id19">Interactive REPL</a></p>
+<ul>
+<li><p><a class="reference internal" href="#live-performance-mode" id="id20">Live Performance Mode</a></p></li>
+<li><p><a class="reference internal" href="#repl-commands" id="id21">REPL Commands</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#watch-mode" id="id22">Watch Mode</a></p></li>
+<li><p><a class="reference internal" href="#toml-configuration" id="id23">TOML Configuration</a></p></li>
+</ul>
+</nav>
+<section id="global-options">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Global Options</a><a class="headerlink" href="#global-options" title="Link to this heading">#</a></h2>
+<p>Every sub-command inherits these global flags:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Flag</p></th>
+<th class="head"><p>Short</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--verbose</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-v</span></code></p></td>
+<td><p>off</p></td>
+<td><p>Enable DEBUG-level logging</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--device</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-d</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">cpu</span></code></p></td>
+<td><p>Processing device (<code class="docutils literal notranslate"><span class="pre">cpu</span></code> or <code class="docutils literal notranslate"><span class="pre">cuda</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--config</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-c</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Path to a TOML configuration file</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--version</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-V</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Print version and exit</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>-d<span class="w"> </span>cuda<span class="w"> </span>process<span class="w"> </span><span class="k">in</span>.wav<span class="w"> </span>out.wav<span class="w"> </span>-e<span class="w"> </span>normalize
+torchfx<span class="w"> </span>--version
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="effect-specifications">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Effect Specifications</a><a class="headerlink" href="#effect-specifications" title="Link to this heading">#</a></h2>
+<p>Many commands accept <code class="docutils literal notranslate"><span class="pre">--effect</span></code> / <code class="docutils literal notranslate"><span class="pre">-e</span></code> flags. The format is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">name</span>                        <span class="c1"># defaults</span>
+<span class="n">name</span><span class="p">:</span><span class="n">value</span>                  <span class="c1"># single positional parameter</span>
+<span class="n">name</span><span class="p">:</span><span class="n">k1</span><span class="o">=</span><span class="n">v1</span><span class="p">,</span><span class="n">k2</span><span class="o">=</span><span class="n">v2</span>           <span class="c1"># keyword parameters</span>
+<span class="n">name</span><span class="p">:</span><span class="n">pos</span><span class="p">,</span><span class="n">k1</span><span class="o">=</span><span class="n">v1</span>              <span class="c1"># mixed</span>
+</pre></div>
+</div>
+<p><strong>Examples:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>-e<span class="w"> </span>normalize
+-e<span class="w"> </span><span class="s2">&quot;gain:0.5&quot;</span>
+-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.6,mix=0.3&quot;</span>
+-e<span class="w"> </span><span class="s2">&quot;lowpass:cutoff=1000,q=0.707&quot;</span>
+-e<span class="w"> </span><span class="s2">&quot;parametriceq:frequency=2000,q=1.5,gain=6&quot;</span>
+</pre></div>
+</div>
+<p>Run <code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">interactive</span></code> and type <code class="docutils literal notranslate"><span class="pre">effects</span></code> to see the full list.</p>
+</section>
+<hr class="docutils" />
+<section id="core-commands">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Core Commands</a><a class="headerlink" href="#core-commands" title="Link to this heading">#</a></h2>
+<section id="process">
+<h3><a class="toc-backref" href="#id4" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">process</span></code></a><a class="headerlink" href="#process" title="Link to this heading">#</a></h3>
+<p>Apply an effect chain to one or more audio files.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Single file</span>
+torchfx<span class="w"> </span>process<span class="w"> </span>input.wav<span class="w"> </span>output.wav<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.6&quot;</span>
+
+<span class="c1"># Batch processing (glob pattern)</span>
+torchfx<span class="w"> </span>process<span class="w"> </span><span class="s2">&quot;*.wav&quot;</span><span class="w"> </span>--output-dir<span class="w"> </span>./processed/<span class="w"> </span>-e<span class="w"> </span>gain:0.5
+
+<span class="c1"># From a TOML config</span>
+torchfx<span class="w"> </span>process<span class="w"> </span>input.wav<span class="w"> </span>output.wav<span class="w"> </span>--config<span class="w"> </span>chain.toml
+
+<span class="c1"># Unix pipe</span>
+cat<span class="w"> </span>input.wav<span class="w"> </span><span class="p">|</span><span class="w"> </span>torchfx<span class="w"> </span>process<span class="w"> </span>-<span class="w"> </span>-<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span><span class="p">|</span><span class="w"> </span>aplay
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--effect</span></code> / <code class="docutils literal notranslate"><span class="pre">-e</span></code></p></td>
+<td><p>Effect specification (repeatable)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--output-dir</span></code> / <code class="docutils literal notranslate"><span class="pre">-O</span></code></p></td>
+<td><p>Output directory for batch mode</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--config</span></code> / <code class="docutils literal notranslate"><span class="pre">-c</span></code></p></td>
+<td><p>TOML config with <code class="docutils literal notranslate"><span class="pre">[[effects]]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--chunk-size</span></code></p></td>
+<td><p>Samples per processing chunk (default 65 536)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--overlap</span></code></p></td>
+<td><p>Overlap samples between chunks</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--format</span></code> / <code class="docutils literal notranslate"><span class="pre">-f</span></code></p></td>
+<td><p>Pipe format: <code class="docutils literal notranslate"><span class="pre">wav</span></code> or <code class="docutils literal notranslate"><span class="pre">raw</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--rate</span></code> / <code class="docutils literal notranslate"><span class="pre">-r</span></code></p></td>
+<td><p>Sample rate for raw pipe input</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--channels</span></code></p></td>
+<td><p>Channel count for raw pipe input</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="info">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">info</span></code></a><a class="headerlink" href="#info" title="Link to this heading">#</a></h3>
+<p>Display metadata for an audio file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>info<span class="w"> </span>recording.wav
+</pre></div>
+</div>
+</section>
+<section id="play">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">play</span></code></a><a class="headerlink" href="#play" title="Link to this heading">#</a></h3>
+<p>Play an audio file through the default output device (requires <code class="docutils literal notranslate"><span class="pre">sounddevice</span></code>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>play<span class="w"> </span>song.wav
+torchfx<span class="w"> </span>play<span class="w"> </span>recording.wav<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.4&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="record">
+<h3><a class="toc-backref" href="#id7" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">record</span></code></a><a class="headerlink" href="#record" title="Link to this heading">#</a></h3>
+<p>Record audio from a microphone (requires <code class="docutils literal notranslate"><span class="pre">sounddevice</span></code>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>record<span class="w"> </span>output.wav<span class="w"> </span>--duration<span class="w"> </span><span class="m">10</span>
+torchfx<span class="w"> </span>record<span class="w"> </span>output.wav<span class="w"> </span>-t<span class="w"> </span><span class="m">5</span><span class="w"> </span>-r<span class="w"> </span><span class="m">48000</span><span class="w"> </span>-C<span class="w"> </span><span class="m">2</span>
+torchfx<span class="w"> </span>record<span class="w"> </span>output.wav<span class="w"> </span>-t<span class="w"> </span><span class="m">10</span><span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.3&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="sox-compatible-commands">
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">Sox-Compatible Commands</a><a class="headerlink" href="#sox-compatible-commands" title="Link to this heading">#</a></h2>
+<p>These commands mirror common SoX workflows, with GPU acceleration under the
+hood.</p>
+<section id="convert">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">convert</span></code></a><a class="headerlink" href="#convert" title="Link to this heading">#</a></h3>
+<p>Convert between formats, sample rates, and channel layouts.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>convert<span class="w"> </span>input.wav<span class="w"> </span>output.flac
+torchfx<span class="w"> </span>convert<span class="w"> </span>song.wav<span class="w"> </span>mono.wav<span class="w"> </span>--channels<span class="w"> </span><span class="m">1</span><span class="w"> </span>--rate<span class="w"> </span><span class="m">16000</span>
+torchfx<span class="w"> </span>convert<span class="w"> </span>hi-res.wav<span class="w"> </span>cd.wav<span class="w"> </span>-r<span class="w"> </span><span class="m">44100</span><span class="w"> </span>-b<span class="w"> </span><span class="m">16</span>
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--rate</span></code> / <code class="docutils literal notranslate"><span class="pre">-r</span></code></p></td>
+<td><p>Target sample rate (Hz)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--channels</span></code> / <code class="docutils literal notranslate"><span class="pre">-c</span></code></p></td>
+<td><p>Target channel count</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--bits</span></code> / <code class="docutils literal notranslate"><span class="pre">-b</span></code></p></td>
+<td><p>Bit depth (8, 16, 24, 32)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="trim">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">trim</span></code></a><a class="headerlink" href="#trim" title="Link to this heading">#</a></h3>
+<p>Extract a time range from an audio file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>trim<span class="w"> </span>input.wav<span class="w"> </span>clip.wav<span class="w"> </span>--start<span class="w"> </span><span class="m">1</span>.5<span class="w"> </span>--end<span class="w"> </span><span class="m">4</span>.0
+torchfx<span class="w"> </span>trim<span class="w"> </span>input.wav<span class="w"> </span>clip.wav<span class="w"> </span>-s<span class="w"> </span><span class="m">10</span><span class="w"> </span>-d<span class="w"> </span><span class="m">5</span>
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--start</span></code> / <code class="docutils literal notranslate"><span class="pre">-s</span></code></p></td>
+<td><p>Start time in seconds (default 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--end</span></code> / <code class="docutils literal notranslate"><span class="pre">-e</span></code></p></td>
+<td><p>End time in seconds</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--duration</span></code> / <code class="docutils literal notranslate"><span class="pre">-d</span></code></p></td>
+<td><p>Duration in seconds (alternative to <code class="docutils literal notranslate"><span class="pre">--end</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="concat">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">concat</span></code></a><a class="headerlink" href="#concat" title="Link to this heading">#</a></h3>
+<p>Concatenate multiple audio files into one (must share sample rate and channels).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>concat<span class="w"> </span>part1.wav<span class="w"> </span>part2.wav<span class="w"> </span>part3.wav<span class="w"> </span>-o<span class="w"> </span>full.wav
+</pre></div>
+</div>
+</section>
+<section id="stats">
+<h3><a class="toc-backref" href="#id12" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">stats</span></code></a><a class="headerlink" href="#stats" title="Link to this heading">#</a></h3>
+<p>Display signal statistics: peak/RMS levels, crest factor, DC offset, dynamic
+range — with per-channel breakdown.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>stats<span class="w"> </span>recording.wav
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="preset-management">
+<h2><a class="toc-backref" href="#id13" role="doc-backlink">Preset Management</a><a class="headerlink" href="#preset-management" title="Link to this heading">#</a></h2>
+<p>Presets let you save and reuse effect chains. They are stored as TOML files in
+<code class="docutils literal notranslate"><span class="pre">~/.config/torchfx/presets/</span></code>.</p>
+<section id="preset-save">
+<h3><a class="toc-backref" href="#id14" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">save</span></code></a><a class="headerlink" href="#preset-save" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>preset<span class="w"> </span>save<span class="w"> </span>mastering<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.4,mix=0.2&quot;</span>
+torchfx<span class="w"> </span>preset<span class="w"> </span>save<span class="w"> </span>loud<span class="w"> </span>--from<span class="w"> </span>chain.toml
+torchfx<span class="w"> </span>preset<span class="w"> </span>save<span class="w"> </span>mastering<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>--force<span class="w">   </span><span class="c1"># overwrite</span>
+</pre></div>
+</div>
+</section>
+<section id="preset-list">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">list</span></code></a><a class="headerlink" href="#preset-list" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>preset<span class="w"> </span>list
+</pre></div>
+</div>
+</section>
+<section id="preset-show">
+<h3><a class="toc-backref" href="#id16" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">show</span></code></a><a class="headerlink" href="#preset-show" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>preset<span class="w"> </span>show<span class="w"> </span>mastering
+</pre></div>
+</div>
+</section>
+<section id="preset-apply">
+<h3><a class="toc-backref" href="#id17" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">apply</span></code></a><a class="headerlink" href="#preset-apply" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>preset<span class="w"> </span>apply<span class="w"> </span>mastering<span class="w"> </span>input.wav<span class="w"> </span>output.wav
+</pre></div>
+</div>
+</section>
+<section id="preset-delete">
+<h3><a class="toc-backref" href="#id18" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">delete</span></code></a><a class="headerlink" href="#preset-delete" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>preset<span class="w"> </span>delete<span class="w"> </span>mastering
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="interactive-repl">
+<h2><a class="toc-backref" href="#id19" role="doc-backlink">Interactive REPL</a><a class="headerlink" href="#interactive-repl" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">interactive</span></code> command launches a REPL powered by <code class="docutils literal notranslate"><span class="pre">prompt_toolkit</span></code> with
+tab completion and persistent history.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>interactive
+</pre></div>
+</div>
+<p>Inside the REPL:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; load song.wav
+✓ Loaded song.wav  (2 ch, 44100 Hz, 180.50s)
+
+torchfx&gt; add normalize
+✓ [1] Added normalize
+
+torchfx&gt; add reverb:decay=0.5,mix=0.2
+✓ [2] Added reverb:decay=0.5,mix=0.2
+
+torchfx&gt; list
+Effect Chain:
+  1. normalize
+  2. reverb:decay=0.5,mix=0.2
+
+torchfx&gt; play
+▶ Playback complete (processed).
+
+torchfx&gt; play raw
+▶ Playback complete (raw).
+
+torchfx&gt; save output.wav
+✓ Saved → output.wav
+
+torchfx&gt; preset save my-chain
+✓ Preset &#39;my-chain&#39; saved → ~/.config/torchfx/presets/my-chain.toml
+
+torchfx&gt; clear
+✗ Cleared 2 effect(s).
+
+torchfx&gt; preset load my-chain
+✓ Loaded preset &#39;my-chain&#39; (2 effects).
+
+torchfx&gt; exit
+Goodbye!
+</pre></div>
+</div>
+<section id="live-performance-mode">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">Live Performance Mode</a><a class="headerlink" href="#live-performance-mode" title="Link to this heading">#</a></h3>
+<p>The REPL includes a <strong>live playback mode</strong> for real-time effect changes — perfect
+for live music performance or sound design experimentation.</p>
+<p>The live mode uses a <strong>lock-free circular buffer pattern</strong> where:</p>
+<ul class="simple">
+<li><p>Audio playback runs in a real-time callback thread</p></li>
+<li><p>Effect chain modifications happen on the main REPL thread</p></li>
+<li><p>Each audio buffer sees a consistent snapshot of the effect chain</p></li>
+<li><p>Changes apply at the next buffer boundary (~46ms latency at 44.1kHz)</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; live
+▶ Live playback started  (2 ch, 44100 Hz, looping)
+Change effects with &#39;add&#39;, &#39;remove&#39;, or &#39;preset load&#39; — changes apply immediately!
+Use &#39;live stop&#39; to end playback.
+
+torchfx&gt; add reverb:decay=0.8,mix=0.5
+✓ [1] Added reverb:decay=0.8,mix=0.5
+# ← reverb starts immediately
+
+torchfx&gt; preset load vocal-cleanup
+✓ Loaded preset &#39;vocal-cleanup&#39; (3 effects).
+# ← entire chain switches instantly
+
+torchfx&gt; remove 2
+✗ Removed [2] lowpass:cutoff=8000
+# ← filter removed in real-time
+
+torchfx&gt; live stop
+⏹ Live playback stopped.
+</pre></div>
+</div>
+<p><strong>Key features:</strong></p>
+<ul class="simple">
+<li><p>Audio loops continuously</p></li>
+<li><p>Effect changes apply <strong>immediately</strong> at the next buffer boundary</p></li>
+<li><p>Add/remove effects, load presets, clear the chain — all in real-time</p></li>
+<li><p>Lock-free reads ensure glitch-free playback even during effect swaps</p></li>
+<li><p>Perfect for live performance, DJ sets, or iterative sound design</p></li>
+</ul>
+</section>
+<section id="repl-commands">
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">REPL Commands</a><a class="headerlink" href="#repl-commands" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">load</span> <span class="pre">&lt;file&gt;</span></code></p></td>
+<td><p>Load an audio file</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">add</span> <span class="pre">&lt;spec&gt;</span></code></p></td>
+<td><p>Add an effect to the chain</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">remove</span> <span class="pre">&lt;n&gt;</span></code></p></td>
+<td><p>Remove effect at index <em>n</em> (1-based)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">list</span></code></p></td>
+<td><p>Show the current effect chain</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">effects</span></code></p></td>
+<td><p>List all available effect names</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">info</span></code></p></td>
+<td><p>Show loaded file metadata</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">play</span></code></p></td>
+<td><p>Play processed audio (blocks until complete)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">play</span> <span class="pre">raw</span></code></p></td>
+<td><p>Play unprocessed audio</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">live</span></code></p></td>
+<td><p><strong>Start live playback</strong> (non-blocking, loops)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">live</span> <span class="pre">stop</span></code></p></td>
+<td><p><strong>Stop live playback</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">save</span> <span class="pre">&lt;file&gt;</span></code></p></td>
+<td><p>Save processed audio to file</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">save</span> <span class="pre">&lt;name&gt;</span></code></p></td>
+<td><p>Save chain as a preset</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">load</span> <span class="pre">&lt;name&gt;</span></code></p></td>
+<td><p>Load a preset into the chain</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">list</span></code></p></td>
+<td><p>List saved presets</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">clear</span></code></p></td>
+<td><p>Clear the effect chain</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">help</span></code></p></td>
+<td><p>Show help</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">exit</span></code> / <code class="docutils literal notranslate"><span class="pre">quit</span></code></p></td>
+<td><p>Exit the REPL</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="watch-mode">
+<h2><a class="toc-backref" href="#id22" role="doc-backlink">Watch Mode</a><a class="headerlink" href="#watch-mode" title="Link to this heading">#</a></h2>
+<p>Monitor a directory for new or modified audio files and automatically apply
+effects. Ideal for DAW integration where you export to a watched folder.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>watch<span class="w"> </span>./input/<span class="w"> </span>./output/<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.4&quot;</span>
+torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span class="w"> </span>./mastered/<span class="w"> </span>--config<span class="w"> </span>master.toml
+torchfx<span class="w"> </span>watch<span class="w"> </span>./raw/<span class="w"> </span>./processed/<span class="w"> </span>--preset<span class="w"> </span>vocal-cleanup<span class="w"> </span>--recursive
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--effect</span></code> / <code class="docutils literal notranslate"><span class="pre">-e</span></code></p></td>
+<td><p>Effect specification (repeatable)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--config</span></code> / <code class="docutils literal notranslate"><span class="pre">-c</span></code></p></td>
+<td><p>TOML config file</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--preset</span></code> / <code class="docutils literal notranslate"><span class="pre">-p</span></code></p></td>
+<td><p>Named preset to apply</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--recursive</span></code> / <code class="docutils literal notranslate"><span class="pre">-r</span></code></p></td>
+<td><p>Watch subdirectories</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--existing</span></code></p></td>
+<td><p>Process existing files on startup</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Press <code class="docutils literal notranslate"><span class="pre">Ctrl-C</span></code> to stop watching.</p>
+</section>
+<hr class="docutils" />
+<section id="toml-configuration">
+<h2><a class="toc-backref" href="#id23" role="doc-backlink">TOML Configuration</a><a class="headerlink" href="#toml-configuration" title="Link to this heading">#</a></h2>
+<p>Instead of passing <code class="docutils literal notranslate"><span class="pre">--effect</span></code> flags, you can define chains in TOML files:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># chain.toml</span>
+<span class="n">device</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;cuda&quot;</span>
+<span class="n">chunk_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">131072</span>
+
+<span class="k">[[effects]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;normalize&quot;</span>
+<span class="n">peak</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.9</span>
+
+<span class="k">[[effects]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;reverb&quot;</span>
+<span class="n">decay</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span>
+<span class="n">mix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.2</span>
+
+<span class="k">[[effects]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lowpass&quot;</span>
+<span class="n">cutoff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8000</span>
+<span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.707</span>
+</pre></div>
+</div>
+<p>Use with any command that accepts <code class="docutils literal notranslate"><span class="pre">--config</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>process<span class="w"> </span>input.wav<span class="w"> </span>output.wav<span class="w"> </span>--config<span class="w"> </span>chain.toml
+torchfx<span class="w"> </span>watch<span class="w"> </span>./input/<span class="w"> </span>./output/<span class="w"> </span>--config<span class="w"> </span>chain.toml
+</pre></div>
+</div>
+<p>Or save as a preset:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>preset<span class="w"> </span>save<span class="w"> </span>mastering<span class="w"> </span>--from<span class="w"> </span>chain.toml
+</pre></div>
+</div>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Tutorials</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="custom-filters.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Creating Custom Filters</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-options">Global Options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#effect-specifications">Effect Specifications</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-commands">Core Commands</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#process"><code class="docutils literal notranslate"><span class="pre">process</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#info"><code class="docutils literal notranslate"><span class="pre">info</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#play"><code class="docutils literal notranslate"><span class="pre">play</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#record"><code class="docutils literal notranslate"><span class="pre">record</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sox-compatible-commands">Sox-Compatible Commands</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convert"><code class="docutils literal notranslate"><span class="pre">convert</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#trim"><code class="docutils literal notranslate"><span class="pre">trim</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#concat"><code class="docutils literal notranslate"><span class="pre">concat</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stats"><code class="docutils literal notranslate"><span class="pre">stats</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#preset-management">Preset Management</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preset-save"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">save</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preset-list"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">list</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preset-show"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">show</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preset-apply"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">apply</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preset-delete"><code class="docutils literal notranslate"><span class="pre">preset</span> <span class="pre">delete</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interactive-repl">Interactive REPL</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#live-performance-mode">Live Performance Mode</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#repl-commands">REPL Commands</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watch-mode">Watch Mode</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#toml-configuration">TOML Configuration</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/tutorials/cli-guide.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/guides/tutorials/cli-guide.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

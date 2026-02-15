@@ -1,0 +1,1336 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Validation &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/validation';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Logging" href="logging.html" />
+    <link rel="prev" title="Effects" href="effects.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="core.html">Core Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="realtime.html">Real-Time Processing</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">API Reference</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Validation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="validation">
+<h1>Validation<a class="headerlink" href="#validation" title="Link to this heading">#</a></h1>
+<p>The validation module provides custom exceptions and validation utilities for parameter validation across TorchFX.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#overview" id="id1">Overview</a></p></li>
+<li><p><a class="reference internal" href="#exception-hierarchy" id="id2">Exception Hierarchy</a></p>
+<ul>
+<li><p><a class="reference internal" href="#base-exception" id="id3">Base Exception</a></p></li>
+<li><p><a class="reference internal" href="#parameter-validation-exceptions" id="id4">Parameter Validation Exceptions</a></p></li>
+<li><p><a class="reference internal" href="#audio-processing-exceptions" id="id5">Audio Processing Exceptions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#validator-functions" id="id6">Validator Functions</a></p>
+<ul>
+<li><p><a class="reference internal" href="#sample-rate-validation" id="id7">Sample Rate Validation</a></p></li>
+<li><p><a class="reference internal" href="#range-validation" id="id8">Range Validation</a></p></li>
+<li><p><a class="reference internal" href="#tensor-shape-validation" id="id9">Tensor Shape Validation</a></p></li>
+<li><p><a class="reference internal" href="#type-validation" id="id10">Type Validation</a></p></li>
+<li><p><a class="reference internal" href="#audio-specific-validation" id="id11">Audio-Specific Validation</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#constants" id="id12">Constants</a></p></li>
+<li><p><a class="reference internal" href="#usage-examples" id="id13">Usage Examples</a></p>
+<ul>
+<li><p><a class="reference internal" href="#validating-parameters-in-custom-effects" id="id14">Validating Parameters in Custom Effects</a></p></li>
+<li><p><a class="reference internal" href="#validating-audio-tensors" id="id15">Validating Audio Tensors</a></p></li>
+<li><p><a class="reference internal" href="#catching-specific-errors" id="id16">Catching Specific Errors</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="overview">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Overview</a><a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>TorchFX provides a comprehensive validation system with:</p>
+<ul class="simple">
+<li><p><strong>Custom exception hierarchy</strong> for specific error handling</p></li>
+<li><p><strong>Validator functions</strong> for common validation patterns</p></li>
+<li><p><strong>Context-aware error messages</strong> with suggestions for fixes</p></li>
+</ul>
+<p>Import validation utilities:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TorchFXError</span><span class="p">,</span>
+    <span class="n">InvalidParameterError</span><span class="p">,</span>
+    <span class="n">validate_sample_rate</span><span class="p">,</span>
+    <span class="n">validate_range</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="exception-hierarchy">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Exception Hierarchy</a><a class="headerlink" href="#exception-hierarchy" title="Link to this heading">#</a></h2>
+<p>All exceptions inherit from <a class="reference internal" href="#torchfx.validation.TorchFXError" title="torchfx.validation.TorchFXError"><code class="xref py py-class docutils literal notranslate"><span class="pre">TorchFXError</span></code></a>, enabling users to catch all library-specific errors with a single except clause:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="c1"># TorchFX operations</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+    <span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">some_filter</span>
+<span class="k">except</span> <span class="n">TorchFXError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TorchFX error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The exception hierarchy is organized as follows:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>TorchFXError (base)
+├── InvalidParameterError
+│   ├── InvalidSampleRateError
+│   ├── InvalidRangeError
+│   ├── InvalidShapeError
+│   └── InvalidTypeError
+└── AudioProcessingError
+    ├── CoefficientComputationError
+    └── FilterInstabilityError
+</pre></div>
+</div>
+<section id="base-exception">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Base Exception</a><a class="headerlink" href="#base-exception" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.validation.TorchFXError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">TorchFXError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/exceptions.html#TorchFXError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.TorchFXError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#Exception" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></a></p>
+<p>Base exception for all TorchFX library errors.</p>
+<p>All custom exceptions in TorchFX inherit from this class, enabling
+users to catch all library-specific errors with a single except clause.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable error message.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Name of the parameter that caused the error, if applicable.</p></li>
+<li><p><strong>actual_value</strong> (<em>Any</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – The actual value that caused the error.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">raise</span> <span class="n">TorchFXError</span><span class="p">(</span><span class="s2">&quot;Something went wrong&quot;</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="n">TorchFXError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">Error: Something went wrong</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="parameter-validation-exceptions">
+<h3><a class="toc-backref" href="#id4" role="doc-backlink">Parameter Validation Exceptions</a><a class="headerlink" href="#parameter-validation-exceptions" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.validation.InvalidParameterError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">InvalidParameterError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/exceptions.html#InvalidParameterError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.InvalidParameterError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.validation.TorchFXError" title="torchfx.validation.exceptions.TorchFXError"><code class="xref py py-class docutils literal notranslate"><span class="pre">TorchFXError</span></code></a></p>
+<p>Exception raised when a parameter value is invalid.</p>
+<p>This is the base class for all parameter validation errors.
+Use more specific subclasses when possible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable error message.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the invalid parameter.</p></li>
+<li><p><strong>actual_value</strong> (<em>Any</em>) – The actual value that was provided.</p></li>
+<li><p><strong>expected</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Description of what was expected.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">InvalidParameterError</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s2">&quot;Cutoff frequency must be positive&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">parameter_name</span><span class="o">=</span><span class="s2">&quot;cutoff&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">actual_value</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;positive float&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.validation.exceptions.InvalidParameterError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.validation.InvalidSampleRateError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">InvalidSampleRateError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">actual_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/exceptions.html#InvalidSampleRateError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.InvalidSampleRateError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.validation.InvalidParameterError" title="torchfx.validation.exceptions.InvalidParameterError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></p>
+<p>Exception raised when sample rate is invalid.</p>
+<p>Sample rate must be a positive integer within reasonable bounds
+for audio processing (typically 1 Hz to 384000 Hz).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>actual_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – The invalid sample rate value.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">InvalidSampleRateError</span><span class="p">(</span><span class="n">actual_value</span><span class="o">=-</span><span class="mi">44100</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.validation.exceptions.InvalidSampleRateError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.validation.InvalidRangeError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">InvalidRangeError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_inclusive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_inclusive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/exceptions.html#InvalidRangeError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.InvalidRangeError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.validation.InvalidParameterError" title="torchfx.validation.exceptions.InvalidParameterError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></p>
+<p>Exception raised when a value is outside expected bounds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the parameter.</p></li>
+<li><p><strong>actual_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The actual value that was provided.</p></li>
+<li><p><strong>min_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Minimum allowed value. None means no minimum.</p></li>
+<li><p><strong>max_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Maximum allowed value. None means no maximum.</p></li>
+<li><p><strong>min_inclusive</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, min_value is included in the range. Default is True.</p></li>
+<li><p><strong>max_inclusive</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, max_value is included in the range. Default is True.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">InvalidRangeError</span><span class="p">(</span><span class="s2">&quot;decay&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.validation.exceptions.InvalidRangeError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.validation.InvalidShapeError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">InvalidShapeError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_ndim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/exceptions.html#InvalidShapeError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.InvalidShapeError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.validation.InvalidParameterError" title="torchfx.validation.exceptions.InvalidParameterError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></p>
+<p>Exception raised when tensor shape is invalid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the parameter.</p></li>
+<li><p><strong>actual_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>...</em><em>]</em>) – The actual shape of the tensor.</p></li>
+<li><p><strong>expected_ndim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Expected number of dimensions.</p></li>
+<li><p><strong>expected_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>...</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Expected shape (None elements are wildcards).</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">InvalidShapeError</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s2">&quot;waveform&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">actual_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">expected_ndim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">suggestion</span><span class="o">=</span><span class="s2">&quot;Audio should be (channels, samples)&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.validation.exceptions.InvalidShapeError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.validation.InvalidTypeError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">InvalidTypeError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_types</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/exceptions.html#InvalidTypeError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.InvalidTypeError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.validation.InvalidParameterError" title="torchfx.validation.exceptions.InvalidParameterError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></p>
+<p>Exception raised when a parameter has an invalid type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the parameter.</p></li>
+<li><p><strong>actual_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a>) – The actual type of the value.</p></li>
+<li><p><strong>expected_types</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>, </em><em>...</em><em>]</em>) – Tuple of expected types.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">InvalidTypeError</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s2">&quot;gain&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">actual_type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">expected_types</span><span class="o">=</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.validation.exceptions.InvalidTypeError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="audio-processing-exceptions">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Audio Processing Exceptions</a><a class="headerlink" href="#audio-processing-exceptions" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.validation.AudioProcessingError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">AudioProcessingError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/exceptions.html#AudioProcessingError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.AudioProcessingError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.validation.TorchFXError" title="torchfx.validation.exceptions.TorchFXError"><code class="xref py py-class docutils literal notranslate"><span class="pre">TorchFXError</span></code></a></p>
+<p>Exception raised during audio processing operations.</p>
+<p>This error indicates a problem during the actual processing of audio,
+not during parameter validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable error message.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>actual_value</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">AudioProcessingError</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s2">&quot;Failed to process audio buffer&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">suggestion</span><span class="o">=</span><span class="s2">&quot;Check input tensor dimensions&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.validation.exceptions.AudioProcessingError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.validation.CoefficientComputationError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">CoefficientComputationError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/exceptions.html#CoefficientComputationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.CoefficientComputationError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.validation.AudioProcessingError" title="torchfx.validation.exceptions.AudioProcessingError"><code class="xref py py-class docutils literal notranslate"><span class="pre">AudioProcessingError</span></code></a></p>
+<p>Exception raised when filter coefficient computation fails.</p>
+<p>This typically occurs when filter parameters result in mathematically
+invalid or numerically unstable coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The type of filter that failed.</p></li>
+<li><p><strong>reason</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The reason for the failure.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">CoefficientComputationError</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">filter_type</span><span class="o">=</span><span class="s2">&quot;LoButterworth&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Cutoff frequency exceeds Nyquist&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.validation.exceptions.CoefficientComputationError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.validation.FilterInstabilityError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">FilterInstabilityError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/exceptions.html#FilterInstabilityError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.FilterInstabilityError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.validation.AudioProcessingError" title="torchfx.validation.exceptions.AudioProcessingError"><code class="xref py py-class docutils literal notranslate"><span class="pre">AudioProcessingError</span></code></a></p>
+<p>Exception raised when a filter is numerically unstable.</p>
+<p>Unstable filters can produce infinite or NaN values and should not
+be used for audio processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The type of filter that is unstable.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">FilterInstabilityError</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">filter_type</span><span class="o">=</span><span class="s2">&quot;HiChebyshev1&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">suggestion</span><span class="o">=</span><span class="s2">&quot;Try reducing filter order&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.validation.exceptions.FilterInstabilityError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="validator-functions">
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Validator Functions</a><a class="headerlink" href="#validator-functions" title="Link to this heading">#</a></h2>
+<section id="sample-rate-validation">
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">Sample Rate Validation</a><a class="headerlink" href="#sample-rate-validation" title="Link to this heading">#</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_sample_rate">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_sample_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_none</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">384000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_sample_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_sample_rate" title="Link to this definition">#</a></dt>
+<dd><p>Validate a sample rate parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – The sample rate to validate.</p></li>
+<li><p><strong>allow_none</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, None is a valid value (for lazy initialization).
+Default is False.</p></li>
+<li><p><strong>min_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Minimum allowed sample rate in Hz. Default is 1.</p></li>
+<li><p><strong>max_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Maximum allowed sample rate in Hz. Default is 384000.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.validation.InvalidSampleRateError" title="torchfx.validation.InvalidSampleRateError"><strong>InvalidSampleRateError</strong></a> – If the sample rate is invalid.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_sample_rate</span><span class="p">(</span><span class="mi">44100</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_sample_rate</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_sample_rate</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Raises InvalidSampleRateError</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="range-validation">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Range Validation</a><a class="headerlink" href="#range-validation" title="Link to this heading">#</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_positive">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_positive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_positive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_positive" title="Link to this definition">#</a></dt>
+<dd><p>Validate that a value is positive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The value to validate.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the parameter (for error messages).</p></li>
+<li><p><strong>allow_zero</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, zero is allowed. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.validation.InvalidRangeError" title="torchfx.validation.InvalidRangeError"><strong>InvalidRangeError</strong></a> – If the value is not positive (or non-negative if allow_zero=True).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_positive</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_positive</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">,</span> <span class="n">allow_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_positive</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">)</span>  <span class="c1"># Raises InvalidRangeError</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_range">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_inclusive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_inclusive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_range" title="Link to this definition">#</a></dt>
+<dd><p>Validate that a value falls within a specified range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The value to validate.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the parameter (for error messages).</p></li>
+<li><p><strong>min_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Minimum allowed value. None means no minimum.</p></li>
+<li><p><strong>max_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Maximum allowed value. None means no maximum.</p></li>
+<li><p><strong>min_inclusive</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, min_value is included in the range. Default is True.</p></li>
+<li><p><strong>max_inclusive</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, max_value is included in the range. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.validation.InvalidRangeError" title="torchfx.validation.InvalidRangeError"><strong>InvalidRangeError</strong></a> – If the value is outside the specified range.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_range</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;decay&quot;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;decay&quot;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_inclusive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Raises</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_in_set">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_in_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_in_set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_in_set" title="Link to this definition">#</a></dt>
+<dd><p>Validate that a value is in a set of allowed values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<em>Any</em>) – The value to validate.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the parameter (for error messages).</p></li>
+<li><p><strong>valid_values</strong> (<em>Sequence</em><em>[</em><em>Any</em><em>]</em>) – Sequence of allowed values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.validation.InvalidParameterError" title="torchfx.validation.InvalidParameterError"><strong>InvalidParameterError</strong></a> – If the value is not in the set of valid values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_in_set</span><span class="p">(</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;gain_type&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">])</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_in_set</span><span class="p">(</span><span class="s2">&quot;invalid&quot;</span><span class="p">,</span> <span class="s2">&quot;gain_type&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">])</span>  <span class="c1"># Raises</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="tensor-shape-validation">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Tensor Shape Validation</a><a class="headerlink" href="#tensor-shape-validation" title="Link to this heading">#</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_tensor_ndim">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_tensor_ndim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_ndim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_tensor_ndim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_tensor_ndim" title="Link to this definition">#</a></dt>
+<dd><p>Validate tensor dimensionality.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor</strong> (<em>Tensor</em>) – The tensor to validate.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the parameter (for error messages).</p></li>
+<li><p><strong>expected_ndim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>Sequence</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>]</em>) – Expected number of dimensions, or sequence of allowed dimensions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.validation.InvalidShapeError" title="torchfx.validation.InvalidShapeError"><strong>InvalidShapeError</strong></a> – If the tensor has wrong number of dimensions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_tensor_ndim</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;waveform&quot;</span><span class="p">,</span> <span class="n">expected_ndim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_tensor_ndim</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;waveform&quot;</span><span class="p">,</span> <span class="n">expected_ndim</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>  <span class="c1"># OK</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_audio_tensor">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_audio_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'waveform'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_mono</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_audio_tensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_audio_tensor" title="Link to this definition">#</a></dt>
+<dd><p>Validate an audio tensor has correct shape.</p>
+<p>Audio tensors in TorchFX should have shape:
+- [T] for mono (if allow_mono=True)
+- [C, T] for multi-channel
+- [B, C, T] for batched multi-channel</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor</strong> (<em>Tensor</em>) – The audio tensor to validate.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Name of the parameter. Default is “waveform”.</p></li>
+<li><p><strong>allow_mono</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, allow 1D mono tensors. Default is True.</p></li>
+<li><p><strong>min_channels</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Minimum number of channels required.</p></li>
+<li><p><strong>max_channels</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Maximum number of channels allowed.</p></li>
+<li><p><strong>min_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Minimum number of samples required.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.validation.InvalidShapeError" title="torchfx.validation.InvalidShapeError"><strong>InvalidShapeError</strong></a> – If the tensor shape is invalid for audio.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mono</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stereo</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_audio_tensor</span><span class="p">(</span><span class="n">mono</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_audio_tensor</span><span class="p">(</span><span class="n">stereo</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_audio_tensor</span><span class="p">(</span><span class="n">stereo</span><span class="p">,</span> <span class="n">min_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># OK</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="type-validation">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">Type Validation</a><a class="headerlink" href="#type-validation" title="Link to this heading">#</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_type">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_types</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_type" title="Link to this definition">#</a></dt>
+<dd><p>Validate that a value has the expected type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<em>Any</em>) – The value to validate.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the parameter (for error messages).</p></li>
+<li><p><strong>expected_types</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>, </em><em>...</em><em>]</em>) – Expected type or tuple of expected types.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.validation.InvalidTypeError" title="torchfx.validation.InvalidTypeError"><strong>InvalidTypeError</strong></a> – If the value is not of the expected type.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_type</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;gain&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_type</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="s2">&quot;gain&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>  <span class="c1"># Raises InvalidTypeError</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="audio-specific-validation">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Audio-Specific Validation</a><a class="headerlink" href="#audio-specific-validation" title="Link to this heading">#</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_cutoff_frequency">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_cutoff_frequency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cutoff'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_cutoff_frequency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_cutoff_frequency" title="Link to this definition">#</a></dt>
+<dd><p>Validate a filter cutoff frequency.</p>
+<p>The cutoff must be positive and below the Nyquist frequency (fs/2).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cutoff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Cutoff frequency in Hz.</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Sample rate in Hz. If None, only validates that cutoff is positive.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Parameter name for error messages. Default is “cutoff”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.validation.InvalidRangeError" title="torchfx.validation.InvalidRangeError"><strong>InvalidRangeError</strong></a> – If cutoff is invalid.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_cutoff_frequency</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_cutoff_frequency</span><span class="p">(</span><span class="mi">30000</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># Raises (above Nyquist)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_filter_order">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_filter_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'order'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_filter_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_filter_order" title="Link to this definition">#</a></dt>
+<dd><p>Validate a filter order parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>order</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Filter order to validate.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Parameter name for error messages. Default is “order”.</p></li>
+<li><p><strong>min_order</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Minimum allowed order. Default is 1.</p></li>
+<li><p><strong>max_order</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Maximum allowed order. None means no maximum.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="#torchfx.validation.InvalidRangeError" title="torchfx.validation.InvalidRangeError"><strong>InvalidRangeError</strong></a> – If order is invalid.</p></li>
+<li><p><a class="reference internal" href="#torchfx.validation.InvalidTypeError" title="torchfx.validation.InvalidTypeError"><strong>InvalidTypeError</strong></a> – If order is not an integer.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_filter_order</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_filter_order</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Raises InvalidRangeError</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchfx.validation.validate_q_factor">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">validate_q_factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'q'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/validation/validators.html#validate_q_factor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.validation.validate_q_factor" title="Link to this definition">#</a></dt>
+<dd><p>Validate a Q factor (quality factor) parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Q factor to validate.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Parameter name for error messages. Default is “q”.</p></li>
+<li><p><strong>min_q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – Minimum allowed Q. Default is 0.001.</p></li>
+<li><p><strong>max_q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Maximum allowed Q. None means no maximum.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.validation.InvalidRangeError" title="torchfx.validation.InvalidRangeError"><strong>InvalidRangeError</strong></a> – If Q is invalid.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_q_factor</span><span class="p">(</span><span class="mf">0.707</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_q_factor</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Raises InvalidRangeError</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="constants">
+<h2><a class="toc-backref" href="#id12" role="doc-backlink">Constants</a><a class="headerlink" href="#constants" title="Link to this heading">#</a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="torchfx.validation.COMMON_SAMPLE_RATES">
+<span class="sig-prename descclassname"><span class="pre">torchfx.validation.</span></span><span class="sig-name descname"><span class="pre">COMMON_SAMPLE_RATES</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">(8000,</span> <span class="pre">11025,</span> <span class="pre">16000,</span> <span class="pre">22050,</span> <span class="pre">44100,</span> <span class="pre">48000,</span> <span class="pre">88200,</span> <span class="pre">96000,</span> <span class="pre">176400,</span> <span class="pre">192000)</span></em><a class="headerlink" href="#torchfx.validation.COMMON_SAMPLE_RATES" title="Link to this definition">#</a></dt>
+<dd><p>Built-in immutable sequence.</p>
+<p>If no argument is given, the constructor returns an empty tuple.
+If iterable is specified the tuple is initialized from iterable’s items.</p>
+<p>If the argument is a tuple, the return value is the same object.</p>
+</dd></dl>
+
+</section>
+<section id="usage-examples">
+<h2><a class="toc-backref" href="#id13" role="doc-backlink">Usage Examples</a><a class="headerlink" href="#usage-examples" title="Link to this heading">#</a></h2>
+<section id="validating-parameters-in-custom-effects">
+<h3><a class="toc-backref" href="#id14" role="doc-backlink">Validating Parameters in Custom Effects</a><a class="headerlink" href="#validating-parameters-in-custom-effects" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">validate_positive</span><span class="p">,</span>
+    <span class="n">validate_range</span><span class="p">,</span>
+    <span class="n">validate_sample_rate</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Validate parameters</span>
+        <span class="n">validate_positive</span><span class="p">(</span><span class="n">gain</span><span class="p">,</span> <span class="s2">&quot;gain&quot;</span><span class="p">)</span>
+        <span class="n">validate_range</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="s2">&quot;mix&quot;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">validate_sample_rate</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="n">mix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+</pre></div>
+</div>
+</section>
+<section id="validating-audio-tensors">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">Validating Audio Tensors</a><a class="headerlink" href="#validating-audio-tensors" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_audio_tensor</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process_audio</span><span class="p">(</span><span class="n">waveform</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="c1"># Ensure tensor is valid audio shape</span>
+    <span class="n">validate_audio_tensor</span><span class="p">(</span>
+        <span class="n">waveform</span><span class="p">,</span>
+        <span class="n">min_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">max_channels</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">min_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Process...</span>
+    <span class="k">return</span> <span class="n">waveform</span>
+</pre></div>
+</div>
+</section>
+<section id="catching-specific-errors">
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">Catching Specific Errors</a><a class="headerlink" href="#catching-specific-errors" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InvalidRangeError</span><span class="p">,</span>
+    <span class="n">InvalidSampleRateError</span><span class="p">,</span>
+    <span class="n">TorchFXError</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Some operation</span>
+    <span class="k">pass</span>
+<span class="k">except</span> <span class="n">InvalidSampleRateError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid sample rate: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">actual_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">InvalidRangeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value out of range: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">parameter_name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">actual_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">TorchFXError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Other TorchFX error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="effects.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Effects</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="logging.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Logging</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exception-hierarchy">Exception Hierarchy</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#base-exception">Base Exception</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.TorchFXError"><code class="docutils literal notranslate"><span class="pre">TorchFXError</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-validation-exceptions">Parameter Validation Exceptions</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.InvalidParameterError"><code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.InvalidSampleRateError"><code class="docutils literal notranslate"><span class="pre">InvalidSampleRateError</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.InvalidRangeError"><code class="docutils literal notranslate"><span class="pre">InvalidRangeError</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.InvalidShapeError"><code class="docutils literal notranslate"><span class="pre">InvalidShapeError</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.InvalidTypeError"><code class="docutils literal notranslate"><span class="pre">InvalidTypeError</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-processing-exceptions">Audio Processing Exceptions</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.AudioProcessingError"><code class="docutils literal notranslate"><span class="pre">AudioProcessingError</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.CoefficientComputationError"><code class="docutils literal notranslate"><span class="pre">CoefficientComputationError</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.FilterInstabilityError"><code class="docutils literal notranslate"><span class="pre">FilterInstabilityError</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validator-functions">Validator Functions</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-rate-validation">Sample Rate Validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_sample_rate"><code class="docutils literal notranslate"><span class="pre">validate_sample_rate()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#range-validation">Range Validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_positive"><code class="docutils literal notranslate"><span class="pre">validate_positive()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_range"><code class="docutils literal notranslate"><span class="pre">validate_range()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_in_set"><code class="docutils literal notranslate"><span class="pre">validate_in_set()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tensor-shape-validation">Tensor Shape Validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_tensor_ndim"><code class="docutils literal notranslate"><span class="pre">validate_tensor_ndim()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_audio_tensor"><code class="docutils literal notranslate"><span class="pre">validate_audio_tensor()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type-validation">Type Validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_type"><code class="docutils literal notranslate"><span class="pre">validate_type()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-specific-validation">Audio-Specific Validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_cutoff_frequency"><code class="docutils literal notranslate"><span class="pre">validate_cutoff_frequency()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_filter_order"><code class="docutils literal notranslate"><span class="pre">validate_filter_order()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.validate_q_factor"><code class="docutils literal notranslate"><span class="pre">validate_q_factor()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#constants">Constants</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.validation.COMMON_SAMPLE_RATES"><code class="docutils literal notranslate"><span class="pre">COMMON_SAMPLE_RATES</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage-examples">Usage Examples</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validating-parameters-in-custom-effects">Validating Parameters in Custom Effects</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validating-audio-tensors">Validating Audio Tensors</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#catching-specific-errors">Catching Specific Errors</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/api/validation.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/validation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

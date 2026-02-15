@@ -1,0 +1,1725 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Real-Time Processing &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/realtime';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Blog" href="../blog/index.html" />
+    <link rel="prev" title="Logging" href="logging.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="core.html">Core Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Real-Time Processing</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">API Reference</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Real-Time Processing</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="real-time-processing">
+<h1>Real-Time Processing<a class="headerlink" href="#real-time-processing" title="Link to this heading">#</a></h1>
+<p>The realtime module provides real-time audio I/O, ring buffering, and stream processing capabilities.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#overview" id="id1">Overview</a></p></li>
+<li><p><a class="reference internal" href="#quick-start" id="id2">Quick Start</a></p></li>
+<li><p><a class="reference internal" href="#configuration" id="id3">Configuration</a></p></li>
+<li><p><a class="reference internal" href="#audio-backend" id="id4">Audio Backend</a></p></li>
+<li><p><a class="reference internal" href="#ring-buffer" id="id5">Ring Buffer</a></p></li>
+<li><p><a class="reference internal" href="#processors" id="id6">Processors</a></p>
+<ul>
+<li><p><a class="reference internal" href="#real-time-processor" id="id7">Real-Time Processor</a></p></li>
+<li><p><a class="reference internal" href="#stream-processor" id="id8">Stream Processor</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#exceptions" id="id9">Exceptions</a></p></li>
+<li><p><a class="reference internal" href="#usage-examples" id="id10">Usage Examples</a></p>
+<ul>
+<li><p><a class="reference internal" href="#real-time-guitar-effect" id="id11">Real-Time Guitar Effect</a></p></li>
+<li><p><a class="reference internal" href="#processing-large-files" id="id12">Processing Large Files</a></p></li>
+<li><p><a class="reference internal" href="#thread-safe-parameter-updates" id="id13">Thread-Safe Parameter Updates</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="overview">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Overview</a><a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>The real-time processing system consists of:</p>
+<ul class="simple">
+<li><p><strong>Audio backends</strong> - Abstract interface for audio I/O with a PortAudio implementation via <code class="docutils literal notranslate"><span class="pre">sounddevice</span></code></p></li>
+<li><p><strong>Ring buffer</strong> - Lock-free SPSC buffer for real-time tensor transfer</p></li>
+<li><p><strong>Real-time processor</strong> - Orchestrator connecting backend to effect chain</p></li>
+<li><p><strong>Stream processor</strong> - Chunk-based file processing for large files</p></li>
+</ul>
+</section>
+<section id="quick-start">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Quick Start</a><a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h2>
+<p>Both processors support the context manager protocol for safe resource management.</p>
+<p>Real-time processing (requires <code class="docutils literal notranslate"><span class="pre">sounddevice</span></code>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimeProcessor</span><span class="p">,</span> <span class="n">SoundDeviceBackend</span><span class="p">,</span> <span class="n">StreamConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">StreamConfig</span><span class="p">(</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span>
+    <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+    <span class="n">channels_in</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">channels_out</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">with</span> <span class="n">RealtimeProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">SoundDeviceBackend</span><span class="p">(),</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Press Enter to stop...&quot;</span><span class="p">)</span>
+<span class="c1"># Stream is automatically stopped on exit</span>
+</pre></div>
+</div>
+<p>Stream processing (no extra dependencies):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamProcessor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+
+<span class="k">with</span> <span class="n">StreamProcessor</span><span class="p">(</span><span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)],</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">65536</span><span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="n">processor</span><span class="o">.</span><span class="n">process_file</span><span class="p">(</span><span class="s2">&quot;large_input.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="configuration">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Configuration</a><a class="headerlink" href="#configuration" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">StreamConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">48000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'float32'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'low'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#StreamConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.StreamConfig" title="Link to this definition">#</a></dt>
+<dd><p>Configuration for an audio stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Sample rate in Hz (e.g., 44100, 48000). Default is 48000.</p></li>
+<li><p><strong>buffer_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of samples per buffer/callback frame. Default is 512.</p></li>
+<li><p><strong>channels_in</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of input channels (0 for output-only). Default is 0.</p></li>
+<li><p><strong>channels_out</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of output channels (0 for input-only). Default is 2.</p></li>
+<li><p><strong>dtype</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Sample format string. Default is <code class="docutils literal notranslate"><span class="pre">&quot;float32&quot;</span></code>.</p></li>
+<li><p><strong>device_in</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Input device identifier. None for system default.</p></li>
+<li><p><strong>device_out</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Output device identifier. None for system default.</p></li>
+<li><p><strong>latency</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Latency hint: <code class="docutils literal notranslate"><span class="pre">&quot;low&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;high&quot;</span></code>, or seconds as float.
+Default is <code class="docutils literal notranslate"><span class="pre">&quot;low&quot;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">StreamConfig</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span><span class="o">.</span><span class="n">direction</span>
+<span class="go">&lt;StreamDirection.OUTPUT: &#39;output&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span><span class="o">.</span><span class="n">latency_ms</span>
+<span class="go">5.804988662131519</span>
+</pre></div>
+</div>
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamConfig.direction">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">direction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#torchfx.realtime.StreamDirection" title="torchfx.realtime.backend.StreamDirection"><span class="pre">StreamDirection</span></a></em><a class="headerlink" href="#torchfx.realtime.StreamConfig.direction" title="Link to this definition">#</a></dt>
+<dd><p>Infer stream direction from channel counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DUPLEX if both in and out channels &gt; 0,
+INPUT if only in &gt; 0, OUTPUT otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.realtime.StreamDirection" title="torchfx.realtime.StreamDirection">StreamDirection</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamConfig.latency_ms">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">latency_ms</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#torchfx.realtime.StreamConfig.latency_ms" title="Link to this definition">#</a></dt>
+<dd><p>Calculate theoretical minimum latency in milliseconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Latency based on buffer_size / sample_rate.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamDirection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">StreamDirection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#StreamDirection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.StreamDirection" title="Link to this definition">#</a></dt>
+<dd><p>Audio stream direction.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamState">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">StreamState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#StreamState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.StreamState" title="Link to this definition">#</a></dt>
+<dd><p>Audio stream lifecycle state.</p>
+</dd></dl>
+
+</section>
+<section id="audio-backend">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Audio Backend</a><a class="headerlink" href="#audio-backend" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">AudioBackend</span></span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#AudioBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.AudioBackend" title="Link to this definition">#</a></dt>
+<dd><p>Abstract base class for audio I/O backends.</p>
+<p>All audio backends must implement this interface. The backend manages
+the lifecycle of audio streams and routes audio data through callbacks.</p>
+<p>Subclasses should implement all abstract methods to provide a complete
+audio I/O solution.</p>
+<p class="rubric">Examples</p>
+<p>Implementing a custom backend:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">MyBackend</span><span class="p">(</span><span class="n">AudioBackend</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="c1"># Implement all abstract methods</span>
+<span class="gp">... </span>    <span class="k">pass</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.close">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#AudioBackend.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.AudioBackend.close" title="Link to this definition">#</a></dt>
+<dd><p>Close the audio stream and release resources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.get_default_device">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_default_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#AudioBackend.get_default_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.AudioBackend.get_default_device" title="Link to this definition">#</a></dt>
+<dd><p>Get the default device for a given direction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>direction</strong> (<a class="reference internal" href="#torchfx.realtime.StreamDirection" title="torchfx.realtime.StreamDirection"><em>StreamDirection</em></a>) – The stream direction to query.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Device identifier.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.get_devices">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_devices</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#AudioBackend.get_devices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.AudioBackend.get_devices" title="Link to this definition">#</a></dt>
+<dd><p>List available audio devices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of device info dicts with keys: <code class="docutils literal notranslate"><span class="pre">&quot;name&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;index&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;max_input_channels&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;max_output_channels&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;default_sample_rate&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, Any]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.open_stream">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">open_stream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#AudioBackend.open_stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.AudioBackend.open_stream" title="Link to this definition">#</a></dt>
+<dd><p>Open an audio stream with the given configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="#torchfx.realtime.StreamConfig" title="torchfx.realtime.StreamConfig"><em>StreamConfig</em></a>) – Stream configuration.</p></li>
+<li><p><strong>callback</strong> (<em>AudioCallback</em><em> | </em><em>None</em>) – Callback for real-time processing. If None, use blocking API.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.read">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_frames</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#AudioBackend.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.AudioBackend.read" title="Link to this definition">#</a></dt>
+<dd><p>Read audio frames (blocking API).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_frames</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of frames to read.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Shape <code class="docutils literal notranslate"><span class="pre">(channels_in,</span> <span class="pre">num_frames)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.start">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#AudioBackend.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.AudioBackend.start" title="Link to this definition">#</a></dt>
+<dd><p>Start the audio stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.stop">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#AudioBackend.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.AudioBackend.stop" title="Link to this definition">#</a></dt>
+<dd><p>Stop the audio stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.write">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/backend.html#AudioBackend.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.AudioBackend.write" title="Link to this definition">#</a></dt>
+<dd><p>Write audio frames (blocking API).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>Tensor</em>) – Shape <code class="docutils literal notranslate"><span class="pre">(channels_out,</span> <span class="pre">num_frames)</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.is_available">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_available</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#torchfx.realtime.AudioBackend.is_available" title="Link to this definition">#</a></dt>
+<dd><p>Whether this backend’s dependencies are available.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.name">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#torchfx.realtime.AudioBackend.name" title="Link to this definition">#</a></dt>
+<dd><p>Human-readable name of the backend.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.AudioBackend.state">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#torchfx.realtime.StreamState" title="torchfx.realtime.backend.StreamState"><span class="pre">StreamState</span></a></em><a class="headerlink" href="#torchfx.realtime.AudioBackend.state" title="Link to this definition">#</a></dt>
+<dd><p>Current stream state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.sounddevice_backend.</span></span><span class="sig-name descname"><span class="pre">SoundDeviceBackend</span></span><a class="reference internal" href="../_modules/torchfx/realtime/sounddevice_backend.html#SoundDeviceBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend" title="Link to this definition">#</a></dt>
+<dd><p>Audio backend using sounddevice (PortAudio).</p>
+<p>Provides real-time audio I/O through PortAudio with support for
+input, output, and duplex streams. Supports both callback-based
+and blocking APIs.</p>
+<p>The sounddevice module is imported lazily on instantiation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#torchfx.realtime.BackendNotAvailableError" title="torchfx.realtime.BackendNotAvailableError"><strong>BackendNotAvailableError</strong></a> – If sounddevice is not installed.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">backend</span> <span class="o">=</span> <span class="n">SoundDeviceBackend</span><span class="p">()</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">devices</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">get_devices</span><span class="p">()</span>  
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/sounddevice_backend.html#SoundDeviceBackend.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.close" title="Link to this definition">#</a></dt>
+<dd><p>Close the audio stream and release resources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.get_default_device">
+<span class="sig-name descname"><span class="pre">get_default_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/sounddevice_backend.html#SoundDeviceBackend.get_default_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.get_default_device" title="Link to this definition">#</a></dt>
+<dd><p>Get the default device for a given direction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>direction</strong> (<a class="reference internal" href="#torchfx.realtime.StreamDirection" title="torchfx.realtime.StreamDirection"><em>StreamDirection</em></a>) – The stream direction.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Default device index or name.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.get_devices">
+<span class="sig-name descname"><span class="pre">get_devices</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/sounddevice_backend.html#SoundDeviceBackend.get_devices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.get_devices" title="Link to this definition">#</a></dt>
+<dd><p>List available audio devices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Device information dictionaries.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, Any]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.open_stream">
+<span class="sig-name descname"><span class="pre">open_stream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/sounddevice_backend.html#SoundDeviceBackend.open_stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.open_stream" title="Link to this definition">#</a></dt>
+<dd><p>Open an audio stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="#torchfx.realtime.StreamConfig" title="torchfx.realtime.StreamConfig"><em>StreamConfig</em></a>) – Stream configuration.</p></li>
+<li><p><strong>callback</strong> (<em>AudioCallback</em><em> | </em><em>None</em>) – Audio processing callback. If None, blocking API is used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.realtime.StreamError" title="torchfx.realtime.StreamError"><strong>StreamError</strong></a> – If stream is already open or opening fails.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_frames</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/sounddevice_backend.html#SoundDeviceBackend.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.read" title="Link to this definition">#</a></dt>
+<dd><p>Read audio frames using blocking API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_frames</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of frames to read.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Shape <code class="docutils literal notranslate"><span class="pre">(channels_in,</span> <span class="pre">num_frames)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.realtime.StreamError" title="torchfx.realtime.StreamError"><strong>StreamError</strong></a> – If stream is not configured for input.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/sounddevice_backend.html#SoundDeviceBackend.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.start" title="Link to this definition">#</a></dt>
+<dd><p>Start the audio stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#torchfx.realtime.StreamError" title="torchfx.realtime.StreamError"><strong>StreamError</strong></a> – If stream is not open.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.stop">
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/sounddevice_backend.html#SoundDeviceBackend.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.stop" title="Link to this definition">#</a></dt>
+<dd><p>Stop the audio stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#torchfx.realtime.StreamError" title="torchfx.realtime.StreamError"><strong>StreamError</strong></a> – If stream is not running.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/sounddevice_backend.html#SoundDeviceBackend.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.write" title="Link to this definition">#</a></dt>
+<dd><p>Write audio frames using blocking API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>Tensor</em>) – Shape <code class="docutils literal notranslate"><span class="pre">(channels_out,</span> <span class="pre">num_frames)</span></code>.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.realtime.StreamError" title="torchfx.realtime.StreamError"><strong>StreamError</strong></a> – If stream is not configured for output.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.is_available">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_available</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.is_available" title="Link to this definition">#</a></dt>
+<dd><p>Return True since instantiation succeeded.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.name" title="Link to this definition">#</a></dt>
+<dd><p>Return backend name.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.sounddevice_backend.SoundDeviceBackend.state">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#torchfx.realtime.StreamState" title="torchfx.realtime.backend.StreamState"><span class="pre">StreamState</span></a></em><a class="headerlink" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.state" title="Link to this definition">#</a></dt>
+<dd><p>Current stream state.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="ring-buffer">
+<h2><a class="toc-backref" href="#id5" role="doc-backlink">Ring Buffer</a><a class="headerlink" href="#ring-buffer" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">TensorRingBuffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/ring_buffer.html#TensorRingBuffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer" title="Link to this definition">#</a></dt>
+<dd><p>Lock-free SPSC ring buffer for real-time audio tensor transfer.</p>
+<p>Uses separate read/write indices with a pre-allocated tensor backing
+store. In the SPSC model, only the producer writes <code class="docutils literal notranslate"><span class="pre">_write_idx</span></code> and
+only the consumer writes <code class="docutils literal notranslate"><span class="pre">_read_idx</span></code>, so no locks are needed.</p>
+<p>The capacity must be a power of 2 for efficient modular arithmetic
+(bitwise AND instead of modulo). If a non-power-of-2 value is provided,
+it is rounded up to the next power of 2.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>capacity</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Total capacity in samples per channel. Rounded up to next power of 2.</p></li>
+<li><p><strong>channels</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of audio channels. Default is 1.</p></li>
+<li><p><strong>dtype</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.dtype" title="(in PyTorch v2.10)"><em>torch.dtype</em></a>) – Data type for the buffer tensor. Default is <code class="docutils literal notranslate"><span class="pre">torch.float32</span></code>.</p></li>
+<li><p><strong>device</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Device for the buffer tensor. Default is <code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.buffer">
+<span class="sig-name descname"><span class="pre">buffer</span></span><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.buffer" title="Link to this definition">#</a></dt>
+<dd><p>Pre-allocated backing tensor of shape <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">capacity)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span> <span class="o">=</span> <span class="n">TensorRingBuffer</span><span class="p">(</span><span class="n">capacity</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span><span class="o">.</span><span class="n">capacity</span>
+<span class="go">512</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span><span class="o">.</span><span class="n">available_read</span>
+<span class="go">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span><span class="o">.</span><span class="n">available_write</span>
+<span class="go">512</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.advance_read">
+<span class="sig-name descname"><span class="pre">advance_read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/ring_buffer.html#TensorRingBuffer.advance_read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.advance_read" title="Link to this definition">#</a></dt>
+<dd><p>Advance the read pointer without reading data.</p>
+<p>Use after <code class="docutils literal notranslate"><span class="pre">peek()</span></code> to advance by the hop size in
+overlap-add processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of samples to advance.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.realtime.BufferUnderrunError" title="torchfx.realtime.BufferUnderrunError"><strong>BufferUnderrunError</strong></a> – If advancing would go past the write pointer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/ring_buffer.html#TensorRingBuffer.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.clear" title="Link to this definition">#</a></dt>
+<dd><p>Reset the buffer to empty state.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span> <span class="o">=</span> <span class="n">TensorRingBuffer</span><span class="p">(</span><span class="n">capacity</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">buf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span><span class="o">.</span><span class="n">available_read</span>
+<span class="go">0</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.peek">
+<span class="sig-name descname"><span class="pre">peek</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/ring_buffer.html#TensorRingBuffer.peek"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.peek" title="Link to this definition">#</a></dt>
+<dd><p>Read samples without advancing the read pointer.</p>
+<p>Useful for overlap-add processing where the consumer needs
+to read overlapping frames.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of samples to peek.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Audio data of shape <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">num_samples)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.realtime.BufferUnderrunError" title="torchfx.realtime.BufferUnderrunError"><strong>BufferUnderrunError</strong></a> – If fewer samples are available than requested.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/ring_buffer.html#TensorRingBuffer.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.read" title="Link to this definition">#</a></dt>
+<dd><p>Read samples from the buffer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of samples to read.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Audio data of shape <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">num_samples)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.realtime.BufferUnderrunError" title="torchfx.realtime.BufferUnderrunError"><strong>BufferUnderrunError</strong></a> – If fewer samples are available than requested.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span> <span class="o">=</span> <span class="n">TensorRingBuffer</span><span class="p">(</span><span class="n">capacity</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">buf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">buf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([1, 50])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span><span class="o">.</span><span class="n">available_read</span>
+<span class="go">50</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/ring_buffer.html#TensorRingBuffer.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.write" title="Link to this definition">#</a></dt>
+<dd><p>Write samples into the buffer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>Tensor</em>) – Audio data of shape <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">samples)</span></code> or <code class="docutils literal notranslate"><span class="pre">(samples,)</span></code> for
+single-channel buffers.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of samples actually written. May be less than requested
+if the buffer is near full.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span> <span class="o">=</span> <span class="n">TensorRingBuffer</span><span class="p">(</span><span class="n">capacity</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="go">100</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">buf</span><span class="o">.</span><span class="n">available_read</span>
+<span class="go">100</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.available_read">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">available_read</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.available_read" title="Link to this definition">#</a></dt>
+<dd><p>Number of samples available for reading.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.available_write">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">available_write</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.available_write" title="Link to this definition">#</a></dt>
+<dd><p>Number of samples available for writing.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.capacity">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">capacity</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.capacity" title="Link to this definition">#</a></dt>
+<dd><p>Total buffer capacity in samples per channel.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer.channels">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">channels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer.channels" title="Link to this definition">#</a></dt>
+<dd><p>Number of audio channels.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="processors">
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Processors</a><a class="headerlink" href="#processors" title="Link to this heading">#</a></h2>
+<section id="real-time-processor">
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">Real-Time Processor</a><a class="headerlink" href="#real-time-processor" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">RealtimeProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">effects</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8192</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/processor.html#RealtimeProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.RealtimeProcessor" title="Link to this definition">#</a></dt>
+<dd><p>Real-time audio processor connecting an audio backend to an effect chain.</p>
+<p>Orchestrates audio I/O through a backend and processing through
+a chain of FX effects. Supports thread-safe parameter updates
+during processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>effects</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="core.html#torchfx.FX" title="torchfx.FX"><em>FX</em></a><em>] </em><em>| </em><em>nn.Sequential</em>) – Chain of effects to apply in order.</p></li>
+<li><p><strong>backend</strong> (<a class="reference internal" href="#torchfx.realtime.AudioBackend" title="torchfx.realtime.AudioBackend"><em>AudioBackend</em></a>) – Audio backend for I/O.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#torchfx.realtime.StreamConfig" title="torchfx.realtime.StreamConfig"><em>StreamConfig</em></a>) – Stream configuration.</p></li>
+<li><p><strong>buffer_capacity</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Ring buffer capacity in samples per channel. Default is 8192.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimeProcessor</span><span class="p">,</span> <span class="n">StreamConfig</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">StreamConfig</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+<span class="gp">... </span>                      <span class="n">channels_in</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">channels_out</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeProcessor.reset_state">
+<span class="sig-name descname"><span class="pre">reset_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/processor.html#RealtimeProcessor.reset_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.RealtimeProcessor.reset_state" title="Link to this definition">#</a></dt>
+<dd><p>Reset all internal state (filter states, ring buffers).</p>
+<p>Useful after seeking in a file or switching audio sources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeProcessor.set_parameter">
+<span class="sig-name descname"><span class="pre">set_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/processor.html#RealtimeProcessor.set_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.RealtimeProcessor.set_parameter" title="Link to this definition">#</a></dt>
+<dd><p>Thread-safe parameter update.</p>
+<p>Parameters are staged in a pending dict and applied at the
+next processing boundary (start of next audio callback).
+This avoids locks in the audio processing path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Dot-separated parameter path, e.g., <code class="docutils literal notranslate"><span class="pre">&quot;0.cutoff&quot;</span></code> for
+effect index 0, attribute <code class="docutils literal notranslate"><span class="pre">cutoff</span></code>.</p></li>
+<li><p><strong>value</strong> (<em>Any</em>) – New parameter value.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># processor.set_parameter(&quot;0.cutoff&quot;, 2000)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># processor.set_parameter(&quot;1.gain&quot;, 0.8)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeProcessor.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/processor.html#RealtimeProcessor.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.RealtimeProcessor.start" title="Link to this definition">#</a></dt>
+<dd><p>Start real-time processing.</p>
+<p>Opens and starts the audio stream. The backend callback
+routes audio through the effect chain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#torchfx.realtime.RealtimeError" title="torchfx.realtime.RealtimeError"><strong>RealtimeError</strong></a> – If the processor is already running.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeProcessor.stop">
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/processor.html#RealtimeProcessor.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.RealtimeProcessor.stop" title="Link to this definition">#</a></dt>
+<dd><p>Stop real-time processing and close the stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#torchfx.realtime.RealtimeError" title="torchfx.realtime.RealtimeError"><strong>RealtimeError</strong></a> – If the processor is not running.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeProcessor.config">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#torchfx.realtime.StreamConfig" title="torchfx.realtime.backend.StreamConfig"><span class="pre">StreamConfig</span></a></em><a class="headerlink" href="#torchfx.realtime.RealtimeProcessor.config" title="Link to this definition">#</a></dt>
+<dd><p>The stream configuration.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeProcessor.effects">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">effects</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="core.html#torchfx.FX" title="torchfx.effect.FX"><span class="pre">FX</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchfx.realtime.RealtimeProcessor.effects" title="Link to this definition">#</a></dt>
+<dd><p>The current effect chain.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeProcessor.is_running">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_running</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#torchfx.realtime.RealtimeProcessor.is_running" title="Link to this definition">#</a></dt>
+<dd><p>Whether the processor is currently running.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeProcessor.latency_ms">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">latency_ms</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#torchfx.realtime.RealtimeProcessor.latency_ms" title="Link to this definition">#</a></dt>
+<dd><p>Estimated total latency in milliseconds.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="stream-processor">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Stream Processor</a><a class="headerlink" href="#stream-processor" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">StreamProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">effects</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">65536</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/stream.html#StreamProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.StreamProcessor" title="Link to this definition">#</a></dt>
+<dd><p>Process audio files in chunks without loading the entire file.</p>
+<p>Reads audio in configurable chunk sizes, applies an effect chain
+to each chunk, and writes output progressively. Supports an
+overlap parameter for effects that need context beyond chunk
+boundaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>effects</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="core.html#torchfx.FX" title="torchfx.FX"><em>FX</em></a><em>] </em><em>| </em><em>nn.Sequential</em>) – Chain of effects to apply in order.</p></li>
+<li><p><strong>chunk_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of samples per processing chunk. Default is 65536.</p></li>
+<li><p><strong>overlap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of overlap samples between chunks. Default is 0.</p></li>
+<li><p><strong>device</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Processing device (<code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;cuda&quot;</span></code>). Default is <code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamProcessor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processor</span> <span class="o">=</span> <span class="n">StreamProcessor</span><span class="p">(</span><span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)])</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamProcessor.process_chunks">
+<span class="sig-name descname"><span class="pre">process_chunks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/stream.html#StreamProcessor.process_chunks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.StreamProcessor.process_chunks" title="Link to this definition">#</a></dt>
+<dd><p>Yield processed chunks as tensors.</p>
+<p>Generator API for streaming to another process, network,
+or real-time playback.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em>) – Path to the input audio file.</p>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em> – Processed audio chunks of shape <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">chunk_size)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Generator" title="(in Python v3.14)"><em>Generator</em></a>[<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.10)"><em>Tensor</em></a>, None, None]</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamProcessor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processor</span> <span class="o">=</span> <span class="n">StreamProcessor</span><span class="p">(</span><span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># for chunk in processor.process_chunks(&quot;input.wav&quot;):</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#     print(chunk.shape)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamProcessor.process_file">
+<span class="sig-name descname"><span class="pre">process_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/stream.html#StreamProcessor.process_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.StreamProcessor.process_file" title="Link to this definition">#</a></dt>
+<dd><p>Process an audio file chunk by chunk.</p>
+<p>Reads the input file in chunks, applies the effect chain to each
+chunk, and writes the result to the output file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em>) – Path to the input audio file.</p></li>
+<li><p><strong>output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em>) – Path to the output audio file.</p></li>
+<li><p><strong>format</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Output format (e.g., <code class="docutils literal notranslate"><span class="pre">&quot;WAV&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;FLAC&quot;</span></code>). Inferred from
+extension if None.</p></li>
+<li><p><strong>subtype</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Output subtype (e.g., <code class="docutils literal notranslate"><span class="pre">&quot;PCM_16&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;FLOAT&quot;</span></code>). Uses
+default for format if None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamProcessor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processor</span> <span class="o">=</span> <span class="n">StreamProcessor</span><span class="p">(</span><span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># processor.process_file(&quot;input.wav&quot;, &quot;output.wav&quot;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamProcessor.chunk_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">chunk_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#torchfx.realtime.StreamProcessor.chunk_size" title="Link to this definition">#</a></dt>
+<dd><p>Processing chunk size in samples.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamProcessor.effects">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">effects</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="core.html#torchfx.FX" title="torchfx.effect.FX"><span class="pre">FX</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchfx.realtime.StreamProcessor.effects" title="Link to this definition">#</a></dt>
+<dd><p>The current effect chain.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamProcessor.overlap">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">overlap</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#torchfx.realtime.StreamProcessor.overlap" title="Link to this definition">#</a></dt>
+<dd><p>Overlap between chunks in samples.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+<section id="exceptions">
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">Exceptions</a><a class="headerlink" href="#exceptions" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.RealtimeError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">RealtimeError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/exceptions.html#RealtimeError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.RealtimeError" title="Link to this definition">#</a></dt>
+<dd><p>Base exception for all real-time processing errors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable error message.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>actual_value</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">RealtimeError</span><span class="p">(</span><span class="s2">&quot;Processing failed&quot;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.realtime.exceptions.RealtimeError</span>: <span class="n">Processing failed</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.BackendNotAvailableError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">BackendNotAvailableError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/exceptions.html#BackendNotAvailableError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.BackendNotAvailableError" title="Link to this definition">#</a></dt>
+<dd><p>Raised when a requested audio backend is not installed or available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>backend_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the backend that is not available.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Installation instructions or alternative.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">BackendNotAvailableError</span><span class="p">(</span><span class="s2">&quot;sounddevice&quot;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.realtime.exceptions.BackendNotAvailableError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.StreamError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">StreamError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/exceptions.html#StreamError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.StreamError" title="Link to this definition">#</a></dt>
+<dd><p>Raised for audio stream lifecycle errors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable error message.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>actual_value</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">StreamError</span><span class="p">(</span><span class="s2">&quot;Failed to open audio stream&quot;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.realtime.exceptions.StreamError</span>: <span class="n">Failed to open audio stream</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.BufferOverrunError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">BufferOverrunError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/exceptions.html#BufferOverrunError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.BufferOverrunError" title="Link to this definition">#</a></dt>
+<dd><p>Raised when the ring buffer overflows.</p>
+<p>This occurs when the producer writes data faster than the consumer
+reads it, causing data loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable error message.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>actual_value</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">BufferOverrunError</span><span class="p">(</span><span class="s2">&quot;Ring buffer overflow&quot;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.realtime.exceptions.BufferOverrunError</span>: <span class="n">Ring buffer overflow</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.realtime.BufferUnderrunError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">BufferUnderrunError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/exceptions.html#BufferUnderrunError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.BufferUnderrunError" title="Link to this definition">#</a></dt>
+<dd><p>Raised when the ring buffer underflows.</p>
+<p>This occurs when the consumer attempts to read more data than
+is available, typically due to processing being faster than input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable error message.</p></li>
+<li><p><strong>suggestion</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A suggestion for fixing the error.</p></li>
+<li><p><strong>parameter_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>actual_value</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">raise</span> <span class="n">BufferUnderrunError</span><span class="p">(</span><span class="s2">&quot;Ring buffer underrun&quot;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">torchfx.realtime.exceptions.BufferUnderrunError</span>: <span class="n">Ring buffer underrun</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="usage-examples">
+<h2><a class="toc-backref" href="#id10" role="doc-backlink">Usage Examples</a><a class="headerlink" href="#usage-examples" title="Link to this heading">#</a></h2>
+<section id="real-time-guitar-effect">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Real-Time Guitar Effect</a><a class="headerlink" href="#real-time-guitar-effect" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimeProcessor</span><span class="p">,</span> <span class="n">SoundDeviceBackend</span><span class="p">,</span> <span class="n">StreamConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.iir</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span><span class="p">,</span> <span class="n">HiButterworth</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Reverb</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">StreamConfig</span><span class="p">(</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span>
+    <span class="n">buffer_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">channels_in</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">channels_out</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">latency</span><span class="o">=</span><span class="s2">&quot;low&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">with</span> <span class="n">RealtimeProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">HiButterworth</span><span class="p">(</span><span class="mi">80</span><span class="p">),</span>        <span class="c1"># Remove low rumble</span>
+        <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">8000</span><span class="p">),</span>       <span class="c1"># Tame high frequencies</span>
+        <span class="n">Gain</span><span class="p">(</span><span class="mf">1.5</span><span class="p">),</span>                 <span class="c1"># Boost signal</span>
+        <span class="n">Reverb</span><span class="p">(</span><span class="n">room_size</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>     <span class="c1"># Add ambience</span>
+    <span class="p">],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">SoundDeviceBackend</span><span class="p">(),</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="c1"># Tweak parameters in real time</span>
+    <span class="n">processor</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;2.gain&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>  <span class="c1"># Increase gain</span>
+    <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Press Enter to stop...&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="processing-large-files">
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">Processing Large Files</a><a class="headerlink" href="#processing-large-files" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamProcessor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Normalize</span>
+
+<span class="c1"># Process a large file in 64K sample chunks</span>
+<span class="k">with</span> <span class="n">StreamProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.8</span><span class="p">),</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)],</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">65536</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="n">processor</span><span class="o">.</span><span class="n">process_file</span><span class="p">(</span><span class="s2">&quot;large_podcast.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;normalized_podcast.wav&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Or use the generator API</span>
+    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">processor</span><span class="o">.</span><span class="n">process_chunks</span><span class="p">(</span><span class="s2">&quot;large_podcast.wav&quot;</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed chunk: </span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="thread-safe-parameter-updates">
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">Thread-Safe Parameter Updates</a><a class="headerlink" href="#thread-safe-parameter-updates" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimeProcessor</span><span class="p">,</span> <span class="n">SoundDeviceBackend</span><span class="p">,</span> <span class="n">StreamConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.iir</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">StreamConfig</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+                      <span class="n">channels_in</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">channels_out</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">RealtimeProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">1000</span><span class="p">)],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">SoundDeviceBackend</span><span class="p">(),</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="c1"># Sweep filter cutoff from 1000Hz to 5000Hz</span>
+    <span class="k">for</span> <span class="n">cutoff</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">5001</span><span class="p">,</span> <span class="mi">100</span><span class="p">):</span>
+        <span class="n">processor</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;0.cutoff&quot;</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="logging.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Logging</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../blog/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Blog</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-start">Quick Start</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration">Configuration</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamConfig"><code class="docutils literal notranslate"><span class="pre">StreamConfig</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamConfig.direction"><code class="docutils literal notranslate"><span class="pre">StreamConfig.direction</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamConfig.latency_ms"><code class="docutils literal notranslate"><span class="pre">StreamConfig.latency_ms</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamDirection"><code class="docutils literal notranslate"><span class="pre">StreamDirection</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamState"><code class="docutils literal notranslate"><span class="pre">StreamState</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-backend">Audio Backend</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend"><code class="docutils literal notranslate"><span class="pre">AudioBackend</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.close"><code class="docutils literal notranslate"><span class="pre">AudioBackend.close()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.get_default_device"><code class="docutils literal notranslate"><span class="pre">AudioBackend.get_default_device()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.get_devices"><code class="docutils literal notranslate"><span class="pre">AudioBackend.get_devices()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.open_stream"><code class="docutils literal notranslate"><span class="pre">AudioBackend.open_stream()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.read"><code class="docutils literal notranslate"><span class="pre">AudioBackend.read()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.start"><code class="docutils literal notranslate"><span class="pre">AudioBackend.start()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.stop"><code class="docutils literal notranslate"><span class="pre">AudioBackend.stop()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.write"><code class="docutils literal notranslate"><span class="pre">AudioBackend.write()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.is_available"><code class="docutils literal notranslate"><span class="pre">AudioBackend.is_available</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.name"><code class="docutils literal notranslate"><span class="pre">AudioBackend.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.AudioBackend.state"><code class="docutils literal notranslate"><span class="pre">AudioBackend.state</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.close"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.close()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.get_default_device"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.get_default_device()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.get_devices"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.get_devices()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.open_stream"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.open_stream()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.read"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.read()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.start"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.start()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.stop"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.stop()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.write"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.write()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.is_available"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.is_available</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.name"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.state"><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend.state</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ring-buffer">Ring Buffer</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.buffer"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.advance_read"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.advance_read()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.clear"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.clear()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.peek"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.peek()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.read"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.read()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.write"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.write()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.available_read"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.available_read</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.available_write"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.available_write</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.capacity"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.capacity</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.TensorRingBuffer.channels"><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer.channels</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#processors">Processors</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#real-time-processor">Real-Time Processor</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeProcessor"><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeProcessor.reset_state"><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor.reset_state()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeProcessor.set_parameter"><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor.set_parameter()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeProcessor.start"><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor.start()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeProcessor.stop"><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor.stop()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeProcessor.config"><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor.config</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeProcessor.effects"><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor.effects</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeProcessor.is_running"><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor.is_running</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeProcessor.latency_ms"><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor.latency_ms</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stream-processor">Stream Processor</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamProcessor"><code class="docutils literal notranslate"><span class="pre">StreamProcessor</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamProcessor.process_chunks"><code class="docutils literal notranslate"><span class="pre">StreamProcessor.process_chunks()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamProcessor.process_file"><code class="docutils literal notranslate"><span class="pre">StreamProcessor.process_file()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamProcessor.chunk_size"><code class="docutils literal notranslate"><span class="pre">StreamProcessor.chunk_size</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamProcessor.effects"><code class="docutils literal notranslate"><span class="pre">StreamProcessor.effects</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamProcessor.overlap"><code class="docutils literal notranslate"><span class="pre">StreamProcessor.overlap</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exceptions">Exceptions</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.RealtimeError"><code class="docutils literal notranslate"><span class="pre">RealtimeError</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.BackendNotAvailableError"><code class="docutils literal notranslate"><span class="pre">BackendNotAvailableError</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.StreamError"><code class="docutils literal notranslate"><span class="pre">StreamError</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.BufferOverrunError"><code class="docutils literal notranslate"><span class="pre">BufferOverrunError</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.realtime.BufferUnderrunError"><code class="docutils literal notranslate"><span class="pre">BufferUnderrunError</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage-examples">Usage Examples</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#real-time-guitar-effect">Real-Time Guitar Effect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#processing-large-files">Processing Large Files</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#thread-safe-parameter-updates">Thread-Safe Parameter Updates</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/api/realtime.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/realtime.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

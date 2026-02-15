@@ -365,6 +365,7 @@
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/cli-guide.html">Command-Line Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-filters.html">Creating Custom Filters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/series-parallel-filters.html">Series and Parallel Filter Combinations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/custom-effects.html">Creating Custom Effects</a></li>
@@ -748,11 +749,98 @@
 ├── effect.py            # Base FX class and effects
 ├── typing.py            # Type aliases
 ├── _deprecation.py      # Internal utilities (prefix with _)
-└── filter/
-    ├── __init__.py      # Filter exports
-    ├── __base.py        # Base filter classes
-    ├── iir.py           # IIR filters
-    └── fir.py           # FIR filters
+├── filter/
+│   ├── __init__.py      # Filter exports
+│   ├── __base.py        # Base filter classes
+│   ├── iir.py           # IIR filters
+│   └── fir.py           # FIR filters
+├── validation/
+│   ├── __init__.py      # Validation exports
+│   ├── exceptions.py    # Custom exception hierarchy
+│   └── validators.py    # Validator functions
+└── logging/
+    ├── __init__.py      # Logging exports
+    ├── config.py        # Logger configuration
+    └── performance.py   # Performance timing utilities
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="validation-patterns">
+<h2>Validation Patterns<a class="headerlink" href="#validation-patterns" title="Link to this heading">#</a></h2>
+<section id="when-to-use-validators">
+<h3>When to Use Validators<a class="headerlink" href="#when-to-use-validators" title="Link to this heading">#</a></h3>
+<p>Use the validation module for user-facing parameter validation in <code class="docutils literal notranslate"><span class="pre">__init__</span></code> methods:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">validate_positive</span><span class="p">,</span>
+    <span class="n">validate_range</span><span class="p">,</span>
+    <span class="n">validate_sample_rate</span><span class="p">,</span>
+    <span class="n">validate_in_set</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">NewEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">gain_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amplitude&quot;</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Validate parameters using validation module</span>
+        <span class="n">validate_positive</span><span class="p">(</span><span class="n">gain</span><span class="p">,</span> <span class="s2">&quot;gain&quot;</span><span class="p">)</span>
+        <span class="n">validate_range</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="s2">&quot;mix&quot;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">validate_in_set</span><span class="p">(</span><span class="n">gain_type</span><span class="p">,</span> <span class="s2">&quot;gain_type&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">])</span>
+        <span class="n">validate_sample_rate</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="n">mix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">=</span> <span class="n">gain_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+</pre></div>
+</div>
+</section>
+<section id="assertions-vs-custom-exceptions">
+<h3>Assertions vs Custom Exceptions<a class="headerlink" href="#assertions-vs-custom-exceptions" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Use assertions</strong> for internal invariants and developer-facing checks</p></li>
+<li><p><strong>Use validation functions</strong> for user-facing parameter validation</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good - Internal check uses assertion</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;fs must be set before computing coefficients&quot;</span>
+    <span class="c1"># ...</span>
+
+<span class="c1"># Good - User-facing validation uses validator</span>
+<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">validate_positive</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">)</span>
+    <span class="n">validate_sample_rate</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="exception-hierarchy">
+<h3>Exception Hierarchy<a class="headerlink" href="#exception-hierarchy" title="Link to this heading">#</a></h3>
+<p>When raising custom exceptions, use the appropriate level:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InvalidParameterError</span><span class="p">,</span>
+    <span class="n">InvalidRangeError</span><span class="p">,</span>
+    <span class="n">AudioProcessingError</span><span class="p">,</span>
+    <span class="n">CoefficientComputationError</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># For parameter validation - use specific exception</span>
+<span class="k">raise</span> <span class="n">InvalidRangeError</span><span class="p">(</span><span class="s2">&quot;decay&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># For processing errors</span>
+<span class="k">raise</span> <span class="n">AudioProcessingError</span><span class="p">(</span><span class="s2">&quot;Failed to process audio buffer&quot;</span><span class="p">)</span>
+
+<span class="c1"># For filter coefficient errors</span>
+<span class="k">raise</span> <span class="n">CoefficientComputationError</span><span class="p">(</span>
+    <span class="n">filter_type</span><span class="o">=</span><span class="s2">&quot;LoButterworth&quot;</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Cutoff frequency exceeds Nyquist&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -1034,6 +1122,12 @@ pytest<span class="w"> </span>tests/
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filter-implementation-pattern">Filter Implementation Pattern</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#effect-implementation-pattern">Effect Implementation Pattern</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-organization">Module Organization</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-patterns">Validation Patterns</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#when-to-use-validators">When to Use Validators</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#assertions-vs-custom-exceptions">Assertions vs Custom Exceptions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exception-hierarchy">Exception Hierarchy</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-standards">Documentation Standards</a><ul class="visible nav section-nav flex-column">

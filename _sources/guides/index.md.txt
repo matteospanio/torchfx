@@ -34,6 +34,7 @@ Understand the fundamental building blocks of TorchFX:
 
 Learn TorchFX through practical examples:
 
+- [Command-Line Interface](tutorials/cli-guide.md) - Process audio from the terminal
 - [Custom Effects](tutorials/custom-effects.md) - Building your own custom effects
 - [Series and Parallel Filters](tutorials/series-parallel-filters.md) - Combining filters in complex patterns
 - [Custom Filters](tutorials/custom-filters.md) - Creating custom filter designs

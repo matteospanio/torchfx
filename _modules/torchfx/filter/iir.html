@@ -42,14 +42,16 @@
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
-    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
-const defaultStyle = document.createElement('style');
-defaultStyle.textContent = `pre.mermaid {
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
     /* Same as .mermaid-container > pre */
     display: block;
     width: 100%;
@@ -60,12 +62,11 @@ pre.mermaid > svg {
     height: 500px;
     width: 100%;
     max-width: 100% !important;
-}
-`;
-document.head.appendChild(defaultStyle);
+}`;
+    document.head.appendChild(defaultStyle);
 
-const fullscreenStyle = document.createElement('style');
-fullscreenStyle.textContent = `.mermaid-container {
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -217,10 +218,32 @@ fullscreenStyle.textContent = `.mermaid-container {
 .mermaid-fullscreen-modal .mermaid-fullscreen-btn {
     display: none !important;
 }`;
-document.head.appendChild(fullscreenStyle);
+    document.head.appendChild(fullscreenStyle);
+}
 
 // Detect if page has dark background
 const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
     const bgColor = window.getComputedStyle(document.body).backgroundColor;
     const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
     if (match) {
@@ -228,15 +251,45 @@ const isDarkTheme = () => {
         const g = parseInt(match[2]);
         const b = parseInt(match[3]);
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
         return brightness < 128;
     }
+    // console.log("No dark or light theme detected, defaulting to light theme");
     return false;
 };
 
-const load = async () => {
-    await mermaid.run();
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
 
-    const all_mermaids = document.querySelectorAll(".mermaid");
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
     const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
 
     if ("False" === "True") {
@@ -244,10 +297,10 @@ const load = async () => {
         if(mermaids_to_add_zoom > 0) {
             var svgs = d3.selectAll("");
             if(all_mermaids.length !== mermaids_processed.length) {
-                setTimeout(load, 200);
+                setTimeout(() => runMermaid(false), 200);
                 return;
             } else if(svgs.size() !== mermaids_to_add_zoom) {
-                setTimeout(load, 200);
+                setTimeout(() => runMermaid(false), 200);
                 return;
             } else {
                 svgs.each(function() {
@@ -263,16 +316,21 @@ const load = async () => {
         }
     } else if(all_mermaids.length !== mermaids_processed.length) {
         // Wait for mermaid to process all diagrams
-        setTimeout(load, 200);
+        setTimeout(() => runMermaid(false), 200);
         return;
     }
-
-    const darkTheme = isDarkTheme();
 
     // Stop here if not adding fullscreen capability
     if ("True" !== "True") return;
 
-    const modal = document.createElement('div');
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
     modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
@@ -283,10 +341,8 @@ const load = async () => {
     `;
     document.body.appendChild(modal);
 
-    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
     const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
-
-    let previousScrollOffset = [window.scrollX, window.scrollY];
 
     const closeModal = () => {
         modal.classList.remove('active');
@@ -305,11 +361,14 @@ const load = async () => {
         }
     });
 
-    const allButtons = [];
-
     document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
         if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
             mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
             return;
         }
 
@@ -367,46 +426,57 @@ const load = async () => {
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         });
-
         container.appendChild(fullscreenBtn);
-        allButtons.push(fullscreenBtn);
-    });
-
-    // Update theme classes when theme changes
-    const updateTheme = () => {
-        const dark = isDarkTheme();
-        allButtons.forEach(btn => {
-            if (dark) {
-                btn.classList.add('dark-theme');
-            } else {
-                btn.classList.remove('dark-theme');
-            }
-        });
-        if (dark) {
-            modal.classList.add('dark-theme');
-            modalContent.classList.add('dark-theme');
-            closeBtn.classList.add('dark-theme');
-        } else {
-            modal.classList.remove('dark-theme');
-            modalContent.classList.remove('dark-theme');
-            closeBtn.classList.remove('dark-theme');
-        }
-    };
-
-    // Watch for theme changes
-    const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-    observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class', 'style']
     });
 };
 
-window.addEventListener("load", load);
-</script>
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);</script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/torchfx/filter/iir';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -829,16 +899,18 @@ window.addEventListener("load", load);
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span><span class="p">,</span> <span class="n">cheby1</span><span class="p">,</span> <span class="n">cheby2</span><span class="p">,</span> <span class="n">ellip</span><span class="p">,</span> <span class="n">iirnotch</span><span class="p">,</span> <span class="n">iirpeak</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span><span class="p">,</span> <span class="n">cheby1</span><span class="p">,</span> <span class="n">cheby2</span><span class="p">,</span> <span class="n">ellip</span><span class="p">,</span> <span class="n">tf2sos</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dtype</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchaudio</span><span class="w"> </span><span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>  <span class="c1"># noqa: N812</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.__base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractFilter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.biquad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Biquad</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Device</span><span class="p">,</span> <span class="n">FilterOrderScale</span>
 
 <span class="n">NONE_FS_ERR</span> <span class="o">=</span> <span class="s2">&quot;Sample rate of the filter could not be None.&quot;</span>
@@ -851,11 +923,19 @@ window.addEventListener("load", load);
 
 <span class="sd">    This abstract class provides the foundation for all IIR filter implementations</span>
 <span class="sd">    in torchfx. It implements lazy coefficient computation, automatic device</span>
-<span class="sd">    management, and the core filtering operation using `torchaudio.functional.lfilter`.</span>
+<span class="sd">    management, and the core filtering operation.</span>
 
-<span class="sd">    IIR filters are recursive digital filters characterized by their transfer</span>
-<span class="sd">    function H(z) = B(z)/A(z), where B(z) are the feedforward (numerator)</span>
-<span class="sd">    coefficients and A(z) are the feedback (denominator) coefficients.</span>
+<span class="sd">    Two processing paths are provided:</span>
+
+<span class="sd">    * **Stateless (fast)**: delegates to ``torchaudio.functional.lfilter`` for</span>
+<span class="sd">      one-shot processing when no chunk-to-chunk state is needed.</span>
+<span class="sd">    * **Stateful (SOS cascade)**: a pure-PyTorch second-order-sections (SOS) cascade</span>
+<span class="sd">      using Direct Form 1 that carries state between calls. Activated after the</span>
+<span class="sd">      first ``forward()`` call — subsequent calls reuse state. Call</span>
+<span class="sd">      ``reset_state()`` to clear accumulated state.</span>
+
+<span class="sd">    Higher-order IIR filters are internally decomposed into second-order sections</span>
+<span class="sd">    (biquad cascade) for numerical stability.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -877,16 +957,14 @@ window.addEventListener("load", load);
 <span class="sd">    Coefficient Computation Flow:</span>
 <span class="sd">        1. Filter is instantiated with parameters (fs may be None)</span>
 <span class="sd">        2. On first forward pass, if coefficients are None, compute_coefficients() is called</span>
-<span class="sd">        3. Coefficients are converted to tensors and moved to input device</span>
-<span class="sd">        4. Filtering is performed using lfilter from torchaudio</span>
-
-<span class="sd">    The lazy evaluation pattern minimizes memory usage when filters are instantiated</span>
-<span class="sd">    but not immediately used.</span>
+<span class="sd">        3. Coefficients are converted to SOS matrix for stateful processing</span>
+<span class="sd">        4. Filtering is performed using lfilter (stateless) or SOS cascade (stateful)</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
 <span class="sd">    AbstractFilter : Base class for all filters</span>
 <span class="sd">    torchfx.filter.fir.FIR : Base class for FIR filters</span>
+<span class="sd">    torchfx.filter.biquad.Biquad : Biquad filter base class</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -899,6 +977,42 @@ window.addEventListener("load", load);
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="c1"># SOS matrix: [num_sections, 6] each row [b0, b1, b2, 1, a1, a2]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Per-section, per-channel DF1 state: [num_sections, C, 2] for x and y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stateful</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_sos</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert transfer function coefficients to SOS matrix.</span>
+
+<span class="sd">        Uses ``scipy.signal.tf2sos`` to decompose higher-order transfer functions</span>
+<span class="sd">        into cascaded second-order sections for numerical stability.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">a_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+        <span class="p">)</span>
+        <span class="n">b_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+        <span class="p">)</span>
+
+        <span class="c1"># For 2nd-order filters (3 coefficients), build SOS directly</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a_np</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">b_np</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="c1"># Pad to length 3 if needed</span>
+            <span class="n">b_pad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">a_pad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">b_pad</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">b_np</span><span class="p">)]</span> <span class="o">=</span> <span class="n">b_np</span>
+            <span class="n">a_pad</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">a_np</span><span class="p">)]</span> <span class="o">=</span> <span class="n">a_np</span>
+            <span class="n">sos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">b_pad</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b_pad</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">b_pad</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">a_pad</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">a_pad</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">a_pad</span><span class="p">[</span><span class="mi">2</span><span class="p">]]])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sos</span> <span class="o">=</span> <span class="n">tf2sos</span><span class="p">(</span><span class="n">b_np</span><span class="p">,</span> <span class="n">a_np</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">sos</span><span class="p">)</span>
 
 <div class="viewcode-block" id="IIR.move_coeff">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.IIR.move_coeff">[docs]</a>
@@ -924,7 +1038,137 @@ window.addEventListener("load", load);
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
+        <span class="c1"># Stateful path: use SOS cascade in pure PyTorch</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stateful</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_sos</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># Fast stateless path via torchaudio lfilter</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">clamp</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="c1"># Build SOS and bootstrap state for next chunk</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_sos</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bootstrap_state</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stateful</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bootstrap_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize SOS DF1 state from the tail of processed signals.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">num_sections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Get channel count</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">C</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">C</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">C</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># [B, C, T]</span>
+
+        <span class="c1"># We can&#39;t perfectly reconstruct intermediate SOS section states from</span>
+        <span class="c1"># only input/output. Initialize to zeros — this introduces a tiny</span>
+        <span class="c1"># transient on the first stateful chunk boundary, which is inaudible</span>
+        <span class="c1"># for typical chunk sizes (&gt;256 samples).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_sections</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_sections</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_forward_sos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process with SOS biquad cascade carrying state across calls.</span>
+
+<span class="sd">        Each second-order section uses Direct Form 1, vectorized across channels</span>
+<span class="sd">        and sequential across time.</span>
+
+<span class="sd">        Ported from AudioNoise ``biquad.h`` ``biquad_step_df1``.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="n">orig_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">out_dtype</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="c1"># Normalize to [C, T]</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">B</span> <span class="o">*</span> <span class="n">C</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>
+
+        <span class="n">C</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">num_sections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">sos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+        <span class="c1"># Initialize or resize state</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">C</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_sections</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_sections</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="n">section_input</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_sections</span><span class="p">):</span>
+            <span class="n">b0</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">b1</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">b2</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+            <span class="c1"># sos[s, 3] is a0 (== 1 after normalization from tf2sos)</span>
+            <span class="n">a1</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+            <span class="n">a2</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+
+            <span class="n">sx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>  <span class="c1"># [C, 2]</span>
+            <span class="n">sy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>  <span class="c1"># [C, 2]</span>
+
+            <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">section_input</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+                <span class="n">xn</span> <span class="o">=</span> <span class="n">section_input</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span>
+                <span class="n">yn</span> <span class="o">=</span> <span class="n">b0</span> <span class="o">*</span> <span class="n">xn</span> <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">sx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">sx</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">sy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">a2</span> <span class="o">*</span> <span class="n">sy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">out</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">yn</span>
+                <span class="n">sx</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="n">sx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">xn</span>
+                <span class="n">sy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="n">sy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">yn</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">sx</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">sy</span>
+
+            <span class="c1"># Output of this section feeds next section</span>
+            <span class="n">section_input</span> <span class="o">=</span> <span class="n">out</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">section_input</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">out_dtype</span><span class="p">)</span>
+
+        <span class="c1"># Restore original shape</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">orig_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">orig_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">orig_shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="IIR.reset_state">
+<a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.IIR.reset_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset filter state for chunk-to-chunk continuity.</span>
+
+<span class="sd">        Call this when switching audio sources, seeking in a file, or after changing</span>
+<span class="sd">        filter coefficients. After calling this method, the next ``forward()`` will</span>
+<span class="sd">        use the fast ``lfilter`` path again.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stateful</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="kc">None</span></div>
 </div>
 
 
@@ -1638,7 +1882,7 @@ window.addEventListener("load", load);
 
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">Shelving</span><span class="p">(</span><span class="n">IIR</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Shelving</span><span class="p">(</span><span class="n">Biquad</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for shelving filters.</span>
 
 <span class="sd">    Shelving filters boost or cut frequencies above (high shelf) or below (low shelf)</span>
@@ -1649,6 +1893,10 @@ window.addEventListener("load", load);
 <span class="sd">    This base class provides common functionality for both high-shelf and low-shelf</span>
 <span class="sd">    implementations, including the computation of angular frequency and alpha</span>
 <span class="sd">    parameters used in the biquad filter equations.</span>
+
+<span class="sd">    Inherits from ``Biquad`` — shelving filters are second-order IIR filters and</span>
+<span class="sd">    benefit from the biquad&#39;s efficient stateless (lfilter) and stateful (DF1)</span>
+<span class="sd">    processing paths.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1664,10 +1912,6 @@ window.addEventListener("load", load);
 <span class="sd">        - 2.0+: Very steep transition</span>
 <span class="sd">    fs : int | None, default=None</span>
 <span class="sd">        Sampling frequency in Hz.</span>
-<span class="sd">    a : Sequence[float] | None, default=None</span>
-<span class="sd">        Pre-computed denominator coefficients.</span>
-<span class="sd">    b : Sequence[float] | None, default=None</span>
-<span class="sd">        Pre-computed numerator coefficients.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1686,31 +1930,23 @@ window.addEventListener("load", load);
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">q</span><span class="p">:</span> <span class="nb">float</span>
-
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_omega</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">NONE_FS_ERR</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+        <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="HiShelving">
@@ -1819,8 +2055,6 @@ window.addEventListener("load", load);
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span> <span class="k">if</span> <span class="n">gain_scale</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span> <span class="k">else</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">gain</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HiShelving.compute_coefficients">
@@ -1828,19 +2062,25 @@ window.addEventListener("load", load);
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>  <span class="c1"># noqa: N806</span>
-        <span class="n">b0</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">)</span>
-        <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">))</span>
-        <span class="n">b2</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">)</span>
+        <span class="n">cos_w</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span>
+        <span class="n">sqrt_A</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span>
 
-        <span class="n">a0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span>
-        <span class="n">a1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">))</span>
-        <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span>
+        <span class="n">b0</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sqrt_A</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span><span class="p">)</span>
+        <span class="n">b2</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sqrt_A</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
 
-        <span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">b0</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span> <span class="n">b1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span> <span class="n">b2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">]</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">]</span>
+        <span class="n">a0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sqrt_A</span> <span class="o">*</span> <span class="n">alpha</span>
+        <span class="n">a1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span><span class="p">)</span>
+        <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sqrt_A</span> <span class="o">*</span> <span class="n">alpha</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
+            <span class="n">b0</span><span class="o">=</span><span class="n">b0</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">b1</span><span class="o">=</span><span class="n">b1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">b2</span><span class="o">=</span><span class="n">b2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=</span><span class="n">a1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="n">a2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </div>
 
 
@@ -1972,8 +2212,6 @@ window.addEventListener("load", load);
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span> <span class="k">if</span> <span class="n">gain_scale</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span> <span class="k">else</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">gain</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LoShelving.compute_coefficients">
@@ -1981,96 +2219,32 @@ window.addEventListener("load", load);
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>  <span class="c1"># noqa: N806</span>
-        <span class="n">b0</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">)</span>
-        <span class="n">b1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">))</span>
-        <span class="n">b2</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">)</span>
+        <span class="n">cos_w</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span>
+        <span class="n">sqrt_A</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span>
 
-        <span class="n">a0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span>
-        <span class="n">a1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">))</span>
-        <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span>
+        <span class="n">b0</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sqrt_A</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="n">b1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span><span class="p">)</span>
+        <span class="n">b2</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sqrt_A</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
 
-        <span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">b0</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span> <span class="n">b1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span> <span class="n">b2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">]</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">]</span>
+        <span class="n">a0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sqrt_A</span> <span class="o">*</span> <span class="n">alpha</span>
+        <span class="n">a1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span><span class="p">)</span>
+        <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_w</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sqrt_A</span> <span class="o">*</span> <span class="n">alpha</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
+            <span class="n">b0</span><span class="o">=</span><span class="n">b0</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">b1</span><span class="o">=</span><span class="n">b1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">b2</span><span class="o">=</span><span class="n">b2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=</span><span class="n">a1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="n">a2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </div>
 
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">Peaking</span><span class="p">(</span><span class="n">IIR</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Peaking filter for narrow-band frequency adjustment.</span>
-
-<span class="sd">    A peaking filter (also called a bell filter or bandpass/bandstop filter) boosts</span>
-<span class="sd">    or cuts a narrow band of frequencies centered around a specified frequency. This</span>
-<span class="sd">    is a general implementation using scipy&#39;s iirpeak function.</span>
-
-<span class="sd">    For parametric EQ applications with more control, consider using ParametricEQ</span>
-<span class="sd">    instead, which provides implementation based on the Audio EQ Cookbook.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    cutoff : float</span>
-<span class="sd">        Center frequency in Hz where the peak or notch occurs.</span>
-<span class="sd">    q : float</span>
-<span class="sd">        Quality factor determining the bandwidth. Higher Q values result in</span>
-<span class="sd">        narrower peaks. Bandwidth in Hz ≈ cutoff / Q.</span>
-<span class="sd">    gain : float</span>
-<span class="sd">        Peak gain. Interpretation depends on gain_scale:</span>
-<span class="sd">        - For &quot;linear&quot;: Linear gain factor</span>
-<span class="sd">        - For &quot;db&quot;: Gain in dB</span>
-<span class="sd">    gain_scale : {&quot;linear&quot;, &quot;db&quot;}</span>
-<span class="sd">        How to interpret the gain parameter.</span>
-<span class="sd">    fs : int | None, default=None</span>
-<span class="sd">        Sampling frequency in Hz.</span>
-<span class="sd">    a : Sequence[float] | None, default=None</span>
-<span class="sd">        Pre-computed denominator coefficients.</span>
-<span class="sd">    b : Sequence[float] | None, default=None</span>
-<span class="sd">        Pre-computed numerator coefficients.</span>
-
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; import torchfx as fx</span>
-<span class="sd">    &gt;&gt;&gt; peak = fx.filter.Peaking(cutoff=1000, q=2.0, gain=6, gain_scale=&quot;db&quot;, fs=44100)</span>
-<span class="sd">    &gt;&gt;&gt; wave = fx.Wave.from_file(&quot;audio.wav&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; filtered = wave | peak</span>
-
-<span class="sd">    See Also</span>
-<span class="sd">    --------</span>
-<span class="sd">    ParametricEQ : More sophisticated parametric EQ implementation</span>
-<span class="sd">    Notch : Notch filter for frequency rejection</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">gain_scale</span><span class="p">:</span> <span class="n">FilterOrderScale</span><span class="p">,</span>
-        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span> <span class="k">if</span> <span class="n">gain_scale</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span> <span class="k">else</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">gain</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-
-    <span class="nd">@override</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-
-        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">iirpeak</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>  <span class="c1"># type: ignore</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>  <span class="c1"># type: ignore</span>
-
-
 <div class="viewcode-block" id="ParametricEQ">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.ParametricEQ">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ParametricEQ</span><span class="p">(</span><span class="n">IIR</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParametricEQ</span><span class="p">(</span><span class="n">Biquad</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parametric equalizer with bell-shaped frequency response.</span>
 
 <span class="sd">    A parametric EQ is a bell-shaped filter (also called a peaking filter) that</span>
@@ -2234,52 +2408,91 @@ window.addEventListener("load", load);
         <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">frequency</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain_db</span> <span class="o">=</span> <span class="n">gain</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">gain</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_omega</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">NONE_FS_ERR</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">))</span>
 
 <div class="viewcode-block" id="ParametricEQ.compute_coefficients">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.ParametricEQ.compute_coefficients">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the filter coefficients using the Audio EQ Cookbook formulas.&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>  <span class="c1"># noqa: N806</span>
+        <span class="n">sin_w0</span><span class="p">,</span> <span class="n">cos_w0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_alpha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
 
-        <span class="n">b0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">*</span> <span class="n">A</span>
-        <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span>
-        <span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">*</span> <span class="n">A</span>
+        <span class="n">b0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">A</span>
+        <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">cos_w0</span>
+        <span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">A</span>
 
-        <span class="n">a0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">/</span> <span class="n">A</span>
-        <span class="n">a1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega</span><span class="p">)</span>
-        <span class="n">a2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">/</span> <span class="n">A</span>
+        <span class="n">a0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">A</span>
+        <span class="n">a1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">cos_w0</span>
+        <span class="n">a2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">A</span>
 
-        <span class="c1"># Normalize coefficients</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">b0</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span> <span class="n">b1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span> <span class="n">b2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">]</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">]</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
+            <span class="n">b0</span><span class="o">=</span><span class="n">b0</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">b1</span><span class="o">=</span><span class="n">b1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">b2</span><span class="o">=</span><span class="n">b2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=</span><span class="n">a1</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="n">a2</span> <span class="o">/</span> <span class="n">a0</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </div>
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">Peaking</span><span class="p">(</span><span class="n">ParametricEQ</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Peaking filter for narrow-band frequency adjustment.</span>
+
+<span class="sd">    A simple wrapper around ``ParametricEQ`` that provides compatibility with</span>
+<span class="sd">    the ``gain_scale`` parameter for specifying gain in linear or dB.</span>
+
+<span class="sd">    For parametric EQ applications with more control, consider using</span>
+<span class="sd">    ``ParametricEQ`` directly.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cutoff : float</span>
+<span class="sd">        Center frequency in Hz where the peak or notch occurs.</span>
+<span class="sd">    q : float</span>
+<span class="sd">        Quality factor determining the bandwidth. Higher Q values result in</span>
+<span class="sd">        narrower peaks. Bandwidth in Hz ≈ cutoff / Q.</span>
+<span class="sd">    gain : float</span>
+<span class="sd">        Peak gain. Interpretation depends on gain_scale:</span>
+<span class="sd">        - For &quot;linear&quot;: Linear gain factor</span>
+<span class="sd">        - For &quot;db&quot;: Gain in dB</span>
+<span class="sd">    gain_scale : {&quot;linear&quot;, &quot;db&quot;}</span>
+<span class="sd">        How to interpret the gain parameter.</span>
+<span class="sd">    fs : int | None, default=None</span>
+<span class="sd">        Sampling frequency in Hz.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import torchfx as fx</span>
+<span class="sd">    &gt;&gt;&gt; peak = fx.filter.Peaking(cutoff=1000, q=2.0, gain=6, gain_scale=&quot;db&quot;, fs=44100)</span>
+<span class="sd">    &gt;&gt;&gt; wave = fx.Wave.from_file(&quot;audio.wav&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; filtered = wave | peak</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    ParametricEQ : Full parametric EQ implementation</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">gain_scale</span><span class="p">:</span> <span class="n">FilterOrderScale</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gain_db</span> <span class="o">=</span> <span class="n">gain</span> <span class="k">if</span> <span class="n">gain_scale</span> <span class="o">==</span> <span class="s2">&quot;db&quot;</span> <span class="k">else</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">gain</span><span class="p">)</span> <span class="k">if</span> <span class="n">gain</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="n">gain_db</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="Notch">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.Notch">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Notch</span><span class="p">(</span><span class="n">IIR</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Notch</span><span class="p">(</span><span class="n">Biquad</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Notch filter for narrow-band frequency rejection.</span>
 
 <span class="sd">    A notch filter (also called a band-stop or band-reject filter) attenuates a</span>
@@ -2289,6 +2502,9 @@ window.addEventListener("load", load);
 
 <span class="sd">    The filter creates a sharp dip in the frequency response at the notch frequency,</span>
 <span class="sd">    with the width of the notch controlled by the Q parameter.</span>
+
+<span class="sd">    Inherits from ``Biquad`` — notch filters are second-order IIR filters and</span>
+<span class="sd">    benefit from the biquad&#39;s efficient processing paths.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -2393,26 +2609,47 @@ window.addEventListener("load", load);
         <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Notch.compute_coefficients">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.Notch.compute_coefficients">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute notch filter coefficients.</span>
+
+<span class="sd">        Uses the AudioNoise ``biquad.h`` ``_biquad_notch_filter`` formula:</span>
+
+<span class="sd">        .. code-block:: c</span>
+
+<span class="sd">            b0 = b2 = 1 / (1 + alpha)</span>
+<span class="sd">            b1 = a1 = -2*cos(w0) / (1 + alpha)</span>
+<span class="sd">            a2 = (1 - alpha) / (1 + alpha)</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        .. [1] AudioNoise project, ``biquad.h``, ``_biquad_notch_filter``.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
-        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">iirnotch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>  <span class="c1"># type: ignore</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>  <span class="c1"># type: ignore</span></div>
+        <span class="n">_</span><span class="p">,</span> <span class="n">cos_w0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_alpha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+        <span class="n">a0_inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="n">common</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span> <span class="o">*</span> <span class="n">a0_inv</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
+            <span class="n">b0</span><span class="o">=</span><span class="n">a0_inv</span><span class="p">,</span>
+            <span class="n">b1</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
+            <span class="n">b2</span><span class="o">=</span><span class="n">a0_inv</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </div>
 
 
 
 <div class="viewcode-block" id="AllPass">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.AllPass">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">AllPass</span><span class="p">(</span><span class="n">IIR</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AllPass</span><span class="p">(</span><span class="n">Biquad</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;All-pass filter for phase manipulation without magnitude change.</span>
 
 <span class="sd">    An all-pass filter passes all frequencies with unity magnitude (no amplitude</span>
@@ -2423,6 +2660,9 @@ window.addEventListener("load", load);
 <span class="sd">    While the magnitude response is flat across all frequencies, the phase response</span>
 <span class="sd">    varies with frequency, which can be used to align phase between different signal</span>
 <span class="sd">    paths or create time-domain dispersion effects.</span>
+
+<span class="sd">    Inherits from ``Biquad`` — all-pass filters are second-order IIR filters and</span>
+<span class="sd">    benefit from the biquad&#39;s efficient processing paths.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -2500,19 +2740,42 @@ window.addEventListener("load", load);
         <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AllPass.compute_coefficients">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.AllPass.compute_coefficients">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute all-pass filter coefficients.</span>
+
+<span class="sd">        Uses the AudioNoise ``biquad.h`` ``_biquad_allpass_filter`` formula:</span>
+
+<span class="sd">        .. code-block:: c</span>
+
+<span class="sd">            b0 = a2 = (1 - alpha) / (1 + alpha)</span>
+<span class="sd">            b1 = a1 = -2*cos(w0) / (1 + alpha)</span>
+<span class="sd">            b2 = 1  (= a0, the pre-normalization denominator)</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        .. [1] AudioNoise project, ``biquad.h``, ``_biquad_allpass_filter``.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
-        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">iirpeak</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>  <span class="c1"># type: ignore</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>  <span class="c1"># type: ignore</span></div>
+        <span class="n">_</span><span class="p">,</span> <span class="n">cos_w0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_alpha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+        <span class="n">a0_inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">)</span>
+
+        <span class="n">b0</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span>
+        <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span> <span class="o">*</span> <span class="n">a0_inv</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
+            <span class="n">b0</span><span class="o">=</span><span class="n">b0</span><span class="p">,</span>
+            <span class="n">b1</span><span class="o">=</span><span class="n">b1</span><span class="p">,</span>
+            <span class="n">b2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=</span><span class="n">b1</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="n">b0</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </div>
 
 

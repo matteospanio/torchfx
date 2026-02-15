@@ -404,10 +404,10 @@
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>This tutorial covers:</p>
 <ul class="simple">
-<li><p>Streaming audio input/output</p></li>
-<li><p>Low-latency processing techniques</p></li>
-<li><p>Buffer management</p></li>
-<li><p>Real-time effect chains</p></li>
+<li><p>Setting up real-time audio I/O with the SoundDevice backend</p></li>
+<li><p>Building effect chains for live processing</p></li>
+<li><p>Thread-safe parameter updates during playback</p></li>
+<li><p>Stream processing for large files</p></li>
 </ul>
 </section>
 <section id="prerequisites">
@@ -415,40 +415,170 @@
 <ul class="simple">
 <li><p>Completion of <a class="reference internal" href="../getting-started/getting_started.html"><span class="std std-doc">Getting Started</span></a></p></li>
 <li><p>Understanding of audio streaming concepts</p></li>
-<li><p>Basic knowledge of signal processing</p></li>
+<li><p>Install the optional <code class="docutils literal notranslate"><span class="pre">sounddevice</span></code> dependency:</p></li>
 </ul>
-</section>
-<section id="tutorial-content">
-<h2>Tutorial Content<a class="headerlink" href="#tutorial-content" title="Link to this heading">#</a></h2>
-<div class="admonition-todo admonition" id="id1">
-<p class="admonition-title">Todo</p>
-<p><em>Coming soon! This tutorial is currently under development.</em></p>
-</div>
-</section>
-<section id="what-youll-learn">
-<h2>What You’ll Learn<a class="headerlink" href="#what-youll-learn" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>How to set up real-time audio I/O</p></li>
-<li><p>Minimizing latency in processing pipelines</p></li>
-<li><p>Handling buffer underruns and overruns</p></li>
-<li><p>Building responsive audio applications</p></li>
-</ul>
-</section>
-<section id="example-code">
-<h2>Example Code<a class="headerlink" href="#example-code" title="Link to this heading">#</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span><span class="p">,</span> <span class="n">FX</span>
-
-<span class="c1"># Example code will be added here</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>sounddevice
 </pre></div>
 </div>
+</section>
+<section id="audio-backend-setup">
+<h2>Audio Backend Setup<a class="headerlink" href="#audio-backend-setup" title="Link to this heading">#</a></h2>
+<p>TorchFX uses an abstract audio backend system. The primary backend uses
+<a class="reference external" href="https://python-sounddevice.readthedocs.io/">sounddevice</a> (PortAudio) for
+cross-platform audio I/O.</p>
+<section id="stream-configuration">
+<h3>Stream Configuration<a class="headerlink" href="#stream-configuration" title="Link to this heading">#</a></h3>
+<p>Configure your audio stream with <code class="docutils literal notranslate"><span class="pre">StreamConfig</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamConfig</span><span class="p">,</span> <span class="n">StreamDirection</span>
+
+<span class="c1"># Output-only stream (e.g., playback)</span>
+<span class="n">playback_config</span> <span class="o">=</span> <span class="n">StreamConfig</span><span class="p">(</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span>
+    <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+    <span class="n">channels_out</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">playback_config</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>  <span class="c1"># StreamDirection.OUTPUT</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Latency: </span><span class="si">{</span><span class="n">playback_config</span><span class="o">.</span><span class="n">latency_ms</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">ms&quot;</span><span class="p">)</span>  <span class="c1"># ~10.7ms</span>
+
+<span class="c1"># Duplex stream (e.g., guitar processing)</span>
+<span class="n">duplex_config</span> <span class="o">=</span> <span class="n">StreamConfig</span><span class="p">(</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span>
+    <span class="n">buffer_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">channels_in</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">channels_out</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">latency</span><span class="o">=</span><span class="s2">&quot;low&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">duplex_config</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>  <span class="c1"># StreamDirection.DUPLEX</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Latency: </span><span class="si">{</span><span class="n">duplex_config</span><span class="o">.</span><span class="n">latency_ms</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">ms&quot;</span><span class="p">)</span>  <span class="c1"># ~5.3ms</span>
+</pre></div>
+</div>
+</section>
+<section id="listing-audio-devices">
+<h3>Listing Audio Devices<a class="headerlink" href="#listing-audio-devices" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoundDeviceBackend</span>
+
+<span class="n">backend</span> <span class="o">=</span> <span class="n">SoundDeviceBackend</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">backend</span><span class="o">.</span><span class="n">get_devices</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;(in=</span><span class="si">{</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;max_input_channels&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, out=</span><span class="si">{</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;max_output_channels&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="real-time-processing">
+<h2>Real-Time Processing<a class="headerlink" href="#real-time-processing" title="Link to this heading">#</a></h2>
+<section id="basic-passthrough-with-effects">
+<h3>Basic Passthrough with Effects<a class="headerlink" href="#basic-passthrough-with-effects" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">RealtimeProcessor</span></code> connects an audio backend to an effect chain.
+Use it as a context manager for automatic start/stop:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimeProcessor</span><span class="p">,</span> <span class="n">SoundDeviceBackend</span><span class="p">,</span> <span class="n">StreamConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Reverb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.iir</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span><span class="p">,</span> <span class="n">HiButterworth</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">StreamConfig</span><span class="p">(</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span>
+    <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+    <span class="n">channels_in</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">channels_out</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">with</span> <span class="n">RealtimeProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">HiButterworth</span><span class="p">(</span><span class="mi">80</span><span class="p">),</span>         <span class="c1"># Remove low-frequency rumble</span>
+        <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">8000</span><span class="p">),</span>       <span class="c1"># Tame harsh highs</span>
+        <span class="n">Gain</span><span class="p">(</span><span class="mf">1.5</span><span class="p">),</span>                 <span class="c1"># Boost signal</span>
+        <span class="n">Reverb</span><span class="p">(</span><span class="n">room_size</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>     <span class="c1"># Add ambience</span>
+    <span class="p">],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">SoundDeviceBackend</span><span class="p">(),</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing at </span><span class="si">{</span><span class="n">processor</span><span class="o">.</span><span class="n">latency_ms</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">ms latency&quot;</span><span class="p">)</span>
+    <span class="c1"># Audio flows: mic -&gt; effects -&gt; speakers</span>
+    <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Press Enter to stop...&quot;</span><span class="p">)</span>
+<span class="c1"># Processor automatically stops when the block exits</span>
+</pre></div>
+</div>
+<p>The context manager ensures the stream is properly stopped even if an
+exception occurs. You can also use <code class="docutils literal notranslate"><span class="pre">start()</span></code>/<code class="docutils literal notranslate"><span class="pre">stop()</span></code> manually if needed.</p>
+</section>
+<section id="thread-safe-parameter-updates">
+<h3>Thread-Safe Parameter Updates<a class="headerlink" href="#thread-safe-parameter-updates" title="Link to this heading">#</a></h3>
+<p>You can update effect parameters while processing is running:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="k">with</span> <span class="n">RealtimeProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">500</span><span class="p">),</span> <span class="n">Gain</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">SoundDeviceBackend</span><span class="p">(),</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="c1"># Sweep a low-pass filter cutoff from 500Hz to 5000Hz</span>
+    <span class="k">for</span> <span class="n">cutoff</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">5001</span><span class="p">,</span> <span class="mi">100</span><span class="p">):</span>
+        <span class="n">processor</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;0.cutoff&quot;</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The parameter format is <code class="docutils literal notranslate"><span class="pre">&quot;&lt;effect_index&gt;.&lt;attribute_name&gt;&quot;</span></code>. Parameters
+are applied at buffer boundaries for thread safety.</p>
+</section>
+<section id="automatic-sample-rate-propagation">
+<h3>Automatic Sample Rate Propagation<a class="headerlink" href="#automatic-sample-rate-propagation" title="Link to this heading">#</a></h3>
+<p>Filters with <code class="docutils literal notranslate"><span class="pre">fs=None</span></code> automatically receive the sample rate from the
+<code class="docutils literal notranslate"><span class="pre">StreamConfig</span></code>, just like with the <code class="docutils literal notranslate"><span class="pre">Wave</span></code> pipe operator:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># No need to specify fs — it comes from config.sample_rate</span>
+<span class="n">lpf</span> <span class="o">=</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>  <span class="c1"># fs=None</span>
+<span class="n">processor</span> <span class="o">=</span> <span class="n">RealtimeProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">lpf</span><span class="p">],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">SoundDeviceBackend</span><span class="p">(),</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">StreamConfig</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span> <span class="o">...</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">lpf</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>  <span class="c1"># 48000</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="stream-processing-for-large-files">
+<h2>Stream Processing for Large Files<a class="headerlink" href="#stream-processing-for-large-files" title="Link to this heading">#</a></h2>
+<p>For files too large to load into memory, use <code class="docutils literal notranslate"><span class="pre">StreamProcessor</span></code> as a
+context manager:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamProcessor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Normalize</span>
+
+<span class="k">with</span> <span class="n">StreamProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.8</span><span class="p">),</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)],</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">65536</span><span class="p">,</span>  <span class="c1"># 64K samples per chunk</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="n">processor</span><span class="o">.</span><span class="n">process_file</span><span class="p">(</span><span class="s2">&quot;large_podcast.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;normalized_podcast.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="generator-api">
+<h3>Generator API<a class="headerlink" href="#generator-api" title="Link to this heading">#</a></h3>
+<p>For custom pipelines, use the generator:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">StreamProcessor</span><span class="p">(</span><span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)],</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">65536</span><span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">processor</span><span class="o">.</span><span class="n">process_chunks</span><span class="p">(</span><span class="s2">&quot;large_file.wav&quot;</span><span class="p">):</span>
+        <span class="c1"># Each chunk is a tensor of shape (channels, chunk_size)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Chunk: </span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, max=</span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="gpu-acceleration">
+<h3>GPU Acceleration<a class="headerlink" href="#gpu-acceleration" title="Link to this heading">#</a></h3>
+<p>Process chunks on GPU for faster throughput:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">StreamProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)],</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">131072</span><span class="p">,</span>  <span class="c1"># Larger chunks benefit from GPU</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="n">processor</span><span class="o">.</span><span class="n">process_file</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="performance-considerations">
 <h2>Performance Considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Buffer size optimization</p></li>
-<li><p>GPU vs CPU for real-time processing</p></li>
-<li><p>Threading and synchronization</p></li>
+<li><p><strong>Buffer size</strong>: Smaller buffers = lower latency but higher CPU load. 256-512 samples at 48kHz is typical.</p></li>
+<li><p><strong>GPU vs CPU</strong>: For real-time processing with small buffers, CPU is often faster due to transfer overhead. Use GPU for stream processing with large chunks.</p></li>
+<li><p><strong>Effect chain length</strong>: Each effect adds processing time. Keep chains short for real-time use.</p></li>
 </ul>
 </section>
 <section id="next-steps">
@@ -495,9 +625,22 @@
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tutorial-content">Tutorial Content</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-youll-learn">What You’ll Learn</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-code">Example Code</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-backend-setup">Audio Backend Setup</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stream-configuration">Stream Configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#listing-audio-devices">Listing Audio Devices</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#real-time-processing">Real-Time Processing</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-passthrough-with-effects">Basic Passthrough with Effects</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#thread-safe-parameter-updates">Thread-Safe Parameter Updates</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-sample-rate-propagation">Automatic Sample Rate Propagation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stream-processing-for-large-files">Stream Processing for Large Files</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generator-api">Generator API</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-acceleration">GPU Acceleration</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-considerations">Performance Considerations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next Steps</a></li>
 </ul>

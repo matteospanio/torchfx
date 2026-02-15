@@ -42,14 +42,16 @@
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/design-tabs.js?v=f930bc37"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
-    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
-const defaultStyle = document.createElement('style');
-defaultStyle.textContent = `pre.mermaid {
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
     /* Same as .mermaid-container > pre */
     display: block;
     width: 100%;
@@ -60,12 +62,11 @@ pre.mermaid > svg {
     height: 500px;
     width: 100%;
     max-width: 100% !important;
-}
-`;
-document.head.appendChild(defaultStyle);
+}`;
+    document.head.appendChild(defaultStyle);
 
-const fullscreenStyle = document.createElement('style');
-fullscreenStyle.textContent = `.mermaid-container {
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -217,10 +218,32 @@ fullscreenStyle.textContent = `.mermaid-container {
 .mermaid-fullscreen-modal .mermaid-fullscreen-btn {
     display: none !important;
 }`;
-document.head.appendChild(fullscreenStyle);
+    document.head.appendChild(fullscreenStyle);
+}
 
 // Detect if page has dark background
 const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
     const bgColor = window.getComputedStyle(document.body).backgroundColor;
     const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
     if (match) {
@@ -228,15 +251,45 @@ const isDarkTheme = () => {
         const g = parseInt(match[2]);
         const b = parseInt(match[3]);
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
         return brightness < 128;
     }
+    // console.log("No dark or light theme detected, defaulting to light theme");
     return false;
 };
 
-const load = async () => {
-    await mermaid.run();
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
 
-    const all_mermaids = document.querySelectorAll(".mermaid");
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
     const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
 
     if ("False" === "True") {
@@ -244,10 +297,10 @@ const load = async () => {
         if(mermaids_to_add_zoom > 0) {
             var svgs = d3.selectAll("");
             if(all_mermaids.length !== mermaids_processed.length) {
-                setTimeout(load, 200);
+                setTimeout(() => runMermaid(false), 200);
                 return;
             } else if(svgs.size() !== mermaids_to_add_zoom) {
-                setTimeout(load, 200);
+                setTimeout(() => runMermaid(false), 200);
                 return;
             } else {
                 svgs.each(function() {
@@ -263,16 +316,21 @@ const load = async () => {
         }
     } else if(all_mermaids.length !== mermaids_processed.length) {
         // Wait for mermaid to process all diagrams
-        setTimeout(load, 200);
+        setTimeout(() => runMermaid(false), 200);
         return;
     }
-
-    const darkTheme = isDarkTheme();
 
     // Stop here if not adding fullscreen capability
     if ("True" !== "True") return;
 
-    const modal = document.createElement('div');
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
     modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
@@ -283,10 +341,8 @@ const load = async () => {
     `;
     document.body.appendChild(modal);
 
-    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
     const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
-
-    let previousScrollOffset = [window.scrollX, window.scrollY];
 
     const closeModal = () => {
         modal.classList.remove('active');
@@ -305,11 +361,14 @@ const load = async () => {
         }
     });
 
-    const allButtons = [];
-
     document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
         if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
             mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
             return;
         }
 
@@ -367,46 +426,57 @@ const load = async () => {
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         });
-
         container.appendChild(fullscreenBtn);
-        allButtons.push(fullscreenBtn);
-    });
-
-    // Update theme classes when theme changes
-    const updateTheme = () => {
-        const dark = isDarkTheme();
-        allButtons.forEach(btn => {
-            if (dark) {
-                btn.classList.add('dark-theme');
-            } else {
-                btn.classList.remove('dark-theme');
-            }
-        });
-        if (dark) {
-            modal.classList.add('dark-theme');
-            modalContent.classList.add('dark-theme');
-            closeBtn.classList.add('dark-theme');
-        } else {
-            modal.classList.remove('dark-theme');
-            modalContent.classList.remove('dark-theme');
-            closeBtn.classList.remove('dark-theme');
-        }
-    };
-
-    // Watch for theme changes
-    const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-    observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class', 'style']
     });
 };
 
-window.addEventListener("load", load);
-</script>
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" />
@@ -751,6 +821,7 @@ window.addEventListener("load", load);
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  | <a href="#Y"><strong>Y</strong></a>
  | <a href="#Z"><strong>Z</strong></a>
@@ -760,6 +831,14 @@ window.addEventListener("load", load);
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/effects.html#torchfx.effect.NormalizationStrategy.__call__">__call__() (torchfx.effect.NormalizationStrategy method)</a>
+
+      <ul>
+        <li><a href="api/logging.html#torchfx.logging.LogPerformance.__call__">(torchfx.logging.LogPerformance method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/logging.html#torchfx.logging.LogPerformance.__init__">__init__() (torchfx.logging.LogPerformance method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -775,10 +854,10 @@ window.addEventListener("load", load);
         <li><a href="api/filters.html#torchfx.filter.IIR.a">(torchfx.filter.IIR attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.advance_read">advance_read() (torchfx.realtime.TensorRingBuffer method)</a>
+</li>
       <li><a href="api/filters.html#torchfx.filter.AllPass">AllPass (class in torchfx.filter)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/effects.html#id0">apply_delay() (torchfx.effect.DelayStrategy method)</a>, <a href="api/effects.html#torchfx.effect.DelayStrategy.apply_delay">[1]</a>
 
       <ul>
@@ -787,7 +866,17 @@ window.addEventListener("load", load);
         <li><a href="api/effects.html#torchfx.effect.PingPongDelayStrategy.apply_delay">(torchfx.effect.PingPongDelayStrategy method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="glossary.html#term-Audio-Effect"><strong>Audio Effect</strong></a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend">AudioBackend (class in torchfx.realtime)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.AudioProcessingError">AudioProcessingError (class in torchfx.validation)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.available_read">available_read (torchfx.realtime.TensorRingBuffer property)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.available_write">available_write (torchfx.realtime.TensorRingBuffer property)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -801,6 +890,8 @@ window.addEventListener("load", load);
         <li><a href="api/filters.html#torchfx.filter.IIR.b">(torchfx.filter.IIR attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api/realtime.html#torchfx.realtime.BackendNotAvailableError">BackendNotAvailableError (class in torchfx.realtime)</a>
+</li>
       <li><a href="glossary.html#term-BPM"><strong>BPM</strong></a>
 </li>
       <li><a href="api/filters.html#torchfx.filter.Butterworth.btype">btype (torchfx.filter.Butterworth attribute)</a>
@@ -817,6 +908,12 @@ window.addEventListener("load", load);
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.buffer">buffer (torchfx.realtime.TensorRingBuffer attribute)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.BufferOverrunError">BufferOverrunError (class in torchfx.realtime)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.BufferUnderrunError">BufferUnderrunError (class in torchfx.realtime)</a>
+</li>
       <li><a href="api/filters.html#torchfx.filter.Butterworth">Butterworth (class in torchfx.filter)</a>
 </li>
   </ul></td>
@@ -825,11 +922,29 @@ window.addEventListener("load", load);
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.capacity">capacity (torchfx.realtime.TensorRingBuffer property)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.channels">channels (torchfx.realtime.TensorRingBuffer property)</a>
+</li>
       <li><a href="api/core.html#torchfx.Wave.channels">channels() (torchfx.Wave method)</a>
 </li>
       <li><a href="api/filters.html#torchfx.filter.Chebyshev1">Chebyshev1 (class in torchfx.filter)</a>
 </li>
       <li><a href="api/filters.html#torchfx.filter.Chebyshev2">Chebyshev2 (class in torchfx.filter)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamProcessor.chunk_size">chunk_size (torchfx.realtime.StreamProcessor property)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.clear">clear() (torchfx.realtime.TensorRingBuffer method)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.close">close() (torchfx.realtime.AudioBackend method)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.close">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/validation.html#torchfx.validation.CoefficientComputationError">CoefficientComputationError (class in torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.COMMON_SAMPLE_RATES">COMMON_SAMPLE_RATES (in module torchfx.validation)</a>
 </li>
       <li><a href="api/filters.html#torchfx.filter.AllPass.compute_coefficients">compute_coefficients() (torchfx.filter.AllPass method)</a>
 
@@ -859,6 +974,8 @@ window.addEventListener("load", load);
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.RealtimeProcessor.config">config (torchfx.realtime.RealtimeProcessor property)</a>
+</li>
       <li><a href="glossary.html#term-CUDA"><strong>CUDA</strong></a>
 </li>
       <li><a href="api/effects.html#torchfx.effect.CustomNormalizationStrategy">CustomNormalizationStrategy (class in torchfx.effect)</a>
@@ -883,6 +1000,10 @@ window.addEventListener("load", load);
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/logging.html#torchfx.logging.DEFAULT_DATE_FORMAT">DEFAULT_DATE_FORMAT (in module torchfx.logging)</a>
+</li>
+      <li><a href="api/logging.html#torchfx.logging.DEFAULT_FORMAT">DEFAULT_FORMAT (in module torchfx.logging)</a>
+</li>
       <li><a href="api/effects.html#torchfx.effect.Delay">Delay (class in torchfx.effect)</a>
 </li>
       <li><a href="api/effects.html#torchfx.effect.DelayStrategy">DelayStrategy (class in torchfx.effect)</a>
@@ -901,6 +1022,10 @@ window.addEventListener("load", load);
       </ul></li>
       <li><a href="glossary.html#term-Digital-Filter"><strong>Digital Filter</strong></a>
 </li>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamConfig.direction">direction (torchfx.realtime.StreamConfig property)</a>
+</li>
+      <li><a href="api/logging.html#torchfx.logging.disable_logging">disable_logging() (in module torchfx.logging)</a>
+</li>
       <li><a href="glossary.html#term-DSP"><strong>DSP</strong></a>
 </li>
       <li><a href="api/core.html#torchfx.Wave.duration">duration() (torchfx.Wave method)</a>
@@ -911,7 +1036,19 @@ window.addEventListener("load", load);
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.RealtimeProcessor.effects">effects (torchfx.realtime.RealtimeProcessor property)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.StreamProcessor.effects">(torchfx.realtime.StreamProcessor property)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/filters.html#torchfx.filter.Elliptic">Elliptic (class in torchfx.filter)</a>
+</li>
+      <li><a href="api/logging.html#torchfx.logging.enable_debug_logging">enable_debug_logging() (in module torchfx.logging)</a>
+</li>
+      <li><a href="api/logging.html#torchfx.logging.enable_logging">enable_logging() (in module torchfx.logging)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -920,6 +1057,8 @@ window.addEventListener("load", load);
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="glossary.html#term-Filter"><strong>Filter</strong></a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.FilterInstabilityError">FilterInstabilityError (class in torchfx.validation)</a>
 </li>
       <li><a href="glossary.html#term-FIR"><strong>FIR</strong></a>
 
@@ -975,11 +1114,25 @@ window.addEventListener("load", load);
         <li><a href="api/filters.html#torchfx.filter.ParametricEQ.gain">(torchfx.filter.ParametricEQ attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/filters.html#torchfx.filter.ParametricEQ.gain_db">gain_db (torchfx.filter.ParametricEQ attribute)</a>
 </li>
       <li><a href="api/core.html#torchfx.Wave.get_channel">get_channel() (torchfx.Wave method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.get_default_device">get_default_device() (torchfx.realtime.AudioBackend method)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.get_default_device">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.get_devices">get_devices() (torchfx.realtime.AudioBackend method)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.get_devices">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/logging.html#torchfx.logging.get_logger">get_logger() (in module torchfx.logging)</a>
 </li>
       <li><a href="glossary.html#term-GPU"><strong>GPU</strong></a>
 </li>
@@ -1017,9 +1170,27 @@ window.addEventListener("load", load);
         <li><a href="api/filters.html#torchfx.filter.IIR">(class in torchfx.filter)</a>
 </li>
       </ul></li>
+      <li><a href="glossary.html#term-Immutability"><strong>Immutability</strong></a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.InvalidParameterError">InvalidParameterError (class in torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.InvalidRangeError">InvalidRangeError (class in torchfx.validation)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="glossary.html#term-Immutability"><strong>Immutability</strong></a>
+      <li><a href="api/validation.html#torchfx.validation.InvalidSampleRateError">InvalidSampleRateError (class in torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.InvalidShapeError">InvalidShapeError (class in torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.InvalidTypeError">InvalidTypeError (class in torchfx.validation)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.is_available">is_available (torchfx.realtime.AudioBackend property)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.is_available">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend property)</a>
+</li>
+      </ul></li>
+      <li><a href="api/realtime.html#torchfx.realtime.RealtimeProcessor.is_running">is_running (torchfx.realtime.RealtimeProcessor property)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1039,6 +1210,12 @@ window.addEventListener("load", load);
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.RealtimeProcessor.latency_ms">latency_ms (torchfx.realtime.RealtimeProcessor property)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.StreamConfig.latency_ms">(torchfx.realtime.StreamConfig property)</a>
+</li>
+      </ul></li>
       <li><a href="api/filters.html#torchfx.filter.LinkwitzRiley">LinkwitzRiley (class in torchfx.filter)</a>
 </li>
       <li><a href="api/filters.html#torchfx.filter.LoButterworth">LoButterworth (class in torchfx.filter)</a>
@@ -1050,6 +1227,10 @@ window.addEventListener("load", load);
       <li><a href="api/filters.html#torchfx.filter.LoChebyshev2">LoChebyshev2 (class in torchfx.filter)</a>
 </li>
       <li><a href="api/filters.html#torchfx.filter.LoElliptic">LoElliptic (class in torchfx.filter)</a>
+</li>
+      <li><a href="api/logging.html#torchfx.logging.log_performance">log_performance() (in module torchfx.logging)</a>
+</li>
+      <li><a href="api/logging.html#torchfx.logging.LogPerformance">LogPerformance (class in torchfx.logging)</a>
 </li>
       <li><a href="api/filters.html#torchfx.filter.LoLinkwitzRiley">LoLinkwitzRiley (class in torchfx.filter)</a>
 </li>
@@ -1079,12 +1260,18 @@ window.addEventListener("load", load);
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/effects.html#torchfx.effect.NormalizationStrategy">NormalizationStrategy (class in torchfx.effect)</a>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.name">name (torchfx.realtime.AudioBackend property)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.name">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend property)</a>
 </li>
-      <li><a href="api/effects.html#torchfx.effect.Normalize">Normalize (class in torchfx.effect)</a>
+      </ul></li>
+      <li><a href="api/effects.html#torchfx.effect.NormalizationStrategy">NormalizationStrategy (class in torchfx.effect)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/effects.html#torchfx.effect.Normalize">Normalize (class in torchfx.effect)</a>
+</li>
       <li><a href="api/filters.html#torchfx.filter.Notch">Notch (class in torchfx.filter)</a>
 </li>
       <li><a href="api/filters.html#torchfx.filter.DesignableFIR.num_taps">num_taps (torchfx.filter.DesignableFIR attribute)</a>
@@ -1095,6 +1282,12 @@ window.addEventListener("load", load);
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.open_stream">open_stream() (torchfx.realtime.AudioBackend method)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.open_stream">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend method)</a>
+</li>
+      </ul></li>
       <li><a href="api/filters.html#torchfx.filter.Butterworth.order">order (torchfx.filter.Butterworth attribute)</a>
 
       <ul>
@@ -1107,6 +1300,10 @@ window.addEventListener("load", load);
         <li><a href="api/filters.html#torchfx.filter.LinkwitzRiley.order">(torchfx.filter.LinkwitzRiley attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamProcessor.overlap">overlap (torchfx.realtime.StreamProcessor property)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -1121,6 +1318,8 @@ window.addEventListener("load", load);
 </li>
       <li><a href="api/effects.html#torchfx.effect.PeakNormalizationStrategy">PeakNormalizationStrategy (class in torchfx.effect)</a>
 </li>
+      <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.peek">peek() (torchfx.realtime.TensorRingBuffer method)</a>
+</li>
       <li><a href="api/effects.html#torchfx.effect.PercentileNormalizationStrategy.percentile">percentile (torchfx.effect.PercentileNormalizationStrategy attribute)</a>
 </li>
   </ul></td>
@@ -1134,6 +1333,10 @@ window.addEventListener("load", load);
       <li><a href="glossary.html#term-Pipeline"><strong>Pipeline</strong></a>
 </li>
       <li><a href="glossary.html#term-Pipeline-Operator"><strong>Pipeline Operator</strong></a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamProcessor.process_chunks">process_chunks() (torchfx.realtime.StreamProcessor method)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamProcessor.process_file">process_file() (torchfx.realtime.StreamProcessor method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1155,6 +1358,26 @@ window.addEventListener("load", load);
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.read">read() (torchfx.realtime.AudioBackend method)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.read">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend method)</a>
+</li>
+        <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.read">(torchfx.realtime.TensorRingBuffer method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/realtime.html#torchfx.realtime.RealtimeError">RealtimeError (class in torchfx.realtime)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.RealtimeProcessor">RealtimeProcessor (class in torchfx.realtime)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/filters.html#torchfx.filter.IIR.reset_state">reset_state() (torchfx.filter.IIR method)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.RealtimeProcessor.reset_state">(torchfx.realtime.RealtimeProcessor method)</a>
+</li>
+      </ul></li>
       <li><a href="api/effects.html#torchfx.effect.Reverb">Reverb (class in torchfx.effect)</a>
 </li>
       <li><a href="api/filters.html#torchfx.filter.Chebyshev1.ripple">ripple (torchfx.filter.Chebyshev1 attribute)</a>
@@ -1163,8 +1386,6 @@ window.addEventListener("load", load);
         <li><a href="api/filters.html#torchfx.filter.Chebyshev2.ripple">(torchfx.filter.Chebyshev2 attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/effects.html#torchfx.effect.RMSNormalizationStrategy">RMSNormalizationStrategy (class in torchfx.effect)</a>
 </li>
   </ul></td>
@@ -1177,11 +1398,47 @@ window.addEventListener("load", load);
 </li>
       <li><a href="api/core.html#torchfx.Wave.save">save() (torchfx.Wave method)</a>
 </li>
+      <li><a href="api/realtime.html#torchfx.realtime.RealtimeProcessor.set_parameter">set_parameter() (torchfx.realtime.RealtimeProcessor method)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend">SoundDeviceBackend (class in torchfx.realtime.sounddevice_backend)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.start">start() (torchfx.realtime.AudioBackend method)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.RealtimeProcessor.start">(torchfx.realtime.RealtimeProcessor method)</a>
+</li>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.start">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.state">state (torchfx.realtime.AudioBackend property)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.state">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend property)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.stop">stop() (torchfx.realtime.AudioBackend method)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.RealtimeProcessor.stop">(torchfx.realtime.RealtimeProcessor method)</a>
+</li>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.stop">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend method)</a>
+</li>
+      </ul></li>
       <li><a href="api/filters.html#torchfx.filter.Elliptic.stopband_attenuation">stopband_attenuation (torchfx.filter.Elliptic attribute)</a>
 </li>
       <li><a href="glossary.html#term-Strategy-Pattern"><strong>Strategy Pattern</strong></a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamConfig">StreamConfig (class in torchfx.realtime)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamDirection">StreamDirection (class in torchfx.realtime)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamError">StreamError (class in torchfx.realtime)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamProcessor">StreamProcessor (class in torchfx.realtime)</a>
+</li>
+      <li><a href="api/realtime.html#torchfx.realtime.StreamState">StreamState (class in torchfx.realtime)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1191,13 +1448,45 @@ window.addEventListener("load", load);
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="glossary.html#term-Tensor"><strong>Tensor</strong></a>
 </li>
+      <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer">TensorRingBuffer (class in torchfx.realtime)</a>
+</li>
       <li><a href="api/core.html#torchfx.Wave.to">to() (torchfx.Wave method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/validation.html#torchfx.validation.TorchFXError">TorchFXError (class in torchfx.validation)</a>
+</li>
       <li><a href="glossary.html#term-Transfer-Function"><strong>Transfer Function</strong></a>
 </li>
       <li><a href="api/core.html#torchfx.Wave.transform">transform() (torchfx.Wave method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/validation.html#torchfx.validation.validate_audio_tensor">validate_audio_tensor() (in module torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.validate_cutoff_frequency">validate_cutoff_frequency() (in module torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.validate_filter_order">validate_filter_order() (in module torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.validate_in_set">validate_in_set() (in module torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.validate_positive">validate_positive() (in module torchfx.validation)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/validation.html#torchfx.validation.validate_q_factor">validate_q_factor() (in module torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.validate_range">validate_range() (in module torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.validate_sample_rate">validate_sample_rate() (in module torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.validate_tensor_ndim">validate_tensor_ndim() (in module torchfx.validation)</a>
+</li>
+      <li><a href="api/validation.html#torchfx.validation.validate_type">validate_type() (in module torchfx.validation)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1211,10 +1500,18 @@ window.addEventListener("load", load);
         <li><a href="api/core.html#torchfx.Wave">(class in torchfx)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/filters.html#torchfx.filter.DesignableFIR.window">window (torchfx.filter.DesignableFIR attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/realtime.html#torchfx.realtime.AudioBackend.write">write() (torchfx.realtime.AudioBackend method)</a>
+
+      <ul>
+        <li><a href="api/realtime.html#torchfx.realtime.sounddevice_backend.SoundDeviceBackend.write">(torchfx.realtime.sounddevice_backend.SoundDeviceBackend method)</a>
+</li>
+        <li><a href="api/realtime.html#torchfx.realtime.TensorRingBuffer.write">(torchfx.realtime.TensorRingBuffer method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 

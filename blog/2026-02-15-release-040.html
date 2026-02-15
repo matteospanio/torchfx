@@ -1,0 +1,1223 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>TorchFX 0.4.0: Production-Ready Audio DSP 🚀 &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-02-15-release-040';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" /> 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__postcard">
+   
+  <h2>
+     
+    <i class="fa fa-calendar"></i>
+    
+    <span>15 February 2026</span>
+    
+  </h2>
+  <ul>
+    <div class="ablog-sidebar-item ablog__postcard2">
+   
+  <li id="ablog-sidebar-item author ablog__author">
+    <span>
+      
+      <i class="fa-fw fa fa-user"></i>
+      
+    </span>
+     
+    <a href="index/author/matteo-spanio.html">Matteo Spanio</a>
+      
+  </li>
+     
+  <li id="ablog-sidebar-item category ablog__category">
+    <span>
+      
+      <i class="fa-fw fa fa-folder-open"></i>
+      
+    </span>
+     
+    <a href="index/category/releases.html">releases</a>
+      
+  </li>
+   
+  <li id="ablog-sidebar-item tags ablog__tags">
+    <span>
+       
+      <i class="fa-fw fa fa-tags"></i>
+       
+    </span>
+     
+    <a href="index/tag/release.html">release</a>
+        
+    <a href="index/tag/cli.html">cli</a>
+        
+    <a href="index/tag/validation.html">validation</a>
+        
+    <a href="index/tag/logging.html">logging</a>
+        
+    <a href="index/tag/real-time.html">real-time</a>
+      
+  </li>
+   
+</div>
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__recentposts">
+  <h3>
+    <a href="index.html">Recent Posts</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="2026-02-15-cli-interface.html">
+        15 February - TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-02-15-repl-live-performance.html">
+        15 February - Interactive Audio Magic: The TorchFX REPL
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-01-11-new-docs.html">
+        11 January - TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-01-06-deepwiki.html">
+        06 January - TorchFX is now indexed on DeepWiki
+      </a>
+    </li>
+    
+    <li>
+      <a href="2025-12-13-release-021.html">
+        13 December - TorchFX 0.2.1 Released 🎉
+      </a>
+    </li>
+    
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__tagcloud">
+  <link
+    rel="stylesheet"
+    href="../_static/ablog/tagcloud.css"
+    type="text/css"
+  />
+  <h3><a href="index/tag.html">Tags</a></h3>
+  <ul class="ablog-cloud">
+     
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/cli.html">cli</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/dafx.html">dafx</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/documentation.html">documentation</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/interactive.html">interactive</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/live-performance.html">live-performance</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/logging.html">logging</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-5">
+      <a href="index/tag/open-source.html">open-source</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/real-time.html">real-time</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-5">
+      <a href="index/tag/release.html">release</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/repl.html">repl</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/tools.html">tools</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/validation.html">validation</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/welcome.html">welcome</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/workflow.html">workflow</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__categories">
+  <h3>
+    <a href="index/category.html">Categories</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="index/category/announcements.html">announcements (4)</a>
+    </li>
+      
+    <li>
+      <a href="index/category/features.html">features (2)</a>
+    </li>
+      
+    <li>
+      <a href="index/category/releases.html">releases (1)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__authors">
+  <h3>
+    <a href="index/author.html">Authors</a>
+  </h3>
+  <ul>
+       
+    <li>
+      <a href="index/author/matteo-spanio.html">Matteo Spanio (7)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__archives">
+  <h3>
+    <a href="index/archive.html">Archives</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="index/2026.html">2026 (5)</a>
+    </li>
+      
+    <li>
+      <a href="index/2025.html">2025 (2)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX 0.4.0: Production-Ready Audio DSP 🚀</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="torchfx-0-4-0-production-ready-audio-dsp">
+<h1>TorchFX 0.4.0: Production-Ready Audio DSP 🚀<a class="headerlink" href="#torchfx-0-4-0-production-ready-audio-dsp" title="Link to this heading">#</a></h1>
+<p>I’m thrilled to announce <strong>TorchFX 0.4.0</strong>, the biggest release yet. This version transforms TorchFX from a research library into a <strong>audio DSP toolkit</strong> with real-time processing, and a powerful CLI interface.</p>
+<p>This release represents months of work implementing the core features needed for v1.0.0. Let’s dive into what’s new!</p>
+<section id="release-highlights">
+<h2>🎯 Release Highlights<a class="headerlink" href="#release-highlights" title="Link to this heading">#</a></h2>
+<section id="full-featured-cli-application">
+<h3>1. Full-Featured CLI Application<a class="headerlink" href="#full-featured-cli-application" title="Link to this heading">#</a></h3>
+<p>The crown jewel of 0.4.0 is a <strong>complete command-line interface</strong> that brings GPU-accelerated audio processing to your terminal:</p>
+<p><strong>11 Commands:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">process</span></code> — Apply effects to audio (single/batch/pipes)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">info</span></code> — Display file metadata</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">play</span></code> — Play audio with effects</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">record</span></code> — Record from microphone</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">convert</span></code> — Format/rate/channel conversion (sox-compatible)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trim</span></code> — Extract time ranges (sox-compatible)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">concat</span></code> — Join multiple files (sox-compatible)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">stats</span></code> — Signal statistics (sox-compatible)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">preset</span></code> — Manage reusable effect chains (save/load/list/show/delete/apply)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">interactive</span></code> — Launch the REPL</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">watch</span></code> — Monitor directories for auto-processing</p></li>
+</ul>
+<p><strong>Example workflows:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Batch processing on GPU</span>
+torchfx<span class="w"> </span>--device<span class="w"> </span>cuda<span class="w"> </span>process<span class="w"> </span><span class="s2">&quot;*.wav&quot;</span><span class="w"> </span>-O<span class="w"> </span>./processed/<span class="w"> </span>-e<span class="w"> </span>normalize
+
+<span class="c1"># Unix pipes</span>
+cat<span class="w"> </span>input.wav<span class="w"> </span><span class="p">|</span><span class="w"> </span>torchfx<span class="w"> </span>process<span class="w"> </span>-<span class="w"> </span>-<span class="w"> </span>-e<span class="w"> </span>normalize<span class="w"> </span><span class="p">|</span><span class="w"> </span>aplay
+
+<span class="c1"># Watch DAW export folder</span>
+torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span class="w"> </span>./mastered/<span class="w"> </span>--preset<span class="w"> </span>mastering
+
+<span class="c1"># Interactive mode with live performance</span>
+torchfx<span class="w"> </span>interactive
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="2026-02-15-cli-interface.html"><span class="std std-doc">CLI blog post</span></a> for full details.</p>
+</section>
+<section id="interactive-repl-with-live-performance-mode">
+<h3>2. Interactive REPL with Live Performance Mode<a class="headerlink" href="#interactive-repl-with-live-performance-mode" title="Link to this heading">#</a></h3>
+<p>The REPL enables <strong>real-time audio manipulation</strong> with instant effect changes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>torchfx&gt; load song.wav
+torchfx&gt; live
+▶ Live playback started (looping)
+
+torchfx&gt; add reverb:decay=0.8,mix=0.5
+✓ [1] Added reverb:decay=0.8,mix=0.5
+# ← Effect applies while playing
+
+torchfx&gt; preset load mastering
+✓ Loaded preset &#39;mastering&#39; (3 effects)
+# ← Entire chain switches in real-time
+</pre></div>
+</div>
+<p><strong>Key features:</strong></p>
+<ul class="simple">
+<li><p>Lock-free circular buffer for glitch-free playback</p></li>
+<li><p>Effect hot-swapping at buffer boundaries (~46ms latency)</p></li>
+<li><p>prompt_toolkit with tab completion and persistent history</p></li>
+<li><p>Perfect for sound design, education, and live performance</p></li>
+</ul>
+<p>Read the <a class="reference internal" href="2026-02-15-repl-live-performance.html"><span class="std std-doc">REPL blog post</span></a> for the full story.</p>
+</section>
+<section id="input-validation-layer-torchfx-validation">
+<h3>3. Input Validation Layer (<code class="docutils literal notranslate"><span class="pre">torchfx.validation</span></code>)<a class="headerlink" href="#input-validation-layer-torchfx-validation" title="Link to this heading">#</a></h3>
+<p>Error handling with context-aware messages:</p>
+<p><strong>Exception hierarchy:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TorchFXError</span></code> (base — catch all library errors)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InvalidSampleRateError</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InvalidRangeError</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InvalidShapeError</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InvalidTypeError</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AudioProcessingError</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CoefficientComputationError</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FilterInstabilityError</span></code></p></li>
+</ul>
+<p><strong>Validator functions:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_sample_rate()</span></code> — Ensure valid sampling rates</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_positive()</span></code> — Check positive numbers</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_range()</span></code> — Verify parameter bounds</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_in_set()</span></code> — Enum-like validation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_tensor_ndim()</span></code> — Tensor shape checking</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_audio_tensor()</span></code> — Audio-specific validation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_type()</span></code> — Type checking with suggestions</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_cutoff_frequency()</span></code> — Filter cutoff validation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_filter_order()</span></code> — Order constraints</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_q_factor()</span></code> — Q parameter validation</p></li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_sample_rate</span><span class="p">,</span> <span class="n">InvalidSampleRateError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">validate_sample_rate</span><span class="p">(</span><span class="mi">48000</span><span class="p">)</span>  <span class="c1"># OK</span>
+    <span class="n">validate_sample_rate</span><span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="p">)</span>   <span class="c1"># Raises with helpful message</span>
+<span class="k">except</span> <span class="n">InvalidSampleRateError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># &quot;Invalid sample rate: -100 (must be positive)&quot;</span>
+</pre></div>
+</div>
+<p>All exceptions include:</p>
+<ul class="simple">
+<li><p>Parameter name</p></li>
+<li><p>Actual value</p></li>
+<li><p>Expected value/range</p></li>
+<li><p>Suggestion for fixing</p></li>
+</ul>
+</section>
+<section id="logging-infrastructure-torchfx-logging">
+<h3>4. Logging Infrastructure (<code class="docutils literal notranslate"><span class="pre">torchfx.logging</span></code>)<a class="headerlink" href="#logging-infrastructure-torchfx-logging" title="Link to this heading">#</a></h3>
+<p>Production-grade logging following Python best practices:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx.logging</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tfx_log</span>
+
+<span class="c1"># Enable logging (NullHandler by default)</span>
+<span class="n">tfx_log</span><span class="o">.</span><span class="n">enable_logging</span><span class="p">()</span>        <span class="c1"># INFO level</span>
+<span class="n">tfx_log</span><span class="o">.</span><span class="n">enable_debug_logging</span><span class="p">()</span>  <span class="c1"># DEBUG level</span>
+
+<span class="c1"># Get module-specific loggers</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">tfx_log</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;torchfx.filter&quot;</span><span class="p">)</span>
+
+<span class="c1"># Performance profiling</span>
+<span class="k">with</span> <span class="n">tfx_log</span><span class="o">.</span><span class="n">log_performance</span><span class="p">(</span><span class="s2">&quot;Heavy operation&quot;</span><span class="p">):</span>
+    <span class="c1"># ... code ...</span>
+    <span class="k">pass</span>  <span class="c1"># Logs execution time at INFO level</span>
+
+<span class="c1"># Or as decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogPerformance</span>
+
+<span class="nd">@LogPerformance</span><span class="p">(</span><span class="s2">&quot;My function&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_audio</span><span class="p">():</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p><strong>Features:</strong></p>
+<ul class="simple">
+<li><p>Hierarchical loggers: <code class="docutils literal notranslate"><span class="pre">torchfx</span></code>, <code class="docutils literal notranslate"><span class="pre">torchfx.performance</span></code>, <code class="docutils literal notranslate"><span class="pre">torchfx.&lt;module&gt;</span></code></p></li>
+<li><p>Opt-in by default (follows Python logging conventions)</p></li>
+<li><p>Performance utilities for profiling</p></li>
+<li><p>DEBUG logs include detailed parameter info</p></li>
+</ul>
+</section>
+<section id="real-time-processing-module-torchfx-realtime">
+<h3>5. Real-Time Processing Module (<code class="docutils literal notranslate"><span class="pre">torchfx.realtime</span></code>)<a class="headerlink" href="#real-time-processing-module-torchfx-realtime" title="Link to this heading">#</a></h3>
+<p>Complete real-time audio infrastructure:</p>
+<p><strong>Core classes:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor</span></code> — Orchestrates backend + effect chain</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">StreamProcessor</span></code> — Chunk-based file processing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer</span></code> — Lock-free SPSC ring buffer</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend</span></code> — PortAudio integration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">StreamConfig</span></code> — Stream configuration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AudioBackend</span></code> — Abstract backend interface</p></li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimeProcessor</span><span class="p">,</span> <span class="n">StreamConfig</span><span class="p">,</span> <span class="n">SoundDeviceBackend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Reverb</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">StreamConfig</span><span class="p">(</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span>
+    <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+    <span class="n">channels_in</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">channels_out</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">processor</span> <span class="o">=</span> <span class="n">RealtimeProcessor</span><span class="p">(</span>
+    <span class="n">effects</span><span class="o">=</span><span class="p">[</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.8</span><span class="p">),</span> <span class="n">Reverb</span><span class="p">()],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">SoundDeviceBackend</span><span class="p">(),</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">with</span> <span class="n">processor</span><span class="p">:</span>
+    <span class="c1"># Real-time processing active</span>
+    <span class="n">processor</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;0.gain&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># Thread-safe parameter update</span>
+    <span class="c1"># ... processing continues ...</span>
+</pre></div>
+</div>
+<p><strong>Features:</strong></p>
+<ul class="simple">
+<li><p>&lt;10ms latency at 48kHz, 512 buffer</p></li>
+<li><p>Thread-safe parameter updates at buffer boundaries</p></li>
+<li><p>GPU/CPU hybrid processing</p></li>
+<li><p>Ring buffer for smooth I/O</p></li>
+<li><p>Automatic <code class="docutils literal notranslate"><span class="pre">fs</span></code> propagation to effects</p></li>
+</ul>
+</section>
+<section id="biquad-filter-suite">
+<h3>6. Biquad Filter Suite<a class="headerlink" href="#biquad-filter-suite" title="Link to this heading">#</a></h3>
+<p>Six new biquad implementations with Audio EQ Cookbook formulas:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BiquadLPF</span></code> — Lowpass filter</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BiquadHPF</span></code> — Highpass filter</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BiquadBPF</span></code> — Bandpass filter (constant skirt gain)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BiquadBPFPeak</span></code> — Bandpass filter (constant 0 dB peak gain)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BiquadNotch</span></code> — Notch filter</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BiquadAllPass</span></code> — All-pass filter</p></li>
+</ul>
+<p>All support:</p>
+<ul class="simple">
+<li><p>Stateful processing (IIR state management)</p></li>
+<li><p>Stateless processing (for one-shot operations)</p></li>
+<li><p>Device transfer (CPU ↔ GPU)</p></li>
+<li><p>Standard <code class="docutils literal notranslate"><span class="pre">cutoff</span></code> and <code class="docutils literal notranslate"><span class="pre">q</span></code> parameters</p></li>
+</ul>
+</section>
+<section id="toml-configuration-preset-system">
+<h3>7. TOML Configuration &amp; Preset System<a class="headerlink" href="#toml-configuration-preset-system" title="Link to this heading">#</a></h3>
+<p>Reproducible effect chains with TOML:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># mastering.toml</span>
+<span class="n">device</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;cuda&quot;</span>
+<span class="n">chunk_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">131072</span>
+
+<span class="k">[[effects]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;normalize&quot;</span>
+<span class="n">peak</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.9</span>
+
+<span class="k">[[effects]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;parametriceq&quot;</span>
+<span class="n">frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2000</span>
+<span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.5</span>
+<span class="n">gain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
+
+<span class="k">[[effects]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;reverb&quot;</span>
+<span class="n">decay</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span>
+<span class="n">mix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.2</span>
+</pre></div>
+</div>
+<p>Use with CLI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>process<span class="w"> </span>input.wav<span class="w"> </span>output.wav<span class="w"> </span>--config<span class="w"> </span>mastering.toml
+</pre></div>
+</div>
+<p>Or save as preset:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchfx<span class="w"> </span>preset<span class="w"> </span>save<span class="w"> </span>mastering<span class="w"> </span>--from<span class="w"> </span>mastering.toml
+torchfx<span class="w"> </span>preset<span class="w"> </span>apply<span class="w"> </span>mastering<span class="w"> </span>input.wav<span class="w"> </span>output.wav
+</pre></div>
+</div>
+<p>Presets stored in <code class="docutils literal notranslate"><span class="pre">~/.config/torchfx/presets/</span></code> for easy sharing.</p>
+</section>
+<section id="effect-chain-parser">
+<h3>8. Effect Chain Parser<a class="headerlink" href="#effect-chain-parser" title="Link to this heading">#</a></h3>
+<p>30+ effects/filters registered with intuitive CLI syntax:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simple effect</span>
+-e<span class="w"> </span>normalize
+
+<span class="c1"># Positional parameter</span>
+-e<span class="w"> </span><span class="s2">&quot;gain:0.5&quot;</span>
+
+<span class="c1"># Keyword parameters</span>
+-e<span class="w"> </span><span class="s2">&quot;reverb:decay=0.6,mix=0.3&quot;</span>
+
+<span class="c1"># Mixed</span>
+-e<span class="w"> </span><span class="s2">&quot;parametriceq:frequency=2000,q=1.5,gain=6&quot;</span>
+</pre></div>
+</div>
+<p>Registered effects include:</p>
+<ul class="simple">
+<li><p>Effects: <code class="docutils literal notranslate"><span class="pre">gain</span></code>, <code class="docutils literal notranslate"><span class="pre">normalize</span></code>, <code class="docutils literal notranslate"><span class="pre">reverb</span></code>, <code class="docutils literal notranslate"><span class="pre">delay</span></code></p></li>
+<li><p>Biquad filters: <code class="docutils literal notranslate"><span class="pre">lowpass</span></code>, <code class="docutils literal notranslate"><span class="pre">highpass</span></code>, <code class="docutils literal notranslate"><span class="pre">bandpass</span></code>, <code class="docutils literal notranslate"><span class="pre">notch</span></code>, <code class="docutils literal notranslate"><span class="pre">allpass</span></code></p></li>
+<li><p>IIR filters: <code class="docutils literal notranslate"><span class="pre">lobutterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">hibutterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">butterworth</span></code>, <code class="docutils literal notranslate"><span class="pre">lochebyshev1</span></code>, <code class="docutils literal notranslate"><span class="pre">hichebyshev1</span></code>, <code class="docutils literal notranslate"><span class="pre">chebyshev1</span></code>, <code class="docutils literal notranslate"><span class="pre">lochebyshev2</span></code>, <code class="docutils literal notranslate"><span class="pre">hichebyshev2</span></code>, <code class="docutils literal notranslate"><span class="pre">chebyshev2</span></code>, <code class="docutils literal notranslate"><span class="pre">loelliptic</span></code>, <code class="docutils literal notranslate"><span class="pre">hielliptic</span></code>, <code class="docutils literal notranslate"><span class="pre">elliptic</span></code></p></li>
+<li><p>Shelving/EQ: <code class="docutils literal notranslate"><span class="pre">loshelving</span></code>, <code class="docutils literal notranslate"><span class="pre">hishelving</span></code>, <code class="docutils literal notranslate"><span class="pre">parametriceq</span></code>, <code class="docutils literal notranslate"><span class="pre">peaking</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="test-coverage">
+<h2>📊 Test Coverage<a class="headerlink" href="#test-coverage" title="Link to this heading">#</a></h2>
+<p><strong>393 tests</strong> across the codebase with &gt;90% coverage:</p>
+<ul class="simple">
+<li><p>Wave class: 72 tests</p></li>
+<li><p>Filters (IIR/FIR/Biquad): 85+ tests</p></li>
+<li><p>Effects: 43 tests</p></li>
+<li><p>Real-time processing: 62 tests</p></li>
+<li><p>Validation: 76 tests</p></li>
+<li><p>Logging: 25 tests</p></li>
+<li><p>CLI: 71 tests</p></li>
+</ul>
+<p>All tests pass on Linux, macOS, and Windows with Python 3.10-3.13.</p>
+</section>
+<section id="documentation-updates">
+<h2>📚 Documentation Updates<a class="headerlink" href="#documentation-updates" title="Link to this heading">#</a></h2>
+<p>Complete overhaul of documentation:</p>
+<ul class="simple">
+<li><p><strong>CLI Guide</strong>: Comprehensive tutorial with examples for all commands</p></li>
+<li><p><strong>API Reference</strong>: Complete docstrings with examples</p></li>
+<li><p><strong>Developer Guides</strong>: Roadmap, style guide, contributing guide</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>🔧 Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Core library</span>
+pip<span class="w"> </span>install<span class="w"> </span>torchfx
+
+<span class="c1"># With CLI tools</span>
+pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli<span class="o">]</span>
+
+<span class="c1"># With real-time audio (for play/record/REPL live mode)</span>
+pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>realtime<span class="o">]</span>
+
+<span class="c1"># Everything</span>
+pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli,realtime<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="project-status">
+<h2>📈 Project Status<a class="headerlink" href="#project-status" title="Link to this heading">#</a></h2>
+<p>With 0.4.0, we’ve completed <strong>Phase 1 and Phase 2</strong> of the roadmap to v1.0.0:</p>
+<p>✅ <strong>Phase 1 (Foundation)</strong>: Core stabilization, API stability, error handling, testing<br />
+✅ <strong>Phase 2 (Major Features)</strong>: Real-time processing, CLI application, documentation</p>
+<p><strong>Next up — Phase 3 (Optimization):</strong></p>
+<ul class="simple">
+<li><p>Custom CUDA kernels for IIR filters</p></li>
+<li><p>Batch processing optimizations</p></li>
+<li><p>Additional effects (compressor, phaser, pitch shift)</p></li>
+</ul>
+<p>We’re now <strong>~85% complete</strong> toward v1.0.0!</p>
+</section>
+<section id="try-it-now">
+<h2>🚀 Try It Now<a class="headerlink" href="#try-it-now" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli,realtime<span class="o">]</span>
+torchfx<span class="w"> </span>interactive
+</pre></div>
+</div>
+<p>Load a file, type <code class="docutils literal notranslate"><span class="pre">live</span></code>, and experience real-time audio magic.</p>
+</section>
+<section id="complete-changelog">
+<h2>📝 Complete Changelog<a class="headerlink" href="#complete-changelog" title="Link to this heading">#</a></h2>
+<section id="added">
+<h3>Added<a class="headerlink" href="#added" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Input validation layer with custom exception hierarchy (<code class="docutils literal notranslate"><span class="pre">torchfx.validation</span></code> module)</p>
+<ul>
+<li><p>Base exception <code class="docutils literal notranslate"><span class="pre">TorchFXError</span></code> for catching all library errors</p></li>
+<li><p>Specific exceptions: <code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidSampleRateError</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidRangeError</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidShapeError</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidTypeError</span></code>, <code class="docutils literal notranslate"><span class="pre">AudioProcessingError</span></code>, <code class="docutils literal notranslate"><span class="pre">CoefficientComputationError</span></code>, <code class="docutils literal notranslate"><span class="pre">FilterInstabilityError</span></code></p></li>
+<li><p>Validator functions for sample rates, parameter ranges, tensor shapes, types, and audio-specific validation</p></li>
+</ul>
+</li>
+<li><p>Logging infrastructure (<code class="docutils literal notranslate"><span class="pre">torchfx.logging</span></code> module)</p>
+<ul>
+<li><p>Structured logging following Python best practices (NullHandler by default)</p></li>
+<li><p>Convenience functions: <code class="docutils literal notranslate"><span class="pre">enable_logging()</span></code>, <code class="docutils literal notranslate"><span class="pre">enable_debug_logging()</span></code>, <code class="docutils literal notranslate"><span class="pre">disable_logging()</span></code>, <code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></p></li>
+<li><p>Performance profiling: <code class="docutils literal notranslate"><span class="pre">log_performance()</span></code> context manager and <code class="docutils literal notranslate"><span class="pre">LogPerformance</span></code> decorator</p></li>
+<li><p>Hierarchical logger support for fine-grained control</p></li>
+</ul>
+</li>
+<li><p>Realtime processing module (<code class="docutils literal notranslate"><span class="pre">torchfx.realtime</span></code>)</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor</span></code> with thread-safe parameter updates</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">StreamProcessor</span></code> for chunk-based file processing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TensorRingBuffer</span></code> with lock-free SPSC pattern</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SoundDeviceBackend</span></code> for PortAudio integration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">StreamConfig</span></code> and <code class="docutils literal notranslate"><span class="pre">AudioBackend</span></code> abstractions</p></li>
+</ul>
+</li>
+<li><p>Biquad filter implementations</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">BiquadLPF</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadHPF</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadBPF</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadBPFPeak</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadNotch</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadAllPass</span></code></p></li>
+<li><p>Stateful and stateless processing paths</p></li>
+<li><p>Audio EQ Cookbook formulas</p></li>
+</ul>
+</li>
+<li><p>CLI application (Epic 3 — Phase 1)</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">process</span></code>: single-file, batch (glob + progress bar), and Unix pipe processing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">info</span></code>: display audio file metadata in Rich tables</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">play</span></code>: play audio through speakers with optional effects</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">record</span></code>: record from microphone</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">convert</span></code>: format/rate/channel conversion (sox-compatible)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">trim</span></code>: extract time ranges (sox-compatible)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">concat</span></code>: join multiple files (sox-compatible)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">stats</span></code>: signal statistics (sox-compatible)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">preset</span></code>: save/load/list/show/delete/apply presets</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">interactive</span></code>: launch REPL with live performance mode</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">watch</span></code>: monitor directories for auto-processing</p></li>
+<li><p>Effect-chain parser with 30+ registered effects/filters</p></li>
+<li><p>TOML configuration file support</p></li>
+<li><p>Preset management in <code class="docutils literal notranslate"><span class="pre">~/.config/torchfx/presets/</span></code></p></li>
+<li><p>GPU acceleration via <code class="docutils literal notranslate"><span class="pre">--device</span> <span class="pre">cuda</span></code></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="changed">
+<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Improved error messages throughout library with context and suggestions</p></li>
+<li><p>Enhanced logging with performance profiling capabilities</p></li>
+<li><p>Real-time processing now uses ring buffers for smooth I/O</p></li>
+</ul>
+</section>
+<section id="technical-details">
+<h3>Technical Details<a class="headerlink" href="#technical-details" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Lines of Code</strong>: ~12,000 (including tests and docs)</p></li>
+<li><p><strong>Test Count</strong>: 393 (up from 95 in v0.2.1)</p></li>
+<li><p><strong>Coverage</strong>: &gt;90% (up from ~70%)</p></li>
+<li><p><strong>Documentation Pages</strong>: 50+ (up from ~20)</p></li>
+<li><p><strong>Supported Python</strong>: 3.10, 3.11, 3.12, 3.13</p></li>
+<li><p><strong>Optional Dependencies</strong>: <code class="docutils literal notranslate"><span class="pre">sounddevice</span></code>, <code class="docutils literal notranslate"><span class="pre">typer</span></code>, <code class="docutils literal notranslate"><span class="pre">rich</span></code>, <code class="docutils literal notranslate"><span class="pre">prompt_toolkit</span></code>, <code class="docutils literal notranslate"><span class="pre">watchdog</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="whats-next">
+<h2>🔮 What’s Next?<a class="headerlink" href="#whats-next" title="Link to this heading">#</a></h2>
+<p><strong>v1.0.0 Release Candidate</strong> is the immediate goal. After community testing and final polish, we’ll ship v1.0.0 with:</p>
+<ul class="simple">
+<li><p>Semantic versioning guarantees</p></li>
+<li><p>Long-term API stability</p></li>
+<li><p>Custom CUDA kernels for 2-3x speedup</p></li>
+</ul>
+<p><strong>Post-1.0</strong> roadmap includes:</p>
+<ul class="simple">
+<li><p>Advanced effects (compressor, phaser, pitch shift)</p></li>
+<li><p>VST3 wrapper (long-term)</p></li>
+</ul>
+</section>
+<section id="get-involved">
+<h2>💬 Get Involved<a class="headerlink" href="#get-involved" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>GitHub</strong>: <a class="reference external" href="https://github.com/matteospanio/torchfx">matteospanio/torchfx</a></p></li>
+<li><p><strong>Issues</strong>: Report bugs, request features</p></li>
+<li><p><strong>Discussions</strong>: Ask questions, share workflows</p></li>
+<li><p><strong>Contributing</strong>: See <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/dev/CONTRIBUTING.md">CONTRIBUTING.md</a></p></li>
+</ul>
+<hr class="docutils" />
+<p><strong>TorchFX 0.4.0 is available now. Install it, explore the CLI, try the REPL, and let us know what you think!</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="o">[</span>cli,realtime<span class="o">]</span>
+torchfx<span class="w"> </span>--help
+</pre></div>
+</div>
+<p><em>Happy audio processing! 🎵</em></p>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+     
+<div class="section ablog__prev-next">
+  <span class="ablog__prev">
+     
+    <a href="2026-02-15-repl-live-performance.html">
+      
+      <i class="fa fa-arrow-circle-left"></i>
+      
+      <span>Interactive Audio Magic: The TorchFX REPL</span>
+    </a>
+    
+  </span>
+  <span class="ablog__spacer">&nbsp;</span>
+  <span class="ablog__next">
+     
+    <a href="2026-02-15-cli-interface.html">
+      <span>TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal</span>
+      
+      <i class="fa fa-arrow-circle-right"></i>
+      
+    </a>
+    
+  </span>
+</div>
+  
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#release-highlights">🎯 Release Highlights</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#full-featured-cli-application">1. Full-Featured CLI Application</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interactive-repl-with-live-performance-mode">2. Interactive REPL with Live Performance Mode</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#input-validation-layer-torchfx-validation">3. Input Validation Layer (<code class="docutils literal notranslate"><span class="pre">torchfx.validation</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#logging-infrastructure-torchfx-logging">4. Logging Infrastructure (<code class="docutils literal notranslate"><span class="pre">torchfx.logging</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#real-time-processing-module-torchfx-realtime">5. Real-Time Processing Module (<code class="docutils literal notranslate"><span class="pre">torchfx.realtime</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#biquad-filter-suite">6. Biquad Filter Suite</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#toml-configuration-preset-system">7. TOML Configuration &amp; Preset System</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#effect-chain-parser">8. Effect Chain Parser</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-coverage">📊 Test Coverage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-updates">📚 Documentation Updates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">🔧 Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#project-status">📈 Project Status</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#try-it-now">🚀 Try It Now</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-changelog">📝 Complete Changelog</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#added">Added</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changed">Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#technical-details">Technical Details</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whats-next">🔮 What’s Next?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-involved">💬 Get Involved</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-02-15-release-040.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/blog/2026-02-15-release-040.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

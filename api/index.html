@@ -357,6 +357,9 @@
 <li class="toctree-l1"><a class="reference internal" href="core.html">Core Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="realtime.html">Real-Time Processing</a></li>
 </ul>
 </div>
 </nav></div>
@@ -435,15 +438,47 @@
 <li class="toctree-l2"><a class="reference internal" href="effects.html#time-based-effects">Time-based Effects</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="validation.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validation.html#exception-hierarchy">Exception Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validation.html#validator-functions">Validator Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validation.html#constants">Constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validation.html#usage-examples">Usage Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#quick-start">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#configuration-functions">Configuration Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#performance-logging">Performance Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#constants">Constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#logger-hierarchy">Logger Hierarchy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="realtime.html">Real-Time Processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="realtime.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="realtime.html#quick-start">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="realtime.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="realtime.html#audio-backend">Audio Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="realtime.html#ring-buffer">Ring Buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="realtime.html#processors">Processors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="realtime.html#exceptions">Exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="realtime.html#usage-examples">Usage Examples</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>The library is organized into three main modules:</p>
+<p>The library is organized into six main modules:</p>
 <ul class="simple">
 <li><p><strong>Core</strong> (<a class="reference internal" href="core.html"><span class="doc">Core Classes</span></a>) - Base classes <a class="reference internal" href="core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> and <a class="reference internal" href="core.html#torchfx.FX" title="torchfx.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p></li>
 <li><p><strong>Filters</strong> (<a class="reference internal" href="filters.html"><span class="doc">Filters</span></a>) - IIR and FIR filters for audio processing</p></li>
 <li><p><strong>Effects</strong> (<a class="reference internal" href="effects.html"><span class="doc">Effects</span></a>) - Built-in audio effects like Reverb and Delay</p></li>
+<li><p><strong>Validation</strong> (<a class="reference internal" href="validation.html"><span class="doc">Validation</span></a>) - Custom exceptions and parameter validation utilities</p></li>
+<li><p><strong>Logging</strong> (<a class="reference internal" href="logging.html"><span class="doc">Logging</span></a>) - Structured logging and performance profiling</p></li>
+<li><p><strong>Real-Time</strong> (<a class="reference internal" href="realtime.html"><span class="doc">Real-Time Processing</span></a>) - Real-time audio I/O, ring buffering, and stream processing</p></li>
 </ul>
 </section>
 <section id="quick-start">
@@ -452,6 +487,8 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span><span class="p">,</span> <span class="n">FX</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Reverb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchFXError</span><span class="p">,</span> <span class="n">validate_sample_rate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">enable_debug_logging</span><span class="p">,</span> <span class="n">log_performance</span>
 </pre></div>
 </div>
 <p>For detailed documentation of each module, see the sections below.</p>
