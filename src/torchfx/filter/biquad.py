@@ -271,6 +271,9 @@ class Biquad(AbstractFilter):
         Vectorized across channels, sequential across time samples.
         Ported from AudioNoise ``biquad.h`` ``biquad_step_df1``.
 
+        Uses a CUDA parallel prefix scan kernel when available and the input
+        is on a CUDA device, falling back to the pure-PyTorch loop otherwise.
+
         """
         assert self.a is not None and self.b is not None
 
@@ -285,14 +288,7 @@ class Biquad(AbstractFilter):
             x = x.reshape(B * C, T)
 
         C, T = x.shape
-        x_f64 = x.to(dtype=torch.float64)
         device = x.device
-
-        b0 = self.b[0]
-        b1 = self.b[1]
-        b2 = self.b[2]
-        a1 = self.a[1]
-        a2 = self.a[2]
 
         # Initialize or resize state
         if self._state_x is None or self._state_x.shape[0] != C:
@@ -304,6 +300,28 @@ class Biquad(AbstractFilter):
             self._state_y = self._state_y.to(device=device)
 
         assert self._state_y is not None
+
+        # Try native (CUDA or C++) kernel
+        from torchfx._ops import biquad_forward
+
+        native_result = biquad_forward(x, self.b, self.a, self._state_x, self._state_y)
+        if native_result is not None:
+            out, self._state_x, self._state_y = native_result
+            result = out.to(dtype=dtype)
+            if len(orig_shape) == 1:
+                return result.squeeze(0)
+            elif len(orig_shape) == 3:
+                return result.reshape(orig_shape)
+            return result
+
+        # Pure-PyTorch fallback
+        x_f64 = x.to(dtype=torch.float64)
+
+        b0 = self.b[0]
+        b1 = self.b[1]
+        b2 = self.b[2]
+        a1 = self.a[1]
+        a2 = self.a[2]
 
         # state[:, 0] = x[n-1] / y[n-1]
         # state[:, 1] = x[n-2] / y[n-2]

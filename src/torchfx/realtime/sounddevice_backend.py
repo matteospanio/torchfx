@@ -30,6 +30,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
+import numpy as np
 import torch
 from numpy.typing import NDArray
 from torch import Tensor
@@ -230,6 +231,24 @@ class SoundDeviceBackend(AudioBackend):
         config = self._config
         assert config is not None
 
+        # Pre-allocate tensors once — dimensions are fixed for the stream's lifetime.
+        buf = config.buffer_size
+        ch_in = config.channels_in
+        ch_out = config.channels_out
+        mono_in = ch_in == 1
+        mono_out = ch_out == 1
+
+        _input_tensor = (
+            torch.zeros(ch_in, buf, dtype=torch.float32) if ch_in > 0 else torch.empty(0)
+        )
+        _output_tensor = (
+            torch.zeros(ch_out, buf, dtype=torch.float32) if ch_out > 0 else torch.empty(0)
+        )
+
+        # Pre-allocate numpy view for output copy-back (channels, frames) order.
+        # We'll transpose into outdata at the end.
+        _out_np = _output_tensor.numpy() if ch_out > 0 else None
+
         def sd_callback(
             indata: NDArray[Any] | None,
             outdata: NDArray[Any] | None,
@@ -243,23 +262,31 @@ class SoundDeviceBackend(AudioBackend):
                 logger = get_logger("realtime.sounddevice")
                 logger.warning("sounddevice status: %s", status)
 
-            # Convert input: numpy (frames, channels) -> tensor (channels, frames)
+            # Convert input: numpy (frames, channels) -> pre-allocated tensor (channels, frames)
             if indata is not None:
-                input_tensor = torch.from_numpy(indata.T.copy())
-            else:
-                input_tensor = torch.empty(0)
+                if mono_in:
+                    # Mono fast-path: no transpose needed, just copy the column
+                    np.copyto(_input_tensor.numpy()[0], indata[:, 0])
+                else:
+                    np.copyto(_input_tensor.numpy(), indata.T)
 
-            # Create output tensor
+            # Zero the output tensor in-place (no allocation)
             if outdata is not None:
-                output_tensor = torch.zeros(outdata.shape[1], outdata.shape[0], dtype=torch.float32)
-            else:
-                output_tensor = torch.empty(0)
+                _output_tensor.zero_()
 
-            callback(input_tensor, output_tensor, frames)
+            callback(
+                _input_tensor if indata is not None else torch.empty(0),
+                _output_tensor if outdata is not None else torch.empty(0),
+                frames,
+            )
 
             # Copy output back: tensor (channels, frames) -> numpy (frames, channels)
-            if outdata is not None:
-                outdata[:] = output_tensor.numpy().T
+            if outdata is not None and _out_np is not None:
+                if mono_out:
+                    # Mono fast-path: no transpose needed
+                    np.copyto(outdata[:, 0], _out_np[0])
+                else:
+                    np.copyto(outdata, _out_np.T)
 
         return sd_callback
 

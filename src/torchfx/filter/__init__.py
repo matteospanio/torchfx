@@ -7,6 +7,7 @@ from .biquad import (
     BiquadLPF,
     BiquadNotch,
 )
+from .filterbank import LogFilterBank
 from .fir import FIR, DesignableFIR
 from .iir import (
     IIR,
@@ -61,6 +62,7 @@ __all__ = [
     "LoChebyshev2",
     "LoElliptic",
     "LoLinkwitzRiley",
+    "LogFilterBank",
     "LoShelving",
     "Notch",
     "ParametricEQ",

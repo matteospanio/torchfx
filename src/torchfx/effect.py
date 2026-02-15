@@ -920,6 +920,15 @@ class Reverb(FX):
         if waveform.size(-1) <= self.delay:
             return waveform
 
+        # Try native CUDA kernel for fused delay+mix
+        if waveform.is_cuda:
+            from torchfx._ops import delay_line_forward
+
+            result = delay_line_forward(waveform, self.delay, self.decay, self.mix)
+            if result is not None:
+                return result
+
+        # PyTorch fallback
         # Pad waveform for delay
         padded = torch.nn.functional.pad(waveform, (self.delay, 0))
         # Create delayed signal

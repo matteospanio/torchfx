@@ -26,7 +26,7 @@ Examples
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Iterable, Sequence
 from typing import Any, cast
 
 import torch
@@ -275,13 +275,10 @@ class RealtimeProcessor:
         """
         self._apply_pending_params()
 
-        # Process through effect chain
+        # Process through effect chain (all effects validated as FX/nn.Module at init)
         x = input_data
         for effect in self._effects:
-            if not isinstance(effect, nn.Module):
-                raise TypeError("Effects must inherit from torch.nn.Module")
-            call_effect = cast(Callable[[Tensor], Tensor], effect)
-            x = call_effect(x)
+            x = effect(x)
 
         # Write processed audio to output
         if output_data.numel() > 0:

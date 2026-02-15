@@ -243,6 +243,9 @@ class IIR(AbstractFilter):
         Each second-order section uses Direct Form 1, vectorized across channels
         and sequential across time.
 
+        Uses a CUDA parallel prefix scan kernel when available and the input
+        is on a CUDA device, falling back to the pure-PyTorch loop otherwise.
+
         Ported from AudioNoise ``biquad.h`` ``biquad_step_df1``.
 
         """
@@ -275,6 +278,20 @@ class IIR(AbstractFilter):
 
         assert self._state_y is not None
 
+        # Try native (CUDA or C++) SOS cascade kernel
+        from torchfx._ops import parallel_iir_forward
+
+        native_result = parallel_iir_forward(x, sos, self._state_x, self._state_y)
+        if native_result is not None:
+            out, self._state_x, self._state_y = native_result
+            result = out.to(dtype=out_dtype)
+            if len(orig_shape) == 1:
+                return result.squeeze(0)
+            elif len(orig_shape) == 3:
+                return result.reshape(orig_shape)
+            return result
+
+        # Pure-PyTorch fallback
         section_input = x.to(dtype=torch.float64)
 
         for s in range(num_sections):
