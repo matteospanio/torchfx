@@ -52,7 +52,7 @@ def toml_config(tmp_path: Path) -> Path:
     """Create a minimal TOML config file."""
     path = tmp_path / "chain.toml"
     path.write_text(
-        '[[effects]]\nname = "gain"\ngain = 0.5\n\n' '[[effects]]\nname = "normalize"\npeak = 0.8\n'
+        '[[effects]]\nname = "gain"\ngain = 0.5\n\n[[effects]]\nname = "normalize"\npeak = 0.8\n'
     )
     return path
 
