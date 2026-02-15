@@ -152,7 +152,7 @@ class StreamProcessor:
             # Validate cutoff before computing coefficients
             if isinstance(effect, AbstractFilter) and hasattr(effect, "cutoff"):
                 cutoff = effect.cutoff
-                if isinstance(cutoff, (int, float)) and cutoff >= nyquist:
+                if isinstance(cutoff, int | float) and cutoff >= nyquist:
                     raise ValueError(
                         f"{type(effect).__name__} cutoff ({cutoff} Hz) must be "
                         f"below the Nyquist frequency ({nyquist} Hz) for sample rate "

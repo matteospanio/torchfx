@@ -17,8 +17,8 @@ from torchfx.realtime import StreamProcessor
 # Note: filter cutoffs must be below the Nyquist frequency (fs/2) of the input file.
 # Using 6000 Hz is safe for all common sample rates (16kHz+).
 effects = [
-    HiButterworth(60),           # Remove sub-bass rumble
-    LoButterworth(6000),         # Remove high frequencies
+    BiquadHPF(60, 0.707),           # Remove sub-bass rumble
+    BiquadLPF(6000, 0.707),         # Remove high frequencies
     Gain(0.8),                   # Reduce volume slightly
     Normalize(peak=0.95),        # Normalize to -0.5dBFS
 ]

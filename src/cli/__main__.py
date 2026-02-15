@@ -1,3 +1,12 @@
+"""Entry point for ``python -m cli`` and the ``torchfx`` console script."""
+
+from cli.app import app
+
+
 def main() -> None:
-    print("Welcome to the TorchFX CLI!")
-    print("This is a placeholder for the CLI functionality.")
+    """Launch the TorchFX CLI application."""
+    app()
+
+
+if __name__ == "__main__":
+    main()

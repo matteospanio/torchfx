@@ -138,7 +138,11 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 cli = [
+    "prompt-toolkit>=3.0",
+    "rich>=13.0",
+    "tomli>=2.0; python_version < '3.11'",
     "typer>=0.16.0",
+    "watchdog>=4.0",
 ]
 dev = [
     "black>=25.1.0",

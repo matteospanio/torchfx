@@ -5,6 +5,7 @@ Learn TorchFX through practical examples organized by use case.
 ```{toctree}
 :maxdepth: 2
 
+cli-guide
 custom-filters
 series-parallel-filters
 custom-effects

@@ -124,11 +124,11 @@ class SoundDeviceBackend(AudioBackend):
         """
         default = self._sd.default.device
         if direction == StreamDirection.INPUT:
-            return cast(int | str, default[0] if isinstance(default, (list, tuple)) else default)
+            return cast(int | str, default[0] if isinstance(default, list | tuple) else default)
         elif direction == StreamDirection.OUTPUT:
-            return cast(int | str, default[1] if isinstance(default, (list, tuple)) else default)
+            return cast(int | str, default[1] if isinstance(default, list | tuple) else default)
         # DUPLEX: return input device
-        return cast(int | str, default[0] if isinstance(default, (list, tuple)) else default)
+        return cast(int | str, default[0] if isinstance(default, list | tuple) else default)
 
     def open_stream(
         self,
