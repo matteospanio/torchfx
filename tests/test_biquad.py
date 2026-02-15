@@ -20,7 +20,6 @@ from torchfx.filter import (
     BiquadNotch,
 )
 
-
 FS = 44100
 CUTOFF = 1000.0
 Q = 0.707

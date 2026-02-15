@@ -38,7 +38,6 @@ from torchfx.realtime.ring_buffer import TensorRingBuffer
 from torchfx.realtime.stream import StreamProcessor
 from torchfx.validation.exceptions import AudioProcessingError, TorchFXError
 
-
 # ---------------------------------------------------------------------------
 # Mock Backend for testing without real audio hardware
 # ---------------------------------------------------------------------------
