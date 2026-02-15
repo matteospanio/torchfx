@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [0.4.0] - 2026-02-15
+
+### Added
+
+- Input validation layer with custom exception hierarchy (`torchfx.validation` module)
+  - Base exception `TorchFXError` for catching all library errors
+  - Specific exceptions: `InvalidParameterError`, `InvalidSampleRateError`, `InvalidRangeError`, `InvalidShapeError`, `InvalidTypeError`, `AudioProcessingError`, `CoefficientComputationError`, `FilterInstabilityError`
+  - Validator functions for sample rates, parameter ranges, tensor shapes, types, and audio-specific validation (cutoff frequency, filter order, Q factor)
+- Logging infrastructure (`torchfx.logging` module)
+  - Structured logging following Python best practices (NullHandler by default)
+  - Convenience functions: `enable_logging()`, `enable_debug_logging()`, `disable_logging()`, `get_logger()`
+  - Performance profiling: `log_performance()` context manager and `LogPerformance` decorator
+  - Hierarchical logger support for fine-grained control
+- Realtime processing module (`torchfx.realtime`) with streaming processors and audio backends
+- Biquad filter implementations (LPF, HPF, BPF, BPF peak, notch, all-pass) with stateful and stateless processing paths
+- CLI application (Epic 3 — Phase 1) with Typer framework
+  - `torchfx process` command: single-file, batch (glob + progress bar), and Unix pipe processing
+  - `torchfx info` command: display audio file metadata in a Rich table
+  - `torchfx play` command: play audio through speakers with optional effects (requires `sounddevice`)
+  - `torchfx record` command: record from microphone with duration/sample-rate/channels control
+  - Effect-chain parser: `--effect "name:param1=val1,param2=val2"` syntax with 30+ registered effects/filters
+  - TOML configuration file support for defining reusable effect chains
+  - GPU acceleration via `--device cuda` global option
+
 ## [0.3.0] - 2026-01-12
 
 ### Added

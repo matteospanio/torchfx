@@ -66,16 +66,18 @@ torchfx.filter.AbstractFilter : Base class for all filters
 """
 
 import abc
+import math
 from collections.abc import Sequence
 
 import numpy as np
 import torch
-from scipy.signal import butter, cheby1, cheby2, ellip, iirnotch, iirpeak
+from scipy.signal import butter, cheby1, cheby2, ellip, tf2sos
 from torch import Tensor, dtype
 from torchaudio import functional as F  # noqa: N812
 from typing_extensions import override
 
 from torchfx.filter.__base import AbstractFilter
+from torchfx.filter.biquad import Biquad
 from torchfx.typing import Device, FilterOrderScale
 
 NONE_FS_ERR = "Sample rate of the filter could not be None."
@@ -86,11 +88,19 @@ class IIR(AbstractFilter):
 
     This abstract class provides the foundation for all IIR filter implementations
     in torchfx. It implements lazy coefficient computation, automatic device
-    management, and the core filtering operation using `torchaudio.functional.lfilter`.
+    management, and the core filtering operation.
 
-    IIR filters are recursive digital filters characterized by their transfer
-    function H(z) = B(z)/A(z), where B(z) are the feedforward (numerator)
-    coefficients and A(z) are the feedback (denominator) coefficients.
+    Two processing paths are provided:
+
+    * **Stateless (fast)**: delegates to ``torchaudio.functional.lfilter`` for
+      one-shot processing when no chunk-to-chunk state is needed.
+    * **Stateful (SOS cascade)**: a pure-PyTorch second-order-sections (SOS) cascade
+      using Direct Form 1 that carries state between calls. Activated after the
+      first ``forward()`` call — subsequent calls reuse state. Call
+      ``reset_state()`` to clear accumulated state.
+
+    Higher-order IIR filters are internally decomposed into second-order sections
+    (biquad cascade) for numerical stability.
 
     Attributes
     ----------
@@ -112,16 +122,14 @@ class IIR(AbstractFilter):
     Coefficient Computation Flow:
         1. Filter is instantiated with parameters (fs may be None)
         2. On first forward pass, if coefficients are None, compute_coefficients() is called
-        3. Coefficients are converted to tensors and moved to input device
-        4. Filtering is performed using lfilter from torchaudio
-
-    The lazy evaluation pattern minimizes memory usage when filters are instantiated
-    but not immediately used.
+        3. Coefficients are converted to SOS matrix for stateful processing
+        4. Filtering is performed using lfilter (stateless) or SOS cascade (stateful)
 
     See Also
     --------
     AbstractFilter : Base class for all filters
     torchfx.filter.fir.FIR : Base class for FIR filters
+    torchfx.filter.biquad.Biquad : Biquad filter base class
 
     """
 
@@ -134,6 +142,42 @@ class IIR(AbstractFilter):
     def __init__(self, fs: int | None = None) -> None:
         super().__init__()
         self.fs = fs
+        # SOS matrix: [num_sections, 6] each row [b0, b1, b2, 1, a1, a2]
+        self._sos: Tensor | None = None
+        # Per-section, per-channel DF1 state: [num_sections, C, 2] for x and y
+        self._state_x: Tensor | None = None
+        self._state_y: Tensor | None = None
+        self._stateful: bool = False
+
+    def _compute_sos(self) -> None:
+        """Convert transfer function coefficients to SOS matrix.
+
+        Uses ``scipy.signal.tf2sos`` to decompose higher-order transfer functions
+        into cascaded second-order sections for numerical stability.
+
+        """
+        if self.a is None or self.b is None:
+            return
+
+        a_np = np.asarray(
+            self.a if not isinstance(self.a, Tensor) else self.a.cpu().numpy(), dtype=np.float64
+        )
+        b_np = np.asarray(
+            self.b if not isinstance(self.b, Tensor) else self.b.cpu().numpy(), dtype=np.float64
+        )
+
+        # For 2nd-order filters (3 coefficients), build SOS directly
+        if len(a_np) <= 3 and len(b_np) <= 3:
+            # Pad to length 3 if needed
+            b_pad = np.zeros(3, dtype=np.float64)
+            a_pad = np.zeros(3, dtype=np.float64)
+            b_pad[: len(b_np)] = b_np
+            a_pad[: len(a_np)] = a_np
+            sos = np.array([[b_pad[0], b_pad[1], b_pad[2], a_pad[0], a_pad[1], a_pad[2]]])
+        else:
+            sos = tf2sos(b_np, a_np)
+
+        self._sos = torch.from_numpy(sos)
 
     def move_coeff(self, device: Device, dtype: dtype = torch.float32) -> None:
         """Move the filter coefficients to the specified device and dtype."""
@@ -154,7 +198,134 @@ class IIR(AbstractFilter):
         if not isinstance(self.a, Tensor) or not isinstance(self.b, Tensor):
             self.move_coeff(device, dtype)
 
-        return F.lfilter(x, self.a, self.b)  # type: ignore
+        # Stateful path: use SOS cascade in pure PyTorch
+        if self._stateful:
+            return self._forward_sos(x)
+
+        # Fast stateless path via torchaudio lfilter
+        result: Tensor = F.lfilter(x, self.a, self.b, clamp=False)
+        result = result.to(dtype=dtype)
+
+        # Build SOS and bootstrap state for next chunk
+        if self._sos is None:
+            self._compute_sos()
+        self._bootstrap_state(x, result)
+        self._stateful = True
+
+        return result
+
+    def _bootstrap_state(self, x: Tensor, y: Tensor) -> None:  # noqa: ARG002
+        """Initialize SOS DF1 state from the tail of processed signals."""
+        if self._sos is None:
+            return
+
+        device = x.device
+        num_sections = self._sos.shape[0]
+
+        # Get channel count
+        if x.ndim == 1:
+            C = 1
+        elif x.ndim == 2:
+            C = x.shape[0]
+        else:
+            C = x.shape[-2]  # [B, C, T]
+
+        # We can't perfectly reconstruct intermediate SOS section states from
+        # only input/output. Initialize to zeros — this introduces a tiny
+        # transient on the first stateful chunk boundary, which is inaudible
+        # for typical chunk sizes (>256 samples).
+        self._state_x = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
+        self._state_y = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
+
+    def _forward_sos(self, x: Tensor) -> Tensor:
+        """Process with SOS biquad cascade carrying state across calls.
+
+        Each second-order section uses Direct Form 1, vectorized across channels
+        and sequential across time.
+
+        Ported from AudioNoise ``biquad.h`` ``biquad_step_df1``.
+
+        """
+        assert self._sos is not None
+
+        orig_shape = x.shape
+        out_dtype = x.dtype
+        device = x.device
+
+        # Normalize to [C, T]
+        if x.ndim == 1:
+            x = x.unsqueeze(0)
+        elif x.ndim == 3:
+            B, C, T = x.shape
+            x = x.reshape(B * C, T)
+
+        C, T = x.shape
+        num_sections = self._sos.shape[0]
+
+        sos = self._sos.to(device=device, dtype=torch.float64)
+
+        # Initialize or resize state
+        if self._state_x is None or self._state_x.shape[1] != C:
+            self._state_x = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
+            self._state_y = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
+        else:
+            self._state_x = self._state_x.to(device=device)
+            assert self._state_y is not None
+            self._state_y = self._state_y.to(device=device)
+
+        assert self._state_y is not None
+
+        section_input = x.to(dtype=torch.float64)
+
+        for s in range(num_sections):
+            b0 = sos[s, 0]
+            b1 = sos[s, 1]
+            b2 = sos[s, 2]
+            # sos[s, 3] is a0 (== 1 after normalization from tf2sos)
+            a1 = sos[s, 4]
+            a2 = sos[s, 5]
+
+            sx = self._state_x[s].clone()  # [C, 2]
+            sy = self._state_y[s].clone()  # [C, 2]
+
+            out = torch.empty_like(section_input)
+
+            for n in range(T):
+                xn = section_input[:, n]
+                yn = b0 * xn + b1 * sx[:, 0] + b2 * sx[:, 1] - a1 * sy[:, 0] - a2 * sy[:, 1]
+                out[:, n] = yn
+                sx[:, 1] = sx[:, 0]
+                sx[:, 0] = xn
+                sy[:, 1] = sy[:, 0]
+                sy[:, 0] = yn
+
+            self._state_x[s] = sx
+            self._state_y[s] = sy
+
+            # Output of this section feeds next section
+            section_input = out
+
+        result = section_input.to(dtype=out_dtype)
+
+        # Restore original shape
+        if len(orig_shape) == 1:
+            return result.squeeze(0)
+        elif len(orig_shape) == 3:
+            return result.reshape(orig_shape)
+        return result
+
+    def reset_state(self) -> None:
+        """Reset filter state for chunk-to-chunk continuity.
+
+        Call this when switching audio sources, seeking in a file, or after changing
+        filter coefficients. After calling this method, the next ``forward()`` will
+        use the fast ``lfilter`` path again.
+
+        """
+        self._state_x = None
+        self._state_y = None
+        self._stateful = False
+        self._sos = None
 
 
 class Butterworth(IIR):
@@ -830,7 +1001,7 @@ class LoButterworth(Butterworth):
         super().__init__("lowpass", cutoff, order, order_scale, fs)
 
 
-class Shelving(IIR):
+class Shelving(Biquad):
     """Base class for shelving filters.
 
     Shelving filters boost or cut frequencies above (high shelf) or below (low shelf)
@@ -841,6 +1012,10 @@ class Shelving(IIR):
     This base class provides common functionality for both high-shelf and low-shelf
     implementations, including the computation of angular frequency and alpha
     parameters used in the biquad filter equations.
+
+    Inherits from ``Biquad`` — shelving filters are second-order IIR filters and
+    benefit from the biquad's efficient stateless (lfilter) and stateful (DF1)
+    processing paths.
 
     Parameters
     ----------
@@ -856,10 +1031,6 @@ class Shelving(IIR):
         - 2.0+: Very steep transition
     fs : int | None, default=None
         Sampling frequency in Hz.
-    a : Sequence[float] | None, default=None
-        Pre-computed denominator coefficients.
-    b : Sequence[float] | None, default=None
-        Pre-computed numerator coefficients.
 
     Attributes
     ----------
@@ -878,31 +1049,23 @@ class Shelving(IIR):
 
     """
 
-    q: float
-
     def __init__(
         self,
         cutoff: float,
         q: float,
         fs: int | None = None,
-        a: Sequence[float] | None = None,
-        b: Sequence[float] | None = None,
     ) -> None:
-        super().__init__(fs)
-        self.cutoff = cutoff
-        self.q = q
-        self.b = b
-        self.a = a
+        super().__init__(cutoff=cutoff, q=q, fs=fs)
 
     @property
     def _omega(self) -> float:
         if self.fs is None:
             raise ValueError(NONE_FS_ERR)
-        return 2 * np.pi * self.cutoff / self.fs
+        return 2.0 * math.pi * self.cutoff / self.fs
 
     @property
     def _alpha(self) -> float:
-        return float(np.sin(self._omega) / (2 * self.q))
+        return math.sin(self._omega) / (2.0 * self.q)
 
 
 class HiShelving(Shelving):
@@ -1009,26 +1172,30 @@ class HiShelving(Shelving):
         fs: int | None = None,
     ):
         super().__init__(cutoff=cutoff, q=q, fs=fs)
-        self.cutoff = cutoff
-        self.q = q
         self.gain = gain if gain_scale == "linear" else 10 ** (gain / 20)
 
     @override
     def compute_coefficients(self) -> None:
         A = self.gain  # noqa: N806
-        b0 = A * ((A + 1) + (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha)
-        b1 = -2 * A * ((A - 1) + (A + 1) * np.cos(self._omega))
-        b2 = A * ((A + 1) + (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha)
+        cos_w = math.cos(self._omega)
+        sqrt_A = math.sqrt(A)
+        alpha = self._alpha
 
-        a0 = (A + 1) - (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha
-        a1 = 2 * ((A - 1) - (A + 1) * np.cos(self._omega))
-        a2 = (A + 1) - (A - 1) * np.cos(self._omega) - 2 * np.sqrt(A) * self._alpha
+        b0 = A * ((A + 1) + (A - 1) * cos_w + 2 * sqrt_A * alpha)
+        b1 = -2 * A * ((A - 1) + (A + 1) * cos_w)
+        b2 = A * ((A + 1) + (A - 1) * cos_w - 2 * sqrt_A * alpha)
 
-        b = [b0 / a0, b1 / a0, b2 / a0]
-        a = [1.0, a1 / a0, a2 / a0]
+        a0 = (A + 1) - (A - 1) * cos_w + 2 * sqrt_A * alpha
+        a1 = 2 * ((A - 1) - (A + 1) * cos_w)
+        a2 = (A + 1) - (A - 1) * cos_w - 2 * sqrt_A * alpha
 
-        self.b = b
-        self.a = a
+        self._set_coefficients(
+            b0=b0 / a0,
+            b1=b1 / a0,
+            b2=b2 / a0,
+            a1=a1 / a0,
+            a2=a2 / a0,
+        )
 
 
 class LoShelving(Shelving):
@@ -1156,99 +1323,33 @@ class LoShelving(Shelving):
         fs: int | None = None,
     ):
         super().__init__(cutoff=cutoff, q=q, fs=fs)
-        self.cutoff = cutoff
-        self.q = q
         self.gain = gain if gain_scale == "linear" else 10 ** (gain / 20)
 
     @override
     def compute_coefficients(self) -> None:
         A = self.gain  # noqa: N806
-        b0 = A * ((A + 1) - (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha)
-        b1 = 2 * A * ((A - 1) - (A + 1) * np.cos(self._omega))
-        b2 = A * ((A + 1) - (A - 1) * np.cos(self._omega) - 2 * np.sqrt(A) * self._alpha)
+        cos_w = math.cos(self._omega)
+        sqrt_A = math.sqrt(A)
+        alpha = self._alpha
 
-        a0 = (A + 1) + (A - 1) * np.cos(self._omega) + 2 * np.sqrt(A) * self._alpha
-        a1 = -2 * ((A - 1) + (A + 1) * np.cos(self._omega))
-        a2 = (A + 1) + (A - 1) * np.cos(self._omega) - 2 * np.sqrt(A) * self._alpha
+        b0 = A * ((A + 1) - (A - 1) * cos_w + 2 * sqrt_A * alpha)
+        b1 = 2 * A * ((A - 1) - (A + 1) * cos_w)
+        b2 = A * ((A + 1) - (A - 1) * cos_w - 2 * sqrt_A * alpha)
 
-        b = [b0 / a0, b1 / a0, b2 / a0]
-        a = [1.0, a1 / a0, a2 / a0]
+        a0 = (A + 1) + (A - 1) * cos_w + 2 * sqrt_A * alpha
+        a1 = -2 * ((A - 1) + (A + 1) * cos_w)
+        a2 = (A + 1) + (A - 1) * cos_w - 2 * sqrt_A * alpha
 
-        self.b = b
-        self.a = a
-
-
-class Peaking(IIR):
-    """Peaking filter for narrow-band frequency adjustment.
-
-    A peaking filter (also called a bell filter or bandpass/bandstop filter) boosts
-    or cuts a narrow band of frequencies centered around a specified frequency. This
-    is a general implementation using scipy's iirpeak function.
-
-    For parametric EQ applications with more control, consider using ParametricEQ
-    instead, which provides implementation based on the Audio EQ Cookbook.
-
-    Parameters
-    ----------
-    cutoff : float
-        Center frequency in Hz where the peak or notch occurs.
-    q : float
-        Quality factor determining the bandwidth. Higher Q values result in
-        narrower peaks. Bandwidth in Hz ≈ cutoff / Q.
-    gain : float
-        Peak gain. Interpretation depends on gain_scale:
-        - For "linear": Linear gain factor
-        - For "db": Gain in dB
-    gain_scale : {"linear", "db"}
-        How to interpret the gain parameter.
-    fs : int | None, default=None
-        Sampling frequency in Hz.
-    a : Sequence[float] | None, default=None
-        Pre-computed denominator coefficients.
-    b : Sequence[float] | None, default=None
-        Pre-computed numerator coefficients.
-
-    Examples
-    --------
-    >>> import torchfx as fx
-    >>> peak = fx.filter.Peaking(cutoff=1000, q=2.0, gain=6, gain_scale="db", fs=44100)
-    >>> wave = fx.Wave.from_file("audio.wav")
-    >>> filtered = wave | peak
-
-    See Also
-    --------
-    ParametricEQ : More sophisticated parametric EQ implementation
-    Notch : Notch filter for frequency rejection
-
-    """
-
-    def __init__(
-        self,
-        cutoff: float,
-        q: float,
-        gain: float,
-        gain_scale: FilterOrderScale,
-        fs: int | None = None,
-        a: Sequence[float] | None = None,
-        b: Sequence[float] | None = None,
-    ) -> None:
-        super().__init__(fs)
-        self.cutoff = cutoff
-        self.q = q
-        self.gain = gain if gain_scale == "linear" else 10 ** (gain / 20)
-        self.a = a
-        self.b = b
-
-    @override
-    def compute_coefficients(self) -> None:
-        assert self.fs is not None
-
-        b, a = iirpeak(self.cutoff / (self.fs / 2), self.q, self.fs)
-        self.b = b  # type: ignore
-        self.a = a  # type: ignore
+        self._set_coefficients(
+            b0=b0 / a0,
+            b1=b1 / a0,
+            b2=b2 / a0,
+            a1=a1 / a0,
+            a2=a2 / a0,
+        )
 
 
-class ParametricEQ(IIR):
+class ParametricEQ(Biquad):
     """Parametric equalizer with bell-shaped frequency response.
 
     A parametric EQ is a bell-shaped filter (also called a peaking filter) that
@@ -1412,46 +1513,85 @@ class ParametricEQ(IIR):
         gain: float,
         fs: int | None = None,
     ) -> None:
-        super().__init__(fs)
-        self.cutoff = frequency
-        self.q = q
+        super().__init__(cutoff=frequency, q=q, fs=fs)
         self.gain_db = gain
         self.gain = 10 ** (gain / 20)
-        self.a = None
-        self.b = None
-
-    @property
-    def _omega(self) -> float:
-        if self.fs is None:
-            raise ValueError(NONE_FS_ERR)
-        return 2 * np.pi * self.cutoff / self.fs
-
-    @property
-    def _alpha(self) -> float:
-        return float(np.sin(self._omega) / (2 * self.q))
 
     @override
     def compute_coefficients(self) -> None:
         """Compute the filter coefficients using the Audio EQ Cookbook formulas."""
+        assert self.fs is not None
         A = self.gain  # noqa: N806
+        sin_w0, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
 
-        b0 = 1 + self._alpha * A
-        b1 = -2 * np.cos(self._omega)
-        b2 = 1 - self._alpha * A
+        b0 = 1 + alpha * A
+        b1 = -2 * cos_w0
+        b2 = 1 - alpha * A
 
-        a0 = 1 + self._alpha / A
-        a1 = -2 * np.cos(self._omega)
-        a2 = 1 - self._alpha / A
+        a0 = 1 + alpha / A
+        a1 = -2 * cos_w0
+        a2 = 1 - alpha / A
 
-        # Normalize coefficients
-        b = [b0 / a0, b1 / a0, b2 / a0]
-        a = [1.0, a1 / a0, a2 / a0]
+        self._set_coefficients(
+            b0=b0 / a0,
+            b1=b1 / a0,
+            b2=b2 / a0,
+            a1=a1 / a0,
+            a2=a2 / a0,
+        )
 
-        self.b = b
-        self.a = a
+
+class Peaking(ParametricEQ):
+    """Peaking filter for narrow-band frequency adjustment.
+
+    A simple wrapper around ``ParametricEQ`` that provides compatibility with
+    the ``gain_scale`` parameter for specifying gain in linear or dB.
+
+    For parametric EQ applications with more control, consider using
+    ``ParametricEQ`` directly.
+
+    Parameters
+    ----------
+    cutoff : float
+        Center frequency in Hz where the peak or notch occurs.
+    q : float
+        Quality factor determining the bandwidth. Higher Q values result in
+        narrower peaks. Bandwidth in Hz ≈ cutoff / Q.
+    gain : float
+        Peak gain. Interpretation depends on gain_scale:
+        - For "linear": Linear gain factor
+        - For "db": Gain in dB
+    gain_scale : {"linear", "db"}
+        How to interpret the gain parameter.
+    fs : int | None, default=None
+        Sampling frequency in Hz.
+
+    Examples
+    --------
+    >>> import torchfx as fx
+    >>> peak = fx.filter.Peaking(cutoff=1000, q=2.0, gain=6, gain_scale="db", fs=44100)
+    >>> wave = fx.Wave.from_file("audio.wav")
+    >>> filtered = wave | peak
+
+    See Also
+    --------
+    ParametricEQ : Full parametric EQ implementation
+
+    """
+
+    def __init__(
+        self,
+        cutoff: float,
+        q: float,
+        gain: float,
+        gain_scale: FilterOrderScale,
+        fs: int | None = None,
+    ) -> None:
+        gain_db = gain if gain_scale == "db" else 20 * math.log10(gain) if gain > 0 else 0
+        super().__init__(frequency=cutoff, q=q, gain=gain_db, fs=fs)
 
 
-class Notch(IIR):
+class Notch(Biquad):
     """Notch filter for narrow-band frequency rejection.
 
     A notch filter (also called a band-stop or band-reject filter) attenuates a
@@ -1461,6 +1601,9 @@ class Notch(IIR):
 
     The filter creates a sharp dip in the frequency response at the notch frequency,
     with the width of the notch controlled by the Q parameter.
+
+    Inherits from ``Biquad`` — notch filters are second-order IIR filters and
+    benefit from the biquad's efficient processing paths.
 
     Parameters
     ----------
@@ -1565,20 +1708,41 @@ class Notch(IIR):
         q: float,
         fs: int | None = None,
     ) -> None:
-        super().__init__(fs)
-        self.cutoff = cutoff
-        self.q = q
+        super().__init__(cutoff=cutoff, q=q, fs=fs)
 
     @override
     def compute_coefficients(self) -> None:
+        """Compute notch filter coefficients.
+
+        Uses the AudioNoise ``biquad.h`` ``_biquad_notch_filter`` formula:
+
+        .. code-block:: c
+
+            b0 = b2 = 1 / (1 + alpha)
+            b1 = a1 = -2*cos(w0) / (1 + alpha)
+            a2 = (1 - alpha) / (1 + alpha)
+
+        References
+        ----------
+        .. [1] AudioNoise project, ``biquad.h``, ``_biquad_notch_filter``.
+
+        """
         assert self.fs is not None
 
-        b, a = iirnotch(self.cutoff / (self.fs / 2), self.q)
-        self.b = b  # type: ignore
-        self.a = a  # type: ignore
+        _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
+        a0_inv = 1.0 / (1.0 + alpha)
+        common = -2.0 * cos_w0 * a0_inv
+
+        self._set_coefficients(
+            b0=a0_inv,
+            b1=common,
+            b2=a0_inv,
+            a1=common,
+            a2=(1.0 - alpha) * a0_inv,
+        )
 
 
-class AllPass(IIR):
+class AllPass(Biquad):
     """All-pass filter for phase manipulation without magnitude change.
 
     An all-pass filter passes all frequencies with unity magnitude (no amplitude
@@ -1589,6 +1753,9 @@ class AllPass(IIR):
     While the magnitude response is flat across all frequencies, the phase response
     varies with frequency, which can be used to align phase between different signal
     paths or create time-domain dispersion effects.
+
+    Inherits from ``Biquad`` — all-pass filters are second-order IIR filters and
+    benefit from the biquad's efficient processing paths.
 
     Parameters
     ----------
@@ -1666,17 +1833,40 @@ class AllPass(IIR):
         q: float,
         fs: int | None = None,
     ) -> None:
-        super().__init__(fs)
-        self.cutoff = cutoff
-        self.q = q
+        super().__init__(cutoff=cutoff, q=q, fs=fs)
 
     @override
     def compute_coefficients(self) -> None:
+        """Compute all-pass filter coefficients.
+
+        Uses the AudioNoise ``biquad.h`` ``_biquad_allpass_filter`` formula:
+
+        .. code-block:: c
+
+            b0 = a2 = (1 - alpha) / (1 + alpha)
+            b1 = a1 = -2*cos(w0) / (1 + alpha)
+            b2 = 1  (= a0, the pre-normalization denominator)
+
+        References
+        ----------
+        .. [1] AudioNoise project, ``biquad.h``, ``_biquad_allpass_filter``.
+
+        """
         assert self.fs is not None
 
-        b, a = iirpeak(self.cutoff / (self.fs / 2), self.q)
-        self.b = b  # type: ignore
-        self.a = a  # type: ignore
+        _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
+        a0_inv = 1.0 / (1.0 + alpha)
+
+        b0 = (1.0 - alpha) * a0_inv
+        b1 = -2.0 * cos_w0 * a0_inv
+
+        self._set_coefficients(
+            b0=b0,
+            b1=b1,
+            b2=1.0,
+            a1=b1,
+            a2=b0,
+        )
 
 
 class LinkwitzRiley(IIR):

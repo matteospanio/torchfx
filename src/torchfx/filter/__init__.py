@@ -1,3 +1,12 @@
+from .biquad import (
+    Biquad,
+    BiquadAllPass,
+    BiquadBPF,
+    BiquadBPFPeak,
+    BiquadHPF,
+    BiquadLPF,
+    BiquadNotch,
+)
 from .fir import FIR, DesignableFIR
 from .iir import (
     IIR,
@@ -21,10 +30,18 @@ from .iir import (
     LoShelving,
     Notch,
     ParametricEQ,
+    Peaking,
 )
 
 __all__ = [
     "AllPass",
+    "Biquad",
+    "BiquadAllPass",
+    "BiquadBPF",
+    "BiquadBPFPeak",
+    "BiquadHPF",
+    "BiquadLPF",
+    "BiquadNotch",
     "Butterworth",
     "Chebyshev1",
     "Chebyshev2",
@@ -47,4 +64,5 @@ __all__ = [
     "LoShelving",
     "Notch",
     "ParametricEQ",
+    "Peaking",
 ]

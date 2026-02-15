@@ -549,10 +549,17 @@ class FIR(AbstractFilter):
 
         # Pad input to maintain original length, pad right side
         pad = int(kernel.shape[-1] - 1)  # type: ignore
-        x_padded = nn.functional.pad(x, (pad, 0))  # pad right only # type: ignore
+        x_padded = nn.functional.pad(x, (pad, 0))  # pad left only # type: ignore
 
-        # Apply convolution with groups = C (same kernel per channel, repeated for batch)
-        y = nn.functional.conv1d(x_padded, kernel_exp.repeat(BATCHES, 1, 1), groups=CHANNELS)
+        # For batch > 1, reshape to [B*C, 1, T] and use single-channel conv1d
+        if BATCHES > 1:
+            x_padded = x_padded.reshape(BATCHES * CHANNELS, 1, -1)
+            assert isinstance(kernel, Tensor)
+            y = nn.functional.conv1d(x_padded, kernel)
+            y = y.reshape(BATCHES, CHANNELS, TIME)
+        else:
+            assert isinstance(kernel_exp, Tensor)
+            y = nn.functional.conv1d(x_padded, kernel_exp, groups=CHANNELS)
 
         # Reshape back to [B, C, T]
         y = y.view(BATCHES, CHANNELS, TIME)

@@ -26,6 +26,11 @@ jobs:
       - name: Install uv
         run: pip install uv
 
+      - name: Install system audio deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libportaudio2 portaudio19-dev
+
       - name: Restore dependency cache
         id: cache-restore
         uses: actions/cache/restore@v4
@@ -76,6 +81,9 @@ jobs:
             ~/.cache/uv
           key: uv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
+      - name: Install dependencies
+        run: uv sync --all-groups
+
       - name: Check formatting with Black
         run: uv run black --check src tests
 
@@ -107,6 +115,9 @@ jobs:
             .venv
             ~/.cache/uv
           key: uv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+
+      - name: Install dependencies
+        run: uv sync --all-groups
 
       - name: Lint with Ruff
         run: |
@@ -141,6 +152,9 @@ jobs:
             .venv
             ~/.cache/uv
           key: uv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+
+      - name: Install dependencies
+        run: uv sync --all-groups
 
       - name: Run tests with pytest
         run: uv run pytest
