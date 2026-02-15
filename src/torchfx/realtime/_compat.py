@@ -28,7 +28,7 @@ def _check_sounddevice() -> bool:
     try:
         _sounddevice_module = importlib.import_module("sounddevice")
         return True
-    except ImportError:
+    except (ImportError, OSError):
         return False
 
 
