@@ -11,7 +11,7 @@ Usage:
 """
 
 from torchfx.effect import Gain, Reverb
-from torchfx.filter.iir import HiButterworth, LoButterworth
+from torchfx.filter import HiButterworth, LoButterworth, BiquadHPF, BiquadLPF
 from torchfx.realtime import RealtimeProcessor, SoundDeviceBackend, StreamConfig
 
 # Configure duplex stream (mic in -> speakers out)
@@ -25,8 +25,8 @@ config = StreamConfig(
 
 # Build effect chain
 effects = [
-    HiButterworth(220),         # Remove low-frequency rumble
-    LoButterworth(8000),       # Tame harsh highs
+    BiquadHPF(220, 0.707),         # Remove low-frequency rumble
+    BiquadLPF(8000, 0.707),       # Tame harsh highs
     Gain(1.5),                 # Boost signal
     Reverb(),     # Add ambience
 ]

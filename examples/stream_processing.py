@@ -10,7 +10,7 @@ Usage:
 import sys
 
 from torchfx.effect import Gain, Normalize
-from torchfx.filter.iir import HiButterworth, LoButterworth
+from torchfx.filter import HiButterworth, LoButterworth, BiquadHPF, BiquadLPF
 from torchfx.realtime import StreamProcessor
 
 # Build effect chain
