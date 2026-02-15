@@ -70,7 +70,9 @@ from collections.abc import Sequence
 
 import numpy as np
 import torch
+from numpy.typing import NDArray
 from scipy.signal import butter, cheby1, cheby2, ellip, iirnotch, iirpeak
+from scipy.signal import lfilter as sp_lfilter
 from torch import Tensor, dtype
 from torchaudio import functional as F  # noqa: N812
 from typing_extensions import override
@@ -134,6 +136,7 @@ class IIR(AbstractFilter):
     def __init__(self, fs: int | None = None) -> None:
         super().__init__()
         self.fs = fs
+        self._zi: list[NDArray[np.float64]] | None = None
 
     def move_coeff(self, device: Device, dtype: dtype = torch.float32) -> None:
         """Move the filter coefficients to the specified device and dtype."""
@@ -154,7 +157,56 @@ class IIR(AbstractFilter):
         if not isinstance(self.a, Tensor) or not isinstance(self.b, Tensor):
             self.move_coeff(device, dtype)
 
-        return F.lfilter(x, self.a, self.b)  # type: ignore
+        # Use scipy lfilter with zi for stateful CPU processing
+        if device.type == "cpu":
+            return self._forward_stateful(x)
+
+        # GPU path: stateless (no zi support in torchaudio.lfilter)
+        return F.lfilter(x, self.a, self.b, clamp=False)  # type: ignore
+
+    def _forward_stateful(self, x: Tensor) -> Tensor:
+        """CPU filtering with proper state continuity between chunks."""
+        assert isinstance(self.a, Tensor)
+        assert isinstance(self.b, Tensor)
+        a_np = np.array(self.a.cpu().numpy(), dtype=np.float64)
+        b_np = np.array(self.b.cpu().numpy(), dtype=np.float64)
+        x_np = x.numpy().astype(np.float64)
+        state_len = max(len(a_np), len(b_np)) - 1
+
+        # Handle 1D input (no channel dimension)
+        if x_np.ndim == 1:
+            zi = self._zi[0] if self._zi is not None else np.zeros(state_len, dtype=np.float64)
+            y, zf = sp_lfilter(b_np, a_np, x_np, zi=zi)
+            self._zi = [zf]
+            return torch.from_numpy(y).to(dtype=x.dtype)
+
+        # Process each channel with state
+        out_channels = []
+        for ch in range(x_np.shape[0]):
+            if self._zi is not None and ch < len(self._zi):
+                zi_ch = self._zi[ch]
+            else:
+                zi_ch = np.zeros(state_len, dtype=np.float64)
+
+            y_ch, zf_ch = sp_lfilter(b_np, a_np, x_np[ch], zi=zi_ch)
+            out_channels.append(y_ch)
+
+            # Store final state
+            if self._zi is None:
+                self._zi = [np.zeros(state_len, dtype=np.float64) for _ in range(x_np.shape[0])]
+            self._zi[ch] = zf_ch
+
+        out_np = np.stack(out_channels, axis=0)
+        return torch.from_numpy(out_np).to(dtype=x.dtype)
+
+    def reset_state(self) -> None:
+        """Reset filter state for chunk-to-chunk continuity.
+
+        Call this when switching audio sources, seeking in a file, or after changing
+        filter coefficients.
+
+        """
+        self._zi = None
 
 
 class Butterworth(IIR):
