@@ -2,8 +2,8 @@ import tempfile
 from pathlib import Path
 
 import pytest
+import soundfile as sf
 import torch
-import torchaudio
 
 from torchfx import Wave  # Replace with the actual module name
 from torchfx.filter import (
@@ -141,10 +141,9 @@ class TestWaveSave:
 
             assert output_path.exists()
 
-            # Verify encoding
-            info = torchaudio.info(output_path)
-            assert info.bits_per_sample == 32
-            assert info.encoding == "PCM_F"
+            # Verify encoding via soundfile
+            info = sf.info(str(output_path))
+            assert info.subtype == "FLOAT"
 
     def test_save_high_bit_depth_64bit_float(self, mono_wave):
         """Test saving with 64-bit float encoding."""
@@ -155,10 +154,9 @@ class TestWaveSave:
 
             assert output_path.exists()
 
-            # Verify encoding
-            info = torchaudio.info(output_path)
-            assert info.bits_per_sample == 64
-            assert info.encoding == "PCM_F"
+            # Verify encoding via soundfile
+            info = sf.info(str(output_path))
+            assert info.subtype == "DOUBLE"
 
     def test_save_high_sample_rate(self):
         """Test saving with high sample rates (96kHz, 192kHz)."""
@@ -173,8 +171,8 @@ class TestWaveSave:
 
                 assert output_path.exists()
 
-                info = torchaudio.info(output_path)
-                assert info.sample_rate == sample_rate
+                info = sf.info(str(output_path))
+                assert info.samplerate == sample_rate
 
     def test_save_with_string_path(self, mono_wave):
         """Test saving with a string path instead of Path object."""
@@ -187,6 +185,7 @@ class TestWaveSave:
 
     def test_save_different_bit_depths(self, mono_wave):
         """Test saving with different bit depths (16, 24, 32)."""
+        expected_subtypes = {16: "PCM_16", 24: "PCM_24", 32: "PCM_32"}
         for bits in [16, 24, 32]:
             with tempfile.TemporaryDirectory() as tmpdir:
                 output_path = Path(tmpdir) / f"test_{bits}bit.wav"
@@ -195,8 +194,8 @@ class TestWaveSave:
 
                 assert output_path.exists()
 
-                info = torchaudio.info(output_path)
-                assert info.bits_per_sample == bits
+                info = sf.info(str(output_path))
+                assert info.subtype == expected_subtypes[bits]
 
     def test_save_infers_format_from_extension(self, mono_wave):
         """Test that format is inferred from file extension."""
@@ -258,8 +257,7 @@ class TestWaveSave:
             # Load and check metadata
             loaded_wave = Wave.from_file(output_path)
             assert loaded_wave.metadata is not None
-            assert loaded_wave.metadata["encoding"] == "PCM_S"
-            assert loaded_wave.metadata["bits_per_sample"] == 24
+            assert loaded_wave.metadata["subtype"] == "PCM_24"
             assert loaded_wave.metadata["num_channels"] == mono_wave.channels()
 
     def test_wave_with_metadata_initialization(self):

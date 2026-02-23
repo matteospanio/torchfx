@@ -421,14 +421,17 @@ class Wave:
         """
         data, fs = torchaudio.load(path, *args, **kwargs)
 
-        # Extract metadata from the file
+        # Extract metadata from the file using soundfile (torchaudio.info
+        # was removed in torchaudio 2.10+).
         try:
-            info = torchaudio.info(path)
+            import soundfile as _sf  # type: ignore[import-untyped]
+
+            info = _sf.info(str(path))
             metadata = {
-                "num_frames": info.num_frames,
-                "num_channels": info.num_channels,
-                "bits_per_sample": info.bits_per_sample,
-                "encoding": info.encoding,
+                "num_frames": info.frames,
+                "num_channels": info.channels,
+                "subtype": info.subtype,
+                "format": info.format,
             }
         except Exception:
             # If metadata extraction fails, continue without it
@@ -442,7 +445,6 @@ class Wave:
         format: str | None = None,  # noqa: A002
         encoding: str | None = None,
         bits_per_sample: BitRate | None = None,
-        **kwargs: tp.Any,
     ) -> None:
         """Save the wave to an audio file.
 
@@ -494,24 +496,45 @@ class Wave:
         torchaudio.save : Underlying function used for saving.
 
         """
-        # Convert path to Path object for easier manipulation
+        import soundfile as _sf
+
         output_path = Path(path)
 
         # Create parent directories if they don't exist
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Move tensor to CPU for saving (torchaudio requires CPU tensors)
+        # Move tensor to CPU for saving
         audio_data = self.ys.cpu()
 
-        # Save using torchaudio
-        torchaudio.save(
-            uri=str(output_path),
-            src=audio_data,
-            sample_rate=self.fs,
+        # Determine format from extension if not provided
+        if format is None:
+            ext = output_path.suffix.lower()
+            format_map = {".wav": "WAV", ".flac": "FLAC", ".ogg": "OGG"}
+            format = format_map.get(ext, "WAV")  # noqa: A001
+
+        # Map encoding/bits_per_sample to soundfile subtype
+        subtype: str | None = None
+        if encoding is not None and bits_per_sample is not None:
+            subtype = f"{encoding.replace('PCM_', 'PCM_')}{bits_per_sample}"
+            # Normalise common patterns: "PCM_S16" -> "PCM_16", "PCM_F32" -> "FLOAT"
+            if encoding == "PCM_S":
+                subtype = f"PCM_{bits_per_sample}"
+            elif encoding == "PCM_U":
+                subtype = "PCM_U8" if bits_per_sample == 8 else f"PCM_{bits_per_sample}"
+            elif encoding == "PCM_F":
+                subtype = "FLOAT" if bits_per_sample == 32 else "DOUBLE"
+        elif bits_per_sample is not None:
+            subtype = f"PCM_{bits_per_sample}"
+        elif encoding is not None and encoding == "PCM_F":
+            subtype = "FLOAT"
+
+        # Save using soundfile (channels, samples) -> (samples, channels)
+        _sf.write(
+            str(output_path),
+            audio_data.numpy().T,
+            self.fs,
             format=format,
-            encoding=encoding,
-            bits_per_sample=bits_per_sample,
-            **kwargs,
+            subtype=subtype,
         )
 
     def __or__(self, f: nn.Module) -> "Wave":

@@ -19,7 +19,7 @@ def info_cmd(
       torchfx info podcast.flac
 
     """
-    import torchaudio
+    import soundfile as sf  # type: ignore[import-untyped]
     from rich.console import Console
     from rich.table import Table
 
@@ -29,12 +29,12 @@ def info_cmd(
         raise typer.Exit(code=1)
 
     try:
-        meta = torchaudio.info(str(path))
+        meta = sf.info(str(path))
     except Exception as exc:
         typer.echo(f"Error reading file: {exc}", err=True)
         raise typer.Exit(code=1) from exc
 
-    duration_sec = meta.num_frames / meta.sample_rate
+    duration_sec = meta.frames / meta.samplerate
     minutes = int(duration_sec // 60)
     seconds = duration_sec % 60
     duration_str = f"{minutes}:{seconds:05.2f}" if minutes else f"{seconds:.2f}s"
@@ -52,13 +52,12 @@ def info_cmd(
     table.add_column("Value", style="white")
 
     table.add_row("File", str(path))
-    table.add_row("Format", path.suffix.lstrip(".").upper())
-    table.add_row("Sample Rate", f"{meta.sample_rate:,} Hz")
-    table.add_row("Channels", str(meta.num_channels))
+    table.add_row("Format", meta.format)
+    table.add_row("Sample Rate", f"{meta.samplerate:,} Hz")
+    table.add_row("Channels", str(meta.channels))
     table.add_row("Duration", duration_str)
-    table.add_row("Frames", f"{meta.num_frames:,}")
-    table.add_row("Bits/Sample", str(meta.bits_per_sample))
-    table.add_row("Encoding", str(meta.encoding))
+    table.add_row("Frames", f"{meta.frames:,}")
+    table.add_row("Subtype", meta.subtype)
     table.add_row("File Size", size_str)
 
     console = Console()

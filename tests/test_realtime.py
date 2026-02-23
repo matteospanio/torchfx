@@ -13,6 +13,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+import soundfile as sf
 import torch
 import torchaudio
 from torch import Tensor
@@ -669,8 +670,8 @@ class TestStreamProcessor:
 
         # Total samples should equal original file
         total_samples = sum(c.shape[1] for c in chunks)
-        info = torchaudio.info(str(wav_file))
-        assert total_samples == info.num_frames
+        info = sf.info(str(wav_file))
+        assert total_samples == info.frames
 
     def test_process_file_flac(self, wav_file: Path, tmp_path: Path) -> None:
         output_path = tmp_path / "output.flac"

@@ -199,11 +199,11 @@ class StreamProcessor:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Get file metadata without loading
-        info = torchaudio.info(str(input_path))
-        fs = info.sample_rate
-        num_frames = info.num_frames
-        channels = info.num_channels
+        # Get file metadata without loading (torchaudio.info removed in 2.10+)
+        info = sf.info(str(input_path))
+        fs = info.samplerate
+        num_frames = info.frames
+        channels = info.channels
 
         _logger.info(
             "Processing %s: %d frames, %d channels, %dHz",
@@ -305,9 +305,9 @@ class StreamProcessor:
         """
         input_path = Path(input_path)
 
-        info = torchaudio.info(str(input_path))
-        fs = info.sample_rate
-        num_frames = info.num_frames
+        info = sf.info(str(input_path))
+        fs = info.samplerate
+        num_frames = info.frames
 
         self._configure_effects(fs)
 
