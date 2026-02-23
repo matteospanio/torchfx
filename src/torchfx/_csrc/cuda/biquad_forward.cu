@@ -14,21 +14,20 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
   TORCH_CHECK(x.is_cuda(), "biquad_forward_cuda: input must be on CUDA");
   TORCH_CHECK(x.dim() == 2, "biquad_forward_cuda: input must be [C, T]");
 
-  auto x_f64 = x.to(torch::kFloat64).contiguous();
-  auto b_f64 = b.to(torch::kFloat64).contiguous();
-  auto a_f64 = a.to(torch::kFloat64).contiguous();
-  auto sy = state_y.to(x.device()).to(torch::kFloat64).contiguous();
+  // Caller (_ops.py) already provides float64 tensors; just ensure contiguity.
+  auto x_f64 = x.contiguous();
+  auto b_f64 = b.contiguous();
+  auto a_f64 = a.contiguous();
+  auto sy = state_y.contiguous();
 
-  const double a1 = a_f64[1].item<double>();
-  const double a2 = a_f64[2].item<double>();
+  // Extract coefficients on CPU to avoid implicit cudaDeviceSynchronize.
+  // a is a tiny 3-element tensor, so the D2H copy is negligible.
+  auto a_cpu = a_f64.cpu();
+  const double a1 = a_cpu.data_ptr<double>()[1];
+  const double a2 = a_cpu.data_ptr<double>()[2];
 
   // Step 1: Compute forcing function f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2]
-  // The state_x provides x[-1] and x[-2] for the first two samples.
-  // Prepend state_x to x, compute f, then discard the first 0 samples
-  // (the padding in compute_forcing handles x[-1], x[-2] as zeros).
-  //
-  // For proper state handling, we need to account for x[-1] and x[-2]:
-  auto sx = state_x.to(x.device()).to(torch::kFloat64).contiguous();
+  auto sx = state_x.contiguous();
   auto C = x_f64.size(0);
   auto T = x_f64.size(1);
 
@@ -80,18 +79,23 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
   TORCH_CHECK(x.dim() == 2, "sos_forward_cuda: input must be [C, T]");
   TORCH_CHECK(sos.dim() == 2 && sos.size(1) == 6, "sos_forward_cuda: sos must be [K, 6]");
 
-  auto sos_f64 = sos.to(x.device()).to(torch::kFloat64).contiguous();
-  auto new_sx = state_x.to(x.device()).to(torch::kFloat64).clone();
-  auto new_sy = state_y.to(x.device()).to(torch::kFloat64).clone();
+  // Caller (_ops.py) already provides float64 tensors on the correct device.
+  auto sos_f64 = sos.contiguous();
+  auto new_sx = state_x.clone();
+  auto new_sy = state_y.clone();
 
   const int64_t K = sos_f64.size(0);
+
+  // Copy the small SOS matrix to CPU once to avoid per-section .item() GPU syncs.
+  auto sos_cpu = sos_f64.cpu();
 
   auto section_input = x;
 
   // Process each SOS section sequentially, using parallel scan within each.
   for (int64_t s = 0; s < K; ++s) {
     auto b = sos_f64.index({s, torch::indexing::Slice(0, 3)});
-    auto a = torch::tensor({1.0, sos_f64[s][4].item<double>(), sos_f64[s][5].item<double>()},
+    // Build 'a' tensor from CPU copy -- .item() on CPU tensors is free.
+    auto a = torch::tensor({1.0, sos_cpu[s][4].item<double>(), sos_cpu[s][5].item<double>()},
                            torch::dtype(torch::kFloat64).device(x.device()));
 
     auto sx_s = new_sx[s];  // [C, 2]

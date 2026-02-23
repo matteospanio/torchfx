@@ -239,8 +239,9 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
     double a2,
     const torch::Tensor& state) {
 
-  auto f_cont = f.to(torch::kFloat64).contiguous();
-  auto state_cont = state.to(torch::kFloat64).contiguous();
+  // Caller already provides float64 tensors; just ensure contiguity.
+  auto f_cont = f.contiguous();
+  auto state_cont = state.contiguous();
 
   const int64_t C = f_cont.size(0);
   const int64_t T = f_cont.size(1);
@@ -278,12 +279,6 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
   }
 
   // Extract updated state: [y[T-1], y[T-2]]
-  auto new_state = torch::empty_like(state_cont);
-  // Copy last two y values per channel
-  for (int64_t c = 0; c < C; ++c) {
-    // This is done on CPU after sync -- could be a small kernel too
-  }
-  // More efficient: use a tiny kernel or just index
   auto y_last = y.index({torch::indexing::Slice(), -1}).unsqueeze(1);  // [C, 1]
   auto y_prev = (T >= 2) ?
       y.index({torch::indexing::Slice(), -2}).unsqueeze(1) :
