@@ -40,7 +40,7 @@ repos:
         language: system
         types: [python]
         args: [--config-file, pyproject.toml]
-        exclude: ^tests/
+        exclude: (^tests/|^examples/|^benchmarks/|^docs/)
 
 -   repo: https://github.com/PyCQA/docformatter
     rev: v1.7.7
