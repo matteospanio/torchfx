@@ -25,13 +25,13 @@ echo ""
     echo "hostname: $(hostname)"
     echo "date: $(date -Iseconds)"
     echo "slurm_job_id: $SLURM_JOB_ID"
-    python -c "
+    uv run python -c "
 import torch
 print(f'torch: {torch.__version__}')
 print(f'cuda_available: {torch.cuda.is_available()}')
 if torch.cuda.is_available():
     print(f'gpu: {torch.cuda.get_device_name(0)}')
-    print(f'gpu_memory: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB')
+    print(f'gpu_memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB')
 "
 } > "$RESULTS_DIR/environment.txt"
 
