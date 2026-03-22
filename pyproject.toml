@@ -12,6 +12,7 @@ dependencies = [
     "annotated-types>=0.7.0",
     "numpy>=2.2.4",
     "scipy>=1.15.2",
+    "setuptools",
     "soundfile>=0.13.1",
     "torch>=2.6.0",
     "torchaudio>=2.6.0",
@@ -72,6 +73,10 @@ module = [
 ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "benchmarks.*"
+ignore_errors = true
+
 [tool.ruff]
 src = ["src"]
 line-length = 100
@@ -105,9 +110,12 @@ branch = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "--strict-markers --tb=short"
-testpaths = ["tests"]
+addopts = "--strict-markers --tb=short --benchmark-disable"
+testpaths = ["tests", "benchmarks"]
 pythonpath = ["src"]
+markers = [
+    "benchmark: performance benchmark (enable with --benchmark-enable)",
+]
 
 [tool.docformatter]
 recursive = true
@@ -130,6 +138,7 @@ dev = [
     "coverage>=7.9.1",
     "mypy>=1.16.1",
     "pytest>=8.3.5",
+    "pytest-benchmark>=5.1.0",
     "ruff>=0.12.1",
     "scalene>=1.5.51",
     "scipy-stubs>=1.15.3.0",

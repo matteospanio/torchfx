@@ -194,6 +194,7 @@ class IIR(AbstractFilter):
 
         if self.a is None or self.b is None:
             self.compute_coefficients()
+            self._compute_sos()
 
         if not isinstance(self.a, Tensor) or not isinstance(self.b, Tensor):
             self.move_coeff(device, dtype)
@@ -206,7 +207,7 @@ class IIR(AbstractFilter):
         result: Tensor = F.lfilter(x, self.a, self.b, clamp=False)
         result = result.to(dtype=dtype)
 
-        # Build SOS and bootstrap state for next chunk
+        # Bootstrap state for next chunk
         if self._sos is None:
             self._compute_sos()
         self._bootstrap_state(x, result)
@@ -271,7 +272,7 @@ class IIR(AbstractFilter):
         if self._state_x is None or self._state_x.shape[1] != C:
             self._state_x = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
             self._state_y = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
-        else:
+        elif self._state_x.device != device:
             self._state_x = self._state_x.to(device=device)
             assert self._state_y is not None
             self._state_y = self._state_y.to(device=device)
@@ -291,35 +292,43 @@ class IIR(AbstractFilter):
                 return result.reshape(orig_shape)
             return result
 
-        # Pure-PyTorch fallback
+        # Vectorized PyTorch fallback using lfilter with state decomposition.
         section_input = x.to(dtype=torch.float64)
+        b_delta = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64, device=device)
 
         for s in range(num_sections):
-            b0 = sos[s, 0]
-            b1 = sos[s, 1]
-            b2 = sos[s, 2]
-            # sos[s, 3] is a0 (== 1 after normalization from tf2sos)
-            a1 = sos[s, 4]
-            a2 = sos[s, 5]
+            b_s = sos[s, :3]  # [b0, b1, b2]
+            a_s = torch.stack([sos[s, 3], sos[s, 4], sos[s, 5]])  # [a0, a1, a2]
+            a1 = a_s[1]
+            a2 = a_s[2]
 
-            sx = self._state_x[s].clone()  # [C, 2]
-            sy = self._state_y[s].clone()  # [C, 2]
+            sx = self._state_x[s]  # [C, 2]
+            sy = self._state_y[s]  # [C, 2]
 
-            out = torch.empty_like(section_input)
+            # Step 1: Compute forcing function via conv1d with x-state prepend
+            x_ext = torch.cat([sx[:, 1:2], sx[:, 0:1], section_input], dim=1)
+            kernel = b_s.flip(0).reshape(1, 1, 3)
+            f = torch.nn.functional.conv1d(x_ext.unsqueeze(1), kernel, padding=0).squeeze(
+                1
+            )  # [C, T]
 
-            for n in range(T):
-                xn = section_input[:, n]
-                yn = b0 * xn + b1 * sx[:, 0] + b2 * sx[:, 1] - a1 * sy[:, 0] - a2 * sy[:, 1]
-                out[:, n] = yn
-                sx[:, 1] = sx[:, 0]
-                sx[:, 0] = xn
-                sy[:, 1] = sy[:, 0]
-                sy[:, 0] = yn
+            # Step 2: Zero-state response
+            y_zs = F.lfilter(f, a_s, b_delta, clamp=False)
 
-            self._state_x[s] = sx
-            self._state_y[s] = sy
+            # Step 3: Zero-input response for initial y-state
+            g = torch.zeros_like(f)
+            g[:, 0] = -a1 * sy[:, 0] - a2 * sy[:, 1]
+            if T > 1:
+                g[:, 1] = -a2 * sy[:, 0]
+            y_zi = F.lfilter(g, a_s, b_delta, clamp=False)
 
-            # Output of this section feeds next section
+            out = y_zs + y_zi
+
+            # Update state from tail
+            if T >= 2:
+                self._state_x[s] = torch.stack([section_input[:, -1], section_input[:, -2]], dim=1)
+                self._state_y[s] = torch.stack([out[:, -1], out[:, -2]], dim=1)
+
             section_input = out
 
         result = section_input.to(dtype=out_dtype)

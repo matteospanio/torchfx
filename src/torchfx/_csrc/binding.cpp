@@ -1,6 +1,9 @@
 #include <torch/extension.h>
+
+#ifdef WITH_CUDA
 #include "torchfx/biquad_kernel.h"
 #include "torchfx/delay_kernel.h"
+#endif
 
 // CPU fallback declarations
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cpu(
@@ -23,9 +26,13 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward(
     const torch::Tensor& a,
     const torch::Tensor& state_x,
     const torch::Tensor& state_y) {
+#ifdef WITH_CUDA
   if (x.is_cuda()) {
     return torchfx::biquad_forward_cuda(x, b, a, state_x, state_y);
   }
+#else
+  TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
+#endif
   return biquad_forward_cpu(x, b, a, state_x, state_y);
 }
 
@@ -34,9 +41,13 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward(
     const torch::Tensor& sos,
     const torch::Tensor& state_x,
     const torch::Tensor& state_y) {
+#ifdef WITH_CUDA
   if (x.is_cuda()) {
     return torchfx::sos_forward_cuda(x, sos, state_x, state_y);
   }
+#else
+  TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
+#endif
   return sos_forward_cpu(x, sos, state_x, state_y);
 }
 
@@ -45,10 +56,11 @@ torch::Tensor delay_line_forward(
     int delay_samples,
     double decay,
     double mix) {
+#ifdef WITH_CUDA
   if (x.is_cuda()) {
     return torchfx::delay_line_forward_cuda(x, delay_samples, decay, mix);
   }
-  // CPU fallback: use PyTorch ops (handled in Python)
+#endif
   TORCH_CHECK(false, "delay_line_forward CPU not implemented in C++; use Python fallback");
 }
 

@@ -9,13 +9,11 @@ These tests ensure that torchfx works correctly when:
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
 import torch
-from scipy.signal import butter, lfilter
 
-from torchfx.filter.biquad import BiquadLPF, BiquadHPF
 from torchfx.filter import LoButterworth
+from torchfx.filter.biquad import BiquadLPF
 from torchfx.filter.filterbank import LogFilterBank
 
 SAMPLE_RATE = 44100
@@ -74,12 +72,9 @@ class TestExtensionLoadFailure:
         """_ops dispatch functions return None when extension unavailable."""
         import torchfx._ops as ops
 
-        # Reset extension state
+        # Simulate a failed extension load
         monkeypatch.setattr(ops, "_ext", None)
-        monkeypatch.setattr(ops, "_ext_load_attempted", False)
-
-        # Mock torch.cuda.is_available to return False
-        monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+        monkeypatch.setattr(ops, "_ext_load_attempted", True)
 
         x = torch.randn(2, 1000)
         b = torch.tensor([0.1, 0.2, 0.1])

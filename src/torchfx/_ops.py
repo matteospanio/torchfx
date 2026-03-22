@@ -47,21 +47,22 @@ def _load_extension() -> ModuleType | None:
         return _ext
     _ext_load_attempted = True
 
-    if not torch.cuda.is_available():
-        logger.debug("CUDA not available; skipping native extension compilation")
-        return None
-
     cpp_sources = [os.path.join(_CSRC_DIR, "binding.cpp")]
     cpu_sources = [os.path.join(_CSRC_DIR, "cpu", "iir_cpu.cpp")]
 
-    cuda_dir = os.path.join(_CSRC_DIR, "cuda")
-    cuda_sources = [
-        os.path.join(cuda_dir, "parallel_scan.cu"),
-        os.path.join(cuda_dir, "biquad_forward.cu"),
-        os.path.join(cuda_dir, "delay_forward.cu"),
-    ]
+    all_sources = cpp_sources + cpu_sources
+    extra_cflags: list[str] = []
 
-    all_sources = cpp_sources + cpu_sources + cuda_sources
+    use_cuda = torch.cuda.is_available()
+    if use_cuda:
+        cuda_dir = os.path.join(_CSRC_DIR, "cuda")
+        cuda_sources = [
+            os.path.join(cuda_dir, "parallel_scan.cu"),
+            os.path.join(cuda_dir, "biquad_forward.cu"),
+            os.path.join(cuda_dir, "delay_forward.cu"),
+        ]
+        all_sources += cuda_sources
+        extra_cflags.append("-DWITH_CUDA")
 
     # Verify all source files exist before attempting compilation
     for src in all_sources:
@@ -73,15 +74,16 @@ def _load_extension() -> ModuleType | None:
         from torch.utils.cpp_extension import load
 
         _ext = load(
-            name="torchfx_cuda",
+            name="torchfx_ext",
             sources=all_sources,
             extra_include_paths=[_INCLUDE_DIR],
+            extra_cflags=extra_cflags,
             verbose=False,
         )
-        logger.info("torchfx CUDA extension compiled successfully")
+        logger.info("torchfx native extension compiled successfully (CUDA=%s)", use_cuda)
     except Exception:
         logger.debug(
-            "Failed to compile torchfx CUDA extension; using PyTorch fallback", exc_info=True
+            "Failed to compile torchfx native extension; using PyTorch fallback", exc_info=True
         )
         _ext = None
 
