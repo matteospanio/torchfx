@@ -118,10 +118,17 @@ def biquad_forward(
         state_y = torch.zeros(C, 2, device=device, dtype=dtype)
 
     try:
+        # Extract a1, a2 as Python floats before any device transfer to avoid
+        # GPU→CPU sync when coefficients are on CUDA.
+        a_f64 = a.to(dtype=dtype)
+        a1 = float(a_f64[1])
+        a2 = float(a_f64[2])
+
         result: tuple[Tensor, Tensor, Tensor] = ext.biquad_forward(
             x.to(dtype=dtype),
             b.to(dtype=dtype),
-            a.to(dtype=dtype),
+            a1,
+            a2,
             state_x.to(device=device, dtype=dtype),
             state_y.to(device=device, dtype=dtype),
         )

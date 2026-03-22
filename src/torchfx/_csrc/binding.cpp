@@ -9,7 +9,8 @@
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cpu(
     const torch::Tensor& x,
     const torch::Tensor& b,
-    const torch::Tensor& a,
+    double a1,
+    double a2,
     const torch::Tensor& state_x,
     const torch::Tensor& state_y);
 
@@ -23,17 +24,18 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cpu(
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward(
     const torch::Tensor& x,
     const torch::Tensor& b,
-    const torch::Tensor& a,
+    double a1,
+    double a2,
     const torch::Tensor& state_x,
     const torch::Tensor& state_y) {
 #ifdef WITH_CUDA
   if (x.is_cuda()) {
-    return torchfx::biquad_forward_cuda(x, b, a, state_x, state_y);
+    return torchfx::biquad_forward_cuda(x, b, a1, a2, state_x, state_y);
   }
 #else
   TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
 #endif
-  return biquad_forward_cpu(x, b, a, state_x, state_y);
+  return biquad_forward_cpu(x, b, a1, a2, state_x, state_y);
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward(
@@ -67,7 +69,7 @@ torch::Tensor delay_line_forward(
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("biquad_forward", &biquad_forward,
         "Biquad filter forward (CUDA/CPU)",
-        py::arg("x"), py::arg("b"), py::arg("a"),
+        py::arg("x"), py::arg("b"), py::arg("a1"), py::arg("a2"),
         py::arg("state_x"), py::arg("state_y"));
   m.def("sos_forward", &sos_forward,
         "SOS cascade forward (CUDA/CPU)",

@@ -318,26 +318,33 @@ class Biquad(AbstractFilter):
         # Decomposes into zero-state + zero-input responses to avoid sample loops.
         x_f64 = x.to(dtype=torch.float64)
         a_f64 = self.a.to(dtype=torch.float64)
-        b_f64 = self.b.to(dtype=torch.float64)
         a1 = a_f64[1]
         a2 = a_f64[2]
+
+        # Cache constant tensors on first fallback call to avoid per-call allocation.
+        if (
+            not hasattr(self, "_fb_kernel")
+            or self._fb_kernel is None  # type: ignore
+            or self._fb_kernel.device != device  # type: ignore
+        ):
+            b_f64 = self.b.to(dtype=torch.float64)
+            self._fb_kernel = b_f64.flip(0).reshape(1, 1, 3).to(device=device)
+            self._fb_b_delta = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64, device=device)
 
         # Step 1: Compute forcing function f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2]
         # by prepending x-state and using conv1d
         x_ext = torch.cat([self._state_x[:, 1:2], self._state_x[:, 0:1], x_f64], dim=1)
-        kernel = b_f64.flip(0).reshape(1, 1, 3)
-        f = torch.nn.functional.conv1d(x_ext.unsqueeze(1), kernel, padding=0).squeeze(1)  # [C, T]
+        f = torch.nn.functional.conv1d(x_ext.unsqueeze(1), self._fb_kernel, padding=0).squeeze(1)
 
         # Step 2: Zero-state response via lfilter (y[n] = f[n] - a1*y[n-1] - a2*y[n-2])
-        b_delta = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64, device=device)
-        y_zs = F.lfilter(f, a_f64, b_delta, clamp=False)
+        y_zs = F.lfilter(f, a_f64, self._fb_b_delta, clamp=False)
 
         # Step 3: Zero-input response for initial y-state
         g = torch.zeros_like(f)
         g[:, 0] = -a1 * self._state_y[:, 0] - a2 * self._state_y[:, 1]
         if T > 1:
             g[:, 1] = -a2 * self._state_y[:, 0]
-        y_zi = F.lfilter(g, a_f64, b_delta, clamp=False)
+        y_zi = F.lfilter(g, a_f64, self._fb_b_delta, clamp=False)
 
         out = Tensor(y_zs + y_zi)
 

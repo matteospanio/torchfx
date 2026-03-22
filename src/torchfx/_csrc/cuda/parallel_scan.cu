@@ -13,7 +13,7 @@
 //   and   M = [-a1, -a2, f[n]; 1, 0, 0; 0, 0, 1]
 //
 // The scan operator is 3x3 matrix multiplication (associative).
-// We use a Blelloch-style up-sweep/down-sweep for work efficiency.
+// We use a Blelloch (work-efficient) up-sweep/down-sweep prefix scan.
 //
 // Optimization: Since the bottom row is always [0, 0, 1], we only store
 // and multiply the 2x3 top portion (6 elements per matrix).
@@ -38,10 +38,6 @@ __device__ __forceinline__ Mat3x3 mat_identity() {
 // Multiply A * B where both have implicit row 2 = [0, 0, 1].
 // Result also has implicit row 2 = [0, 0, 1].
 __device__ __forceinline__ Mat3x3 mat_mul(const Mat3x3& A, const Mat3x3& B) {
-  // Full 3x3 with implicit third row [0,0,1]:
-  // R[0][j] = A[0][0]*B[0][j] + A[0][1]*B[1][j] + A[0][2]*B[2][j]
-  // R[1][j] = A[1][0]*B[0][j] + A[1][1]*B[1][j] + A[1][2]*B[2][j]
-  // where B[2][j] = {0, 0, 1}
   Mat3x3 R;
   R.m[0] = A.m[0]*B.m[0] + A.m[1]*B.m[3];
   R.m[1] = A.m[0]*B.m[1] + A.m[1]*B.m[4];
@@ -60,10 +56,63 @@ __device__ __forceinline__ double extract_y(const Mat3x3& P, double y_m1, double
 }
 
 // ============================================================
-// Block-level Hillis-Steele inclusive prefix scan in shared memory
+// Blelloch work-efficient inclusive prefix scan
 // ============================================================
 
 constexpr int BLOCK_SIZE = 512;
+constexpr int LOG2_BLOCK = 9;  // log2(512)
+
+// Blelloch inclusive prefix scan in shared memory.
+// Input: sdata[tid] contains element for this thread.
+// Output: sdata[tid] contains inclusive prefix product M[tid]*...*M[0].
+// original: the element at this thread's position (saved before scan modifies sdata).
+// Returns: the block's total product (valid for all threads after final sync).
+__device__ Mat3x3 blelloch_inclusive_scan(Mat3x3* sdata, const Mat3x3& original, int tid) {
+
+  // ---- Up-sweep (reduce) ----
+  for (int d = 0; d < LOG2_BLOCK; d++) {
+    int stride = 2 << d;      // 2, 4, 8, ..., BLOCK_SIZE
+    int half = 1 << d;        // 1, 2, 4, ..., BLOCK_SIZE/2
+    int num_active = BLOCK_SIZE >> (d + 1);
+    if (tid < num_active) {
+      int right = (tid + 1) * stride - 1;
+      int left = right - half;
+      sdata[right] = mat_mul(sdata[right], sdata[left]);
+    }
+    __syncthreads();
+  }
+
+  // Save block aggregate (total product) before down-sweep clobbers it
+  Mat3x3 block_total = sdata[BLOCK_SIZE - 1];
+
+  // ---- Set root to identity for exclusive scan ----
+  if (tid == 0) {
+    sdata[BLOCK_SIZE - 1] = mat_identity();
+  }
+  __syncthreads();
+
+  // ---- Down-sweep ----
+  for (int d = LOG2_BLOCK - 1; d >= 0; d--) {
+    int stride = 2 << d;
+    int half = 1 << d;
+    int num_active = BLOCK_SIZE >> (d + 1);
+    if (tid < num_active) {
+      int right = (tid + 1) * stride - 1;
+      int left = right - half;
+      Mat3x3 temp = sdata[left];
+      sdata[left] = sdata[right];
+      sdata[right] = mat_mul(temp, sdata[right]);
+    }
+    __syncthreads();
+  }
+
+  // ---- Convert exclusive → inclusive ----
+  // exclusive[i] = M[i-1]*...*M[0], inclusive[i] = M[i] * exclusive[i]
+  sdata[tid] = mat_mul(original, sdata[tid]);
+  __syncthreads();
+
+  return block_total;
+}
 
 __global__ void prefix_scan_phase1(
     const double* __restrict__ f,        // [C, T] forcing function
@@ -73,13 +122,12 @@ __global__ void prefix_scan_phase1(
     double a1, double a2,
     int T, int num_blocks) {
 
-  // Each block processes BLOCK_SIZE samples for one channel.
   const int channel = blockIdx.y;
   const int block_id = blockIdx.x;
   const int tid = threadIdx.x;
   const int global_n = block_id * BLOCK_SIZE + tid;
 
-  __shared__ Mat3x3 sdata[2 * BLOCK_SIZE];
+  __shared__ Mat3x3 sdata[BLOCK_SIZE];
 
   // Build per-sample matrix or identity if out of range
   Mat3x3 my_mat;
@@ -91,39 +139,23 @@ __global__ void prefix_scan_phase1(
     my_mat = mat_identity();
   }
 
-  // Hillis-Steele inclusive prefix scan
-  int ping = 0;
   sdata[tid] = my_mat;
   __syncthreads();
 
-  for (int offset = 1; offset < BLOCK_SIZE; offset <<= 1) {
-    int pong = 1 - ping;
-    if (tid >= offset) {
-      sdata[pong * BLOCK_SIZE + tid] = mat_mul(sdata[ping * BLOCK_SIZE + tid], sdata[ping * BLOCK_SIZE + tid - offset]);
-    } else {
-      sdata[pong * BLOCK_SIZE + tid] = sdata[ping * BLOCK_SIZE + tid];
-    }
-    ping = pong;
-    __syncthreads();
+  Mat3x3 block_total = blelloch_inclusive_scan(sdata, my_mat, tid);
+
+  // Store block aggregate
+  if (tid == 0) {
+    block_agg[channel * num_blocks + block_id] = block_total;
   }
 
-  // Store the block aggregate (last thread's prefix = product of all matrices in block)
-  if (tid == BLOCK_SIZE - 1) {
-    block_agg[channel * num_blocks + block_id] = sdata[ping * BLOCK_SIZE + tid];
-  }
-
-  // For the first block, we can compute y directly using initial state
+  // For the first block, compute y directly using initial state
   if (block_id == 0 && global_n < T) {
     double y_m1 = state[channel * 2 + 0];
     double y_m2 = state[channel * 2 + 1];
-    double yn = extract_y(sdata[ping * BLOCK_SIZE + tid], y_m1, y_m2);
+    double yn = extract_y(sdata[tid], y_m1, y_m2);
     y[channel * T + global_n] = yn;
   }
-
-  // Other blocks need the inter-block prefix (computed in phase 2)
-  // Store the intra-block prefix for later use in phase 3
-  // We reuse y[] to temporarily store f[n] for non-first blocks
-  // Actually, we store the prefix matrix in block_agg and recompute in phase 3
 }
 
 __global__ void prefix_scan_phase2(
@@ -158,7 +190,7 @@ __global__ void prefix_scan_phase3(
   if (block_id == 0) return;  // Already computed in phase 1
   if (global_n >= T) return;
 
-  __shared__ Mat3x3 sdata[2 * BLOCK_SIZE];
+  __shared__ Mat3x3 sdata[BLOCK_SIZE];
 
   // Rebuild per-sample matrix
   double fn = f[channel * T + global_n];
@@ -166,26 +198,15 @@ __global__ void prefix_scan_phase3(
   my_mat.m[0] = -a1; my_mat.m[1] = -a2; my_mat.m[2] = fn;
   my_mat.m[3] = 1.0; my_mat.m[4] = 0.0; my_mat.m[5] = 0.0;
 
-  // Intra-block Hillis-Steele scan (same as phase 1)
-  int ping = 0;
   sdata[tid] = my_mat;
   __syncthreads();
 
-  for (int offset = 1; offset < BLOCK_SIZE; offset <<= 1) {
-    int pong = 1 - ping;
-    if (tid >= offset) {
-      sdata[pong * BLOCK_SIZE + tid] = mat_mul(sdata[ping * BLOCK_SIZE + tid], sdata[ping * BLOCK_SIZE + tid - offset]);
-    } else {
-      sdata[pong * BLOCK_SIZE + tid] = sdata[ping * BLOCK_SIZE + tid];
-    }
-    ping = pong;
-    __syncthreads();
-  }
+  blelloch_inclusive_scan(sdata, my_mat, tid);
 
   // Compose with inter-block prefix: P_total = intra_prefix * inter_prefix
   // inter_prefix for block k = block_agg[k-1] (inclusive prefix of all previous blocks)
   Mat3x3 inter_prefix = block_agg[channel * num_blocks + block_id - 1];
-  Mat3x3 total_prefix = mat_mul(sdata[ping * BLOCK_SIZE + tid], inter_prefix);
+  Mat3x3 total_prefix = mat_mul(sdata[tid], inter_prefix);
 
   double y_m1 = state[channel * 2 + 0];
   double y_m2 = state[channel * 2 + 1];
@@ -195,16 +216,21 @@ __global__ void prefix_scan_phase3(
 
 // ============================================================
 // Sequential kernel for short signals (T < PARALLEL_SCAN_THRESHOLD)
+// Each thread handles one channel; multiple channels per block for occupancy.
 // ============================================================
+
+constexpr int SEQ_THREADS_PER_BLOCK = 128;
 
 __global__ void sequential_biquad_kernel(
     const double* __restrict__ f,
     double* __restrict__ y,
     const double* __restrict__ state,
     double a1, double a2,
-    int T) {
+    int T, int C) {
 
-  const int channel = blockIdx.x;
+  const int channel = blockIdx.x * blockDim.x + threadIdx.x;
+  if (channel >= C) return;
+
   double y_m1 = state[channel * 2 + 0];
   double y_m2 = state[channel * 2 + 1];
 
@@ -253,8 +279,10 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
   const double* state_ptr = state_cont.data_ptr<double>();
 
   if (T <= 2048) {
-    // Sequential kernel for short signals
-    sequential_biquad_kernel<<<C, 1>>>(f_ptr, y_ptr, state_ptr, a1, a2, T);
+    // Sequential kernel for short signals — multiple channels per block
+    const int seq_blocks = (C + SEQ_THREADS_PER_BLOCK - 1) / SEQ_THREADS_PER_BLOCK;
+    sequential_biquad_kernel<<<seq_blocks, SEQ_THREADS_PER_BLOCK>>>(
+        f_ptr, y_ptr, state_ptr, a1, a2, T, C);
   } else {
     const int num_blocks = (T + BLOCK_SIZE - 1) / BLOCK_SIZE;
 

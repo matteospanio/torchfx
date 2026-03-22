@@ -8,13 +8,13 @@
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cpu(
     const torch::Tensor& x,         // [C, T]
     const torch::Tensor& b,         // [3]
-    const torch::Tensor& a,         // [3]
+    double a1,
+    double a2,
     const torch::Tensor& state_x,   // [C, 2]
     const torch::Tensor& state_y) { // [C, 2]
 
   auto x_f64 = x.to(torch::kFloat64).contiguous();
   auto b_acc = b.to(torch::kFloat64).contiguous();
-  auto a_acc = a.to(torch::kFloat64).contiguous();
   auto sx = state_x.to(torch::kFloat64).clone();
   auto sy = state_y.to(torch::kFloat64).clone();
 
@@ -31,8 +31,6 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cpu(
   const double b0 = b_acc.accessor<double, 1>()[0];
   const double b1 = b_acc.accessor<double, 1>()[1];
   const double b2 = b_acc.accessor<double, 1>()[2];
-  const double a1 = a_acc.accessor<double, 1>()[1];
-  const double a2 = a_acc.accessor<double, 1>()[2];
 
   for (int64_t c = 0; c < C; ++c) {
     double sx0 = sx_ptr[c][0];  // x[n-1]

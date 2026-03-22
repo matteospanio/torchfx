@@ -179,6 +179,12 @@ class IIR(AbstractFilter):
 
         self._sos = torch.from_numpy(sos)
 
+        # Pre-compute flipped b-coefficient kernels for the fallback conv1d path.
+        # Shape: [K, 1, 3] where K = num_sections.
+        sos_t = self._sos.to(dtype=torch.float64)
+        self._sos_kernels = sos_t[:, :3].flip(-1).unsqueeze(1)  # [K, 1, 3]
+        self._fb_b_delta = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
+
     def move_coeff(self, device: Device, dtype: dtype = torch.float32) -> None:
         """Move the filter coefficients to the specified device and dtype."""
         self.a = torch.as_tensor(self.a, device=device, dtype=dtype)
@@ -294,10 +300,12 @@ class IIR(AbstractFilter):
 
         # Vectorized PyTorch fallback using lfilter with state decomposition.
         section_input = x.to(dtype=torch.float64)
-        b_delta = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64, device=device)
+
+        # Move cached tensors to device if needed.
+        b_delta = self._fb_b_delta.to(device=device)
+        sos_kernels = self._sos_kernels.to(device=device)
 
         for s in range(num_sections):
-            b_s = sos[s, :3]  # [b0, b1, b2]
             a_s = torch.stack([sos[s, 3], sos[s, 4], sos[s, 5]])  # [a0, a1, a2]
             a1 = a_s[1]
             a2 = a_s[2]
@@ -305,9 +313,9 @@ class IIR(AbstractFilter):
             sx = self._state_x[s]  # [C, 2]
             sy = self._state_y[s]  # [C, 2]
 
-            # Step 1: Compute forcing function via conv1d with x-state prepend
+            # Step 1: Compute forcing function via conv1d with pre-computed kernel
             x_ext = torch.cat([sx[:, 1:2], sx[:, 0:1], section_input], dim=1)
-            kernel = b_s.flip(0).reshape(1, 1, 3)
+            kernel = sos_kernels[s].unsqueeze(0)  # [1, 1, 3]
             f = torch.nn.functional.conv1d(x_ext.unsqueeze(1), kernel, padding=0).squeeze(
                 1
             )  # [C, T]

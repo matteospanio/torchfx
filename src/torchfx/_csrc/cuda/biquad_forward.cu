@@ -7,7 +7,8 @@ namespace torchfx {
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
     const torch::Tensor& x,          // [C, T]
     const torch::Tensor& b,          // [3] = {b0, b1, b2}
-    const torch::Tensor& a,          // [3] = {1, a1, a2}
+    double a1,                        // denominator coefficient a1
+    double a2,                        // denominator coefficient a2
     const torch::Tensor& state_x,    // [C, 2]
     const torch::Tensor& state_y) {  // [C, 2]
 
@@ -17,14 +18,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
   // Caller (_ops.py) already provides float64 tensors; just ensure contiguity.
   auto x_f64 = x.contiguous();
   auto b_f64 = b.contiguous();
-  auto a_f64 = a.contiguous();
   auto sy = state_y.contiguous();
-
-  // Extract coefficients on CPU to avoid implicit cudaDeviceSynchronize.
-  // a is a tiny 3-element tensor, so the D2H copy is negligible.
-  auto a_cpu = a_f64.cpu();
-  const double a1 = a_cpu.data_ptr<double>()[1];
-  const double a2 = a_cpu.data_ptr<double>()[2];
 
   // Step 1: Compute forcing function f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2]
   auto sx = state_x.contiguous();
@@ -94,15 +88,15 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
   // Process each SOS section sequentially, using parallel scan within each.
   for (int64_t s = 0; s < K; ++s) {
     auto b = sos_f64.index({s, torch::indexing::Slice(0, 3)});
-    // Build 'a' tensor from CPU copy -- .item() on CPU tensors is free.
-    auto a = torch::tensor({1.0, sos_cpu[s][4].item<double>(), sos_cpu[s][5].item<double>()},
-                           torch::dtype(torch::kFloat64).device(x.device()));
+    // Extract a1, a2 from CPU copy -- no GPU sync needed.
+    const double a1 = sos_cpu[s][4].item<double>();
+    const double a2 = sos_cpu[s][5].item<double>();
 
     auto sx_s = new_sx[s];  // [C, 2]
     auto sy_s = new_sy[s];  // [C, 2]
 
     auto [y_s, nsx_s, nsy_s] = biquad_forward_cuda(
-        section_input, b, a, sx_s, sy_s);
+        section_input, b, a1, a2, sx_s, sy_s);
 
     new_sx[s] = nsx_s;
     new_sy[s] = nsy_s;

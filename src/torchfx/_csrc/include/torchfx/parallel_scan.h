@@ -7,8 +7,8 @@ namespace torchfx {
 // Parallel prefix scan for second-order IIR (biquad) filtering.
 //
 // Reformulates the biquad recurrence as a linear recurrence with 3x3 matrix
-// multiplication as the associative operator, then applies a Hillis-Steele
-// parallel prefix scan.
+// multiplication as the associative operator, then applies a Blelloch
+// work-efficient parallel prefix scan.
 //
 // The biquad: y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
 //
