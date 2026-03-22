@@ -507,8 +507,11 @@ class FIR(AbstractFilter):
 
     """
 
-    def __init__(self, b: ArrayLike) -> None:
+    def __init__(self, b: ArrayLike, conv_mode: str = "fft") -> None:
         super().__init__()
+        if conv_mode not in ("fft", "direct", "auto"):
+            raise ValueError(f"conv_mode must be 'fft', 'direct', or 'auto', got {conv_mode!r}")
+        self._conv_mode = conv_mode
         # Flip the kernel for causal convolution (like lfilter)
         b_tensor = torch.tensor(b, dtype=torch.float32).flip(0)
         self.a = [1.0]  # FIR filter denominator is always 1
@@ -526,6 +529,7 @@ class FIR(AbstractFilter):
         dtype = x.dtype
         device = x.device
         kernel = self.kernel.to(dtype=dtype, device=device)
+        assert isinstance(kernel, Tensor)
 
         original_shape = x.shape
 
@@ -543,23 +547,25 @@ class FIR(AbstractFilter):
             raise ValueError("Input must be of shape [T], [C, T], or [B, C, T]")
 
         BATCHES, CHANNELS, TIME = x.shape
+        pad = int(kernel.shape[-1] - 1)
 
-        # Expand kernel to match number of channels
-        kernel_exp = kernel.expand(CHANNELS, 1, -1)  # type: ignore # [C, 1, K]
+        if self._conv_mode in ("fft", "auto"):
+            from torchfx.filter._fftconv import fft_conv1d
 
-        # Pad input to maintain original length, pad right side
-        pad = int(kernel.shape[-1] - 1)  # type: ignore
-        x_padded = nn.functional.pad(x, (pad, 0))  # pad left only # type: ignore
-
-        # For batch > 1, reshape to [B*C, 1, T] and use single-channel conv1d
-        if BATCHES > 1:
-            x_padded = x_padded.reshape(BATCHES * CHANNELS, 1, -1)
-            assert isinstance(kernel, Tensor)
-            y = nn.functional.conv1d(x_padded, kernel)
-            y = y.reshape(BATCHES, CHANNELS, TIME)
+            y = fft_conv1d(x, kernel, padding=(pad, 0))
         else:
-            assert isinstance(kernel_exp, Tensor)
-            y = nn.functional.conv1d(x_padded, kernel_exp, groups=CHANNELS)
+            # Direct conv1d path
+            kernel_exp = kernel.expand(CHANNELS, 1, -1)  # [C, 1, K]
+            x_padded = nn.functional.pad(x, (pad, 0))
+
+            if BATCHES > 1:
+                x_padded = x_padded.reshape(BATCHES * CHANNELS, 1, -1)
+                assert isinstance(kernel, Tensor)
+                y = nn.functional.conv1d(x_padded, kernel)
+                y = y.reshape(BATCHES, CHANNELS, TIME)
+            else:
+                assert isinstance(kernel_exp, Tensor)
+                y = nn.functional.conv1d(x_padded, kernel_exp, groups=CHANNELS)
 
         # Reshape back to [B, C, T]
         y = y.view(BATCHES, CHANNELS, TIME)
@@ -982,6 +988,7 @@ class DesignableFIR(FIR):
         fs: int | None = None,
         pass_zero: bool = True,
         window: WindowType = "hamming",
+        conv_mode: str = "fft",
     ) -> None:
         # Design the filter using firwin
         self.num_taps = num_taps
@@ -989,12 +996,13 @@ class DesignableFIR(FIR):
         self.fs = fs
         self.pass_zero = pass_zero
         self.window = window
+        self._conv_mode = conv_mode
 
         self.b: ArrayLike | None = None
         if fs is not None:
             self.compute_coefficients()
             assert self.b is not None, "Filter coefficients (b) must be computed."
-            super().__init__(self.b)
+            super().__init__(self.b, conv_mode=conv_mode)
 
     @override
     def compute_coefficients(self) -> None:
@@ -1010,4 +1018,4 @@ class DesignableFIR(FIR):
         )
         assert self.b is not None, "Filter coefficients (b) must be computed."
 
-        super().__init__(self.b)
+        super().__init__(self.b, conv_mode=self._conv_mode)
