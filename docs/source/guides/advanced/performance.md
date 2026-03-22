@@ -64,7 +64,7 @@ graph TB
 **Performance Optimization Framework** - Three key dimensions for optimizing TorchFX pipelines.
 
 ```{seealso}
-For detailed GPU acceleration patterns, see {doc}`gpu-acceleration`. For comprehensive benchmarking infrastructure, see the benchmark suite in the `benchmark/` directory.
+For detailed GPU acceleration patterns, see {doc}`gpu-acceleration`. For comprehensive benchmarking infrastructure, see the benchmark suite in the `benchmarks/` directory (run with `uv run pytest --benchmark-enable`).
 ```
 
 ## Benchmark Methodology
@@ -76,9 +76,9 @@ TorchFX includes a comprehensive benchmarking suite that evaluates performance a
 ```{mermaid}
 graph TB
     subgraph "TorchFX Benchmark Suite"
-        API["api_bench.py<br/>API Pattern Comparison"]
-        FIR["fir_bench.py<br/>FIR Filter Performance"]
-        IIR["iir_bench.py<br/>IIR Filter Performance"]
+        API["test_api_bench.py<br/>API Pattern Comparison"]
+        FIR["test_fir_bench.py<br/>FIR Filter Performance"]
+        IIR["test_iir_bench.py<br/>IIR Filter Performance"]
     end
 
     subgraph "Common Test Parameters"
@@ -200,7 +200,7 @@ Timing only measures the core processing operation. Setup costs like loading aud
 
 ## API Performance Comparison
 
-The `api_bench.py` benchmark compares different API patterns for applying the same filter chain to audio. This helps users understand the performance and ergonomic trade-offs of different coding styles.
+The `test_api_bench.py` benchmark compares different API patterns for applying the same filter chain to audio. This helps users understand the performance and ergonomic trade-offs of different coding styles.
 
 ### Test Configuration
 
@@ -375,7 +375,7 @@ filtered = lfilter(b6, a6, filtered)
 
 ## FIR Filter Performance
 
-The `fir_bench.py` benchmark evaluates FIR filter performance across varying signal durations, channel counts, and execution backends (GPU, CPU, SciPy).
+The `test_fir_bench.py` benchmark evaluates FIR filter performance across varying signal durations, channel counts, and execution backends (GPU, CPU, SciPy).
 
 ### FIR Test Configuration
 
@@ -563,7 +563,7 @@ filtered = lfilter(b5, a, filtered)
 
 ## IIR Filter Performance
 
-The `iir_bench.py` benchmark evaluates IIR (Infinite Impulse Response) filter performance using the same test matrix as FIR benchmarks but with recursive filters.
+The `test_iir_bench.py` benchmark evaluates IIR (Infinite Impulse Response) filter performance using the same test matrix as FIR benchmarks but with recursive filters.
 
 ### IIR Test Configuration
 
@@ -743,6 +743,41 @@ filtered = lfilter(b4, a4, filtered)
 - **No GPU**: SciPy doesn't support CUDA
 - **Baseline**: Reference for CPU performance
 - **Filter Design**: Uses standard signal processing algorithms
+
+## Native Extension Architecture
+
+TorchFX includes a JIT-compiled C++/CUDA native extension that dramatically accelerates stateful IIR filter processing. The extension is compiled automatically on first use and cached in `~/.cache/torch_extensions/`.
+
+### How It Works
+
+IIR filters use a two-phase processing strategy:
+
+1. **First call (stateless)**: Uses `torchaudio.functional.lfilter` — fast, but assumes zero initial state.
+2. **Subsequent calls (stateful)**: Carries filter state across calls for streaming/chunked processing. This path dispatches to the native C++ extension when available.
+
+The native extension provides:
+- **CPU**: Tight C++ loops with direct memory accessors (compiled from `_csrc/cpu/iir_cpu.cpp`)
+- **CUDA**: Parallel prefix scan algorithm for biquad and SOS cascades (compiled from `_csrc/cuda/`)
+
+```{important}
+The native extension compiles on **both CPU-only and CUDA-equipped machines**. A CUDA toolkit is not required — the CPU C++ kernel alone provides ~2400x speedup over the pure-PyTorch fallback for stateful IIR processing.
+```
+
+### Fallback Strategy
+
+If the native extension fails to compile (e.g., missing C++ compiler), TorchFX falls back to a vectorized pure-PyTorch implementation that uses `lfilter` with a zero-state/zero-input decomposition. This fallback is ~100-500x faster than a naive sample-by-sample loop, though slower than the C++ kernel.
+
+### Verifying Extension Status
+
+```python
+from torchfx._ops import _load_extension
+
+ext = _load_extension()
+if ext is not None:
+    print("Native extension loaded successfully")
+else:
+    print("Using PyTorch fallback (install a C++ compiler for best performance)")
+```
 
 ## Performance Optimization Guidelines
 

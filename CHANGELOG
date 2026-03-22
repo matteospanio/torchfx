@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [0.5.0] - Unreleased
+
+### Added
+
+- CUDA kernel implementations for biquad, SOS cascade, and delay line filters using parallel prefix scan algorithm
+- JIT-compiled C++/CUDA native extension (`torchfx._ops`) with automatic fallback to pure-PyTorch
+- CPU-only C++ extension support: native kernels now compile and load without CUDA toolkit, providing ~2400x speedup for stateful IIR filtering on CPU
+- `LogFilterBank` for logarithmically-spaced frequency band decomposition
+- CUDA kernel tests and fallback behavior tests
+
+### Changed
+
+- Benchmarks migrated from standalone scripts (`benchmark/`) to pytest-benchmark suite (`benchmarks/`)
+- Stateful biquad and IIR SOS fallback paths replaced sample-by-sample Python loops with vectorized `lfilter`-based zero-state/zero-input decomposition (~100-500x faster when C++ extension is unavailable)
+- IIR SOS matrix (`_compute_sos`) is now computed eagerly after `compute_coefficients()` instead of lazily in the forward path
+- State tensor device transfers in stateful filter paths are now guarded to avoid redundant `.to(device)` calls
+- Removed synchronous CUDA calls from native kernels for improved GPU throughput
+- Added `setuptools` as a runtime dependency (required by `torch.utils.cpp_extension` for JIT compilation)
+
+### Fixed
+
+- Native C++ extension was unreachable on CPU-only machines due to `torch.cuda.is_available()` gate in `_ops.py`
+- Various mypy and ruff errors
+
+
+
 ## [0.4.0] - 2026-02-15
 
 ### Added

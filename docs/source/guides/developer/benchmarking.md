@@ -24,9 +24,9 @@ The benchmarking suite consists of three independent scripts:
 
 | Script | Purpose | Comparisons | Output File |
 |--------|---------|-------------|-------------|
-| `api_bench.py` | API pattern comparison | FilterChain, Sequential, pipe operator, SciPy | `api_bench.out` |
-| `fir_bench.py` | FIR filter performance | GPU vs CPU vs SciPy across varying durations and channels | `fir.out` |
-| `iir_bench.py` | IIR filter performance | GPU vs CPU vs SciPy across varying durations and channels | `iir.out` |
+| `test_api_bench.py` | API pattern comparison | FilterChain, Sequential, pipe operator, SciPy | `api_bench.out` |
+| `test_fir_bench.py` | FIR filter performance | GPU vs CPU vs SciPy across varying durations and channels | `fir.out` |
+| `test_iir_bench.py` | IIR filter performance | GPU vs CPU vs SciPy across varying durations and channels | `iir.out` |
 
 All benchmarks use Python's `timeit` module for precise timing measurements and output results in CSV format for analysis and visualization.
 
@@ -35,9 +35,9 @@ All benchmarks use Python's `timeit` module for precise timing measurements and 
 ```{mermaid}
 graph TB
     subgraph "Benchmark Scripts"
-        API["api_bench.py<br/>API pattern comparison"]
-        FIR["fir_bench.py<br/>FIR filter performance"]
-        IIR["iir_bench.py<br/>IIR filter performance"]
+        API["test_api_bench.py<br/>API pattern comparison"]
+        FIR["test_fir_bench.py<br/>FIR filter performance"]
+        IIR["test_iir_bench.py<br/>IIR filter performance"]
     end
 
     subgraph "Test Signal Generation"
@@ -134,7 +134,7 @@ average_time = time / REP
 
 ## API Benchmark
 
-The API benchmark (`benchmark/api_bench.py`) compares different approaches to chaining filters, evaluating both ergonomics and performance.
+The API benchmark (`benchmarks/test_api_bench.py`) compares different approaches to chaining filters, evaluating both ergonomics and performance.
 
 ### Tested Implementations
 
@@ -276,7 +276,7 @@ Each time value represents average execution time in seconds.
 ### Running API Benchmark
 
 ```bash
-python benchmark/api_bench.py
+python benchmarks/test_api_bench.py
 ```
 
 **Expected output**:
@@ -296,7 +296,7 @@ Results saved to api_bench.out
 
 ## FIR Filter Benchmark
 
-The FIR filter benchmark (`benchmark/fir_bench.py`) evaluates FIR filter performance across different audio durations and channel counts.
+The FIR filter benchmark (`benchmarks/test_fir_bench.py`) evaluates FIR filter performance across different audio durations and channel counts.
 
 ### Test Matrix
 
@@ -426,7 +426,7 @@ time,channels,gpu,cpu,scipy
 ### Running FIR Benchmark
 
 ```bash
-python benchmark/fir_bench.py
+python benchmarks/test_fir_bench.py
 ```
 
 **Expected output**:
@@ -453,7 +453,7 @@ Results saved to fir.out
 
 ## IIR Filter Benchmark
 
-The IIR filter benchmark (`benchmark/iir_bench.py`) evaluates IIR filter performance with similar methodology to the FIR benchmark.
+The IIR filter benchmark (`benchmarks/test_iir_bench.py`) evaluates IIR filter performance with similar methodology to the FIR benchmark.
 
 ### Test Matrix
 
@@ -573,7 +573,7 @@ time,channels,gpu,cpu,scipy
 ### Running IIR Benchmark
 
 ```bash
-python benchmark/iir_bench.py
+python benchmarks/test_iir_bench.py
 ```
 
 **Expected output**:
@@ -652,7 +652,7 @@ These benchmarks generate multi-dimensional data for analysis:
 The `draw3.py` script generates PNG plots from CSV output files:
 
 ```bash
-python benchmark/draw3.py
+python benchmarks/draw3.py
 ```
 
 **Generated plots**:
@@ -680,12 +680,12 @@ Run all benchmarks sequentially:
 
 ```bash
 # Run individual benchmarks
-python benchmark/api_bench.py
-python benchmark/fir_bench.py
-python benchmark/iir_bench.py
+python benchmarks/test_api_bench.py
+python benchmarks/test_fir_bench.py
+python benchmarks/test_iir_bench.py
 
 # Generate visualizations
-python benchmark/draw3.py
+python benchmarks/draw3.py
 ```
 
 ### GPU Configuration
@@ -703,7 +703,7 @@ To disable GPU benchmarks, comment out CUDA calls:
 
 To add a new benchmark:
 
-1. Create new Python file in `benchmark/` directory
+1. Create new Python file in `benchmarks/` directory
 2. Implement `create_audio()` for test signal generation
 3. Use `timeit.timeit()` with `REP=50` for timing
 4. Compare against SciPy baseline when applicable
