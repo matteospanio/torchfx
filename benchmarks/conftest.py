@@ -9,6 +9,17 @@ import torch
 SAMPLE_RATE = 44100
 
 
+def pytest_configure(config):  # noqa: ARG001
+    """Print native extension status at the start of benchmark runs."""
+    from torchfx._ops import is_native_available
+
+    available = is_native_available()
+    cuda = torch.cuda.is_available()
+    gpu_name = torch.cuda.get_device_name(0) if cuda else "N/A"
+    print(f"\n[torchfx] native extension: {'YES' if available else 'NO (using slow fallback!)'}")
+    print(f"[torchfx] CUDA available: {cuda} ({gpu_name})")
+
+
 def create_signal_torch(channels: int, duration_sec: float, device: str = "cpu") -> torch.Tensor:
     """Create a normalized random test signal as a torch Tensor."""
     T = int(SAMPLE_RATE * duration_sec)

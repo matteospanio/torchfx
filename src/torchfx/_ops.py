@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import os
+import warnings
 from types import ModuleType
 from typing import TYPE_CHECKING
 
@@ -85,9 +86,24 @@ def _load_extension() -> ModuleType | None:
         logger.debug(
             "Failed to compile torchfx native extension; using PyTorch fallback", exc_info=True
         )
+        warnings.warn(
+            "torchfx: native C++/CUDA extension failed to compile. "
+            "Falling back to pure-PyTorch implementation which is significantly slower. "
+            "Enable debug logging for details: logging.getLogger('torchfx._ops').setLevel('DEBUG')",
+            stacklevel=2,
+        )
         _ext = None
 
     return _ext
+
+
+def is_native_available() -> bool:
+    """Check whether the native C++/CUDA extension is available.
+
+    Triggers JIT compilation on first call if not already attempted.
+
+    """
+    return _load_extension() is not None
 
 
 def biquad_forward(
@@ -120,17 +136,30 @@ def biquad_forward(
     try:
         # Extract a1, a2 as Python floats before any device transfer to avoid
         # GPU→CPU sync when coefficients are on CUDA.
-        a_f64 = a.to(dtype=dtype)
+        a_f64 = a if a.dtype == dtype else a.to(dtype=dtype)
         a1 = float(a_f64[1])
         a2 = float(a_f64[2])
 
+        x_f64 = x if x.dtype == dtype else x.to(dtype=dtype)
+        b_f64 = b if b.dtype == dtype else b.to(dtype=dtype)
+        sx = (
+            state_x
+            if (state_x.device == device and state_x.dtype == dtype)
+            else state_x.to(device=device, dtype=dtype)
+        )
+        sy = (
+            state_y
+            if (state_y.device == device and state_y.dtype == dtype)
+            else state_y.to(device=device, dtype=dtype)
+        )
+
         result: tuple[Tensor, Tensor, Tensor] = ext.biquad_forward(
-            x.to(dtype=dtype),
-            b.to(dtype=dtype),
+            x_f64,
+            b_f64,
             a1,
             a2,
-            state_x.to(device=device, dtype=dtype),
-            state_y.to(device=device, dtype=dtype),
+            sx,
+            sy,
         )
         return result
     except Exception:
@@ -165,11 +194,33 @@ def parallel_iir_forward(
         state_y = torch.zeros(K, C, 2, device=device, dtype=dtype)
 
     try:
+        x_f64 = x if x.dtype == dtype else x.to(dtype=dtype)
+        sos_device = (
+            sos
+            if (sos.device == device and sos.dtype == dtype)
+            else sos.to(device=device, dtype=dtype)
+        )
+        sx = (
+            state_x
+            if (state_x.device == device and state_x.dtype == dtype)
+            else state_x.to(device=device, dtype=dtype)
+        )
+        sy = (
+            state_y
+            if (state_y.device == device and state_y.dtype == dtype)
+            else state_y.to(device=device, dtype=dtype)
+        )
+
+        # Pre-compute a CPU copy of the SOS matrix so the CUDA kernel can
+        # extract scalar coefficients without a GPU→CPU sync.
+        sos_cpu = sos.detach().to(dtype=dtype, device="cpu") if sos.is_cuda else sos_device
+
         result: tuple[Tensor, Tensor, Tensor] = ext.sos_forward(
-            x.to(dtype=dtype),
-            sos.to(device=device, dtype=dtype),
-            state_x.to(device=device, dtype=dtype),
-            state_y.to(device=device, dtype=dtype),
+            x_f64,
+            sos_device,
+            sos_cpu,
+            sx,
+            sy,
         )
         return result
     except Exception:

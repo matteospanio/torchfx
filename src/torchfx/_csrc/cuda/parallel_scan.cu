@@ -247,16 +247,67 @@ __global__ void sequential_biquad_kernel(
 // Public API
 // ============================================================
 
-torch::Tensor compute_forcing(const torch::Tensor& x, const torch::Tensor& b) {
-  // f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2]
-  // Implemented as 1D convolution with kernel [b2, b1, b0] (flipped for conv).
-  auto b_flip = b.flip(0).reshape({1, 1, 3}).to(x.dtype());
-  auto x_2d = x.unsqueeze(1);  // [C, 1, T]
-  auto padded = torch::nn::functional::pad(x_2d,
-    torch::nn::functional::PadFuncOptions({2, 0}));
-  auto f = torch::conv1d(padded, b_flip.expand({x.size(0), 1, 3}),
-    /*bias=*/{}, /*stride=*/1, /*padding=*/0, /*dilation=*/1, /*groups=*/x.size(0));
-  return f.squeeze(1);  // [C, T]
+// Custom CUDA kernel for 3-tap FIR with state prepend.
+// Fuses the cat + conv1d into a single kernel launch, eliminating
+// ~5 intermediate tensor operations and cuDNN dispatch overhead.
+__global__ void forcing_kernel(
+    const double* __restrict__ x,     // [C, T]
+    const double* __restrict__ sx,    // [C, 2] = {x[-1], x[-2]}
+    double b0, double b1, double b2,
+    double* __restrict__ f,           // [C, T]
+    int T, int total_elements) {
+
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx >= total_elements) return;
+
+  const int c = idx / T;
+  const int n = idx % T;
+
+  const double xn = x[c * T + n];
+  double xn_1, xn_2;
+
+  if (n >= 2) {
+    xn_1 = x[c * T + n - 1];
+    xn_2 = x[c * T + n - 2];
+  } else if (n == 1) {
+    xn_1 = x[c * T + 0];
+    xn_2 = sx[c * 2 + 0];  // x[-1]
+  } else {  // n == 0
+    xn_1 = sx[c * 2 + 0];  // x[-1]
+    xn_2 = sx[c * 2 + 1];  // x[-2]
+  }
+
+  f[c * T + n] = b0 * xn + b1 * xn_1 + b2 * xn_2;
+}
+
+torch::Tensor compute_forcing(
+    const torch::Tensor& x,
+    const torch::Tensor& b,
+    const torch::Tensor& state_x) {
+  // f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] with state prepend for n=0,1.
+  auto x_cont = x.contiguous();
+  auto sx_cont = state_x.contiguous();
+  auto b_cont = b.contiguous();
+
+  const int64_t C = x_cont.size(0);
+  const int64_t T = x_cont.size(1);
+  const int total = static_cast<int>(C * T);
+
+  auto f = torch::empty({C, T}, x_cont.options());
+
+  const double* b_ptr = b_cont.data_ptr<double>();
+  const double b0 = b_ptr[0], b1 = b_ptr[1], b2 = b_ptr[2];
+
+  constexpr int THREADS = 256;
+  const int blocks = (total + THREADS - 1) / THREADS;
+  forcing_kernel<<<blocks, THREADS>>>(
+      x_cont.data_ptr<double>(),
+      sx_cont.data_ptr<double>(),
+      b0, b1, b2,
+      f.data_ptr<double>(),
+      static_cast<int>(T), total);
+
+  return f;
 }
 
 std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(

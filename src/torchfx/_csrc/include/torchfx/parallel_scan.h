@@ -18,10 +18,13 @@ namespace torchfx {
 //         M[n] = [-a1, -a2, f[n]; 1, 0, 0; 0, 0, 1]
 // Step 3: Parallel prefix scan over M[0..T-1] with matrix multiply
 
-// Compute f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] for all n.
-// Input:  x [C, T], b [3] = {b0, b1, b2}
+// Compute f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] for all n, with state prepend.
+// Input:  x [C, T], b [3] = {b0, b1, b2}, state_x [C, 2] = {x[-1], x[-2]}
 // Output: f [C, T]
-torch::Tensor compute_forcing(const torch::Tensor& x, const torch::Tensor& b);
+torch::Tensor compute_forcing(
+    const torch::Tensor& x,
+    const torch::Tensor& b,
+    const torch::Tensor& state_x);
 
 // Parallel biquad via prefix scan.
 // Input:  f [C, T] (precomputed forcing), a1, a2 (feedback coefficients),

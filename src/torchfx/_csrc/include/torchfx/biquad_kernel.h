@@ -16,11 +16,12 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
     const torch::Tensor& state_y);
 
 // Apply a cascade of biquad sections (SOS format) using CUDA parallel scan.
-// Input:  x [C, T], sos [K, 6], state_x [K, C, 2], state_y [K, C, 2]
+// Input:  x [C, T], sos [K, 6] (device), sos_cpu [K, 6] (CPU), state_x/y [K, C, 2]
 // Output: (y [C, T], new_state_x [K, C, 2], new_state_y [K, C, 2])
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
     const torch::Tensor& x,
     const torch::Tensor& sos,
+    const torch::Tensor& sos_cpu,
     const torch::Tensor& state_x,
     const torch::Tensor& state_y);
 

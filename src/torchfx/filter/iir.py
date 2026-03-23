@@ -83,6 +83,58 @@ from torchfx.typing import Device, FilterOrderScale
 NONE_FS_ERR = "Sample rate of the filter could not be None."
 
 
+@torch.jit.script
+def _biquad_df1_fallback(
+    x: Tensor,
+    b0: Tensor,
+    b1: Tensor,
+    b2: Tensor,
+    a1: Tensor,
+    a2: Tensor,
+    sx: Tensor,
+    sy: Tensor,
+) -> Tensor:
+    """Single-pass Direct Form 1 biquad, JIT-compiled for speed.
+
+    Parameters
+    ----------
+    x : Tensor
+        Input signal ``[C, T]``.
+    b0, b1, b2 : Tensor
+        Numerator (feedforward) coefficients (scalars).
+    a1, a2 : Tensor
+        Denominator (feedback) coefficients (scalars, excluding a0=1).
+    sx : Tensor
+        Input state ``[C, 2]`` = ``[x[-1], x[-2]]``.
+    sy : Tensor
+        Output state ``[C, 2]`` = ``[y[-1], y[-2]]``.
+
+    Returns
+    -------
+    Tensor
+        Filtered output ``[C, T]``.
+
+    """
+    T = x.shape[1]
+    y = torch.empty_like(x)
+
+    xn_1 = sx[:, 0]
+    xn_2 = sx[:, 1]
+    yn_1 = sy[:, 0]
+    yn_2 = sy[:, 1]
+
+    for n in range(T):
+        xn = x[:, n]
+        yn = b0 * xn + b1 * xn_1 + b2 * xn_2 - a1 * yn_1 - a2 * yn_2
+        y[:, n] = yn
+        xn_2 = xn_1
+        xn_1 = xn
+        yn_2 = yn_1
+        yn_1 = yn
+
+    return y
+
+
 class IIR(AbstractFilter):
     """Base class for Infinite Impulse Response (IIR) filters.
 
@@ -179,12 +231,6 @@ class IIR(AbstractFilter):
 
         self._sos = torch.from_numpy(sos)
 
-        # Pre-compute flipped b-coefficient kernels for the fallback conv1d path.
-        # Shape: [K, 1, 3] where K = num_sections.
-        sos_t = self._sos.to(dtype=torch.float64)
-        self._sos_kernels = sos_t[:, :3].flip(-1).unsqueeze(1)  # [K, 1, 3]
-        self._fb_b_delta = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
-
     def move_coeff(self, device: Device, dtype: dtype = torch.float32) -> None:
         """Move the filter coefficients to the specified device and dtype."""
         self.a = torch.as_tensor(self.a, device=device, dtype=dtype)
@@ -272,7 +318,9 @@ class IIR(AbstractFilter):
         C, T = x.shape
         num_sections = self._sos.shape[0]
 
-        sos = self._sos.to(device=device, dtype=torch.float64)
+        sos = self._sos
+        if sos.device != device or sos.dtype != torch.float64:
+            sos = sos.to(device=device, dtype=torch.float64)
 
         # Initialize or resize state
         if self._state_x is None or self._state_x.shape[1] != C:
@@ -298,39 +346,20 @@ class IIR(AbstractFilter):
                 return result.reshape(orig_shape)
             return result
 
-        # Vectorized PyTorch fallback using lfilter with state decomposition.
+        # Single-pass DF1 fallback (replaces the 2x lfilter decomposition).
         section_input = x.to(dtype=torch.float64)
 
-        # Move cached tensors to device if needed.
-        b_delta = self._fb_b_delta.to(device=device)
-        sos_kernels = self._sos_kernels.to(device=device)
-
         for s in range(num_sections):
-            a_s = torch.stack([sos[s, 3], sos[s, 4], sos[s, 5]])  # [a0, a1, a2]
-            a1 = a_s[1]
-            a2 = a_s[2]
+            b0 = sos[s, 0]
+            b1 = sos[s, 1]
+            b2 = sos[s, 2]
+            a1 = sos[s, 4]
+            a2 = sos[s, 5]
 
-            sx = self._state_x[s]  # [C, 2]
-            sy = self._state_y[s]  # [C, 2]
+            sx = self._state_x[s]  # [C, 2] = [x[-1], x[-2]]
+            sy = self._state_y[s]  # [C, 2] = [y[-1], y[-2]]
 
-            # Step 1: Compute forcing function via conv1d with pre-computed kernel
-            x_ext = torch.cat([sx[:, 1:2], sx[:, 0:1], section_input], dim=1)
-            kernel = sos_kernels[s].unsqueeze(0)  # [1, 1, 3]
-            f = torch.nn.functional.conv1d(x_ext.unsqueeze(1), kernel, padding=0).squeeze(
-                1
-            )  # [C, T]
-
-            # Step 2: Zero-state response
-            y_zs = F.lfilter(f, a_s, b_delta, clamp=False)
-
-            # Step 3: Zero-input response for initial y-state
-            g = torch.zeros_like(f)
-            g[:, 0] = -a1 * sy[:, 0] - a2 * sy[:, 1]
-            if T > 1:
-                g[:, 1] = -a2 * sy[:, 0]
-            y_zi = F.lfilter(g, a_s, b_delta, clamp=False)
-
-            out = y_zs + y_zi
+            out = _biquad_df1_fallback(section_input, b0, b1, b2, a1, a2, sx, sy)
 
             # Update state from tail
             if T >= 2:
