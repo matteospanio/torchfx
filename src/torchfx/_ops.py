@@ -53,6 +53,7 @@ def _load_extension() -> ModuleType | None:
 
     all_sources = cpp_sources + cpu_sources
     extra_cflags: list[str] = []
+    extra_cuda_cflags: list[str] = []
 
     use_cuda = torch.cuda.is_available()
     if use_cuda:
@@ -64,6 +65,7 @@ def _load_extension() -> ModuleType | None:
         ]
         all_sources += cuda_sources
         extra_cflags.append("-DWITH_CUDA")
+        extra_cuda_cflags.append("-DWITH_CUDA")
 
     # Verify all source files exist before attempting compilation
     for src in all_sources:
@@ -79,17 +81,21 @@ def _load_extension() -> ModuleType | None:
             sources=all_sources,
             extra_include_paths=[_INCLUDE_DIR],
             extra_cflags=extra_cflags,
+            extra_cuda_cflags=extra_cuda_cflags,
             verbose=False,
         )
         logger.info("torchfx native extension compiled successfully (CUDA=%s)", use_cuda)
-    except Exception:
+    except Exception as exc:
         logger.debug(
             "Failed to compile torchfx native extension; using PyTorch fallback", exc_info=True
         )
+        # Include the first ~500 chars of the error so the user can diagnose
+        # compilation failures without enabling debug logging.
+        err_snippet = str(exc)[:500]
         warnings.warn(
             "torchfx: native C++/CUDA extension failed to compile. "
-            "Falling back to pure-PyTorch implementation which is significantly slower. "
-            "Enable debug logging for details: logging.getLogger('torchfx._ops').setLevel('DEBUG')",
+            "Falling back to pure-PyTorch implementation which is significantly slower.\n"
+            f"Error: {err_snippet}",
             stacklevel=2,
         )
         _ext = None
