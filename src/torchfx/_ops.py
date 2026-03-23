@@ -89,9 +89,9 @@ def _load_extension() -> ModuleType | None:
         logger.debug(
             "Failed to compile torchfx native extension; using PyTorch fallback", exc_info=True
         )
-        # Include the first ~500 chars of the error so the user can diagnose
-        # compilation failures without enabling debug logging.
-        err_snippet = str(exc)[:500]
+        # Include the error so the user can diagnose compilation failures
+        # without enabling debug logging.
+        err_snippet = str(exc)[:2000]
         warnings.warn(
             "torchfx: native C++/CUDA extension failed to compile. "
             "Falling back to pure-PyTorch implementation which is significantly slower.\n"
