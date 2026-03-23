@@ -55,7 +55,7 @@ def _load_extension() -> ModuleType | None:
     extra_cflags: list[str] = []
     extra_cuda_cflags: list[str] = []
 
-    use_cuda = torch.cuda.is_available()
+    use_cuda = torch.cuda.is_available() and not os.environ.get("TORCHFX_NO_CUDA")
     if use_cuda:
         cuda_dir = os.path.join(_CSRC_DIR, "cuda")
         cuda_sources = [
@@ -86,16 +86,18 @@ def _load_extension() -> ModuleType | None:
         )
         logger.info("torchfx native extension compiled successfully (CUDA=%s)", use_cuda)
     except Exception as exc:
-        logger.debug(
-            "Failed to compile torchfx native extension; using PyTorch fallback", exc_info=True
+        # Print the full error to stderr so it's not truncated by warnings.warn
+        import sys
+
+        print(
+            f"\n[torchfx] EXTENSION COMPILATION FAILED:\n{exc}\n",
+            file=sys.stderr,
+            flush=True,
         )
-        # Include the error so the user can diagnose compilation failures
-        # without enabling debug logging.
-        err_snippet = str(exc)[:2000]
         warnings.warn(
             "torchfx: native C++/CUDA extension failed to compile. "
-            "Falling back to pure-PyTorch implementation which is significantly slower.\n"
-            f"Error: {err_snippet}",
+            "Falling back to pure-PyTorch implementation which is significantly slower. "
+            "See stderr output above for full compiler error.",
             stacklevel=2,
         )
         _ext = None
