@@ -6,7 +6,7 @@ namespace torchfx {
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
     const torch::Tensor& x,          // [C, T]
-    const torch::Tensor& b,          // [3] = {b0, b1, b2}
+    double b0, double b1, double b2,  // numerator coefficients
     double a1,                        // denominator coefficient a1
     double a2,                        // denominator coefficient a2
     const torch::Tensor& state_x,    // [C, 2]
@@ -16,7 +16,6 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
   TORCH_CHECK(x.dim() == 2, "biquad_forward_cuda: input must be [C, T]");
 
   auto x_f64 = x.contiguous();
-  auto b_f64 = b.contiguous();
   auto sx = state_x.contiguous();
   auto sy = state_y.contiguous();
 
@@ -24,7 +23,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
   auto T = x_f64.size(1);
 
   // Step 1: Compute forcing function with fused state prepend — single kernel.
-  auto f = compute_forcing(x_f64, b_f64, sx);  // [C, T]
+  auto f = compute_forcing(x_f64, b0, b1, b2, sx);  // [C, T]
 
   // Step 2: Parallel scan to solve y[n] = f[n] - a1*y[n-1] - a2*y[n-2]
   auto [y, new_state_y] = parallel_biquad_scan(f, a1, a2, sy);
@@ -71,8 +70,10 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
 
   // Process each SOS section sequentially, using parallel scan within each.
   for (int64_t s = 0; s < K; ++s) {
-    auto b = sos_f64.index({s, torch::indexing::Slice(0, 3)});
-    // Extract a1, a2 from CPU copy -- no GPU sync needed.
+    // Extract all coefficients from CPU copy — no GPU sync needed.
+    const double b0 = sos_cpu[s][0].item<double>();
+    const double b1 = sos_cpu[s][1].item<double>();
+    const double b2 = sos_cpu[s][2].item<double>();
     const double a1 = sos_cpu[s][4].item<double>();
     const double a2 = sos_cpu[s][5].item<double>();
 
@@ -80,7 +81,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
     auto sy_s = new_sy[s];  // [C, 2]
 
     auto [y_s, nsx_s, nsy_s] = biquad_forward_cuda(
-        section_input, b, a1, a2, sx_s, sy_s);
+        section_input, b0, b1, b2, a1, a2, sx_s, sy_s);
 
     new_sx[s] = nsx_s;
     new_sy[s] = nsy_s;

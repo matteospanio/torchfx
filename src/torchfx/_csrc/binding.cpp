@@ -30,7 +30,12 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward(
     const torch::Tensor& state_y) {
 #ifdef WITH_CUDA
   if (x.is_cuda()) {
-    return torchfx::biquad_forward_cuda(x, b, a1, a2, state_x, state_y);
+    // Extract b coefficients as scalars to avoid GPU→CPU sync in the kernel.
+    auto b_cpu = b.is_cuda() ? b.detach().cpu() : b;
+    const double b0 = b_cpu[0].item<double>();
+    const double b1 = b_cpu[1].item<double>();
+    const double b2 = b_cpu[2].item<double>();
+    return torchfx::biquad_forward_cuda(x, b0, b1, b2, a1, a2, state_x, state_y);
   }
 #else
   TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");

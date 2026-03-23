@@ -282,21 +282,17 @@ __global__ void forcing_kernel(
 
 torch::Tensor compute_forcing(
     const torch::Tensor& x,
-    const torch::Tensor& b,
+    double b0, double b1, double b2,
     const torch::Tensor& state_x) {
   // f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] with state prepend for n=0,1.
   auto x_cont = x.contiguous();
   auto sx_cont = state_x.contiguous();
-  auto b_cont = b.contiguous();
 
   const int64_t C = x_cont.size(0);
   const int64_t T = x_cont.size(1);
   const int total = static_cast<int>(C * T);
 
   auto f = torch::empty({C, T}, x_cont.options());
-
-  const double* b_ptr = b_cont.data_ptr<double>();
-  const double b0 = b_ptr[0], b1 = b_ptr[1], b2 = b_ptr[2];
 
   constexpr int THREADS = 256;
   const int blocks = (total + THREADS - 1) / THREADS;
