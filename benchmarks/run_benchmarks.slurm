@@ -1,13 +1,16 @@
 #!/bin/bash
-#SBATCH --job-name=torchfx-bench
+#SBATCH --job-name=tfx-bench
 #SBATCH --output=benchmarks/results/slurm-%j.out
 #SBATCH --error=benchmarks/results/slurm-%j.err
 #SBATCH --gres=gpu:rtx
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
-#SBATCH --time=04:00:00
+#SBATCH --cpus-per-task=12
+#SBATCH --mem=48G
+#SBATCH --time=08:00:00
 
 set -euo pipefail
+
+module load GCC
+module load CUDA
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 RESULTS_DIR="benchmarks/results/$(date +%Y%m%d_%H%M%S)_${SLURM_JOB_ID}"
@@ -31,7 +34,7 @@ print(f'torch: {torch.__version__}')
 print(f'cuda_available: {torch.cuda.is_available()}')
 if torch.cuda.is_available():
     print(f'gpu: {torch.cuda.get_device_name(0)}')
-    print(f'gpu_memory: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB')
+    print(f'gpu_memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB')
 try:
     from numba import cuda as nc
     print(f'numba_cuda: {nc.is_available()}')

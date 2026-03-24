@@ -50,9 +50,12 @@ SCIPY_FILTERS = _scipy_coefficients()
 
 def _get_numba_iir_kernel():
     """Lazily compile the numba CUDA IIR kernel."""
-    from numba import cuda
+    from numba import cuda, float64, void
 
-    @cuda.jit
+    @cuda.jit(
+        void(float64, float64, float64, float64, float64, float64[:, :], float64[:, :]),
+        cache=True,
+    )
     def _numba_iir_df1(b0, b1, b2, a1, a2, x, y):
         """Per-channel DF1 IIR biquad on GPU.
 
