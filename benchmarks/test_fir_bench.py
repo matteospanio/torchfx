@@ -49,9 +49,12 @@ SCIPY_FIR_COEFFS = _scipy_fir_coefficients()
 
 def _get_numba_fir_kernel():
     """Lazily compile a numba CUDA FIR convolution kernel."""
-    from numba import cuda
+    from numba import cuda, float64, int64, void
 
-    @cuda.jit
+    @cuda.jit(
+        void(float64[:], int64, float64[:, :], float64[:, :]),
+        cache=True,
+    )
     def _numba_fir_conv(h, h_len, x, y):
         """Per-channel FIR filtering on GPU.
 
