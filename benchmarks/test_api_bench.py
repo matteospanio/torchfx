@@ -10,11 +10,10 @@ from torch.nn import Sequential
 from torchfx import Wave
 from torchfx.filter import HiChebyshev1, LoButterworth
 
-from .conftest import SAMPLE_RATE, create_signal_numpy
+from .conftest import REP, SAMPLE_RATE, WARMUP, create_signal_numpy
 
 DURATION = 120
 NUM_CHANNELS = 8
-REP = 50
 
 
 class FilterChain(nn.Module):
@@ -53,7 +52,7 @@ def test_filter_chain(benchmark, api_bench_data):
         fchain = FilterChain(wave.fs)
         return fchain(wave.ys)
 
-    benchmark.pedantic(run, rounds=REP, warmup_rounds=3)
+    benchmark.pedantic(run, rounds=REP, warmup_rounds=WARMUP)
 
 
 @pytest.mark.benchmark(group="api-comparison")
@@ -71,7 +70,7 @@ def test_sequential(benchmark, api_bench_data):
         )
         return fchain(wave.ys)
 
-    benchmark.pedantic(run, rounds=REP, warmup_rounds=3)
+    benchmark.pedantic(run, rounds=REP, warmup_rounds=WARMUP)
 
 
 @pytest.mark.benchmark(group="api-comparison")
@@ -89,7 +88,7 @@ def test_pipe(benchmark, api_bench_data):
             | LoButterworth(4850)
         )
 
-    benchmark.pedantic(run, rounds=REP, warmup_rounds=3)
+    benchmark.pedantic(run, rounds=REP, warmup_rounds=WARMUP)
 
 
 @pytest.mark.benchmark(group="api-comparison")
@@ -112,4 +111,4 @@ def test_scipy(benchmark, api_bench_data):
         x = lfilter(b6, a6, x)
         return x
 
-    benchmark.pedantic(run, rounds=REP, warmup_rounds=3)
+    benchmark.pedantic(run, rounds=REP, warmup_rounds=WARMUP)

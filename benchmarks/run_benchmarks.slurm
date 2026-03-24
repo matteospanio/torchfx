@@ -3,7 +3,7 @@
 #SBATCH --output=benchmarks/results/slurm-%j.out
 #SBATCH --error=benchmarks/results/slurm-%j.err
 #SBATCH --gres=gpu:rtx
-#SBATCH --cpus-per-task=6
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=04:00:00
 
@@ -31,48 +31,53 @@ print(f'torch: {torch.__version__}')
 print(f'cuda_available: {torch.cuda.is_available()}')
 if torch.cuda.is_available():
     print(f'gpu: {torch.cuda.get_device_name(0)}')
-    print(f'gpu_memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB')
+    print(f'gpu_memory: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB')
+try:
+    from numba import cuda as nc
+    print(f'numba_cuda: {nc.is_available()}')
+except ImportError:
+    print('numba_cuda: not installed')
 "
 } > "$RESULTS_DIR/environment.txt"
 
 cat "$RESULTS_DIR/environment.txt"
 echo ""
 
+BENCH_OPTS="--benchmark-enable --benchmark-name=short -v --tb=short"
+
 # ── Run benchmarks ───────────────────────────────────────────────────────────
 
-# IIR filter benchmarks (GPU + CPU + SciPy)
 echo ">>> Running IIR benchmarks..."
 uv run pytest benchmarks/test_iir_bench.py \
-    --benchmark-enable \
-    --benchmark-json="$RESULTS_DIR/iir_bench.json" \
-    --benchmark-name=short \
-    -v --tb=short 2>&1 | tee "$RESULTS_DIR/iir_bench.log"
+    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/iir_bench.json" \
+    2>&1 | tee "$RESULTS_DIR/iir_bench.log"
 
-# FIR filter benchmarks
 echo ">>> Running FIR benchmarks..."
 uv run pytest benchmarks/test_fir_bench.py \
-    --benchmark-enable \
-    --benchmark-json="$RESULTS_DIR/fir_bench.json" \
-    --benchmark-name=short \
-    -v --tb=short 2>&1 | tee "$RESULTS_DIR/fir_bench.log"
+    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/fir_bench.json" \
+    2>&1 | tee "$RESULTS_DIR/fir_bench.log"
 
-# API comparison benchmarks
+echo ">>> Running FFT conv benchmarks..."
+uv run pytest benchmarks/test_fftconv_bench.py \
+    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/fftconv_bench.json" \
+    2>&1 | tee "$RESULTS_DIR/fftconv_bench.log"
+
+echo ">>> Running biquad benchmarks..."
+uv run pytest benchmarks/test_biquad_bench.py \
+    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/biquad_bench.json" \
+    2>&1 | tee "$RESULTS_DIR/biquad_bench.log"
+
+echo ">>> Running pipeline benchmarks..."
+uv run pytest benchmarks/test_pipeline_bench.py \
+    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/pipeline_bench.json" \
+    2>&1 | tee "$RESULTS_DIR/pipeline_bench.log"
+
 echo ">>> Running API benchmarks..."
 uv run pytest benchmarks/test_api_bench.py \
-    --benchmark-enable \
-    --benchmark-json="$RESULTS_DIR/api_bench.json" \
-    --benchmark-name=short \
-    -v --tb=short 2>&1 | tee "$RESULTS_DIR/api_bench.log"
+    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/api_bench.json" \
+    2>&1 | tee "$RESULTS_DIR/api_bench.log"
 
-# CUDA-specific benchmarks (stateful, SOS cascade, pipeline)
-echo ">>> Running CUDA benchmarks..."
-uv run pytest benchmarks/test_cuda_bench.py \
-    --benchmark-enable \
-    --benchmark-json="$RESULTS_DIR/cuda_bench.json" \
-    --benchmark-name=short \
-    -v --tb=short 2>&1 | tee "$RESULTS_DIR/cuda_bench.log"
-
-# ── Combine results ──────────────────────────────────────────────────────────
+# ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "=== Benchmark run complete ==="
 echo "Results saved to: $RESULTS_DIR"

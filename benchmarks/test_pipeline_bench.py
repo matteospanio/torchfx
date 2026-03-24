@@ -1,4 +1,4 @@
-"""CUDA performance benchmarks for torchfx biquad/SOS/pipeline processing."""
+"""Pipeline benchmarks: SOS cascade and multi-filter chains (CPU vs CUDA)."""
 
 from __future__ import annotations
 
@@ -7,44 +7,8 @@ import torch
 import torch.nn as nn
 
 from torchfx.filter import HiButterworth, LoButterworth
-from torchfx.filter.biquad import BiquadLPF
 
-from .conftest import SAMPLE_RATE, create_signal_torch
-
-BIQUAD_DURATIONS = [0.1, 1.0, 5.0, 30.0]
-BIQUAD_CHANNELS = [1, 2]
-DEVICES = ["cpu", "cuda"]
-
-
-@pytest.mark.benchmark(group="biquad-stateful")
-@pytest.mark.parametrize("device", DEVICES)
-@pytest.mark.parametrize("channels", BIQUAD_CHANNELS)
-@pytest.mark.parametrize("duration", BIQUAD_DURATIONS)
-def test_biquad_stateful(cuda_sync_benchmark, duration, channels, device):
-    if device == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA not available")
-
-    filt = BiquadLPF(cutoff=1000, q=0.707, fs=SAMPLE_RATE)
-    filt.compute_coefficients()
-
-    x = create_signal_torch(channels, duration, device)
-
-    if device == "cuda":
-        filt.move_coeff("cuda")
-
-    # Force stateful mode (call twice + reset, matching original benchmark)
-    _ = filt(x)
-    filt.reset_state()
-    _ = filt(x)
-    filt.reset_state()
-    _ = filt(x)
-
-    cuda_sync_benchmark.pedantic(
-        lambda f=filt, sig=x: f(sig),
-        rounds=20,
-        warmup_rounds=5,
-    )
-
+from .conftest import DEVICES, REP, SAMPLE_RATE, WARMUP, create_signal_torch
 
 SOS_ORDERS = [4, 8]
 
@@ -65,7 +29,7 @@ def test_sos_cascade(cuda_sync_benchmark, order, device):
     if device == "cuda":
         filt.move_coeff("cuda")
 
-    # Force stateful
+    # Force stateful mode
     _ = filt(x)
     filt.reset_state()
     _ = filt(x)
@@ -74,8 +38,8 @@ def test_sos_cascade(cuda_sync_benchmark, order, device):
 
     cuda_sync_benchmark.pedantic(
         lambda f=filt, sig=x: f(sig),
-        rounds=20,
-        warmup_rounds=5,
+        rounds=REP,
+        warmup_rounds=WARMUP,
     )
 
 
@@ -99,6 +63,6 @@ def test_pipeline(cuda_sync_benchmark, device):
 
     cuda_sync_benchmark.pedantic(
         lambda c=chain, sig=x: c(sig),
-        rounds=20,
-        warmup_rounds=5,
+        rounds=REP,
+        warmup_rounds=WARMUP,
     )
