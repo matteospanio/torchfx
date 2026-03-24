@@ -52,8 +52,9 @@ def _load_extension() -> ModuleType | None:
     cpu_sources = [os.path.join(_CSRC_DIR, "cpu", "iir_cpu.cpp")]
 
     all_sources = cpp_sources + cpu_sources
-    extra_cflags: list[str] = []
+    extra_cflags: list[str] = ["-O3", "-march=native", "-ffast-math", "-fopenmp"]
     extra_cuda_cflags: list[str] = []
+    extra_ldflags: list[str] = ["-lgomp"]
 
     use_cuda = torch.cuda.is_available() and not os.environ.get("TORCHFX_NO_CUDA")
     if use_cuda:
@@ -82,6 +83,7 @@ def _load_extension() -> ModuleType | None:
             extra_include_paths=[_INCLUDE_DIR],
             extra_cflags=extra_cflags,
             extra_cuda_cflags=extra_cuda_cflags,
+            extra_ldflags=extra_ldflags,
             verbose=False,
         )
         logger.info("torchfx native extension compiled successfully (CUDA=%s)", use_cuda)
