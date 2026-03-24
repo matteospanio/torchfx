@@ -32,6 +32,16 @@ DEVICES = ["cpu", "cuda"]
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
+def numba_available() -> bool:
+    """Check if numba is available."""
+    try:
+        import numba  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
 def numba_cuda_available() -> bool:
     """Check if numba CUDA is available (import + device check)."""
     try:
