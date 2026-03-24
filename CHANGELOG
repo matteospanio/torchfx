@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Benchmarks migrated from standalone scripts (`benchmark/`) to pytest-benchmark suite (`benchmarks/`)
+- Benchmarks migrated from standalone scripts (`benchmark/`) to pytest-benchmark suite (`benchmarks/`) with unified structure, numba CUDA baselines for fair GPU comparison, and `--benchmark-disable` by default
 - Stateful biquad and IIR SOS fallback paths replaced sample-by-sample Python loops with vectorized `lfilter`-based zero-state/zero-input decomposition (~100-500x faster when C++ extension is unavailable)
 - IIR SOS matrix (`_compute_sos`) is now computed eagerly after `compute_coefficients()` instead of lazily in the forward path
 - State tensor device transfers in stateful filter paths are now guarded to avoid redundant `.to(device)` calls
@@ -31,12 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIR filters now default to FFT convolution, up to 10x faster for kernel sizes ≥ 64
 - CUDA parallel scan replaced Hillis-Steele algorithm with work-efficient Blelloch scan, reducing total work from O(N log N) to O(N) and shared memory usage from 48 KB to 24 KB per block
 - Sequential CUDA biquad kernel now batches 128 channels per thread block instead of 1, improving GPU occupancy for short signals
-- Eliminated GPU→CPU synchronization in CUDA biquad kernel by passing denominator coefficients (`a1`, `a2`) as scalar arguments instead of extracting them from a device tensor
+- Eliminated GPU→CPU synchronization in CUDA biquad kernel by passing all biquad coefficients (`b0`, `b1`, `b2`, `a1`, `a2`) as scalar arguments instead of extracting them from device tensors
 - Pre-computed SOS convolution kernels and cached constant tensors (`b_delta`) in Python fallback paths to avoid per-call tensor allocation
+- C++ CPU extension now compiles with `-O3 -ffast-math -march=native` and OpenMP parallelization, achieving ~2x faster than scipy for multi-channel IIR filtering
+- `TORCHFX_NO_CUDA` environment variable added to force CPU-only extension compilation
 
 ### Fixed
 
 - Native C++ extension was unreachable on CPU-only machines due to `torch.cuda.is_available()` gate in `_ops.py`
+- Segfault in CUDA biquad kernel caused by dereferencing device pointer on host when reading b-coefficients; fixed by passing b0/b1/b2 as CPU scalars from the SOS copy
 - Various mypy and ruff errors
 
 
