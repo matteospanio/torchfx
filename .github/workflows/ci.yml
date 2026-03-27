@@ -29,7 +29,7 @@ jobs:
       - name: Install system audio deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y libportaudio2 portaudio19-dev
+          sudo apt-get install -y libportaudio2 portaudio19-dev ffmpeg
 
       - name: Restore dependency cache
         id: cache-restore
