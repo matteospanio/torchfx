@@ -21,6 +21,18 @@ from pathlib import Path
 from prompt_toolkit.completion import WordCompleter
 
 from cli.parsing import list_effects, parse_effect_string
+from torchfx.effect import FX
+
+
+def _configure_effect(fx: FX, fs: int) -> None:
+    """Configure an effect/filter with sample rate and coefficients."""
+    from torchfx.filter.__base import AbstractFilter
+
+    if hasattr(fx, "fs") and fx.fs is None:
+        fx.fs = fs
+    if isinstance(fx, AbstractFilter) and not fx._has_computed_coeff:
+        fx.compute_coefficients()
+
 
 # ---------------------------------------------------------------------------
 # REPL state
@@ -31,8 +43,6 @@ class _ReplState:
     """Mutable state for the REPL session."""
 
     def __init__(self) -> None:
-        from torchfx.effect import FX
-
         self.effects: list[FX] = []
         self.effect_specs: list[str] = []  # parallel list of original spec strings
         self.wave: object | None = None
@@ -64,7 +74,7 @@ _HELP_TEXT = """\
   [green]info[/green]                            Show loaded file info
   [green]play[/green]                            Play processed audio (blocks)
   [green]play raw[/green]                        Play original (unprocessed) audio
-  [green]live[/green]                            Start live playback (non-blocking, loop)
+  [green]live[/green] [buffer|buffer=4096 blocks=16] Start live playback (non-blocking, loop)
   [green]live stop[/green]                       Stop live playback
   [green]save[/green] <file>                     Save processed audio to file
   [green]preset save[/green] <name>              Save current chain as preset
@@ -104,6 +114,8 @@ def _cmd_add(state: _ReplState, args: list[str]) -> str:
         fx = parse_effect_string(spec)
     except ValueError as exc:
         return f"[red]{exc}[/red]"
+    if state.wave is not None:
+        _configure_effect(fx, state.sample_rate)
     state.effects.append(fx)
     state.effect_specs.append(spec)
     idx = len(state.effects)
@@ -183,11 +195,14 @@ def _cmd_play(state: _ReplState, args: list[str]) -> str:
     audio = output.ys.cpu().numpy().T.astype(np.float32)
     mode = "raw" if (args and args[0] == "raw") else "processed"
     try:
+        sd.stop()
         sd.play(audio, samplerate=output.fs)
         sd.wait()
     except KeyboardInterrupt:
         sd.stop()
         return "[yellow]⏹ Playback stopped.[/yellow]"
+    finally:
+        sd.stop()
     return f"[green]▶ Playback complete ({mode}).[/green]"
 
 
@@ -275,6 +290,9 @@ def _cmd_preset(state: _ReplState, args: list[str]) -> str:
             return f"[red]Preset '{name}' not found.[/red]"
 
         state.effects = load_effects_from_config(path)
+        if state.wave is not None:
+            for fx in state.effects:
+                _configure_effect(fx, state.sample_rate)
         # Rebuild spec strings from the toml for display
         state.effect_specs = [type(fx).__name__.lower() for fx in state.effects]
         return f"[green]✓ Loaded preset '{name}' ({len(state.effects)} effects).[/green]"
@@ -340,10 +358,29 @@ def _cmd_live(state: _ReplState, args: list[str]) -> str:
     wave: Wave = state.wave  # type: ignore[assignment]
     n_channels = wave.channels()
     blocksize = 2048
+    num_blocks = 8
+
+    # Parse optional buffer settings: "live 4096", "live buffer=4096 blocks=16"
+    for token in args:
+        if token.isdigit():
+            blocksize = int(token)
+            continue
+        if "=" in token:
+            key, _, val = token.partition("=")
+            key = key.strip().lower()
+            val = val.strip()
+            if val.isdigit():
+                if key in {"buffer", "block", "blocksize"}:
+                    blocksize = int(val)
+                elif key in {"blocks", "ring", "ringblocks"}:
+                    num_blocks = int(val)
+
+    if blocksize <= 0 or num_blocks <= 1:
+        return "[red]Invalid live buffer settings. Use positive values (e.g. live 4096 blocks=16).[/red]"
 
     # Pre-allocated ring buffer (multiple blocks so the producer can stay
     # ahead of the callback).
-    _NUM_BLOCKS = 8
+    _NUM_BLOCKS = num_blocks
     ring_buf = np.zeros((_NUM_BLOCKS * blocksize, n_channels), dtype=np.float32)
     ring_size = ring_buf.shape[0]
 
@@ -405,6 +442,7 @@ def _cmd_live(state: _ReplState, args: list[str]) -> str:
 
             effects = list(state.effects)  # shallow copy of current list
             for fx in effects:
+                _configure_effect(fx, wave.fs)
                 with contextlib.suppress(Exception):
                     # skip broken effects
                     chunk = fx(chunk)

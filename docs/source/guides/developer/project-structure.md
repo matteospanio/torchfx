@@ -23,7 +23,7 @@ graph TB
     Root --> Tests["tests/<br/>Test suite"]
     Root --> Docs["docs/<br/>Sphinx documentation"]
     Root --> Examples["examples/<br/>Usage examples"]
-    Root --> Benchmark["benchmark/<br/>Performance tests"]
+    Root --> Benchmark["benchmarks/<br/>Performance tests"]
     Root --> CLI["cli/<br/>Command-line interface"]
 
     Root --> PyProject["pyproject.toml<br/>Project configuration"]
@@ -40,9 +40,9 @@ graph TB
     Examples --> Ex1["series_and_parallel_filters.py"]
     Examples --> Ex2["multi_channel_effect.py"]
     Examples --> Ex3["delay.py"]
-    Benchmark --> B1["api_bench.py"]
-    Benchmark --> B2["fir_bench.py"]
-    Benchmark --> B3["iir_bench.py"]
+    Benchmark --> B1["test_api_bench.py"]
+    Benchmark --> B2["test_fir_bench.py"]
+    Benchmark --> B3["test_iir_bench.py"]
     CLI --> Main["__main__.py<br/>CLI entry point"]
 
     GitHub --> CIWorkflow["workflows/ci.yml"]
@@ -57,7 +57,7 @@ graph TB
 | `tests/` | Test suite | Unit and integration tests |
 | `docs/` | Documentation | Sphinx source files and configuration |
 | `examples/` | Usage examples | Practical demonstrations of library features |
-| `benchmark/` | Performance tests | GPU vs CPU performance comparisons |
+| `benchmarks/` | Performance tests | GPU vs CPU performance comparisons |
 | `cli/` | Command-line interface | CLI implementation (placeholder) |
 | `.github/workflows/` | CI/CD pipelines | GitHub Actions workflow definitions |
 
@@ -410,7 +410,7 @@ Documentation is automatically built and deployed to GitHub Pages via `.github/w
 
 ### Benchmark Directory
 
-The `benchmark/` directory contains performance measurement scripts:
+The `benchmarks/` directory contains performance measurement scripts:
 
 | File | Purpose |
 |------|---------|

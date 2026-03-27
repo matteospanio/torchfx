@@ -83,6 +83,58 @@ from torchfx.typing import Device, FilterOrderScale
 NONE_FS_ERR = "Sample rate of the filter could not be None."
 
 
+@torch.jit.script
+def _biquad_df1_fallback(
+    x: Tensor,
+    b0: Tensor,
+    b1: Tensor,
+    b2: Tensor,
+    a1: Tensor,
+    a2: Tensor,
+    sx: Tensor,
+    sy: Tensor,
+) -> Tensor:
+    """Single-pass Direct Form 1 biquad, JIT-compiled for speed.
+
+    Parameters
+    ----------
+    x : Tensor
+        Input signal ``[C, T]``.
+    b0, b1, b2 : Tensor
+        Numerator (feedforward) coefficients (scalars).
+    a1, a2 : Tensor
+        Denominator (feedback) coefficients (scalars, excluding a0=1).
+    sx : Tensor
+        Input state ``[C, 2]`` = ``[x[-1], x[-2]]``.
+    sy : Tensor
+        Output state ``[C, 2]`` = ``[y[-1], y[-2]]``.
+
+    Returns
+    -------
+    Tensor
+        Filtered output ``[C, T]``.
+
+    """
+    T = x.shape[1]
+    y = torch.empty_like(x)
+
+    xn_1 = sx[:, 0]
+    xn_2 = sx[:, 1]
+    yn_1 = sy[:, 0]
+    yn_2 = sy[:, 1]
+
+    for n in range(T):
+        xn = x[:, n]
+        yn = b0 * xn + b1 * xn_1 + b2 * xn_2 - a1 * yn_1 - a2 * yn_2
+        y[:, n] = yn
+        xn_2 = xn_1
+        xn_1 = xn
+        yn_2 = yn_1
+        yn_1 = yn
+
+    return y
+
+
 class IIR(AbstractFilter):
     """Base class for Infinite Impulse Response (IIR) filters.
 
@@ -194,6 +246,7 @@ class IIR(AbstractFilter):
 
         if self.a is None or self.b is None:
             self.compute_coefficients()
+            self._compute_sos()
 
         if not isinstance(self.a, Tensor) or not isinstance(self.b, Tensor):
             self.move_coeff(device, dtype)
@@ -206,7 +259,7 @@ class IIR(AbstractFilter):
         result: Tensor = F.lfilter(x, self.a, self.b, clamp=False)
         result = result.to(dtype=dtype)
 
-        # Build SOS and bootstrap state for next chunk
+        # Bootstrap state for next chunk
         if self._sos is None:
             self._compute_sos()
         self._bootstrap_state(x, result)
@@ -243,6 +296,9 @@ class IIR(AbstractFilter):
         Each second-order section uses Direct Form 1, vectorized across channels
         and sequential across time.
 
+        Uses a CUDA parallel prefix scan kernel when available and the input
+        is on a CUDA device, falling back to the pure-PyTorch loop otherwise.
+
         Ported from AudioNoise ``biquad.h`` ``biquad_step_df1``.
 
         """
@@ -262,47 +318,54 @@ class IIR(AbstractFilter):
         C, T = x.shape
         num_sections = self._sos.shape[0]
 
-        sos = self._sos.to(device=device, dtype=torch.float64)
+        sos = self._sos
+        if sos.device != device or sos.dtype != torch.float64:
+            sos = sos.to(device=device, dtype=torch.float64)
 
         # Initialize or resize state
         if self._state_x is None or self._state_x.shape[1] != C:
             self._state_x = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
             self._state_y = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
-        else:
+        elif self._state_x.device != device:
             self._state_x = self._state_x.to(device=device)
             assert self._state_y is not None
             self._state_y = self._state_y.to(device=device)
 
         assert self._state_y is not None
 
+        # Try native (CUDA or C++) SOS cascade kernel
+        from torchfx._ops import parallel_iir_forward
+
+        native_result = parallel_iir_forward(x, sos, self._state_x, self._state_y)
+        if native_result is not None:
+            out, self._state_x, self._state_y = native_result
+            result = out.to(dtype=out_dtype)
+            if len(orig_shape) == 1:
+                return result.squeeze(0)
+            elif len(orig_shape) == 3:
+                return result.reshape(orig_shape)
+            return result
+
+        # Single-pass DF1 fallback (replaces the 2x lfilter decomposition).
         section_input = x.to(dtype=torch.float64)
 
         for s in range(num_sections):
             b0 = sos[s, 0]
             b1 = sos[s, 1]
             b2 = sos[s, 2]
-            # sos[s, 3] is a0 (== 1 after normalization from tf2sos)
             a1 = sos[s, 4]
             a2 = sos[s, 5]
 
-            sx = self._state_x[s].clone()  # [C, 2]
-            sy = self._state_y[s].clone()  # [C, 2]
+            sx = self._state_x[s]  # [C, 2] = [x[-1], x[-2]]
+            sy = self._state_y[s]  # [C, 2] = [y[-1], y[-2]]
 
-            out = torch.empty_like(section_input)
+            out = _biquad_df1_fallback(section_input, b0, b1, b2, a1, a2, sx, sy)
 
-            for n in range(T):
-                xn = section_input[:, n]
-                yn = b0 * xn + b1 * sx[:, 0] + b2 * sx[:, 1] - a1 * sy[:, 0] - a2 * sy[:, 1]
-                out[:, n] = yn
-                sx[:, 1] = sx[:, 0]
-                sx[:, 0] = xn
-                sy[:, 1] = sy[:, 0]
-                sy[:, 0] = yn
+            # Update state from tail
+            if T >= 2:
+                self._state_x[s] = torch.stack([section_input[:, -1], section_input[:, -2]], dim=1)
+                self._state_y[s] = torch.stack([out[:, -1], out[:, -2]], dim=1)
 
-            self._state_x[s] = sx
-            self._state_y[s] = sy
-
-            # Output of this section feeds next section
             section_input = out
 
         result = section_input.to(dtype=out_dtype)

@@ -84,6 +84,7 @@ def _process_pipe(
     """Read WAV/raw from stdin, apply effects, write to stdout."""
     import io
 
+    import soundfile as sf  # type: ignore[import-untyped]
     import torch
     import torchaudio
 
@@ -111,7 +112,7 @@ def _process_pipe(
         waveform = waveform.cpu()
 
     out_buf = io.BytesIO()
-    torchaudio.save(out_buf, waveform, sr, format="wav")
+    sf.write(out_buf, waveform.numpy().T, sr, format="WAV")
     sys.stdout.buffer.write(out_buf.getvalue())
 
 
@@ -256,7 +257,7 @@ def _single_to_stdout(
     """Process single file and write WAV bytes to stdout."""
     import io
 
-    import torchaudio
+    import soundfile as sf
 
     from torchfx.wave import Wave
 
@@ -271,7 +272,7 @@ def _single_to_stdout(
         wave = wave.to("cpu")
 
     out_buf = io.BytesIO()
-    torchaudio.save(out_buf, wave.ys, wave.fs, format="wav")
+    sf.write(out_buf, wave.ys.numpy().T, wave.fs, format="WAV")
     sys.stdout.buffer.write(out_buf.getvalue())
 
 

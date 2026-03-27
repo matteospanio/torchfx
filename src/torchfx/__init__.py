@@ -4,7 +4,18 @@ import torchfx.logging as logging  # noqa: A004
 import torchfx.realtime as realtime
 import torchfx.typing as typing
 import torchfx.validation as validation
+from torchfx._ops import is_native_available
 from torchfx.effect import FX
 from torchfx.wave import Wave
 
-__all__ = ["FX", "Wave", "filter", "typing", "effect", "validation", "logging", "realtime"]
+__all__ = [
+    "FX",
+    "Wave",
+    "filter",
+    "typing",
+    "effect",
+    "validation",
+    "logging",
+    "realtime",
+    "is_native_available",
+]

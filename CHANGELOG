@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [0.5.0] - 2026-03-27
+
+### Added
+
+- CUDA kernel implementations for biquad, SOS cascade, and delay line filters using parallel prefix scan algorithm
+- JIT-compiled C++/CUDA native extension (`torchfx._ops`) with automatic fallback to pure-PyTorch
+- CPU-only C++ extension support: native kernels now compile and load without CUDA toolkit, providing ~2400x speedup for stateful IIR filtering on CPU
+- `LogFilterBank` for logarithmically-spaced frequency band decomposition
+- CUDA kernel tests and fallback behavior tests
+- FFT-based 1D convolution (`fft_conv1d`) adapted from [Julius](https://github.com/adefossez/julius) (MIT License) for fast FIR filtering using the overlap-save method
+- `conv_mode` parameter on `FIR` and `DesignableFIR` filters: `"fft"` (default), `"direct"`, or `"auto"`
+- Benchmark suite for FFT vs direct convolution across kernel sizes (64–1024) and signal durations
+
+### Changed
+
+- Benchmarks migrated from standalone scripts (`benchmark/`) to pytest-benchmark suite (`benchmarks/`) with unified structure, numba CUDA baselines for fair GPU comparison, and `--benchmark-disable` by default
+- Stateful biquad and IIR SOS fallback paths replaced sample-by-sample Python loops with vectorized `lfilter`-based zero-state/zero-input decomposition (~100-500x faster when C++ extension is unavailable)
+- IIR SOS matrix (`_compute_sos`) is now computed eagerly after `compute_coefficients()` instead of lazily in the forward path
+- State tensor device transfers in stateful filter paths are now guarded to avoid redundant `.to(device)` calls
+- Removed synchronous CUDA calls from native kernels for improved GPU throughput
+- Added `setuptools` as a runtime dependency (required by `torch.utils.cpp_extension` for JIT compilation)
+- FIR filters now default to FFT convolution, up to 10x faster for kernel sizes ≥ 64
+- CUDA parallel scan replaced Hillis-Steele algorithm with work-efficient Blelloch scan, reducing total work from O(N log N) to O(N) and shared memory usage from 48 KB to 24 KB per block
+- Sequential CUDA biquad kernel now batches 128 channels per thread block instead of 1, improving GPU occupancy for short signals
+- Eliminated GPU→CPU synchronization in CUDA biquad kernel by passing all biquad coefficients (`b0`, `b1`, `b2`, `a1`, `a2`) as scalar arguments instead of extracting them from device tensors
+- Pre-computed SOS convolution kernels and cached constant tensors (`b_delta`) in Python fallback paths to avoid per-call tensor allocation
+- C++ CPU extension now compiles with `-O3 -ffast-math -march=native` and OpenMP parallelization, achieving ~2x faster than scipy for multi-channel IIR filtering
+- `TORCHFX_NO_CUDA` environment variable added to force CPU-only extension compilation
+
+### Fixed
+
+- Native C++ extension was unreachable on CPU-only machines due to `torch.cuda.is_available()` gate in `_ops.py`
+- Segfault in CUDA biquad kernel caused by dereferencing device pointer on host when reading b-coefficients; fixed by passing b0/b1/b2 as CPU scalars from the SOS copy
+- Various mypy and ruff errors
+
+
+
 ## [0.4.0] - 2026-02-15
 
 ### Added

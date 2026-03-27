@@ -271,6 +271,9 @@ class Biquad(AbstractFilter):
         Vectorized across channels, sequential across time samples.
         Ported from AudioNoise ``biquad.h`` ``biquad_step_df1``.
 
+        Uses a CUDA parallel prefix scan kernel when available and the input
+        is on a CUDA device, falling back to the pure-PyTorch loop otherwise.
+
         """
         assert self.a is not None and self.b is not None
 
@@ -285,48 +288,72 @@ class Biquad(AbstractFilter):
             x = x.reshape(B * C, T)
 
         C, T = x.shape
-        x_f64 = x.to(dtype=torch.float64)
         device = x.device
-
-        b0 = self.b[0]
-        b1 = self.b[1]
-        b2 = self.b[2]
-        a1 = self.a[1]
-        a2 = self.a[2]
 
         # Initialize or resize state
         if self._state_x is None or self._state_x.shape[0] != C:
             self._state_x = torch.zeros(C, 2, device=device, dtype=torch.float64)
             self._state_y = torch.zeros(C, 2, device=device, dtype=torch.float64)
-        else:
+        elif self._state_x.device != device:
             self._state_x = self._state_x.to(device=device)
             assert self._state_y is not None
             self._state_y = self._state_y.to(device=device)
 
         assert self._state_y is not None
 
-        # state[:, 0] = x[n-1] / y[n-1]
-        # state[:, 1] = x[n-2] / y[n-2]
-        sx = self._state_x.clone()
-        sy = self._state_y.clone()
+        # Try native (CUDA or C++) kernel
+        from torchfx._ops import biquad_forward
 
-        out = torch.empty_like(x_f64)
+        native_result = biquad_forward(x, self.b, self.a, self._state_x, self._state_y)
+        if native_result is not None:
+            out, self._state_x, self._state_y = native_result
+            result = out.to(dtype=dtype)
+            if len(orig_shape) == 1:
+                return result.squeeze(0)
+            elif len(orig_shape) == 3:
+                return result.reshape(orig_shape)
+            return result
 
-        for n in range(T):
-            xn = x_f64[:, n]
-            yn = b0 * xn + b1 * sx[:, 0] + b2 * sx[:, 1] - a1 * sy[:, 0] - a2 * sy[:, 1]
-            out[:, n] = yn
-            # Shift state
-            sx[:, 1] = sx[:, 0]
-            sx[:, 0] = xn
-            sy[:, 1] = sy[:, 0]
-            sy[:, 0] = yn
+        # Vectorized PyTorch fallback using lfilter with state decomposition.
+        # Decomposes into zero-state + zero-input responses to avoid sample loops.
+        x_f64 = x.to(dtype=torch.float64)
+        a_f64 = self.a.to(dtype=torch.float64)
+        a1 = a_f64[1]
+        a2 = a_f64[2]
 
-        # Store final state
-        self._state_x = sx
-        self._state_y = sy
+        # Cache constant tensors on first fallback call to avoid per-call allocation.
+        if (
+            not hasattr(self, "_fb_kernel")
+            or self._fb_kernel is None  # type: ignore
+            or self._fb_kernel.device != device  # type: ignore
+        ):
+            b_f64 = self.b.to(dtype=torch.float64)
+            self._fb_kernel = b_f64.flip(0).reshape(1, 1, 3).to(device=device)
+            self._fb_b_delta = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64, device=device)
 
-        result = out.to(dtype=dtype)
+        # Step 1: Compute forcing function f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2]
+        # by prepending x-state and using conv1d
+        x_ext = torch.cat([self._state_x[:, 1:2], self._state_x[:, 0:1], x_f64], dim=1)
+        f = torch.nn.functional.conv1d(x_ext.unsqueeze(1), self._fb_kernel, padding=0).squeeze(1)
+
+        # Step 2: Zero-state response via lfilter (y[n] = f[n] - a1*y[n-1] - a2*y[n-2])
+        y_zs = F.lfilter(f, a_f64, self._fb_b_delta, clamp=False)
+
+        # Step 3: Zero-input response for initial y-state
+        g = torch.zeros_like(f)
+        g[:, 0] = -a1 * self._state_y[:, 0] - a2 * self._state_y[:, 1]
+        if T > 1:
+            g[:, 1] = -a2 * self._state_y[:, 0]
+        y_zi = F.lfilter(g, a_f64, self._fb_b_delta, clamp=False)
+
+        out = Tensor(y_zs + y_zi)
+
+        # Update state from the tail of input/output
+        if T >= 2:
+            self._state_x = torch.stack([x_f64[:, -1], x_f64[:, -2]], dim=1)
+            self._state_y = torch.stack([out[:, -1], out[:, -2]], dim=1)
+
+        result = Tensor(out.to(dtype=dtype))
 
         # Restore original shape
         if len(orig_shape) == 1:

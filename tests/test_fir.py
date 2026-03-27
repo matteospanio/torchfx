@@ -59,3 +59,73 @@ def test_designable_fir_forward(sample_signal):
 
     # Check if filtered signal has same shape as input
     assert filtered_signal.shape == sample_signal.shape
+
+
+# ---------------------------------------------------------------------------
+# FFT convolution tests
+# ---------------------------------------------------------------------------
+
+
+def test_default_conv_mode_is_fft():
+    fir = FIR([0.2, 0.2, 0.2, 0.2, 0.2])
+    assert fir._conv_mode == "fft"
+
+
+def test_conv_mode_validation():
+    with pytest.raises(ValueError, match="conv_mode"):
+        FIR([0.2, 0.2, 0.2], conv_mode="invalid")
+
+
+@pytest.mark.parametrize("num_taps", [5, 32, 64, 128, 256, 512, 1024])
+def test_fft_matches_direct(num_taps):
+    """FFT and direct convolution produce numerically equivalent output."""
+    b = firwin(num_taps, 5000, fs=44100, window="hamming")
+    fir_fft = FIR(b, conv_mode="fft")
+    fir_direct = FIR(b, conv_mode="direct")
+
+    signal = torch.randn(2, 44100)
+    out_fft = fir_fft(signal)
+    out_direct = fir_direct(signal)
+
+    assert torch.allclose(out_fft, out_direct, atol=1e-4, rtol=1e-4)
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [(44100,), (2, 44100), (4, 2, 44100)],
+    ids=["mono", "stereo", "batch"],
+)
+def test_fft_conv_shapes(shape):
+    b = [0.1, 0.15, 0.5, 0.15, 0.1]
+    fir = FIR(b, conv_mode="fft")
+    signal = torch.randn(*shape)
+    result = fir(signal)
+    assert result.shape == signal.shape
+
+
+def test_designable_fir_conv_mode():
+    fir = DesignableFIR(cutoff=5000, num_taps=101, fs=44100, conv_mode="fft")
+    assert fir._conv_mode == "fft"
+    signal = torch.randn(44100)
+    result = fir(signal)
+    assert result.shape == signal.shape
+
+
+def test_designable_fir_direct_mode():
+    fir = DesignableFIR(cutoff=5000, num_taps=101, fs=44100, conv_mode="direct")
+    assert fir._conv_mode == "direct"
+    signal = torch.randn(44100)
+    result = fir(signal)
+    assert result.shape == signal.shape
+
+
+def test_fft_conv_short_signal():
+    """FFT path works when signal is short but >= kernel after padding."""
+    b = firwin(32, 5000, fs=44100, window="hamming")
+    fir_fft = FIR(b, conv_mode="fft")
+    fir_direct = FIR(b, conv_mode="direct")
+    signal = torch.randn(1, 100)
+    out_fft = fir_fft(signal)
+    out_direct = fir_direct(signal)
+    assert out_fft.shape == signal.shape
+    assert torch.allclose(out_fft, out_direct, atol=1e-4, rtol=1e-4)

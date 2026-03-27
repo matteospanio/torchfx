@@ -7,7 +7,9 @@ from .biquad import (
     BiquadLPF,
     BiquadNotch,
 )
+from .filterbank import LogFilterBank
 from .fir import FIR, DesignableFIR
+from .fused import FusedSOSCascade
 from .iir import (
     IIR,
     AllPass,
@@ -48,6 +50,7 @@ __all__ = [
     "DesignableFIR",
     "Elliptic",
     "FIR",
+    "FusedSOSCascade",
     "HiButterworth",
     "HiChebyshev1",
     "HiChebyshev2",
@@ -61,6 +64,7 @@ __all__ = [
     "LoChebyshev2",
     "LoElliptic",
     "LoLinkwitzRiley",
+    "LogFilterBank",
     "LoShelving",
     "Notch",
     "ParametricEQ",

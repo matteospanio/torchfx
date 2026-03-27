@@ -1,6 +1,6 @@
 [project]
 name = "torchfx"
-version = "0.4.0"
+version = "0.5.0"
 description = "A GPU accelerated library for audio DSP based on PyTorch"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -12,9 +12,11 @@ dependencies = [
     "annotated-types>=0.7.0",
     "numpy>=2.2.4",
     "scipy>=1.15.2",
+    "setuptools",
     "soundfile>=0.13.1",
     "torch>=2.6.0",
     "torchaudio>=2.6.0",
+    "torchcodec>=0.10.0",
 ]
 keywords = [
     "torch",
@@ -47,26 +49,6 @@ Repository = "https://github.com/matteospanio/torchfx"
 Documentation = "https://matteospanio.github.io/torchfx/"
 Changelog = "https://github.com/matteospanio/torchfx/blob/master/CHANGELOG"
 
-[tool.uv.sources]
-torch = [
-  { index = "pytorch-cpu", marker = "sys_platform != 'linux'" },
-  { index = "pytorch-cu124", marker = "sys_platform == 'linux'" },
-]
-torchvision = [
-  { index = "pytorch-cpu", marker = "sys_platform != 'linux'" },
-  { index = "pytorch-cu124", marker = "sys_platform == 'linux'" },
-]
-
-[[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
-
-[[tool.uv.index]]
-name = "pytorch-cu124"
-url = "https://download.pytorch.org/whl/cu124"
-explicit = true
-
 [tool.mypy]
 python_version = "3.10"
 strict = true
@@ -90,6 +72,10 @@ module = [
   "torchaudio.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "benchmarks.*"
+ignore_errors = true
 
 [tool.ruff]
 src = ["src"]
@@ -124,9 +110,12 @@ branch = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "--strict-markers --tb=short"
+addopts = "--strict-markers --tb=short --benchmark-disable"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "benchmark: performance benchmark (enable with --benchmark-enable)",
+]
 
 [tool.docformatter]
 recursive = true
@@ -148,13 +137,18 @@ dev = [
     "black>=25.1.0",
     "coverage>=7.9.1",
     "mypy>=1.16.1",
+    "numba>=0.64.0",
     "pytest>=8.3.5",
+    "pytest-benchmark>=5.1.0",
     "ruff>=0.12.1",
     "scalene>=1.5.51",
     "scipy-stubs>=1.15.3.0",
 ]
 realtime = [
     "sounddevice>=0.4.6",
+]
+cuda = [
+    "ninja>=1.11",
 ]
 docs = [
     "ablog>=0.11.12",
