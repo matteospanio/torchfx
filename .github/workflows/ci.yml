@@ -145,6 +145,11 @@ jobs:
       - name: Install uv
         run: pip install uv
 
+      - name: Install system audio deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libportaudio2 portaudio19-dev ffmpeg
+
       - name: Restore dependency cache
         uses: actions/cache/restore@v4
         with:
