@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉 &#8212; TorchFX 1 documentation</title>
+    <title>TorchFX 0.5.0: Custom CUDA Kernels &amp; Native C++ Extension &#8212; TorchFX 1 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-01-11-new-docs';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-03-27-release-050';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -354,7 +354,7 @@
      
     <i class="fa fa-calendar"></i>
     
-    <span>11 January 2026</span>
+    <span>27 March 2026</span>
     
   </h2>
   <ul>
@@ -378,7 +378,7 @@
       
     </span>
      
-    <a href="index/category/announcements.html">announcements</a>
+    <a href="index/category/releases.html">releases</a>
       
   </li>
    
@@ -389,9 +389,15 @@
        
     </span>
      
-    <a href="index/tag/documentation.html">documentation</a>
-        
     <a href="index/tag/release.html">release</a>
+        
+    <a href="index/tag/cuda.html">cuda</a>
+        
+    <a href="index/tag/performance.html">performance</a>
+        
+    <a href="index/tag/native-extension.html">native-extension</a>
+        
+    <a href="index/tag/fft.html">fft</a>
       
   </li>
    
@@ -407,12 +413,6 @@
   <ul>
      
     <li>
-      <a href="2026-03-27-release-050.html">
-        27 March - TorchFX 0.5.0: Custom CUDA Kernels & Native C++ Extension
-      </a>
-    </li>
-    
-    <li>
       <a href="2026-02-15-cli-interface.html">
         15 February - TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal
       </a>
@@ -427,6 +427,12 @@
     <li>
       <a href="2026-02-15-repl-live-performance.html">
         15 February - Interactive Audio Magic: The TorchFX REPL
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-01-11-new-docs.html">
+        11 January - TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉
       </a>
     </li>
     
@@ -615,7 +621,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX 0.5.0: Custom CUDA Kernels &amp; Native C++ Extension</span></li>
   </ul>
 </nav>
 </div>
@@ -631,56 +637,170 @@
                 
 <div id="searchbox"></div>
                 <article class="bd-article">
-                   <section id="torchfx-0-3-0-is-here-new-roadmap-and-documentation-refresh">
-<h1>TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉<a class="headerlink" href="#torchfx-0-3-0-is-here-new-roadmap-and-documentation-refresh" title="Link to this heading">#</a></h1>
-<p>I’m excited to announce the release of <strong>TorchFX 0.3.0</strong>, which brings a significant update to the project’s documentation and a clearer roadmap for future development.</p>
-<p>As interest in TorchFX continues to grow within the audio and research community, it became clear that the documentation needed to evolve alongside the project.</p>
-<p>To better support users, developers, and contributors, I’ve carried out a <strong>documentation refresh</strong> focused on clarity, structure, and long-term sustainability.</p>
-<section id="whats-new">
-<h2>What’s New<a class="headerlink" href="#whats-new" title="Link to this heading">#</a></h2>
-<section id="guides">
-<h3>📘 Guides<a class="headerlink" href="#guides" title="Link to this heading">#</a></h3>
-<p>The documentation now includes a dedicated <strong>Guides</strong> section, designed to explain:</p>
+                   <section id="torchfx-0-5-0-custom-cuda-kernels-native-c-extension">
+<h1>TorchFX 0.5.0: Custom CUDA Kernels &amp; Native C++ Extension<a class="headerlink" href="#torchfx-0-5-0-custom-cuda-kernels-native-c-extension" title="Link to this heading">#</a></h1>
+<p>I’m excited to announce <strong>TorchFX 0.5.0</strong>, a performance-focused release that introduces custom CUDA kernels, a JIT-compiled C++ native extension, and major algorithmic improvements across the entire filter pipeline.</p>
+<p>This release delivers on the Phase 3 optimization goals outlined in the 0.4.0 roadmap.</p>
+<section id="the-native-extension-torchfx-ops">
+<h2>The Native Extension (<code class="docutils literal notranslate"><span class="pre">torchfx._ops</span></code>)<a class="headerlink" href="#the-native-extension-torchfx-ops" title="Link to this heading">#</a></h2>
+<p>At the core of 0.5.0 is a new JIT-compiled C++/CUDA extension that loads automatically when you import TorchFX. The extension is compiled on first use via <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension</span></code> and cached for subsequent imports.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
+<span class="c1"># [torchfx] native extension: YES</span>
+<span class="c1"># [torchfx] CUDA available: True (NVIDIA RTX 6000)</span>
+</pre></div>
+</div>
+<p><strong>Key design decisions:</strong></p>
 <ul class="simple">
-<li><p>how TorchFX works internally,</p></li>
-<li><p>the core design ideas behind the library,</p></li>
-<li><p>recommended usage patterns for both users and developers.</p></li>
+<li><p><strong>Automatic fallback</strong>: If compilation fails (no compiler, no CUDA toolkit), TorchFX falls back to pure-PyTorch paths transparently. Your code doesn’t change.</p></li>
+<li><p><strong>CPU-only support</strong>: The C++ extension compiles and loads without the CUDA toolkit. You get native-speed IIR filtering on CPU even without a GPU.</p></li>
+<li><p><strong>Environment control</strong>: Set <code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA=1</span></code> to force CPU-only compilation if you want to skip CUDA entirely.</p></li>
 </ul>
-<p>The goal is to make TorchFX easier to approach, without hiding the underlying concepts.</p>
+<section id="compiler-requirements">
+<h3>Compiler Requirements<a class="headerlink" href="#compiler-requirements" title="Link to this heading">#</a></h3>
+<p>To compile the native extension, you need <strong>GCC 9 or newer</strong> (or an equivalent C++17-compatible compiler). The CPU extension compiles with <code class="docutils literal notranslate"><span class="pre">-O3</span> <span class="pre">-ffast-math</span> <span class="pre">-march=native</span></code> and OpenMP parallelization for multi-channel workloads. On most Linux systems with a recent toolchain this works out of the box.</p>
 </section>
-<section id="filters">
-<h3>Filters<a class="headerlink" href="#filters" title="Link to this heading">#</a></h3>
+</section>
+<section id="cuda-parallel-scan-for-iir-filters">
+<h2>CUDA Parallel Scan for IIR Filters<a class="headerlink" href="#cuda-parallel-scan-for-iir-filters" title="Link to this heading">#</a></h2>
+<p>IIR (Infinite Impulse Response) filters have a fundamental challenge on GPUs: each output sample depends on previous outputs, creating a sequential dependency chain. The naive approach — one thread per channel, looping over samples — leaves 99% of the GPU idle.</p>
+<p>TorchFX 0.5.0 solves this with a <strong>parallel prefix scan</strong> (Blelloch scan) that decomposes the IIR recurrence into parallel-friendly operations:</p>
 <ul class="simple">
-<li><p>Brand new Elliptic filters: <code class="docutils literal notranslate"><span class="pre">HiElliptic</span></code> and <code class="docutils literal notranslate"><span class="pre">LoElliptic</span></code></p></li>
-<li><p>New ParametricEQ filter for precise frequency band adjustments</p></li>
-<li><p>LoShelving filter implementation based on the Audio EQ Cookbook</p></li>
+<li><p><strong>O(N) total work</strong> instead of O(N log N) from the previous Hillis-Steele approach</p></li>
+<li><p><strong>24 KB shared memory per block</strong>, down from 48 KB, allowing higher occupancy</p></li>
+<li><p><strong>128 channels batched per thread block</strong> for the sequential biquad kernel, improving GPU utilization on short signals</p></li>
+</ul>
+<p>The result is that a 300-second, 12-channel IIR cascade completes in <strong>550 ms on GPU</strong> — compared to 5.4 seconds with SciPy and 1.1 seconds on CPU.</p>
+</section>
+<section id="fft-based-fir-convolution">
+<h2>FFT-Based FIR Convolution<a class="headerlink" href="#fft-based-fir-convolution" title="Link to this heading">#</a></h2>
+<p>FIR filters now default to <strong>FFT convolution</strong> via the overlap-save method, adapted from <a class="reference external" href="https://github.com/adefossez/julius">Julius</a> (MIT License). For kernel sizes &gt;= 64 taps, this is up to <strong>10x faster</strong> than direct convolution.</p>
+<p>You can control the convolution mode per filter:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">DesignableFIR</span>
+
+<span class="c1"># FFT convolution (default, fast for large kernels)</span>
+<span class="n">fir</span> <span class="o">=</span> <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">num_taps</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span> <span class="n">conv_mode</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">)</span>
+
+<span class="c1"># Direct convolution (better for very small kernels)</span>
+<span class="n">fir</span> <span class="o">=</span> <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">num_taps</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span> <span class="n">conv_mode</span><span class="o">=</span><span class="s2">&quot;direct&quot;</span><span class="p">)</span>
+
+<span class="c1"># Automatic selection based on kernel size</span>
+<span class="n">fir</span> <span class="o">=</span> <span class="n">DesignableFIR</span><span class="p">(</span><span class="n">num_taps</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span> <span class="n">conv_mode</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="logfilterbank">
+<h2>LogFilterBank<a class="headerlink" href="#logfilterbank" title="Link to this heading">#</a></h2>
+<p>A new <code class="docutils literal notranslate"><span class="pre">LogFilterBank</span></code> class provides logarithmically-spaced frequency band decomposition, useful for spectral analysis, multiband processing, and feature extraction:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogFilterBank</span>
+
+<span class="n">bank</span> <span class="o">=</span> <span class="n">LogFilterBank</span><span class="p">(</span><span class="n">n_bands</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">f_low</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">f_high</span><span class="o">=</span><span class="mi">20000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="n">bands</span> <span class="o">=</span> <span class="n">bank</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">)</span>  <span class="c1"># [n_bands, channels, samples]</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-optimized-fallback-paths">
+<h2>Performance-Optimized Fallback Paths<a class="headerlink" href="#performance-optimized-fallback-paths" title="Link to this heading">#</a></h2>
+<p>Even without the native extension, 0.5.0 is dramatically faster than 0.4.0. The pure-PyTorch fallback paths have been completely rewritten:</p>
+<ul class="simple">
+<li><p><strong>Stateful biquad and IIR SOS</strong>: Replaced sample-by-sample Python loops with a vectorized zero-state/zero-input decomposition using <code class="docutils literal notranslate"><span class="pre">lfilter</span></code>. This gives a <strong>100-500x speedup</strong> when the C++ extension is unavailable.</p></li>
+<li><p><strong>Eager SOS computation</strong>: The SOS matrix is now computed immediately after <code class="docutils literal notranslate"><span class="pre">compute_coefficients()</span></code> instead of lazily during <code class="docutils literal notranslate"><span class="pre">forward()</span></code>, avoiding repeated work.</p></li>
+<li><p><strong>Pre-computed constant tensors</strong>: SOS convolution kernels and delta tensors are cached to avoid per-call allocation.</p></li>
+<li><p><strong>Eliminated redundant device transfers</strong>: State tensor <code class="docutils literal notranslate"><span class="pre">.to(device)</span></code> calls are now guarded to skip when already on the correct device.</p></li>
 </ul>
 </section>
-<section id="improved-api-reference">
-<h3>🧩 Improved API Reference<a class="headerlink" href="#improved-api-reference" title="Link to this heading">#</a></h3>
-<p>The <strong>API reference</strong> has been reorganized and is now clearly divided by <strong>modules</strong>, making it easier to navigate, understand, and extend the library.</p>
+<section id="gpu-kernel-improvements">
+<h2>GPU Kernel Improvements<a class="headerlink" href="#gpu-kernel-improvements" title="Link to this heading">#</a></h2>
+<p>Beyond the parallel scan, several targeted GPU optimizations:</p>
+<ul class="simple">
+<li><p><strong>Removed synchronous CUDA calls</strong> from native kernels, improving throughput by avoiding unnecessary CPU-GPU synchronization points.</p></li>
+<li><p><strong>Scalar coefficient passing</strong>: Biquad coefficients (<code class="docutils literal notranslate"><span class="pre">b0</span></code>, <code class="docutils literal notranslate"><span class="pre">b1</span></code>, <code class="docutils literal notranslate"><span class="pre">b2</span></code>, <code class="docutils literal notranslate"><span class="pre">a1</span></code>, <code class="docutils literal notranslate"><span class="pre">a2</span></code>) are now passed as scalar arguments to CUDA kernels instead of being extracted from device tensors, eliminating a GPU-to-CPU synchronization that was causing a segfault on some configurations.</p></li>
+</ul>
 </section>
-<section id="blog-section">
-<h3>📰 Blog Section<a class="headerlink" href="#blog-section" title="Link to this heading">#</a></h3>
-<p>A new <strong>Blog</strong> section has been added to the documentation.<br />
-This space will be used for announcements, project updates, and general communications related to TorchFX.</p>
+<section id="benchmark-infrastructure">
+<h2>Benchmark Infrastructure<a class="headerlink" href="#benchmark-infrastructure" title="Link to this heading">#</a></h2>
+<p>The benchmark suite has been migrated from standalone scripts to a <strong>pytest-benchmark</strong> suite under <code class="docutils literal notranslate"><span class="pre">benchmarks/</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run all benchmarks</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>--benchmark-enable
+
+<span class="c1"># Run only IIR benchmarks</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>benchmarks/test_iir_bench.py<span class="w"> </span>--benchmark-enable
+
+<span class="c1"># Run only FIR benchmarks</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>benchmarks/test_fir_bench.py<span class="w"> </span>--benchmark-enable
+</pre></div>
+</div>
+<p>Each benchmark compares <strong>five backends</strong>: TorchFX GPU (CUDA), TorchFX CPU, SciPy, Numba <code class="docutils literal notranslate"><span class="pre">&#64;njit</span></code> (CPU), and Numba <code class="docutils literal notranslate"><span class="pre">&#64;cuda.jit</span></code> (GPU), across signal durations from 1 to 300 seconds and varying channel counts / filter orders.</p>
 </section>
-<section id="contributing-guide">
-<h3>🤝 Contributing Guide<a class="headerlink" href="#contributing-guide" title="Link to this heading">#</a></h3>
-<p>For those interested in getting involved, I’ve added a <strong>contribution guide</strong> (<code class="docutils literal notranslate"><span class="pre">CONTRIBUTING.md</span></code>) in the root of the repository.<br />
-It explains how to contribute, propose changes, and collaborate on the project in a structured way.</p>
+<section id="bug-fixes">
+<h2>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Fixed native extension being unreachable on CPU-only machines due to an overly strict <code class="docutils literal notranslate"><span class="pre">torch.cuda.is_available()</span></code> gate in <code class="docutils literal notranslate"><span class="pre">_ops.py</span></code>.</p></li>
+<li><p>Fixed segfault in the CUDA biquad kernel caused by dereferencing a device pointer on the host.</p></li>
+</ul>
 </section>
-<section id="project-roadmap">
-<h3>🛣️ Project Roadmap<a class="headerlink" href="#project-roadmap" title="Link to this heading">#</a></h3>
-<p>Finally, a <strong>roadmap</strong> is now available to better organize and communicate the future development of TorchFX.<br />
-This helps align expectations and provides a clearer picture of where the project is heading.</p>
+<section id="benchmark-results-rtx-6000">
+<h2>Benchmark Results (RTX 6000)<a class="headerlink" href="#benchmark-results-rtx-6000" title="Link to this heading">#</a></h2>
+<p>Here’s a snapshot from our CI benchmarks on a Quadro RTX 6000 (24 GB):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Backend</p></th>
+<th class="head text-right"><p>300s / order 12 IIR</p></th>
+<th class="head"><p>Relative</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>TorchFX GPU</strong></p></td>
+<td class="text-right"><p><strong>550 ms</strong></p></td>
+<td><p>1.0x</p></td>
+</tr>
+<tr class="row-odd"><td><p>TorchFX CPU</p></td>
+<td class="text-right"><p>1,086 ms</p></td>
+<td><p>2.0x slower</p></td>
+</tr>
+<tr class="row-even"><td><p>Numba <code class="docutils literal notranslate"><span class="pre">&#64;njit</span></code> CPU</p></td>
+<td class="text-right"><p>TBD</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>SciPy</p></td>
+<td class="text-right"><p>5,428 ms</p></td>
+<td><p>9.9x slower</p></td>
+</tr>
+<tr class="row-even"><td><p>Numba <code class="docutils literal notranslate"><span class="pre">&#64;cuda.jit</span></code></p></td>
+<td class="text-right"><p>12,957 ms</p></td>
+<td><p>23.6x slower</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The GPU kernel maintains sub-millisecond standard deviation, making it suitable for latency-sensitive workloads.</p>
 </section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx
+</pre></div>
+</div>
+<p>The native extension compiles automatically on first import. Ensure you have:</p>
+<ul class="simple">
+<li><p><strong>GCC &gt;= 9</strong> (or equivalent C++17 compiler)</p></li>
+<li><p><strong>PyTorch &gt;= 2.0</strong> with matching CUDA toolkit (for GPU kernels)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setuptools</span></code> (now a runtime dependency, required by <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension</span></code>)</p></li>
+</ul>
+<p>For CPU-only builds:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TORCHFX_NO_CUDA</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>torchfx
+</pre></div>
+</div>
 </section>
-<section id="looking-ahead">
-<h2>Looking Ahead<a class="headerlink" href="#looking-ahead" title="Link to this heading">#</a></h2>
-<p>This documentation update is a foundation for the next phase of TorchFX.<br />
-As the project grows, the documentation will continue to improve with feedback from the community.</p>
-<p>Thank you to everyone who has shown interest so far — your curiosity and engagement are what make open-source research projects like this possible.</p>
+<section id="whats-next">
+<h2>What’s Next<a class="headerlink" href="#whats-next" title="Link to this heading">#</a></h2>
+<p>With the performance foundation in place, we’re turning our attention to:</p>
+<ul class="simple">
+<li><p>Additional effects: compressor, phaser, pitch shift</p></li>
+<li><p>Batch processing optimizations for the CLI pipeline</p></li>
+<li><p>v1.0.0 release candidate with API stability guarantees</p></li>
+</ul>
+<blockquote>
+<div><p>Benchmarks where run on a Quadro RTX 6000 (24 GB) with CUDA 12.1 and PyTorch 2.10.0. Performance may vary based on hardware and software configuration. Always benchmark on your target system for best results.</p>
+</div></blockquote>
 </section>
 </section>
 
@@ -689,23 +809,16 @@ As the project grows, the documentation will continue to improve with feedback f
 <div class="section ablog__prev-next">
   <span class="ablog__prev">
      
-    <a href="2026-01-06-deepwiki.html">
+    <a href="2026-02-15-cli-interface.html">
       
       <i class="fa fa-arrow-circle-left"></i>
       
-      <span>TorchFX is now indexed on DeepWiki</span>
+      <span>TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal</span>
     </a>
     
   </span>
   <span class="ablog__spacer">&nbsp;</span>
   <span class="ablog__next">
-     
-    <a href="2026-02-15-repl-live-performance.html">
-      <span>Interactive Audio Magic: The TorchFX REPL</span>
-      
-      <i class="fa fa-arrow-circle-right"></i>
-      
-    </a>
     
   </span>
 </div>
@@ -740,16 +853,20 @@ As the project grows, the documentation will continue to improve with feedback f
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whats-new">What’s New</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#guides">📘 Guides</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filters">Filters</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#improved-api-reference">🧩 Improved API Reference</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blog-section">📰 Blog Section</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#contributing-guide">🤝 Contributing Guide</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#project-roadmap">🛣️ Project Roadmap</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-native-extension-torchfx-ops">The Native Extension (<code class="docutils literal notranslate"><span class="pre">torchfx._ops</span></code>)</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#compiler-requirements">Compiler Requirements</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#looking-ahead">Looking Ahead</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-parallel-scan-for-iir-filters">CUDA Parallel Scan for IIR Filters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fft-based-fir-convolution">FFT-Based FIR Convolution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#logfilterbank">LogFilterBank</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-optimized-fallback-paths">Performance-Optimized Fallback Paths</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-kernel-improvements">GPU Kernel Improvements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmark-infrastructure">Benchmark Infrastructure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-fixes">Bug Fixes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmark-results-rtx-6000">Benchmark Results (RTX 6000)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whats-next">What’s Next</a></li>
 </ul>
   </nav></div>
 
@@ -757,7 +874,7 @@ As the project grows, the documentation will continue to improve with feedback f
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-01-11-new-docs.md">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-03-27-release-050.md">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -773,7 +890,7 @@ As the project grows, the documentation will continue to improve with feedback f
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/blog/2026-01-11-new-docs.md.txt"
+      <li><a href="../_sources/blog/2026-03-27-release-050.md.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>

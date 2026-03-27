@@ -477,7 +477,8 @@ mermaid.initialize(
     }
 );
 
-window.addEventListener("load", load);</script>
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/benchmarking';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -919,17 +920,17 @@ window.addEventListener("load", load);</script>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">api_bench.py</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">test_api_bench.py</span></code></p></td>
 <td><p>API pattern comparison</p></td>
 <td><p>FilterChain, Sequential, pipe operator, SciPy</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">api_bench.out</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fir_bench.py</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">test_fir_bench.py</span></code></p></td>
 <td><p>FIR filter performance</p></td>
 <td><p>GPU vs CPU vs SciPy across varying durations and channels</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">fir.out</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">iir_bench.py</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">test_iir_bench.py</span></code></p></td>
 <td><p>IIR filter performance</p></td>
 <td><p>GPU vs CPU vs SciPy across varying durations and channels</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">iir.out</span></code></p></td>
@@ -944,9 +945,9 @@ window.addEventListener("load", load);</script>
 <pre  class="mermaid">
         graph TB
     subgraph &quot;Benchmark Scripts&quot;
-        API[&quot;api_bench.py&lt;br/&gt;API pattern comparison&quot;]
-        FIR[&quot;fir_bench.py&lt;br/&gt;FIR filter performance&quot;]
-        IIR[&quot;iir_bench.py&lt;br/&gt;IIR filter performance&quot;]
+        API[&quot;test_api_bench.py&lt;br/&gt;API pattern comparison&quot;]
+        FIR[&quot;test_fir_bench.py&lt;br/&gt;FIR filter performance&quot;]
+        IIR[&quot;test_iir_bench.py&lt;br/&gt;IIR filter performance&quot;]
     end
 
     subgraph &quot;Test Signal Generation&quot;
@@ -1061,7 +1062,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="api-benchmark">
 <h2>API Benchmark<a class="headerlink" href="#api-benchmark" title="Link to this heading">#</a></h2>
-<p>The API benchmark (<code class="docutils literal notranslate"><span class="pre">benchmark/api_bench.py</span></code>) compares different approaches to chaining filters, evaluating both ergonomics and performance.</p>
+<p>The API benchmark (<code class="docutils literal notranslate"><span class="pre">benchmarks/test_api_bench.py</span></code>) compares different approaches to chaining filters, evaluating both ergonomics and performance.</p>
 <section id="tested-implementations">
 <h3>Tested Implementations<a class="headerlink" href="#tested-implementations" title="Link to this heading">#</a></h3>
 <pre  class="mermaid">
@@ -1234,7 +1235,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="running-api-benchmark">
 <h3>Running API Benchmark<a class="headerlink" href="#running-api-benchmark" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmark/api_bench.py
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmarks/test_api_bench.py
 </pre></div>
 </div>
 <p><strong>Expected output</strong>:</p>
@@ -1254,7 +1255,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="fir-filter-benchmark">
 <h2>FIR Filter Benchmark<a class="headerlink" href="#fir-filter-benchmark" title="Link to this heading">#</a></h2>
-<p>The FIR filter benchmark (<code class="docutils literal notranslate"><span class="pre">benchmark/fir_bench.py</span></code>) evaluates FIR filter performance across different audio durations and channel counts.</p>
+<p>The FIR filter benchmark (<code class="docutils literal notranslate"><span class="pre">benchmarks/test_fir_bench.py</span></code>) evaluates FIR filter performance across different audio durations and channel counts.</p>
 <section id="test-matrix">
 <h3>Test Matrix<a class="headerlink" href="#test-matrix" title="Link to this heading">#</a></h3>
 <p>The benchmark tests across two dimensions:</p>
@@ -1386,7 +1387,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="running-fir-benchmark">
 <h3>Running FIR Benchmark<a class="headerlink" href="#running-fir-benchmark" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmark/fir_bench.py
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmarks/test_fir_bench.py
 </pre></div>
 </div>
 <p><strong>Expected output</strong>:</p>
@@ -1413,7 +1414,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="iir-filter-benchmark">
 <h2>IIR Filter Benchmark<a class="headerlink" href="#iir-filter-benchmark" title="Link to this heading">#</a></h2>
-<p>The IIR filter benchmark (<code class="docutils literal notranslate"><span class="pre">benchmark/iir_bench.py</span></code>) evaluates IIR filter performance with similar methodology to the FIR benchmark.</p>
+<p>The IIR filter benchmark (<code class="docutils literal notranslate"><span class="pre">benchmarks/test_iir_bench.py</span></code>) evaluates IIR filter performance with similar methodology to the FIR benchmark.</p>
 <section id="id3">
 <h3>Test Matrix<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -1568,7 +1569,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="running-iir-benchmark">
 <h3>Running IIR Benchmark<a class="headerlink" href="#running-iir-benchmark" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmark/iir_bench.py
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmarks/test_iir_bench.py
 </pre></div>
 </div>
 <p><strong>Expected output</strong>:</p>
@@ -1674,7 +1675,7 @@ window.addEventListener("load", load);</script>
 <section id="visualization">
 <h2>Visualization<a class="headerlink" href="#visualization" title="Link to this heading">#</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">draw3.py</span></code> script generates PNG plots from CSV output files:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmark/draw3.py
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>benchmarks/draw3.py
 </pre></div>
 </div>
 <p><strong>Generated plots</strong>:</p>
@@ -1701,12 +1702,12 @@ python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;i
 <h3>Execution Script<a class="headerlink" href="#execution-script" title="Link to this heading">#</a></h3>
 <p>Run all benchmarks sequentially:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run individual benchmarks</span>
-python<span class="w"> </span>benchmark/api_bench.py
-python<span class="w"> </span>benchmark/fir_bench.py
-python<span class="w"> </span>benchmark/iir_bench.py
+python<span class="w"> </span>benchmarks/test_api_bench.py
+python<span class="w"> </span>benchmarks/test_fir_bench.py
+python<span class="w"> </span>benchmarks/test_iir_bench.py
 
 <span class="c1"># Generate visualizations</span>
-python<span class="w"> </span>benchmark/draw3.py
+python<span class="w"> </span>benchmarks/draw3.py
 </pre></div>
 </div>
 </section>
@@ -1725,7 +1726,7 @@ python<span class="w"> </span>benchmark/draw3.py
 <h3>Adding New Benchmarks<a class="headerlink" href="#adding-new-benchmarks" title="Link to this heading">#</a></h3>
 <p>To add a new benchmark:</p>
 <ol class="arabic simple">
-<li><p>Create new Python file in <code class="docutils literal notranslate"><span class="pre">benchmark/</span></code> directory</p></li>
+<li><p>Create new Python file in <code class="docutils literal notranslate"><span class="pre">benchmarks/</span></code> directory</p></li>
 <li><p>Implement <code class="docutils literal notranslate"><span class="pre">create_audio()</span></code> for test signal generation</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">timeit.timeit()</span></code> with <code class="docutils literal notranslate"><span class="pre">REP=50</span></code> for timing</p></li>
 <li><p>Compare against SciPy baseline when applicable</p></li>

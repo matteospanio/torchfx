@@ -2,10 +2,193 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
   <id>https://matteospanio.github.io/torchfx/</id>
   <title>TorchFX Blog</title>
-  <updated>2026-02-15T15:57:37.797538+00:00</updated>
+  <updated>2026-03-27T14:02:41.798529+00:00</updated>
   <link href="https://matteospanio.github.io/torchfx/"/>
   <link href="https://matteospanio.github.io/torchfx/blog/index/atom.xml" rel="self"/>
   <generator uri="https://ablog.readthedocs.io/" version="0.11.12">ABlog</generator>
+  <entry>
+    <id>https://matteospanio.github.io/torchfx/blog/2026-03-27-release-050.html</id>
+    <title>TorchFX 0.5.0: Custom CUDA Kernels &amp; Native C++ Extension</title>
+    <updated>2026-03-27T00:00:00+00:00</updated>
+    <author>
+      <name>Matteo Spanio</name>
+    </author>
+    <content type="html">&lt;section id="torchfx-0-5-0-custom-cuda-kernels-native-c-extension"&gt;
+
+&lt;p&gt;I’m excited to announce &lt;strong&gt;TorchFX 0.5.0&lt;/strong&gt;, a performance-focused release that introduces custom CUDA kernels, a JIT-compiled C++ native extension, and major algorithmic improvements across the entire filter pipeline.&lt;/p&gt;
+&lt;p&gt;This release delivers on the Phase 3 optimization goals outlined in the 0.4.0 roadmap.&lt;/p&gt;
+&lt;section id="the-native-extension-torchfx-ops"&gt;
+&lt;h2&gt;The Native Extension (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx._ops&lt;/span&gt;&lt;/code&gt;)&lt;/h2&gt;
+&lt;p&gt;At the core of 0.5.0 is a new JIT-compiled C++/CUDA extension that loads automatically when you import TorchFX. The extension is compiled on first use via &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torch.utils.cpp_extension&lt;/span&gt;&lt;/code&gt; and cached for subsequent imports.&lt;/p&gt;
+&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx&lt;/span&gt;
+&lt;span class="c1"&gt;# [torchfx] native extension: YES&lt;/span&gt;
+&lt;span class="c1"&gt;# [torchfx] CUDA available: True (NVIDIA RTX 6000)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;strong&gt;Key design decisions:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Automatic fallback&lt;/strong&gt;: If compilation fails (no compiler, no CUDA toolkit), TorchFX falls back to pure-PyTorch paths transparently. Your code doesn’t change.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;CPU-only support&lt;/strong&gt;: The C++ extension compiles and loads without the CUDA toolkit. You get native-speed IIR filtering on CPU even without a GPU.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Environment control&lt;/strong&gt;: Set &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TORCHFX_NO_CUDA=1&lt;/span&gt;&lt;/code&gt; to force CPU-only compilation if you want to skip CUDA entirely.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;section id="compiler-requirements"&gt;
+&lt;h3&gt;Compiler Requirements&lt;/h3&gt;
+&lt;p&gt;To compile the native extension, you need &lt;strong&gt;GCC 9 or newer&lt;/strong&gt; (or an equivalent C++17-compatible compiler). The CPU extension compiles with &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;-O3&lt;/span&gt; &lt;span class="pre"&gt;-ffast-math&lt;/span&gt; &lt;span class="pre"&gt;-march=native&lt;/span&gt;&lt;/code&gt; and OpenMP parallelization for multi-channel workloads. On most Linux systems with a recent toolchain this works out of the box.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+&lt;section id="cuda-parallel-scan-for-iir-filters"&gt;
+&lt;h2&gt;CUDA Parallel Scan for IIR Filters&lt;/h2&gt;
+&lt;p&gt;IIR (Infinite Impulse Response) filters have a fundamental challenge on GPUs: each output sample depends on previous outputs, creating a sequential dependency chain. The naive approach — one thread per channel, looping over samples — leaves 99% of the GPU idle.&lt;/p&gt;
+&lt;p&gt;TorchFX 0.5.0 solves this with a &lt;strong&gt;parallel prefix scan&lt;/strong&gt; (Blelloch scan) that decomposes the IIR recurrence into parallel-friendly operations:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;O(N) total work&lt;/strong&gt; instead of O(N log N) from the previous Hillis-Steele approach&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;24 KB shared memory per block&lt;/strong&gt;, down from 48 KB, allowing higher occupancy&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;128 channels batched per thread block&lt;/strong&gt; for the sequential biquad kernel, improving GPU utilization on short signals&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The result is that a 300-second, 12-channel IIR cascade completes in &lt;strong&gt;550 ms on GPU&lt;/strong&gt; — compared to 5.4 seconds with SciPy and 1.1 seconds on CPU.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="fft-based-fir-convolution"&gt;
+&lt;h2&gt;FFT-Based FIR Convolution&lt;/h2&gt;
+&lt;p&gt;FIR filters now default to &lt;strong&gt;FFT convolution&lt;/strong&gt; via the overlap-save method, adapted from &lt;a class="reference external" href="https://github.com/adefossez/julius"&gt;Julius&lt;/a&gt; (MIT License). For kernel sizes &amp;gt;= 64 taps, this is up to &lt;strong&gt;10x faster&lt;/strong&gt; than direct convolution.&lt;/p&gt;
+&lt;p&gt;You can control the convolution mode per filter:&lt;/p&gt;
+&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.filter&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;DesignableFIR&lt;/span&gt;
+
+&lt;span class="c1"&gt;# FFT convolution (default, fast for large kernels)&lt;/span&gt;
+&lt;span class="n"&gt;fir&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;DesignableFIR&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;num_taps&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;512&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;cutoff&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;4000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fs&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;44100&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;conv_mode&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;fft&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Direct convolution (better for very small kernels)&lt;/span&gt;
+&lt;span class="n"&gt;fir&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;DesignableFIR&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;num_taps&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;cutoff&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;4000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fs&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;44100&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;conv_mode&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;direct&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Automatic selection based on kernel size&lt;/span&gt;
+&lt;span class="n"&gt;fir&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;DesignableFIR&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;num_taps&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;128&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;cutoff&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;4000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fs&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;44100&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;conv_mode&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;auto&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="logfilterbank"&gt;
+&lt;h2&gt;LogFilterBank&lt;/h2&gt;
+&lt;p&gt;A new &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;LogFilterBank&lt;/span&gt;&lt;/code&gt; class provides logarithmically-spaced frequency band decomposition, useful for spectral analysis, multiband processing, and feature extraction:&lt;/p&gt;
+&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.filter&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;LogFilterBank&lt;/span&gt;
+
+&lt;span class="n"&gt;bank&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;LogFilterBank&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;n_bands&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;32&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;f_low&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;20&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;f_high&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;20000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fs&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;44100&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;bands&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;bank&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;wave&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ys&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;  &lt;span class="c1"&gt;# [n_bands, channels, samples]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="performance-optimized-fallback-paths"&gt;
+&lt;h2&gt;Performance-Optimized Fallback Paths&lt;/h2&gt;
+&lt;p&gt;Even without the native extension, 0.5.0 is dramatically faster than 0.4.0. The pure-PyTorch fallback paths have been completely rewritten:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Stateful biquad and IIR SOS&lt;/strong&gt;: Replaced sample-by-sample Python loops with a vectorized zero-state/zero-input decomposition using &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;lfilter&lt;/span&gt;&lt;/code&gt;. This gives a &lt;strong&gt;100-500x speedup&lt;/strong&gt; when the C++ extension is unavailable.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Eager SOS computation&lt;/strong&gt;: The SOS matrix is now computed immediately after &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;compute_coefficients()&lt;/span&gt;&lt;/code&gt; instead of lazily during &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;forward()&lt;/span&gt;&lt;/code&gt;, avoiding repeated work.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Pre-computed constant tensors&lt;/strong&gt;: SOS convolution kernels and delta tensors are cached to avoid per-call allocation.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Eliminated redundant device transfers&lt;/strong&gt;: State tensor &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;.to(device)&lt;/span&gt;&lt;/code&gt; calls are now guarded to skip when already on the correct device.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section id="gpu-kernel-improvements"&gt;
+&lt;h2&gt;GPU Kernel Improvements&lt;/h2&gt;
+&lt;p&gt;Beyond the parallel scan, several targeted GPU optimizations:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Removed synchronous CUDA calls&lt;/strong&gt; from native kernels, improving throughput by avoiding unnecessary CPU-GPU synchronization points.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Scalar coefficient passing&lt;/strong&gt;: Biquad coefficients (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;b0&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;b1&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;b2&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;a1&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;a2&lt;/span&gt;&lt;/code&gt;) are now passed as scalar arguments to CUDA kernels instead of being extracted from device tensors, eliminating a GPU-to-CPU synchronization that was causing a segfault on some configurations.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section id="benchmark-infrastructure"&gt;
+&lt;h2&gt;Benchmark Infrastructure&lt;/h2&gt;
+&lt;p&gt;The benchmark suite has been migrated from standalone scripts to a &lt;strong&gt;pytest-benchmark&lt;/strong&gt; suite under &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;benchmarks/&lt;/span&gt;&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# Run all benchmarks&lt;/span&gt;
+uv&lt;span class="w"&gt; &lt;/span&gt;run&lt;span class="w"&gt; &lt;/span&gt;pytest&lt;span class="w"&gt; &lt;/span&gt;--benchmark-enable
+
+&lt;span class="c1"&gt;# Run only IIR benchmarks&lt;/span&gt;
+uv&lt;span class="w"&gt; &lt;/span&gt;run&lt;span class="w"&gt; &lt;/span&gt;pytest&lt;span class="w"&gt; &lt;/span&gt;benchmarks/test_iir_bench.py&lt;span class="w"&gt; &lt;/span&gt;--benchmark-enable
+
+&lt;span class="c1"&gt;# Run only FIR benchmarks&lt;/span&gt;
+uv&lt;span class="w"&gt; &lt;/span&gt;run&lt;span class="w"&gt; &lt;/span&gt;pytest&lt;span class="w"&gt; &lt;/span&gt;benchmarks/test_fir_bench.py&lt;span class="w"&gt; &lt;/span&gt;--benchmark-enable
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Each benchmark compares &lt;strong&gt;five backends&lt;/strong&gt;: TorchFX GPU (CUDA), TorchFX CPU, SciPy, Numba &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;&amp;#64;njit&lt;/span&gt;&lt;/code&gt; (CPU), and Numba &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;&amp;#64;cuda.jit&lt;/span&gt;&lt;/code&gt; (GPU), across signal durations from 1 to 300 seconds and varying channel counts / filter orders.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="bug-fixes"&gt;
+&lt;h2&gt;Bug Fixes&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;Fixed native extension being unreachable on CPU-only machines due to an overly strict &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torch.cuda.is_available()&lt;/span&gt;&lt;/code&gt; gate in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;_ops.py&lt;/span&gt;&lt;/code&gt;.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Fixed segfault in the CUDA biquad kernel caused by dereferencing a device pointer on the host.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section id="benchmark-results-rtx-6000"&gt;
+&lt;h2&gt;Benchmark Results (RTX 6000)&lt;/h2&gt;
+&lt;p&gt;Here’s a snapshot from our CI benchmarks on a Quadro RTX 6000 (24 GB):&lt;/p&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;Backend&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;300s / order 12 IIR&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head"&gt;&lt;p&gt;Relative&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;&lt;strong&gt;TorchFX GPU&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;550 ms&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;1.0x&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;TorchFX CPU&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;1,086 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;2.0x slower&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;Numba &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;&amp;#64;njit&lt;/span&gt;&lt;/code&gt; CPU&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;TBD&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;–&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;SciPy&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;5,428 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;9.9x slower&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;Numba &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;&amp;#64;cuda.jit&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;12,957 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;23.6x slower&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;The GPU kernel maintains sub-millisecond standard deviation, making it suitable for latency-sensitive workloads.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="installation"&gt;
+&lt;h2&gt;Installation&lt;/h2&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;The native extension compiles automatically on first import. Ensure you have:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;GCC &amp;gt;= 9&lt;/strong&gt; (or equivalent C++17 compiler)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;PyTorch &amp;gt;= 2.0&lt;/strong&gt; with matching CUDA toolkit (for GPU kernels)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;setuptools&lt;/span&gt;&lt;/code&gt; (now a runtime dependency, required by &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torch.utils.cpp_extension&lt;/span&gt;&lt;/code&gt;)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For CPU-only builds:&lt;/p&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nv"&gt;TORCHFX_NO_CUDA&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="whats-next"&gt;
+&lt;h2&gt;What’s Next&lt;/h2&gt;
+&lt;p&gt;With the performance foundation in place, we’re turning our attention to:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;Additional effects: compressor, phaser, pitch shift&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Batch processing optimizations for the CLI pipeline&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;v1.0.0 release candidate with API stability guarantees&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;div&gt;&lt;p&gt;Benchmarks where run on a Quadro RTX 6000 (24 GB) with CUDA 12.1 and PyTorch 2.10.0. Performance may vary based on hardware and software configuration. Always benchmark on your target system for best results.&lt;/p&gt;
+&lt;/div&gt;&lt;/blockquote&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+</content>
+    <link href="https://matteospanio.github.io/torchfx/blog/2026-03-27-release-050.html"/>
+    <summary>I’m excited to announce TorchFX 0.5.0, a performance-focused release that introduces custom CUDA kernels, a JIT-compiled C++ native extension, and major algorithmic improvements across the entire filter pipeline.</summary>
+    <category term="cuda" label="cuda"/>
+    <category term="fft" label="fft"/>
+    <category term="native-extension" label="native-extension"/>
+    <category term="performance" label="performance"/>
+    <category term="release" label="release"/>
+    <published>2026-03-27T00:00:00+00:00</published>
+  </entry>
   <entry>
     <id>https://matteospanio.github.io/torchfx/blog/2026-02-15-cli-interface.html</id>
     <title>TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal</title>

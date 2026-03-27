@@ -476,7 +476,8 @@ mermaid.initialize(
     }
 );
 
-window.addEventListener("load", load);</script>
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/torchfx/realtime/sounddevice_backend';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -863,6 +864,7 @@ window.addEventListener("load", load);</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
@@ -1074,6 +1076,24 @@ window.addEventListener("load", load);</script>
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span>
         <span class="k">assert</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
+        <span class="c1"># Pre-allocate tensors once — dimensions are fixed for the stream&#39;s lifetime.</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">buffer_size</span>
+        <span class="n">ch_in</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">channels_in</span>
+        <span class="n">ch_out</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">channels_out</span>
+        <span class="n">mono_in</span> <span class="o">=</span> <span class="n">ch_in</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="n">mono_out</span> <span class="o">=</span> <span class="n">ch_out</span> <span class="o">==</span> <span class="mi">1</span>
+
+        <span class="n">_input_tensor</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ch_in</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="k">if</span> <span class="n">ch_in</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">_output_tensor</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ch_out</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="k">if</span> <span class="n">ch_out</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Pre-allocate numpy view for output copy-back (channels, frames) order.</span>
+        <span class="c1"># We&#39;ll transpose into outdata at the end.</span>
+        <span class="n">_out_np</span> <span class="o">=</span> <span class="n">_output_tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">if</span> <span class="n">ch_out</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+
         <span class="k">def</span><span class="w"> </span><span class="nf">sd_callback</span><span class="p">(</span>
             <span class="n">indata</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">outdata</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -1087,23 +1107,31 @@ window.addEventListener("load", load);</script>
                 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;realtime.sounddevice&quot;</span><span class="p">)</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;sounddevice status: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">status</span><span class="p">)</span>
 
-            <span class="c1"># Convert input: numpy (frames, channels) -&gt; tensor (channels, frames)</span>
+            <span class="c1"># Convert input: numpy (frames, channels) -&gt; pre-allocated tensor (channels, frames)</span>
             <span class="k">if</span> <span class="n">indata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">indata</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">mono_in</span><span class="p">:</span>
+                    <span class="c1"># Mono fast-path: no transpose needed, just copy the column</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">_input_tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">indata</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">_input_tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">indata</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
-            <span class="c1"># Create output tensor</span>
+            <span class="c1"># Zero the output tensor in-place (no allocation)</span>
             <span class="k">if</span> <span class="n">outdata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">outdata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">outdata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">_output_tensor</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
 
-            <span class="n">callback</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">output_tensor</span><span class="p">,</span> <span class="n">frames</span><span class="p">)</span>
+            <span class="n">callback</span><span class="p">(</span>
+                <span class="n">_input_tensor</span> <span class="k">if</span> <span class="n">indata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                <span class="n">_output_tensor</span> <span class="k">if</span> <span class="n">outdata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                <span class="n">frames</span><span class="p">,</span>
+            <span class="p">)</span>
 
             <span class="c1"># Copy output back: tensor (channels, frames) -&gt; numpy (frames, channels)</span>
-            <span class="k">if</span> <span class="n">outdata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">outdata</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">output_tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+            <span class="k">if</span> <span class="n">outdata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_out_np</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">mono_out</span><span class="p">:</span>
+                    <span class="c1"># Mono fast-path: no transpose needed</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">outdata</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">_out_np</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">outdata</span><span class="p">,</span> <span class="n">_out_np</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">sd_callback</span>
 

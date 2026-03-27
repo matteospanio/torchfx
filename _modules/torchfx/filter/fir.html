@@ -476,7 +476,8 @@ mermaid.initialize(
     }
 );
 
-window.addEventListener("load", load);</script>
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/torchfx/filter/fir';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -1342,8 +1343,11 @@ window.addEventListener("load", load);</script>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">conv_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;fft&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">conv_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span> <span class="s2">&quot;direct&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;conv_mode must be &#39;fft&#39;, &#39;direct&#39;, or &#39;auto&#39;, got </span><span class="si">{</span><span class="n">conv_mode</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conv_mode</span> <span class="o">=</span> <span class="n">conv_mode</span>
         <span class="c1"># Flip the kernel for causal convolution (like lfilter)</span>
         <span class="n">b_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>  <span class="c1"># FIR filter denominator is always 1</span>
@@ -1366,6 +1370,7 @@ window.addEventListener("load", load);</script>
         <span class="n">dtype</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
 
         <span class="n">original_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
 
@@ -1383,23 +1388,25 @@ window.addEventListener("load", load);</script>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input must be of shape [T], [C, T], or [B, C, T]&quot;</span><span class="p">)</span>
 
         <span class="n">BATCHES</span><span class="p">,</span> <span class="n">CHANNELS</span><span class="p">,</span> <span class="n">TIME</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
-        <span class="c1"># Expand kernel to match number of channels</span>
-        <span class="n">kernel_exp</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">CHANNELS</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore # [C, 1, K]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conv_mode</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter._fftconv</span><span class="w"> </span><span class="kn">import</span> <span class="n">fft_conv1d</span>
 
-        <span class="c1"># Pad input to maintain original length, pad right side</span>
-        <span class="n">pad</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-        <span class="n">x_padded</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>  <span class="c1"># pad left only # type: ignore</span>
-
-        <span class="c1"># For batch &gt; 1, reshape to [B*C, 1, T] and use single-channel conv1d</span>
-        <span class="k">if</span> <span class="n">BATCHES</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">x_padded</span> <span class="o">=</span> <span class="n">x_padded</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">BATCHES</span> <span class="o">*</span> <span class="n">CHANNELS</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">conv1d</span><span class="p">(</span><span class="n">x_padded</span><span class="p">,</span> <span class="n">kernel</span><span class="p">)</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">BATCHES</span><span class="p">,</span> <span class="n">CHANNELS</span><span class="p">,</span> <span class="n">TIME</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">fft_conv1d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel_exp</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">conv1d</span><span class="p">(</span><span class="n">x_padded</span><span class="p">,</span> <span class="n">kernel_exp</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">CHANNELS</span><span class="p">)</span>
+            <span class="c1"># Direct conv1d path</span>
+            <span class="n">kernel_exp</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">CHANNELS</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [C, 1, K]</span>
+            <span class="n">x_padded</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">BATCHES</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">x_padded</span> <span class="o">=</span> <span class="n">x_padded</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">BATCHES</span> <span class="o">*</span> <span class="n">CHANNELS</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">conv1d</span><span class="p">(</span><span class="n">x_padded</span><span class="p">,</span> <span class="n">kernel</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">BATCHES</span><span class="p">,</span> <span class="n">CHANNELS</span><span class="p">,</span> <span class="n">TIME</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel_exp</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">conv1d</span><span class="p">(</span><span class="n">x_padded</span><span class="p">,</span> <span class="n">kernel_exp</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">CHANNELS</span><span class="p">)</span>
 
         <span class="c1"># Reshape back to [B, C, T]</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">BATCHES</span><span class="p">,</span> <span class="n">CHANNELS</span><span class="p">,</span> <span class="n">TIME</span><span class="p">)</span>
@@ -1826,6 +1833,7 @@ window.addEventListener("load", load);</script>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pass_zero</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">window</span><span class="p">:</span> <span class="n">WindowType</span> <span class="o">=</span> <span class="s2">&quot;hamming&quot;</span><span class="p">,</span>
+        <span class="n">conv_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;fft&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># Design the filter using firwin</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_taps</span> <span class="o">=</span> <span class="n">num_taps</span>
@@ -1833,12 +1841,13 @@ window.addEventListener("load", load);</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pass_zero</span> <span class="o">=</span> <span class="n">pass_zero</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">window</span> <span class="o">=</span> <span class="n">window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conv_mode</span> <span class="o">=</span> <span class="n">conv_mode</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Filter coefficients (b) must be computed.&quot;</span>
-            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">conv_mode</span><span class="o">=</span><span class="n">conv_mode</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DesignableFIR.compute_coefficients">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.DesignableFIR.compute_coefficients">[docs]</a>
@@ -1856,7 +1865,7 @@ window.addEventListener("load", load);</script>
         <span class="p">)</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Filter coefficients (b) must be computed.&quot;</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">conv_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_conv_mode</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

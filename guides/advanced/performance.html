@@ -477,7 +477,8 @@ mermaid.initialize(
     }
 );
 
-window.addEventListener("load", load);</script>
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'guides/advanced/performance';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -967,7 +968,7 @@ window.addEventListener("load", load);</script>
     </pre><p><strong>Performance Optimization Framework</strong> - Three key dimensions for optimizing TorchFX pipelines.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p>For detailed GPU acceleration patterns, see <a class="reference internal" href="gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a>. For comprehensive benchmarking infrastructure, see the benchmark suite in the <code class="docutils literal notranslate"><span class="pre">benchmark/</span></code> directory.</p>
+<p>For detailed GPU acceleration patterns, see <a class="reference internal" href="gpu-acceleration.html"><span class="doc">GPU Acceleration</span></a>. For comprehensive benchmarking infrastructure, see the benchmark suite in the <code class="docutils literal notranslate"><span class="pre">benchmarks/</span></code> directory (run with <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span> <span class="pre">pytest</span> <span class="pre">--benchmark-enable</span></code>).</p>
 </div>
 </section>
 <section id="benchmark-methodology">
@@ -978,9 +979,9 @@ window.addEventListener("load", load);</script>
 <pre  class="mermaid">
         graph TB
     subgraph &quot;TorchFX Benchmark Suite&quot;
-        API[&quot;api_bench.py&lt;br/&gt;API Pattern Comparison&quot;]
-        FIR[&quot;fir_bench.py&lt;br/&gt;FIR Filter Performance&quot;]
-        IIR[&quot;iir_bench.py&lt;br/&gt;IIR Filter Performance&quot;]
+        API[&quot;test_api_bench.py&lt;br/&gt;API Pattern Comparison&quot;]
+        FIR[&quot;test_fir_bench.py&lt;br/&gt;FIR Filter Performance&quot;]
+        IIR[&quot;test_iir_bench.py&lt;br/&gt;IIR Filter Performance&quot;]
     end
 
     subgraph &quot;Common Test Parameters&quot;
@@ -1100,7 +1101,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="api-performance-comparison">
 <h2>API Performance Comparison<a class="headerlink" href="#api-performance-comparison" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">api_bench.py</span></code> benchmark compares different API patterns for applying the same filter chain to audio. This helps users understand the performance and ergonomic trade-offs of different coding styles.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">test_api_bench.py</span></code> benchmark compares different API patterns for applying the same filter chain to audio. This helps users understand the performance and ergonomic trade-offs of different coding styles.</p>
 <section id="test-configuration">
 <h3>Test Configuration<a class="headerlink" href="#test-configuration" title="Link to this heading">#</a></h3>
 <p><strong>Filter Chain</strong>: 6 cascaded IIR filters</p>
@@ -1125,7 +1126,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="api-pattern-1-custom-nn-module-class">
 <h3>API Pattern 1: Custom nn.Module Class<a class="headerlink" href="#api-pattern-1-custom-nn-module-class" title="Link to this heading">#</a></h3>
-<p>A traditional PyTorch approach using a custom <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>:</p>
+<p>A traditional PyTorch approach using a custom <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">HiChebyshev1</span><span class="p">,</span> <span class="n">LoButterworth</span>
 
@@ -1165,7 +1166,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="api-pattern-2-nn-sequential">
 <h3>API Pattern 2: nn.Sequential<a class="headerlink" href="#api-pattern-2-nn-sequential" title="Link to this heading">#</a></h3>
-<p>Using PyTorch’s built-in <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> container:</p>
+<p>Using PyTorch’s built-in <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> container:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">HiChebyshev1</span><span class="p">,</span> <span class="n">LoButterworth</span>
 
@@ -1303,7 +1304,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="fir-filter-performance">
 <h2>FIR Filter Performance<a class="headerlink" href="#fir-filter-performance" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">fir_bench.py</span></code> benchmark evaluates FIR filter performance across varying signal durations, channel counts, and execution backends (GPU, CPU, SciPy).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">test_fir_bench.py</span></code> benchmark evaluates FIR filter performance across varying signal durations, channel counts, and execution backends (GPU, CPU, SciPy).</p>
 <section id="fir-test-configuration">
 <h3>FIR Test Configuration<a class="headerlink" href="#fir-test-configuration" title="Link to this heading">#</a></h3>
 <p><strong>Filter Chain</strong>: 5 cascaded FIR filters with varying tap counts</p>
@@ -1516,7 +1517,7 @@ window.addEventListener("load", load);</script>
 </section>
 <section id="iir-filter-performance">
 <h2>IIR Filter Performance<a class="headerlink" href="#iir-filter-performance" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">iir_bench.py</span></code> benchmark evaluates IIR (Infinite Impulse Response) filter performance using the same test matrix as FIR benchmarks but with recursive filters.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">test_iir_bench.py</span></code> benchmark evaluates IIR (Infinite Impulse Response) filter performance using the same test matrix as FIR benchmarks but with recursive filters.</p>
 <section id="iir-test-configuration">
 <h3>IIR Test Configuration<a class="headerlink" href="#iir-test-configuration" title="Link to this heading">#</a></h3>
 <p><strong>Filter Chain</strong>: 4 cascaded IIR filters</p>
@@ -1715,6 +1716,43 @@ window.addEventListener("load", load);</script>
 <li><p><strong>Baseline</strong>: Reference for CPU performance</p></li>
 <li><p><strong>Filter Design</strong>: Uses standard signal processing algorithms</p></li>
 </ul>
+</section>
+</section>
+<section id="native-extension-architecture">
+<h2>Native Extension Architecture<a class="headerlink" href="#native-extension-architecture" title="Link to this heading">#</a></h2>
+<p>TorchFX includes a JIT-compiled C++/CUDA native extension that dramatically accelerates stateful IIR filter processing. The extension is compiled automatically on first use and cached in <code class="docutils literal notranslate"><span class="pre">~/.cache/torch_extensions/</span></code>.</p>
+<section id="how-it-works">
+<h3>How It Works<a class="headerlink" href="#how-it-works" title="Link to this heading">#</a></h3>
+<p>IIR filters use a two-phase processing strategy:</p>
+<ol class="arabic simple">
+<li><p><strong>First call (stateless)</strong>: Uses <code class="docutils literal notranslate"><span class="pre">torchaudio.functional.lfilter</span></code> — fast, but assumes zero initial state.</p></li>
+<li><p><strong>Subsequent calls (stateful)</strong>: Carries filter state across calls for streaming/chunked processing. This path dispatches to the native C++ extension when available.</p></li>
+</ol>
+<p>The native extension provides:</p>
+<ul class="simple">
+<li><p><strong>CPU</strong>: Tight C++ loops with direct memory accessors (compiled from <code class="docutils literal notranslate"><span class="pre">_csrc/cpu/iir_cpu.cpp</span></code>)</p></li>
+<li><p><strong>CUDA</strong>: Parallel prefix scan algorithm for biquad and SOS cascades (compiled from <code class="docutils literal notranslate"><span class="pre">_csrc/cuda/</span></code>)</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The native extension compiles on <strong>both CPU-only and CUDA-equipped machines</strong>. A CUDA toolkit is not required — the CPU C++ kernel alone provides ~2400x speedup over the pure-PyTorch fallback for stateful IIR processing.</p>
+</div>
+</section>
+<section id="fallback-strategy">
+<h3>Fallback Strategy<a class="headerlink" href="#fallback-strategy" title="Link to this heading">#</a></h3>
+<p>If the native extension fails to compile (e.g., missing C++ compiler), TorchFX falls back to a vectorized pure-PyTorch implementation that uses <code class="docutils literal notranslate"><span class="pre">lfilter</span></code> with a zero-state/zero-input decomposition. This fallback is ~100-500x faster than a naive sample-by-sample loop, though slower than the C++ kernel.</p>
+</section>
+<section id="verifying-extension-status">
+<h3>Verifying Extension Status<a class="headerlink" href="#verifying-extension-status" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">_load_extension</span>
+
+<span class="n">ext</span> <span class="o">=</span> <span class="n">_load_extension</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">ext</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Native extension loaded successfully&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using PyTorch fallback (install a C++ compiler for best performance)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 </section>
 <section id="performance-optimization-guidelines">
@@ -2481,6 +2519,12 @@ window.addEventListener("load", load);</script>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iir-coefficient-management">IIR Coefficient Management</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iir-vs-fir-performance-trade-offs">IIR vs FIR Performance Trade-offs</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iir-scipy-baseline">IIR SciPy Baseline</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#native-extension-architecture">Native Extension Architecture</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-works">How It Works</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fallback-strategy">Fallback Strategy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#verifying-extension-status">Verifying Extension Status</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-optimization-guidelines">Performance Optimization Guidelines</a><ul class="visible nav section-nav flex-column">

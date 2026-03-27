@@ -476,7 +476,8 @@ mermaid.initialize(
     }
 );
 
-window.addEventListener("load", load);</script>
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/torchfx/wave';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -1264,14 +1265,17 @@ window.addEventListener("load", load);</script>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data</span><span class="p">,</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">torchaudio</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="c1"># Extract metadata from the file</span>
+        <span class="c1"># Extract metadata from the file using soundfile (torchaudio.info</span>
+        <span class="c1"># was removed in torchaudio 2.10+).</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="n">torchaudio</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">soundfile</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_sf</span>  <span class="c1"># type: ignore[import-untyped]</span>
+
+            <span class="n">info</span> <span class="o">=</span> <span class="n">_sf</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
             <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;num_frames&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">num_frames</span><span class="p">,</span>
-                <span class="s2">&quot;num_channels&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">num_channels</span><span class="p">,</span>
-                <span class="s2">&quot;bits_per_sample&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">bits_per_sample</span><span class="p">,</span>
-                <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">encoding</span><span class="p">,</span>
+                <span class="s2">&quot;num_frames&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span>
+                <span class="s2">&quot;num_channels&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">channels</span><span class="p">,</span>
+                <span class="s2">&quot;subtype&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">subtype</span><span class="p">,</span>
+                <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">format</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="c1"># If metadata extraction fails, continue without it</span>
@@ -1288,7 +1292,6 @@ window.addEventListener("load", load);</script>
         <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">bits_per_sample</span><span class="p">:</span> <span class="n">BitRate</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">tp</span><span class="o">.</span><span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Save the wave to an audio file.</span>
 
@@ -1340,24 +1343,45 @@ window.addEventListener("load", load);</script>
 <span class="sd">        torchaudio.save : Underlying function used for saving.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Convert path to Path object for easier manipulation</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">soundfile</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_sf</span>
+
         <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 
         <span class="c1"># Create parent directories if they don&#39;t exist</span>
         <span class="n">output_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="c1"># Move tensor to CPU for saving (torchaudio requires CPU tensors)</span>
+        <span class="c1"># Move tensor to CPU for saving</span>
         <span class="n">audio_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
 
-        <span class="c1"># Save using torchaudio</span>
-        <span class="n">torchaudio</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
-            <span class="n">uri</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">),</span>
-            <span class="n">src</span><span class="o">=</span><span class="n">audio_data</span><span class="p">,</span>
-            <span class="n">sample_rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
+        <span class="c1"># Determine format from extension if not provided</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="n">output_path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">format_map</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;.wav&quot;</span><span class="p">:</span> <span class="s2">&quot;WAV&quot;</span><span class="p">,</span> <span class="s2">&quot;.flac&quot;</span><span class="p">:</span> <span class="s2">&quot;FLAC&quot;</span><span class="p">,</span> <span class="s2">&quot;.ogg&quot;</span><span class="p">:</span> <span class="s2">&quot;OGG&quot;</span><span class="p">}</span>
+            <span class="nb">format</span> <span class="o">=</span> <span class="n">format_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="s2">&quot;WAV&quot;</span><span class="p">)</span>  <span class="c1"># noqa: A001</span>
+
+        <span class="c1"># Map encoding/bits_per_sample to soundfile subtype</span>
+        <span class="n">subtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">bits_per_sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">subtype</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">encoding</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;PCM_&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;PCM_&#39;</span><span class="p">)</span><span class="si">}{</span><span class="n">bits_per_sample</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="c1"># Normalise common patterns: &quot;PCM_S16&quot; -&gt; &quot;PCM_16&quot;, &quot;PCM_F32&quot; -&gt; &quot;FLOAT&quot;</span>
+            <span class="k">if</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s2">&quot;PCM_S&quot;</span><span class="p">:</span>
+                <span class="n">subtype</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;PCM_</span><span class="si">{</span><span class="n">bits_per_sample</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">elif</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s2">&quot;PCM_U&quot;</span><span class="p">:</span>
+                <span class="n">subtype</span> <span class="o">=</span> <span class="s2">&quot;PCM_U8&quot;</span> <span class="k">if</span> <span class="n">bits_per_sample</span> <span class="o">==</span> <span class="mi">8</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;PCM_</span><span class="si">{</span><span class="n">bits_per_sample</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">elif</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s2">&quot;PCM_F&quot;</span><span class="p">:</span>
+                <span class="n">subtype</span> <span class="o">=</span> <span class="s2">&quot;FLOAT&quot;</span> <span class="k">if</span> <span class="n">bits_per_sample</span> <span class="o">==</span> <span class="mi">32</span> <span class="k">else</span> <span class="s2">&quot;DOUBLE&quot;</span>
+        <span class="k">elif</span> <span class="n">bits_per_sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">subtype</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;PCM_</span><span class="si">{</span><span class="n">bits_per_sample</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">elif</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s2">&quot;PCM_F&quot;</span><span class="p">:</span>
+            <span class="n">subtype</span> <span class="o">=</span> <span class="s2">&quot;FLOAT&quot;</span>
+
+        <span class="c1"># Save using soundfile (channels, samples) -&gt; (samples, channels)</span>
+        <span class="n">_sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">),</span>
+            <span class="n">audio_data</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
             <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span>
-            <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span>
-            <span class="n">bits_per_sample</span><span class="o">=</span><span class="n">bits_per_sample</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="n">subtype</span><span class="o">=</span><span class="n">subtype</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

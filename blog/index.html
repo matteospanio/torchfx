@@ -476,7 +476,8 @@ mermaid.initialize(
     }
 );
 
-window.addEventListener("load", load);</script>
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'blog/index';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -783,6 +784,12 @@ window.addEventListener("load", load);</script>
   <ul>
      
     <li>
+      <a href="2026-03-27-release-050.html">
+        27 March - TorchFX 0.5.0: Custom CUDA Kernels & Native C++ Extension
+      </a>
+    </li>
+    
+    <li>
       <a href="2026-02-15-cli-interface.html">
         15 February - TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal
       </a>
@@ -806,12 +813,6 @@ window.addEventListener("load", load);</script>
       </a>
     </li>
     
-    <li>
-      <a href="2026-01-06-deepwiki.html">
-        06 January - TorchFX is now indexed on DeepWiki
-      </a>
-    </li>
-    
   </ul>
 </div>
 </div>
@@ -825,16 +826,24 @@ window.addEventListener("load", load);</script>
   <h3><a href="index/tag.html">Tags</a></h3>
   <ul class="ablog-cloud">
      
-    <li class="ablog-cloud ablog-cloud-3">
+    <li class="ablog-cloud ablog-cloud-2">
       <a href="index/tag/cli.html">cli</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/cuda.html">cuda</a>
     </li>
       
     <li class="ablog-cloud ablog-cloud-1">
       <a href="index/tag/dafx.html">dafx</a>
     </li>
       
-    <li class="ablog-cloud ablog-cloud-3">
+    <li class="ablog-cloud ablog-cloud-2">
       <a href="index/tag/documentation.html">documentation</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/fft.html">fft</a>
     </li>
       
     <li class="ablog-cloud ablog-cloud-1">
@@ -849,11 +858,19 @@ window.addEventListener("load", load);</script>
       <a href="index/tag/logging.html">logging</a>
     </li>
       
-    <li class="ablog-cloud ablog-cloud-5">
-      <a href="index/tag/open-source.html">open-source</a>
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/native-extension.html">native-extension</a>
     </li>
       
     <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/open-source.html">open-source</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/performance.html">performance</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-2">
       <a href="index/tag/real-time.html">real-time</a>
     </li>
       
@@ -900,7 +917,7 @@ window.addEventListener("load", load);</script>
     </li>
       
     <li>
-      <a href="index/category/releases.html">releases (1)</a>
+      <a href="index/category/releases.html">releases (2)</a>
     </li>
      
   </ul>
@@ -914,7 +931,7 @@ window.addEventListener("load", load);</script>
   <ul>
        
     <li>
-      <a href="index/author/matteo-spanio.html">Matteo Spanio (7)</a>
+      <a href="index/author/matteo-spanio.html">Matteo Spanio (8)</a>
     </li>
      
   </ul>
@@ -928,7 +945,7 @@ window.addEventListener("load", load);</script>
   <ul>
      
     <li>
-      <a href="index/2026.html">2026 (5)</a>
+      <a href="index/2026.html">2026 (6)</a>
     </li>
       
     <li>
@@ -1000,6 +1017,72 @@ window.addEventListener("load", load);</script>
     </span>
   </h1>
    
+  <div class="section ablog-post">
+    <h2 class="ablog-post-title">
+      <a href="2026-03-27-release-050.html">TorchFX 0.5.0: Custom CUDA Kernels & Native C++ Extension</a>
+    </h2>
+    <ul class="ablog-archive">
+      <li>
+         
+        <i class="fa fa-calendar"></i>
+        
+        <span>27 March 2026</span>
+        
+      </li>
+      <div class="ablog-sidebar-item ablog__postcard2">
+   
+  <li id="ablog-sidebar-item author ablog__author">
+    <span>
+      
+      <i class="fa-fw fa fa-user"></i>
+      
+    </span>
+     
+    <a href="index/author/matteo-spanio.html">Matteo Spanio</a>
+      
+  </li>
+     
+  <li id="ablog-sidebar-item category ablog__category">
+    <span>
+      
+      <i class="fa-fw fa fa-folder-open"></i>
+      
+    </span>
+     
+    <a href="index/category/releases.html">releases</a>
+      
+  </li>
+   
+  <li id="ablog-sidebar-item tags ablog__tags">
+    <span>
+       
+      <i class="fa-fw fa fa-tags"></i>
+       
+    </span>
+     
+    <a href="index/tag/release.html">release</a>
+        
+    <a href="index/tag/cuda.html">cuda</a>
+        
+    <a href="index/tag/performance.html">performance</a>
+        
+    <a href="index/tag/native-extension.html">native-extension</a>
+        
+    <a href="index/tag/fft.html">fft</a>
+      
+  </li>
+   
+</div>
+    </ul>
+    <p class="ablog-post-excerpt"><p>I’m excited to announce <strong>TorchFX 0.5.0</strong>, a performance-focused release that introduces custom CUDA kernels, a JIT-compiled C++ native extension, and major algorithmic improvements across the entire filter pipeline.</p>
+</p>
+
+    <p class="ablog-post-expand">
+      <a href="2026-03-27-release-050.html"><em>Read more ...</em></a>
+    </p>
+    <hr />
+  </div>
+  
   <div class="section ablog-post">
     <h2 class="ablog-post-title">
       <a href="2026-02-15-cli-interface.html">TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal</a>

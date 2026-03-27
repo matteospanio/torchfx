@@ -476,7 +476,8 @@ mermaid.initialize(
     }
 );
 
-window.addEventListener("load", load);</script>
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/torchfx/effect';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -1796,6 +1797,15 @@ window.addEventListener("load", load);</script>
         <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">waveform</span>
 
+        <span class="c1"># Try native CUDA kernel for fused delay+mix</span>
+        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">is_cuda</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">delay_line_forward</span>
+
+            <span class="n">result</span> <span class="o">=</span> <span class="n">delay_line_forward</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span>
+
+        <span class="c1"># PyTorch fallback</span>
         <span class="c1"># Pad waveform for delay</span>
         <span class="n">padded</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="c1"># Create delayed signal</span>

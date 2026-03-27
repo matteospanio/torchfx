@@ -476,7 +476,8 @@ mermaid.initialize(
     }
 );
 
-window.addEventListener("load", load);</script>
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/torchfx/filter/iir';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -916,6 +917,58 @@ window.addEventListener("load", load);</script>
 <span class="n">NONE_FS_ERR</span> <span class="o">=</span> <span class="s2">&quot;Sample rate of the filter could not be None.&quot;</span>
 
 
+<span class="nd">@torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">script</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_biquad_df1_fallback</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">b0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">b1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">b2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">a1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">a2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">sx</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">sy</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Single-pass Direct Form 1 biquad, JIT-compiled for speed.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : Tensor</span>
+<span class="sd">        Input signal ``[C, T]``.</span>
+<span class="sd">    b0, b1, b2 : Tensor</span>
+<span class="sd">        Numerator (feedforward) coefficients (scalars).</span>
+<span class="sd">    a1, a2 : Tensor</span>
+<span class="sd">        Denominator (feedback) coefficients (scalars, excluding a0=1).</span>
+<span class="sd">    sx : Tensor</span>
+<span class="sd">        Input state ``[C, 2]`` = ``[x[-1], x[-2]]``.</span>
+<span class="sd">    sy : Tensor</span>
+<span class="sd">        Output state ``[C, 2]`` = ``[y[-1], y[-2]]``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        Filtered output ``[C, T]``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="n">xn_1</span> <span class="o">=</span> <span class="n">sx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">xn_2</span> <span class="o">=</span> <span class="n">sx</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">yn_1</span> <span class="o">=</span> <span class="n">sy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">yn_2</span> <span class="o">=</span> <span class="n">sy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+        <span class="n">xn</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span>
+        <span class="n">yn</span> <span class="o">=</span> <span class="n">b0</span> <span class="o">*</span> <span class="n">xn</span> <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">xn_1</span> <span class="o">+</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">xn_2</span> <span class="o">-</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">yn_1</span> <span class="o">-</span> <span class="n">a2</span> <span class="o">*</span> <span class="n">yn_2</span>
+        <span class="n">y</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">yn</span>
+        <span class="n">xn_2</span> <span class="o">=</span> <span class="n">xn_1</span>
+        <span class="n">xn_1</span> <span class="o">=</span> <span class="n">xn</span>
+        <span class="n">yn_2</span> <span class="o">=</span> <span class="n">yn_1</span>
+        <span class="n">yn_1</span> <span class="o">=</span> <span class="n">yn</span>
+
+    <span class="k">return</span> <span class="n">y</span>
+
+
 <div class="viewcode-block" id="IIR">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.IIR">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">IIR</span><span class="p">(</span><span class="n">AbstractFilter</span><span class="p">):</span>
@@ -1034,6 +1087,7 @@ window.addEventListener("load", load);</script>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_sos</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
@@ -1046,7 +1100,7 @@ window.addEventListener("load", load);</script>
         <span class="n">result</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">clamp</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
 
-        <span class="c1"># Build SOS and bootstrap state for next chunk</span>
+        <span class="c1"># Bootstrap state for next chunk</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_compute_sos</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_bootstrap_state</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
@@ -1084,6 +1138,9 @@ window.addEventListener("load", load);</script>
 <span class="sd">        Each second-order section uses Direct Form 1, vectorized across channels</span>
 <span class="sd">        and sequential across time.</span>
 
+<span class="sd">        Uses a CUDA parallel prefix scan kernel when available and the input</span>
+<span class="sd">        is on a CUDA device, falling back to the pure-PyTorch loop otherwise.</span>
+
 <span class="sd">        Ported from AudioNoise ``biquad.h`` ``biquad_step_df1``.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1103,47 +1160,54 @@ window.addEventListener("load", load);</script>
         <span class="n">C</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">num_sections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="n">sos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">sos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span>
+        <span class="k">if</span> <span class="n">sos</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">sos</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
+            <span class="n">sos</span> <span class="o">=</span> <span class="n">sos</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
         <span class="c1"># Initialize or resize state</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">C</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_sections</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_sections</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="n">device</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
+        <span class="c1"># Try native (CUDA or C++) SOS cascade kernel</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">parallel_iir_forward</span>
+
+        <span class="n">native_result</span> <span class="o">=</span> <span class="n">parallel_iir_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">native_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="n">native_result</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">out_dtype</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">orig_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">orig_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">orig_shape</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="c1"># Single-pass DF1 fallback (replaces the 2x lfilter decomposition).</span>
         <span class="n">section_input</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_sections</span><span class="p">):</span>
             <span class="n">b0</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
             <span class="n">b1</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
             <span class="n">b2</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
-            <span class="c1"># sos[s, 3] is a0 (== 1 after normalization from tf2sos)</span>
             <span class="n">a1</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
             <span class="n">a2</span> <span class="o">=</span> <span class="n">sos</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
 
-            <span class="n">sx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>  <span class="c1"># [C, 2]</span>
-            <span class="n">sy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>  <span class="c1"># [C, 2]</span>
+            <span class="n">sx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>  <span class="c1"># [C, 2] = [x[-1], x[-2]]</span>
+            <span class="n">sy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>  <span class="c1"># [C, 2] = [y[-1], y[-2]]</span>
 
-            <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">section_input</span><span class="p">)</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">_biquad_df1_fallback</span><span class="p">(</span><span class="n">section_input</span><span class="p">,</span> <span class="n">b0</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">sx</span><span class="p">,</span> <span class="n">sy</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
-                <span class="n">xn</span> <span class="o">=</span> <span class="n">section_input</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span>
-                <span class="n">yn</span> <span class="o">=</span> <span class="n">b0</span> <span class="o">*</span> <span class="n">xn</span> <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">sx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">sx</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">sy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">a2</span> <span class="o">*</span> <span class="n">sy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
-                <span class="n">out</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">yn</span>
-                <span class="n">sx</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
-                <span class="n">sx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">xn</span>
-                <span class="n">sy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
-                <span class="n">sy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">yn</span>
+            <span class="c1"># Update state from tail</span>
+            <span class="k">if</span> <span class="n">T</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">section_input</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">section_input</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">2</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">out</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">out</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">2</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">sx</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">sy</span>
-
-            <span class="c1"># Output of this section feeds next section</span>
             <span class="n">section_input</span> <span class="o">=</span> <span class="n">out</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="n">section_input</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">out_dtype</span><span class="p">)</span>
