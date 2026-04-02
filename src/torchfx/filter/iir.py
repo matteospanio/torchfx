@@ -71,7 +71,7 @@ from collections.abc import Sequence
 
 import numpy as np
 import torch
-from scipy.signal import butter, cheby1, cheby2, ellip, tf2sos
+from scipy.signal import butter, cheby1, cheby2, ellip, sos2tf
 from torch import Tensor, dtype
 from torchaudio import functional as F  # noqa: N812
 from typing_extensions import override
@@ -201,35 +201,20 @@ class IIR(AbstractFilter):
         self._state_y: Tensor | None = None
         self._stateful: bool = False
 
-    def _compute_sos(self) -> None:
-        """Convert transfer function coefficients to SOS matrix.
+    def _compute_ba_from_sos(self) -> None:
+        """Derive transfer function coefficients from the SOS matrix.
 
-        Uses ``scipy.signal.tf2sos`` to decompose higher-order transfer functions
-        into cascaded second-order sections for numerical stability.
+        Uses ``scipy.signal.sos2tf`` to reconstruct the (b, a) polynomial
+        representation needed by the stateless ``lfilter`` path.
 
         """
-        if self.a is None or self.b is None:
+        if self._sos is None:
             return
 
-        a_np = np.asarray(
-            self.a if not isinstance(self.a, Tensor) else self.a.cpu().numpy(), dtype=np.float64
-        )
-        b_np = np.asarray(
-            self.b if not isinstance(self.b, Tensor) else self.b.cpu().numpy(), dtype=np.float64
-        )
-
-        # For 2nd-order filters (3 coefficients), build SOS directly
-        if len(a_np) <= 3 and len(b_np) <= 3:
-            # Pad to length 3 if needed
-            b_pad = np.zeros(3, dtype=np.float64)
-            a_pad = np.zeros(3, dtype=np.float64)
-            b_pad[: len(b_np)] = b_np
-            a_pad[: len(a_np)] = a_np
-            sos = np.array([[b_pad[0], b_pad[1], b_pad[2], a_pad[0], a_pad[1], a_pad[2]]])
-        else:
-            sos = tf2sos(b_np, a_np)
-
-        self._sos = torch.from_numpy(sos)
+        sos_np = self._sos.numpy()
+        b, a = sos2tf(sos_np)
+        self.b = torch.from_numpy(b)
+        self.a = torch.from_numpy(a)
 
     def move_coeff(self, device: Device, dtype: dtype = torch.float32) -> None:
         """Move the filter coefficients to the specified device and dtype."""
@@ -244,9 +229,11 @@ class IIR(AbstractFilter):
         if self.fs is None:
             raise ValueError(NONE_FS_ERR)
 
-        if self.a is None or self.b is None:
+        if self._sos is None:
             self.compute_coefficients()
-            self._compute_sos()
+
+        if self.a is None or self.b is None:
+            self._compute_ba_from_sos()
 
         if not isinstance(self.a, Tensor) or not isinstance(self.b, Tensor):
             self.move_coeff(device, dtype)
@@ -260,8 +247,6 @@ class IIR(AbstractFilter):
         result = result.to(dtype=dtype)
 
         # Bootstrap state for next chunk
-        if self._sos is None:
-            self._compute_sos()
         self._bootstrap_state(x, result)
         self._stateful = True
 
@@ -516,9 +501,9 @@ class Butterworth(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = butter(self.order, self.cutoff / (0.5 * self.fs), btype=self.btype)  # type: ignore
-        self.b = b
-        self.a = a
+        self._sos = torch.from_numpy(
+            butter(self.order, self.cutoff / (0.5 * self.fs), btype=self.btype, output="sos")  # type: ignore
+        )
 
 
 class Chebyshev1(IIR):
@@ -652,14 +637,15 @@ class Chebyshev1(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = cheby1(
-            self.order,
-            self.ripple,
-            self.cutoff / (0.5 * self.fs),
-            btype=self.btype,  # type: ignore
+        self._sos = torch.from_numpy(
+            cheby1(
+                self.order,
+                self.ripple,
+                self.cutoff / (0.5 * self.fs),
+                btype=self.btype,  # type: ignore
+                output="sos",
+            )
         )
-        self.b = b
-        self.a = a
 
 
 class Chebyshev2(IIR):
@@ -777,19 +763,22 @@ class Chebyshev2(IIR):
         self.cutoff = cutoff
         self.order = order
         self.ripple = ripple
+        self.a = None
+        self.b = None
 
     @override
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = cheby2(
-            self.order,
-            self.ripple,
-            self.cutoff / (0.5 * self.fs),
-            btype=self.btype,  # type: ignore
+        self._sos = torch.from_numpy(
+            cheby2(
+                self.order,
+                self.ripple,
+                self.cutoff / (0.5 * self.fs),
+                btype=self.btype,  # type: ignore
+                output="sos",
+            )
         )
-        self.b = b
-        self.a = a
 
 
 class HiChebyshev1(Chebyshev1):
@@ -2105,12 +2094,13 @@ class LinkwitzRiley(IIR):
         # An Nth-order Linkwitz-Riley filter is made from two (N/2)th-order Butterworth filters.
         butter_order = self.order // 2
 
-        # Get the coefficients for the base Butterworth filter
-        b_butter, a_butter = butter(butter_order, self.cutoff / (0.5 * self.fs), btype=self.btype)  # type: ignore
+        # Get SOS for the base Butterworth filter
+        sos_butter = butter(
+            butter_order, self.cutoff / (0.5 * self.fs), btype=self.btype, output="sos"
+        )  # type: ignore
 
-        # Cascade the filters by convolving the coefficients with themselves
-        self.b = np.convolve(b_butter, b_butter)  # type: ignore
-        self.a = np.convolve(a_butter, a_butter)  # type: ignore
+        # Cascade two identical filters by stacking their SOS sections
+        self._sos = torch.from_numpy(np.vstack([sos_butter, sos_butter]))
 
 
 class HiLinkwitzRiley(LinkwitzRiley):
@@ -2377,15 +2367,16 @@ class Elliptic(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = ellip(
-            self.order,
-            self.passband_ripple,
-            self.stopband_attenuation,
-            self.cutoff / (0.5 * self.fs),
-            btype=self.btype,  # type: ignore
+        self._sos = torch.from_numpy(
+            ellip(
+                self.order,
+                self.passband_ripple,
+                self.stopband_attenuation,
+                self.cutoff / (0.5 * self.fs),
+                btype=self.btype,  # type: ignore
+                output="sos",
+            )
         )
-        self.b = b
-        self.a = a
 
 
 class HiElliptic(Elliptic):
