@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [0.5.1] - 2026-04-02
+
+### Fixed
+
+- Fixed a bug in `LinkwitzRiley` filter where the `order` parameter was not correctly stored as an instance variable, causing issues in coefficient computation and filter behavior. The `order` is now properly assigned to `self.order` in the constructor.
+
+### Changed
+
+- Update iir.py to use sos2tf conversion for computing the a and b coefficients from the SOS matrix, ensuring consistency between the SOS representation and the direct form coefficients used in the CPU fallback paths. This change also allows for better numerical stability and correctness in the filter implementation.
+
 ## [0.5.0] - 2026-03-27
 
 ### Added
