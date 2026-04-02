@@ -172,7 +172,6 @@ def test_iir_gpu(cuda_sync_benchmark, duration, channels):
 
     for f in fchain:
         f.compute_coefficients()
-        f.move_coeff("cuda")
 
     cuda_sync_benchmark.pedantic(
         lambda: fchain(wave.ys),

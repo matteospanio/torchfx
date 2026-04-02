@@ -11,11 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed a bug in `LinkwitzRiley` filter where the `order` parameter was not correctly stored as an instance variable, causing issues in coefficient computation and filter behavior. The `order` is now properly assigned to `self.order` in the constructor.
+- Fixed `LinkwitzRiley` filter where the `order` parameter was overwritten in the constructor, causing incorrect coefficient computation
+- Fixed `BadCoefficients` scipy warning on high-order IIR filters with low normalized cutoffs (e.g., 24th-order highpass at 50 Hz / 32 kHz) by computing SOS directly from scipy design functions instead of going through the numerically unstable `ba` intermediate
 
 ### Changed
 
-- Update iir.py to use sos2tf conversion for computing the a and b coefficients from the SOS matrix, ensuring consistency between the SOS representation and the direct form coefficients used in the CPU fallback paths. This change also allows for better numerical stability and correctness in the filter implementation.
+- IIR filters now use SOS (second-order sections) as the sole coefficient representation, computed directly via `scipy.signal.butter(..., output='sos')` and friends — the `ba` transfer function form is no longer used
+- `IIR.forward()` always uses the SOS cascade path; the old stateless `torchaudio.lfilter` path has been removed (SOS cascade is both more numerically stable and 1.5–4x faster for typical signal lengths)
+- `LinkwitzRiley` now cascades filters by stacking SOS sections (`np.vstack`) instead of convolving `ba` polynomials
+- Removed dead code from `IIR` base class: `_compute_ba_from_sos()`, `move_coeff()`, `_bootstrap_state()`, `_stateful` flag, and `a`/`b` attributes
+- Removed `a`/`b` constructor parameters from `Butterworth` and `Chebyshev1`
 
 ## [0.5.0] - 2026-03-27
 
