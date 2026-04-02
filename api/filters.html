@@ -433,17 +433,10 @@
 <p>This abstract class provides the foundation for all IIR filter implementations
 in torchfx. It implements lazy coefficient computation, automatic device
 management, and the core filtering operation.</p>
-<p>Two processing paths are provided:</p>
-<ul class="simple">
-<li><p><strong>Stateless (fast)</strong>: delegates to <code class="docutils literal notranslate"><span class="pre">torchaudio.functional.lfilter</span></code> for
-one-shot processing when no chunk-to-chunk state is needed.</p></li>
-<li><p><strong>Stateful (SOS cascade)</strong>: a pure-PyTorch second-order-sections (SOS) cascade
-using Direct Form 1 that carries state between calls. Activated after the
-first <code class="docutils literal notranslate"><span class="pre">forward()</span></code> call — subsequent calls reuse state. Call
-<code class="docutils literal notranslate"><span class="pre">reset_state()</span></code> to clear accumulated state.</p></li>
-</ul>
-<p>Higher-order IIR filters are internally decomposed into second-order sections
-(biquad cascade) for numerical stability.</p>
+<p>Filtering is performed via a second-order-sections (SOS) cascade using
+Direct Form 1 that carries state between calls. Call <code class="docutils literal notranslate"><span class="pre">reset_state()</span></code> to
+clear accumulated state. Higher-order IIR filters are internally decomposed
+into second-order sections (biquad cascade) for numerical stability.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>)</p>
@@ -473,37 +466,12 @@ the -3dB point, center frequency, or transition frequency.</p>
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchfx.filter.IIR.a">
-<span class="sig-name descname"><span class="pre">a</span></span><a class="headerlink" href="#torchfx.filter.IIR.a" title="Link to this definition">#</a></dt>
-<dd><p>Denominator (feedback) coefficients of the filter transfer function.
-None until computed via <cite>compute_coefficients()</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Sequence[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a>] | Tensor | None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchfx.filter.IIR.b">
-<span class="sig-name descname"><span class="pre">b</span></span><a class="headerlink" href="#torchfx.filter.IIR.b" title="Link to this definition">#</a></dt>
-<dd><p>Numerator (feedforward) coefficients of the filter transfer function.
-None until computed via <cite>compute_coefficients()</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Sequence[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a>] | Tensor | None</p>
-</dd>
-</dl>
-</dd></dl>
-
 <p class="rubric">Notes</p>
 <dl class="simple">
 <dt>Coefficient Computation Flow:</dt><dd><ol class="arabic simple">
 <li><p>Filter is instantiated with parameters (fs may be None)</p></li>
-<li><p>On first forward pass, if coefficients are None, compute_coefficients() is called</p></li>
-<li><p>Coefficients are converted to SOS matrix for stateful processing</p></li>
-<li><p>Filtering is performed using lfilter (stateless) or SOS cascade (stateful)</p></li>
+<li><p>On first forward pass, if SOS is None, compute_coefficients() is called</p></li>
+<li><p>Filtering is performed via SOS cascade</p></li>
 </ol>
 </dd>
 </dl>
@@ -541,29 +509,11 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="torchfx.filter.IIR.move_coeff">
-<span class="sig-name descname"><span class="pre">move_coeff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#IIR.move_coeff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.IIR.move_coeff" title="Link to this definition">#</a></dt>
-<dd><p>Move the filter coefficients to the specified device and dtype.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>device</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><em>Literal</em></a><em>[</em><em>'cpu'</em><em>, </em><em>'cuda'</em><em>] </em><em>| </em><em>~torch.device</em>)</p></li>
-<li><p><strong>dtype</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.dtype" title="(in PyTorch v2.11)"><em>dtype</em></a>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="torchfx.filter.IIR.reset_state">
 <span class="sig-name descname"><span class="pre">reset_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#IIR.reset_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.IIR.reset_state" title="Link to this definition">#</a></dt>
 <dd><p>Reset filter state for chunk-to-chunk continuity.</p>
 <p>Call this when switching audio sources, seeking in a file, or after changing
-filter coefficients. After calling this method, the next <code class="docutils literal notranslate"><span class="pre">forward()</span></code> will
-use the fast <code class="docutils literal notranslate"><span class="pre">lfilter</span></code> path again.</p>
+filter coefficients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -1486,7 +1436,7 @@ see wiki/4.2 FIR Filters.md.</p>
 <h4>Butterworth<a class="headerlink" href="#butterworth" title="Link to this heading">#</a></h4>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.filter.Butterworth">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">Butterworth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">btype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#Butterworth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.Butterworth" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">Butterworth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">btype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#Butterworth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.Butterworth" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#torchfx.filter.IIR" title="torchfx.filter.iir.IIR"><code class="xref py py-class docutils literal notranslate"><span class="pre">IIR</span></code></a></p>
 <p>Butterworth filter with maximally flat passband response.</p>
 <p>Butterworth filters provide the smoothest possible passband response with no
@@ -1513,10 +1463,6 @@ Typical values: 2-8 for audio applications.</p></li>
 - “db”: Divide order by 6 (useful for octave-based specifications)</p></li>
 <li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>default=None</em>) – Sampling frequency in Hz. If None, will be set automatically from the
 input signal.</p></li>
-<li><p><strong>a</strong> (<em>Sequence</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>default=None</em>) – Pre-computed denominator coefficients. If provided, coefficient computation
-is skipped.</p></li>
-<li><p><strong>b</strong> (<em>Sequence</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>default=None</em>) – Pre-computed numerator coefficients. If provided, coefficient computation
-is skipped.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1801,7 +1747,7 @@ in the passband with smooth rolloff.</p>
 <h4>Chebyshev Type I<a class="headerlink" href="#chebyshev-type-i" title="Link to this heading">#</a></h4>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.filter.Chebyshev1">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">Chebyshev1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">btype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ripple</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#Chebyshev1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.Chebyshev1" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">Chebyshev1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">btype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ripple</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#Chebyshev1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.Chebyshev1" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#torchfx.filter.IIR" title="torchfx.filter.iir.IIR"><code class="xref py py-class docutils literal notranslate"><span class="pre">IIR</span></code></a></p>
 <p>Chebyshev Type I filter with equalized passband ripple.</p>
 <p>Chebyshev Type I filters trade passband ripple for steeper rolloff compared to
@@ -1830,8 +1776,6 @@ ripples) and the rolloff steepness. Higher orders provide steeper rolloff.</p></
 - 1.0 dB: Aggressive rolloff, significant passband distortion</p></li>
 <li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>default=None</em>) – Sampling frequency in Hz. If None, will be set automatically from the
 input signal.</p></li>
-<li><p><strong>a</strong> (<em>Sequence</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>default=None</em>) – Pre-computed denominator coefficients.</p></li>
-<li><p><strong>b</strong> (<em>Sequence</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>default=None</em>) – Pre-computed numerator coefficients.</p></li>
 </ul>
 </dd>
 </dl>
@@ -2976,9 +2920,8 @@ Noncoincident Drivers.” Journal of the Audio Engineering Society, 24(1), 2-8.<
 <dt class="sig sig-object py" id="torchfx.filter.LinkwitzRiley.compute_coefficients">
 <span class="sig-name descname"><span class="pre">compute_coefficients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#LinkwitzRiley.compute_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.LinkwitzRiley.compute_coefficients" title="Link to this definition">#</a></dt>
 <dd><p>Compute the filter coefficients.</p>
-<p>The method calculates the coefficients for a Butterworth filter of half the
-specified order and then cascades it with itself by convolving the numerator and
-denominator coefficients.</p>
+<p>The method calculates the SOS for a Butterworth filter of half the specified
+order and then cascades it with itself by stacking the SOS sections.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -4059,10 +4002,7 @@ judiciously in critical listening applications.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.IIR"><code class="docutils literal notranslate"><span class="pre">IIR</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.IIR.fs"><code class="docutils literal notranslate"><span class="pre">IIR.fs</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.IIR.cutoff"><code class="docutils literal notranslate"><span class="pre">IIR.cutoff</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.IIR.a"><code class="docutils literal notranslate"><span class="pre">IIR.a</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.IIR.b"><code class="docutils literal notranslate"><span class="pre">IIR.b</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.IIR.forward"><code class="docutils literal notranslate"><span class="pre">IIR.forward()</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.IIR.move_coeff"><code class="docutils literal notranslate"><span class="pre">IIR.move_coeff()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.IIR.reset_state"><code class="docutils literal notranslate"><span class="pre">IIR.reset_state()</span></code></a></li>
 </ul>
 </li>

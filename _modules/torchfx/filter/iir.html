@@ -901,18 +901,16 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span><span class="p">,</span> <span class="n">cheby1</span><span class="p">,</span> <span class="n">cheby2</span><span class="p">,</span> <span class="n">ellip</span><span class="p">,</span> <span class="n">tf2sos</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dtype</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchaudio</span><span class="w"> </span><span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>  <span class="c1"># noqa: N812</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span><span class="p">,</span> <span class="n">cheby1</span><span class="p">,</span> <span class="n">cheby2</span><span class="p">,</span> <span class="n">ellip</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.__base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractFilter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.biquad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Biquad</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Device</span><span class="p">,</span> <span class="n">FilterOrderScale</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">FilterOrderScale</span>
 
 <span class="n">NONE_FS_ERR</span> <span class="o">=</span> <span class="s2">&quot;Sample rate of the filter could not be None.&quot;</span>
 
@@ -978,17 +976,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    in torchfx. It implements lazy coefficient computation, automatic device</span>
 <span class="sd">    management, and the core filtering operation.</span>
 
-<span class="sd">    Two processing paths are provided:</span>
-
-<span class="sd">    * **Stateless (fast)**: delegates to ``torchaudio.functional.lfilter`` for</span>
-<span class="sd">      one-shot processing when no chunk-to-chunk state is needed.</span>
-<span class="sd">    * **Stateful (SOS cascade)**: a pure-PyTorch second-order-sections (SOS) cascade</span>
-<span class="sd">      using Direct Form 1 that carries state between calls. Activated after the</span>
-<span class="sd">      first ``forward()`` call — subsequent calls reuse state. Call</span>
-<span class="sd">      ``reset_state()`` to clear accumulated state.</span>
-
-<span class="sd">    Higher-order IIR filters are internally decomposed into second-order sections</span>
-<span class="sd">    (biquad cascade) for numerical stability.</span>
+<span class="sd">    Filtering is performed via a second-order-sections (SOS) cascade using</span>
+<span class="sd">    Direct Form 1 that carries state between calls. Call ``reset_state()`` to</span>
+<span class="sd">    clear accumulated state. Higher-order IIR filters are internally decomposed</span>
+<span class="sd">    into second-order sections (biquad cascade) for numerical stability.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -998,20 +989,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    cutoff : float</span>
 <span class="sd">        The cutoff frequency in Hz. For different filter types, this may represent</span>
 <span class="sd">        the -3dB point, center frequency, or transition frequency.</span>
-<span class="sd">    a : Sequence[float] | Tensor | None</span>
-<span class="sd">        Denominator (feedback) coefficients of the filter transfer function.</span>
-<span class="sd">        None until computed via `compute_coefficients()`.</span>
-<span class="sd">    b : Sequence[float] | Tensor | None</span>
-<span class="sd">        Numerator (feedforward) coefficients of the filter transfer function.</span>
-<span class="sd">        None until computed via `compute_coefficients()`.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
 <span class="sd">    Coefficient Computation Flow:</span>
 <span class="sd">        1. Filter is instantiated with parameters (fs may be None)</span>
-<span class="sd">        2. On first forward pass, if coefficients are None, compute_coefficients() is called</span>
-<span class="sd">        3. Coefficients are converted to SOS matrix for stateful processing</span>
-<span class="sd">        4. Filtering is performed using lfilter (stateless) or SOS cascade (stateful)</span>
+<span class="sd">        2. On first forward pass, if SOS is None, compute_coefficients() is called</span>
+<span class="sd">        3. Filtering is performed via SOS cascade</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -1023,8 +1007,6 @@ window.runMermaid = runMermaid;</script>
 
     <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span>
-    <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span>
 
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1035,102 +1017,20 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># Per-section, per-channel DF1 state: [num_sections, C, 2] for x and y</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stateful</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_sos</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert transfer function coefficients to SOS matrix.</span>
-
-<span class="sd">        Uses ``scipy.signal.tf2sos`` to decompose higher-order transfer functions</span>
-<span class="sd">        into cascaded second-order sections for numerical stability.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="n">a_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
-        <span class="p">)</span>
-        <span class="n">b_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
-        <span class="p">)</span>
-
-        <span class="c1"># For 2nd-order filters (3 coefficients), build SOS directly</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a_np</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">b_np</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="c1"># Pad to length 3 if needed</span>
-            <span class="n">b_pad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-            <span class="n">a_pad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-            <span class="n">b_pad</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">b_np</span><span class="p">)]</span> <span class="o">=</span> <span class="n">b_np</span>
-            <span class="n">a_pad</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">a_np</span><span class="p">)]</span> <span class="o">=</span> <span class="n">a_np</span>
-            <span class="n">sos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">b_pad</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b_pad</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">b_pad</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">a_pad</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">a_pad</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">a_pad</span><span class="p">[</span><span class="mi">2</span><span class="p">]]])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">sos</span> <span class="o">=</span> <span class="n">tf2sos</span><span class="p">(</span><span class="n">b_np</span><span class="p">,</span> <span class="n">a_np</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">sos</span><span class="p">)</span>
-
-<div class="viewcode-block" id="IIR.move_coeff">
-<a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.IIR.move_coeff">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">move_coeff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Move the filter coefficients to the specified device and dtype.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span></div>
-
 
 <div class="viewcode-block" id="IIR.forward">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.IIR.forward">[docs]</a>
     <span class="nd">@override</span>
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="n">dtype</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
-        <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">NONE_FS_ERR</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_sos</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_sos</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 
-        <span class="c1"># Stateful path: use SOS cascade in pure PyTorch</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stateful</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_sos</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-
-        <span class="c1"># Fast stateless path via torchaudio lfilter</span>
-        <span class="n">result</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">clamp</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-
-        <span class="c1"># Bootstrap state for next chunk</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_sos</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_bootstrap_state</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stateful</span> <span class="o">=</span> <span class="kc">True</span>
-
-        <span class="k">return</span> <span class="n">result</span></div>
-
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_bootstrap_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize SOS DF1 state from the tail of processed signals.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>
-        <span class="n">num_sections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-        <span class="c1"># Get channel count</span>
-        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">C</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">C</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">C</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># [B, C, T]</span>
-
-        <span class="c1"># We can&#39;t perfectly reconstruct intermediate SOS section states from</span>
-        <span class="c1"># only input/output. Initialize to zeros — this introduces a tiny</span>
-        <span class="c1"># transient on the first stateful chunk boundary, which is inaudible</span>
-        <span class="c1"># for typical chunk sizes (&gt;256 samples).</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_sections</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_sections</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_forward_sos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Process with SOS biquad cascade carrying state across calls.</span>
@@ -1225,13 +1125,11 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset filter state for chunk-to-chunk continuity.</span>
 
 <span class="sd">        Call this when switching audio sources, seeking in a file, or after changing</span>
-<span class="sd">        filter coefficients. After calling this method, the next ``forward()`` will</span>
-<span class="sd">        use the fast ``lfilter`` path again.</span>
+<span class="sd">        filter coefficients.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stateful</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="kc">None</span></div>
 </div>
 
@@ -1272,12 +1170,6 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    fs : int | None, default=None</span>
 <span class="sd">        Sampling frequency in Hz. If None, will be set automatically from the</span>
 <span class="sd">        input signal.</span>
-<span class="sd">    a : Sequence[float] | None, default=None</span>
-<span class="sd">        Pre-computed denominator coefficients. If provided, coefficient computation</span>
-<span class="sd">        is skipped.</span>
-<span class="sd">    b : Sequence[float] | None, default=None</span>
-<span class="sd">        Pre-computed numerator coefficients. If provided, coefficient computation</span>
-<span class="sd">        is skipped.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1350,15 +1242,11 @@ window.runMermaid = runMermaid;</script>
         <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">order_scale</span><span class="p">:</span> <span class="n">FilterOrderScale</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">btype</span> <span class="o">=</span> <span class="n">btype</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span> <span class="k">if</span> <span class="n">order_scale</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span> <span class="k">else</span> <span class="n">order</span> <span class="o">//</span> <span class="mi">6</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
 
 <div class="viewcode-block" id="Butterworth.compute_coefficients">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.Butterworth.compute_coefficients">[docs]</a>
@@ -1366,9 +1254,9 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
-        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span> <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+            <span class="n">butter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span> <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">&quot;sos&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="p">)</span></div>
 </div>
 
 
@@ -1410,10 +1298,6 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    fs : int | None, default=None</span>
 <span class="sd">        Sampling frequency in Hz. If None, will be set automatically from the</span>
 <span class="sd">        input signal.</span>
-<span class="sd">    a : Sequence[float] | None, default=None</span>
-<span class="sd">        Pre-computed denominator coefficients.</span>
-<span class="sd">    b : Sequence[float] | None, default=None</span>
-<span class="sd">        Pre-computed numerator coefficients.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1491,16 +1375,12 @@ window.runMermaid = runMermaid;</script>
         <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">ripple</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
         <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">a</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">b</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">btype</span> <span class="o">=</span> <span class="n">btype</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ripple</span> <span class="o">=</span> <span class="n">ripple</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
 
 <div class="viewcode-block" id="Chebyshev1.compute_coefficients">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.Chebyshev1.compute_coefficients">[docs]</a>
@@ -1508,14 +1388,15 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
-        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">cheby1</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ripple</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
-            <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+            <span class="n">cheby1</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ripple</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+                <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">output</span><span class="o">=</span><span class="s2">&quot;sos&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
 </div>
 
 
@@ -1644,14 +1525,15 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
-        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">cheby2</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ripple</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
-            <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+            <span class="n">cheby2</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ripple</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+                <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">output</span><span class="o">=</span><span class="s2">&quot;sos&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
 </div>
 
 
@@ -3001,9 +2883,6 @@ window.runMermaid = runMermaid;</script>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Linkwitz-Riley filter order must be a positive even integer.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">btype</span> <span class="o">=</span> <span class="n">btype</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="LinkwitzRiley.compute_coefficients">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.LinkwitzRiley.compute_coefficients">[docs]</a>
@@ -3011,9 +2890,8 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the filter coefficients.</span>
 
-<span class="sd">        The method calculates the coefficients for a Butterworth filter of half the</span>
-<span class="sd">        specified order and then cascades it with itself by convolving the numerator and</span>
-<span class="sd">        denominator coefficients.</span>
+<span class="sd">        The method calculates the SOS for a Butterworth filter of half the specified</span>
+<span class="sd">        order and then cascades it with itself by stacking the SOS sections.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -3021,12 +2899,13 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># An Nth-order Linkwitz-Riley filter is made from two (N/2)th-order Butterworth filters.</span>
         <span class="n">butter_order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">//</span> <span class="mi">2</span>
 
-        <span class="c1"># Get the coefficients for the base Butterworth filter</span>
-        <span class="n">b_butter</span><span class="p">,</span> <span class="n">a_butter</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="n">butter_order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span> <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="c1"># Get SOS for the base Butterworth filter</span>
+        <span class="n">sos_butter</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span>
+            <span class="n">butter_order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span> <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">&quot;sos&quot;</span>
+        <span class="p">)</span>  <span class="c1"># type: ignore</span>
 
-        <span class="c1"># Cascade the filters by convolving the coefficients with themselves</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">b_butter</span><span class="p">,</span> <span class="n">b_butter</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">a_butter</span><span class="p">,</span> <span class="n">a_butter</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
+        <span class="c1"># Cascade two identical filters by stacking their SOS sections</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">sos_butter</span><span class="p">,</span> <span class="n">sos_butter</span><span class="p">]))</span></div>
 </div>
 
 
@@ -3296,8 +3175,6 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">passband_ripple</span> <span class="o">=</span> <span class="n">passband_ripple</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stopband_attenuation</span> <span class="o">=</span> <span class="n">stopband_attenuation</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Elliptic.compute_coefficients">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.Elliptic.compute_coefficients">[docs]</a>
@@ -3305,15 +3182,16 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
-        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">ellip</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">passband_ripple</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stopband_attenuation</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
-            <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+            <span class="n">ellip</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">passband_ripple</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stopband_attenuation</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+                <span class="n">btype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btype</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">output</span><span class="o">=</span><span class="s2">&quot;sos&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
 </div>
 
 
