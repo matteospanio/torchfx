@@ -2076,7 +2076,6 @@ class LinkwitzRiley(IIR):
             raise ValueError("Linkwitz-Riley filter order must be a positive even integer.")
         self.btype = btype
         self.cutoff = cutoff
-        self.order = order
         self.a = None
         self.b = None
 
