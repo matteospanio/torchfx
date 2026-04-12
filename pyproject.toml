@@ -108,6 +108,17 @@ exclude = '''
 source = ["src/torchfx"]
 branch = true
 
+[tool.coverage.report]
+# Phase 1 gate: current local CPU-only coverage (with sounddevice omitted)
+# is 88%. Ratchet this up as further phases land; never drop below without
+# review.
+fail_under = 87
+# Skip files that are unreachable on a CPU-only workstation. Cluster runs
+# exercise these via the sounddevice backend and CUDA kernels.
+omit = [
+    "src/torchfx/realtime/sounddevice_backend.py",
+]
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "--strict-markers --tb=short --benchmark-disable"

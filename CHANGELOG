@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [Unreleased]
+
+### Added
+
+- **Performance baseline** (`docs/source/perf/baseline.md`): Phase 0 of the
+  optimization campaign — captures pre-optimization coverage, CPU benchmark
+  numbers, and CPU `torch.profiler` findings so every follow-up PR has a
+  concrete before/after to diff against.
+- **SLURM harness for CUDA runs** (`benchmarks/slurm/`): `run_profiles.sbatch`
+  + README covering the `sbatch → rsync → pytest-benchmark compare` cycle for
+  CUDA benchmarks and profiles measured on the cluster.
+- **Profile scenarios** (`benchmarks/profiles/scenarios.py`) plus `run_cpu_profile.py`
+  and `run_cuda_profile.py` so the same scenarios run on local CPU and on
+  cluster GPUs.
+- **Coverage gate**: `[tool.coverage.report] fail_under = 87` plus an HTML
+  coverage CI job on Python 3.12. Local CPU coverage (with the sounddevice
+  backend omitted) is now **88%** — up from the Phase 0 baseline of 74%.
+- New test files closing Phase 0 coverage gaps:
+  `tests/test_fused.py`, `tests/test_filter_base.py`,
+  `tests/test_filter_utils.py`, `tests/test_ops_dispatch.py`,
+  `tests/test_filterbank.py`, `tests/test_iir_gaps.py`. Per-module jumps:
+  `filter/fused.py` 9% → 75%, `filter/utils.py` 0% → 91%,
+  `filter/__base.py` 44% → 89%, `filter/filterbank.py` 73% → 100%,
+  `filter/iir.py` 71% → 86%, `_ops.py` 64% → 84%.
+
+### Known issues (Phase 2 follow-up)
+
+These are locked in as `pytest.mark.xfail(strict=True)` tests pointing at the
+offending line numbers so they flip to passing the moment the fix lands:
+
+- `AbstractFilter._has_computed_coeff` returns `True` for an IIR subclass whose
+  `_sos is None` and which has no `b`/`a` attributes — silently claiming
+  coefficients are ready before `compute_coefficients()` has run.
+- `ParallelFilterCombination.__init__` assigns `self.fs = fs` before
+  `self.filters = filters`, so passing `fs` at construction crashes with
+  `AttributeError: 'ParallelFilterCombination' object has no attribute 'filters'`.
+- `FX` / `AbstractFilter` has no `__or__` despite the docstring claim that it
+  is "inherited from FX"; only `Wave.__or__` is defined. Series-chaining
+  filters requires `nn.Sequential` in the meantime.
+
+## [0.5.1] - 2026-04-02
+
+### Fixed
+
+- Fixed `LinkwitzRiley` filter where the `order` parameter was overwritten in the constructor, causing incorrect coefficient computation
+- Fixed `BadCoefficients` scipy warning on high-order IIR filters with low normalized cutoffs (e.g., 24th-order highpass at 50 Hz / 32 kHz) by computing SOS directly from scipy design functions instead of going through the numerically unstable `ba` intermediate
+
+### Changed
+
+- IIR filters now use SOS (second-order sections) as the sole coefficient representation, computed directly via `scipy.signal.butter(..., output='sos')` and friends — the `ba` transfer function form is no longer used
+- `IIR.forward()` always uses the SOS cascade path; the old stateless `torchaudio.lfilter` path has been removed (SOS cascade is both more numerically stable and 1.5–4x faster for typical signal lengths)
+- `LinkwitzRiley` now cascades filters by stacking SOS sections (`np.vstack`) instead of convolving `ba` polynomials
+- Removed dead code from `IIR` base class: `_compute_ba_from_sos()`, `move_coeff()`, `_bootstrap_state()`, `_stateful` flag, and `a`/`b` attributes
+- Removed `a`/`b` constructor parameters from `Butterworth` and `Chebyshev1`
+
 ## [0.5.0] - 2026-03-27
 
 ### Added

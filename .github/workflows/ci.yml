@@ -163,3 +163,54 @@ jobs:
 
       - name: Run tests with pytest
         run: uv run pytest
+
+  coverage:
+    name: Coverage (Python 3.12)
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install system audio deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libportaudio2 portaudio19-dev ffmpeg
+
+      - name: Restore dependency cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .venv
+            ~/.cache/uv
+          key: uv-3.12-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run tests under coverage
+        run: uv run coverage run -m pytest
+
+      - name: Report coverage (enforces fail_under)
+        run: uv run coverage report -m
+
+      - name: Generate HTML report
+        if: always()
+        run: uv run coverage html -d htmlcov
+
+      - name: Upload HTML coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: htmlcov
+          retention-days: 14
