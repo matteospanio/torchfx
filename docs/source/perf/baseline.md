@@ -172,22 +172,139 @@ scaled to multi-channel / multi-filter chains.
 `(B=32, C=2, T=480000)` through a 6-filter chain: **521 ms/call**. Will be
 the main Phase 3 showcase once CUDA numbers come back from the cluster.
 
-## Outstanding — produced by the cluster
+---
 
-The following will be filled in from a SLURM run:
+## CUDA baseline — 2026-04-12
 
-- [ ] CUDA equivalents of every benchmark in this table
-- [ ] GPU cold-start time for `_load_extension()` (JIT compile baseline —
-      informs the deferred AOT decision)
-- [ ] Chrome trace for `offline_batch_chain` on CUDA
-- [ ] Memory snapshot from `torch.cuda.memory._snapshot()` on the same scenario
+Cluster hardware: Quadro RTX 6000 (24 GB), CUDA 12.8,
+PyTorch 2.10.0+cu128, node025.
 
-Submit with:
+Artifacts at `benchmarks/results/cuda-baseline-20260412/` (benchmarks) and
+`benchmarks/results/cuda-profile-baseline-20260412/` (profiler traces +
+memory snapshot).
 
-```bash
-sbatch benchmarks/run_benchmarks.slurm
-# then pull benchmarks/results/<jobid>/ back to the repo
-```
+### Cold import + JIT compile
+
+| Phase | Time |
+|---|---|
+| `import torchfx` | **10.40 s** |
+| `_load_extension()` (JIT compile) | **5.33 s** |
+
+The 5.3 s JIT compile is the headline baseline for the deferred AOT migration.
+In a batch pipeline that processes thousands of files this is amortized away;
+in a real-time context it's a painful one-time stall.
+
+### CUDA IIR benchmark — headline numbers
+
+Format: `[duration_s-channels]`, mean across 5+ rounds. SOS cascade, all on
+Quadro RTX 6000 (GPU column) or on the same node's CPU.
+
+| Scenario | GPU (parallel scan) | CPU (C++ kernel) | scipy | Numba CUDA |
+|---|---:|---:|---:|---:|
+| 1 s, 1 ch | 1.13 ms | 1.41 ms | 1.15 ms | 23.8 ms |
+| 5 s, 2 ch | 2.39 ms | 6.13 ms | 10.9 ms | 133 ms |
+| 30 s, 4 ch | 21.3 ms | 50.0 ms | 160 ms | 809 ms |
+| 30 s, 8 ch | 38.2 ms | 83.5 ms | 320 ms | 821 ms |
+| 60 s, 8 ch | **75.8 ms** | 168 ms | 859 ms | 1653 ms |
+
+**Key takeaways:**
+
+- GPU parallel-scan is **2.2× faster than the C++ CPU** kernel at 60 s × 8 ch,
+  **11× faster than scipy**, and **22× faster than Numba CUDA**.
+- The C++ CPU kernel is **4–5× faster than scipy** at high channel counts
+  (30+ s, 8 ch), validating the investment in native kernels.
+- Numba CUDA is 20–40× slower than the custom CUDA kernel —
+  the handwritten parallel-scan approach is justified.
+- At short signals (1 s, 1 ch), GPU overhead makes it roughly even with CPU.
+  The crossover point is ≈ 5 s × 2 ch.
+
+### CUDA biquad benchmark
+
+| Signal | CPU | GPU | GPU/CPU |
+|---|---:|---:|---:|
+| 0.1 s, 1 ch | 0.11 ms | 0.27 ms | 0.43× (GPU slower) |
+| 1.0 s, 1 ch | 0.44 ms | 0.27 ms | 1.6× |
+| 5.0 s, 2 ch | 1.58 ms | 0.61 ms | 2.6× |
+| 30 s, 2 ch | 9.30 ms | 3.16 ms | **2.9×** |
+
+Biquad GPU wins above ~1 s signal length.
+
+### Pipeline CUDA benchmark — `move_coeff` crash
+
+The pipeline CUDA benchmarks **failed** because `LoButterworth.move_coeff("cuda")`
+was removed in v0.5.1 (see CHANGELOG). The benchmark script must be updated to
+use `.to(device)` instead. Added to Phase 2 bug list.
+
+### CUDA profile — offline filter chain (10 min stereo @ 48 kHz)
+
+Self CUDA total = **1.345 s** (3 iterations). The top entries are our custom
+parallel-scan kernels — exactly what we want to see dominating:
+
+| Op | Self CUDA % | Calls | Interpretation |
+|---|---:|---:|---|
+| `prefix_scan_phase3` | **33.7%** | 21 | Our write-back kernel — correct |
+| `prefix_scan_phase2` | **31.1%** | 21 | Sweep kernel — correct |
+| `prefix_scan_phase1` | **30.6%** | 21 | Build kernel — correct |
+| `forcing_kernel` | 3.0% | 21 | Input preparation — acceptable |
+| `aten::copy_` (dtype) | **1.4%** | 12 | **3.87 GB** CUDA alloc → Phase 3.1 |
+| `aten::mul` (Gain) | 0.2% | 3 | Negligible |
+
+**Phase 3.1 target (CUDA):** `aten::copy_` at 1.4% Self CUDA is already lower
+than the CPU profile's 19.9%, but it still copies **3.87 GB** per iteration.
+Eliminating the dtype churn will drop this to zero.
+
+### CUDA profile — offline batch chain (B=32, C=2, T=480k)
+
+Self CUDA total = **668.6 ms** (3 iterations).
+
+| Op | Self CUDA % | Interpretation |
+|---|---:|---|
+| `prefix_scan_phase3` | 46.4% | Dominates — expected |
+| `prefix_scan_phase1` | 42.1% | |
+| `forcing_kernel` | 4.1% | |
+| `aten::copy_` (dtype) | **3.7%** | **5.15 GB** CUDA alloc |
+| `prefix_scan_phase2` | 3.4% | Lower % because batch shape is wider |
+
+**Additional CPU-side finding:** `aten::item` calls: 135 per iteration,
+consuming **21.1% of Self CPU time**. This is Python-side scalar extraction
+from GPU — the SOS coefficient indexing (`sos[s, 4]`, etc.) goes through
+`aten::_local_scalar_dense` which forces a GPU→CPU sync per scalar. This is
+a new Phase 3 optimization target: batch-extract SOS coefficients once per
+forward, not per-section.
+
+### CUDA profile — realtime GPU (512-sample chunks)
+
+Self CUDA total per 3-iteration block = **246 µs**.
+
+| Op | Self CUDA % | Interpretation |
+|---|---:|---|
+| `sequential_biquad_kernel` | 44.6% | Short signals use sequential kernel — correct |
+| elementwise kernels (dtype) | ~27% | Coefficient cast churn |
+| `aten::add_` / `aten::mul` (Delay comb) | ~14% | |
+| `aten::zeros` + `fill_` (Delay tail) | ~5.5% | Same pathological Delay behavior |
+| `delay_line_kernel` | 2.0% | Minimal — the native kernel itself is fast |
+
+Per-chunk CUDA time ≈ **82 µs**. At 48 kHz / 512 samples, the chunk period is
+10.67 ms → **~130× headroom** on GPU. The realtime GPU path is in excellent
+shape; the biggest wins are behavioral (Delay streaming mode) not kernel-level.
+
+### Memory snapshot
+
+The `torch.cuda.memory._snapshot()` pickle is at
+`benchmarks/results/cuda-profile-baseline-20260412/memory_snapshot.pkl`.
+Visualize with `python -m torch.cuda.memory_viz memory_snapshot.pkl`.
+
+---
+
+## Summary of Phase 3 optimization targets (data-driven)
+
+| Target | Evidence | Expected win |
+|---|---|---|
+| **3.1 Eliminate dtype churn** | CPU: 19.9% Self CPU, 3.86 GB/iter. CUDA: 1.4–3.7% Self CUDA, 3.87–5.15 GB/iter | Largest single win on CPU; moderate on GPU |
+| **3.2 Batch SOS coefficient extraction** | Batch CUDA: `aten::item` = 21.1% Self CPU, 135 calls/iter | Major CPU-side win on GPU path |
+| **3.3 Delay streaming mode** | CPU: 42% Self CPU (zeros). GPU: ~5.5% CUDA (zeros+fill) | Critical for realtime correctness |
+| **3.4 State update allocation** | `aten::clone` / `torch.stack` per section per chunk | Moderate win at high section counts |
+| **3.5 Pipeline benchmark fix** | `move_coeff` removed in v0.5.1 | Prerequisite for CUDA pipeline tracking |
 
 The master plan is at [`plans/starry-juggling-matsumoto.md`](../../../../.claude/plans/starry-juggling-matsumoto.md)
 (not in the repo tree — local to the planning workflow).

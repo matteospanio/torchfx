@@ -428,7 +428,7 @@ class AbstractFilter(FX, abc.ABC):
             return True
         if hasattr(self, "b") and hasattr(self, "a"):
             return self.b is not None and self.a is not None
-        return True
+        return False
 
     @abc.abstractmethod
     def __init__(self, *args, **kwargs) -> None:  # type: ignore
@@ -1007,12 +1007,8 @@ class ParallelFilterCombination(AbstractFilter):
 
     def __init__(self, *filters: AbstractFilter, fs: int | None = None) -> None:
         super().__init__()
-        self.fs = fs
         self.filters = filters
-        if fs is not None:
-            for f in self.filters:
-                if hasattr(f, "fs") and f.fs is None:
-                    f.fs = fs
+        self.fs = fs
 
     @property
     def fs(self) -> int | None:

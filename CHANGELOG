@@ -32,17 +32,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `filter/__base.py` 44% → 89%, `filter/filterbank.py` 73% → 100%,
   `filter/iir.py` 71% → 86%, `_ops.py` 64% → 84%.
 
-### Known issues (Phase 2 follow-up)
+### Fixed
 
-These are locked in as `pytest.mark.xfail(strict=True)` tests pointing at the
-offending line numbers so they flip to passing the moment the fix lands:
+- `AbstractFilter._has_computed_coeff` returned `True` for IIR subclasses whose
+  `_sos is None` and which have no `b`/`a` attributes — silently claiming
+  coefficients were ready before `compute_coefficients()` had run. The fallthrough
+  now correctly returns `False`.
+- `ParallelFilterCombination.__init__` assigned `self.fs = fs` before
+  `self.filters = filters`, crashing with `AttributeError` when `fs` was passed
+  at construction. Swapped assignment order so the `fs` setter can safely
+  iterate child filters.
+- `iir_cpu.cpp` `sos_forward_cpu` used a hardcoded `double sec_sx0[16]` stack
+  array for per-section state, silently overflowing for filters with >16 SOS
+  sections (order >32). Now uses stack arrays for K≤16 and falls back to
+  heap-allocated `std::vector<double>` for higher orders.
+- Benchmark scripts (`test_pipeline_bench.py`, `test_biquad_bench.py`,
+  `scenarios.py`) called the removed `move_coeff()` method on IIR filters.
+  Replaced with standard `nn.Module.to(device)`.
 
-- `AbstractFilter._has_computed_coeff` returns `True` for an IIR subclass whose
-  `_sos is None` and which has no `b`/`a` attributes — silently claiming
-  coefficients are ready before `compute_coefficients()` has run.
-- `ParallelFilterCombination.__init__` assigns `self.fs = fs` before
-  `self.filters = filters`, so passing `fs` at construction crashes with
-  `AttributeError: 'ParallelFilterCombination' object has no attribute 'filters'`.
+### Known issues
+
 - `FX` / `AbstractFilter` has no `__or__` despite the docstring claim that it
   is "inherited from FX"; only `Wave.__or__` is defined. Series-chaining
   filters requires `nn.Sequential` in the meantime.

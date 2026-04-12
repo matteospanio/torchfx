@@ -27,15 +27,6 @@ RTOL = 1e-5
 
 
 class TestHasComputedCoeff:
-    @pytest.mark.xfail(
-        reason=(
-            "Phase 2 bug: AbstractFilter._has_computed_coeff falls through to "
-            "`return True` when the IIR subclass has `_sos = None` and no `b`/`a` "
-            "attributes, silently claiming coefficients are ready before they are "
-            "computed. Fix lives in src/torchfx/filter/__base.py:425-431."
-        ),
-        strict=True,
-    )
     def test_false_before_compute_iir(self):
         f = LoButterworth(cutoff=1000, order=4, fs=SAMPLE_RATE)
         assert f._sos is None
@@ -46,10 +37,6 @@ class TestHasComputedCoeff:
         f.compute_coefficients()
         assert f._has_computed_coeff is True
 
-    @pytest.mark.xfail(
-        reason="Phase 2 bug: blocked by the _has_computed_coeff fallthrough above.",
-        strict=True,
-    )
     def test_parallel_propagates_child_status(self):
         f1 = LoButterworth(cutoff=1000, order=4, fs=SAMPLE_RATE)
         f2 = HiButterworth(cutoff=200, order=4, fs=SAMPLE_RATE)
@@ -108,16 +95,6 @@ class TestFsPropagation:
         assert f1.fs is None
         assert f2.fs is None
 
-    @pytest.mark.xfail(
-        reason=(
-            "Phase 2 bug: ParallelFilterCombination.__init__ sets ``self.fs = fs`` "
-            "before ``self.filters = filters``, so the fs setter attempts to iterate "
-            "``self.filters`` and crashes with AttributeError. Fix lives in "
-            "src/torchfx/filter/__base.py:1008-1015 — swap the assignment order."
-        ),
-        strict=True,
-        raises=AttributeError,
-    )
     def test_init_with_fs_propagates(self):
         f1 = LoButterworth(cutoff=1000, order=4)
         f2 = HiButterworth(cutoff=200, order=4)

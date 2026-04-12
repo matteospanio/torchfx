@@ -32,7 +32,7 @@ def test_biquad_stateful(cuda_sync_benchmark, duration, channels, device):
     x = create_signal_torch(channels, duration, device)
 
     if device == "cuda":
-        filt.move_coeff("cuda")
+        filt = filt.to("cuda")
 
     # Force stateful mode (call twice + reset)
     _ = filt(x)

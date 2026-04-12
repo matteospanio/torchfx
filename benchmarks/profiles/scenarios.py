@@ -67,8 +67,6 @@ def _build_offline_chain(device: str) -> nn.Module:
     for m in chain:
         if hasattr(m, "compute_coefficients"):
             m.compute_coefficients()
-        if hasattr(m, "move_coeff"):
-            m.move_coeff(device)
     return chain.to(device)
 
 
@@ -101,8 +99,6 @@ def _build_batch_chain(device: str) -> nn.Module:
     for m in chain:
         if hasattr(m, "compute_coefficients"):
             m.compute_coefficients()
-        if hasattr(m, "move_coeff"):
-            m.move_coeff(device)
     return chain.to(device)
 
 
@@ -131,8 +127,6 @@ def _build_realtime_cpu(device: str) -> nn.Module:
     for m in chain:
         if hasattr(m, "compute_coefficients"):
             m.compute_coefficients()
-        if hasattr(m, "move_coeff"):
-            m.move_coeff(device)
     return chain.to(device)
 
 
@@ -145,8 +139,6 @@ def _build_realtime_gpu(device: str) -> nn.Module:
     for m in chain:
         if hasattr(m, "compute_coefficients"):
             m.compute_coefficients()
-        if hasattr(m, "move_coeff"):
-            m.move_coeff(device)
     return chain.to(device)
 
 
