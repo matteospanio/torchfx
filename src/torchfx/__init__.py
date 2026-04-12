@@ -5,11 +5,13 @@ import torchfx.realtime as realtime
 import torchfx.typing as typing
 import torchfx.validation as validation
 from torchfx._ops import is_native_available
+from torchfx.chain import FilterChain
 from torchfx.effect import FX
 from torchfx.wave import Wave
 
 __all__ = [
     "FX",
+    "FilterChain",
     "Wave",
     "filter",
     "typing",

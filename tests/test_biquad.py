@@ -200,19 +200,19 @@ class TestBiquadForward:
 class TestBiquadStateful:
     """Test stateful chunk-to-chunk processing."""
 
-    def test_second_call_uses_stateful_path(self) -> None:
+    def test_second_call_carries_state(self) -> None:
         f = BiquadLPF(cutoff=1000, q=0.707, fs=44100)
         x = torch.randn(4410)
         f(x)
-        assert f._stateful is True
+        assert f._state_x is not None
+        assert f._state_y is not None
 
     def test_reset_state(self) -> None:
         f = BiquadLPF(cutoff=1000, q=0.707, fs=44100)
         x = torch.randn(4410)
         f(x)
-        assert f._stateful is True
+        assert f._state_x is not None
         f.reset_state()
-        assert f._stateful is False
         assert f._state_x is None
         assert f._state_y is None
 

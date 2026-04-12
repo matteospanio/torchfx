@@ -13,7 +13,6 @@ import numpy as np
 import pytest
 import scipy.signal as sps
 import torch
-import torch.nn as nn
 
 from torchfx.filter import HiButterworth, LoButterworth
 from torchfx.filter.__base import AbstractFilter, ParallelFilterCombination
@@ -190,22 +189,13 @@ class TestParallelForward:
         assert torch.isfinite(y).all()
 
     def test_nested_series_parallel_topology(self):
-        """Cover a mixed series/parallel topology.
-
-        The ``AbstractFilter`` docstring (src/torchfx/filter/__base.py:617)
-        claims ``|`` is "inherited from FX", but no such method exists on FX
-        or AbstractFilter — only ``Wave.__or__`` is defined. That's tracked as
-        a Phase 2 doc/API bug. Until then, the working pattern for series
-        chaining a ``ParallelFilterCombination`` with another filter is
-        ``nn.Sequential``.
-
-        """
+        """Cover a mixed series/parallel topology using the ``|`` operator."""
         torch.manual_seed(3)
         f1 = LoButterworth(cutoff=4000, order=2, fs=SAMPLE_RATE)
         f2 = HiButterworth(cutoff=200, order=2, fs=SAMPLE_RATE)
         f3 = LoButterworth(cutoff=6000, order=2, fs=SAMPLE_RATE)
 
-        chain = nn.Sequential(ParallelFilterCombination(f1, f2), f3)
+        chain = ParallelFilterCombination(f1, f2) | f3
 
         x = torch.randn(2, 1024, dtype=torch.float64)
         y = chain(x)

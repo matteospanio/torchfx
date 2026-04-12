@@ -62,7 +62,7 @@ class TestConstruction:
         class NotAFilter:
             pass
 
-        with pytest.raises(TypeError, match="Expected IIR"):
+        with pytest.raises(TypeError, match="Expected filter with SOS coefficients"):
             FusedSOSCascade(NotAFilter())  # type: ignore[arg-type]
 
     def test_rejects_mismatched_fs(self):
@@ -102,11 +102,11 @@ class TestFromChain:
         assert fused._num_sections == f._sos.shape[0]
 
     def test_rejects_bad_type(self):
-        with pytest.raises(TypeError, match="Expected nn.Sequential or IIR"):
+        with pytest.raises(TypeError, match="Expected nn.Sequential or IIR/Biquad"):
             FusedSOSCascade.from_chain(nn.ReLU())  # type: ignore[arg-type]
 
     def test_empty_sequential_raises(self):
-        with pytest.raises(ValueError, match="No IIR filters"):
+        with pytest.raises(ValueError, match="No IIR/Biquad filters"):
             FusedSOSCascade.from_chain(nn.Sequential(nn.Identity()))
 
 

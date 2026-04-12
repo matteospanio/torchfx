@@ -518,9 +518,12 @@ def test_delay_lazy_fs_inference_with_wave():
     assert delay.fs is None
 
     wave = Wave(torch.randn(2, 44100), fs=44100)
-    _ = wave | delay
+    result = wave | delay
 
+    # fs is set eagerly by the pipeline config
     assert delay.fs == 44100
+    # delay_samples is computed lazily during forward — trigger materialization
+    _ = result.ys
     assert delay.delay_samples == 11025
 
 

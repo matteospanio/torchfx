@@ -133,6 +133,107 @@ def _biquad_df1_fallback(
     return y
 
 
+def _sos_cascade_forward(
+    x: Tensor,
+    sos_canonical: Tensor,
+    sos_device_cache: Tensor | None,
+    state_x: Tensor | None,
+    state_y: Tensor | None,
+) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+    """Shared SOS biquad cascade with state, native dispatch, and DF1 fallback.
+
+    Normalizes input to ``[C, T]``, manages device-cached SOS and per-section
+    DF1 state, tries the native CUDA/C++ kernel, and falls back to a
+    JIT-compiled Python loop.
+
+    Parameters
+    ----------
+    x : Tensor
+        Input signal of shape ``[T]``, ``[C, T]``, or ``[B, C, T]``.
+    sos_canonical : Tensor
+        Canonical (CPU, float64) SOS matrix ``[K, 6]``.
+    sos_device_cache : Tensor | None
+        Previously cached device-matched SOS, or ``None``.
+    state_x, state_y : Tensor | None
+        Per-section DF1 state ``[K, C, 2]`` or ``None`` for first call.
+
+    Returns
+    -------
+    tuple[Tensor, Tensor, Tensor | None, Tensor | None]
+        ``(output, sos_device_cache, state_x, state_y)``
+
+    """
+    orig_shape = x.shape
+    out_dtype = x.dtype
+    device = x.device
+
+    # Normalize to [C, T]
+    if x.ndim == 1:
+        x = x.unsqueeze(0)
+    elif x.ndim == 3:
+        B, C, T = x.shape
+        x = x.reshape(B * C, T)
+
+    C, T = x.shape
+    num_sections = sos_canonical.shape[0]
+
+    # Use cached device-matched SOS to avoid per-forward .to() calls.
+    cache = sos_device_cache
+    if cache is None or cache.device != device:
+        cache = sos_canonical.to(device=device, dtype=torch.float64)
+    sos = cache
+
+    # Initialize or resize state.
+    if state_x is None or state_x.shape[1] != C:
+        state_x = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
+        state_y = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
+    elif state_x.device != device:
+        state_x = state_x.to(device=device)
+        assert state_y is not None
+        state_y = state_y.to(device=device)
+
+    assert state_y is not None
+
+    # Try native (CUDA or C++) SOS cascade kernel.
+    from torchfx._ops import parallel_iir_forward
+
+    native_result = parallel_iir_forward(x, sos, state_x, state_y, sos_cpu=sos_canonical)
+    if native_result is not None:
+        out, state_x, state_y = native_result
+        result = out.to(dtype=out_dtype)
+    else:
+        # Single-pass DF1 fallback.
+        section_input = x.to(dtype=torch.float64)
+
+        for s in range(num_sections):
+            b0 = sos[s, 0]
+            b1 = sos[s, 1]
+            b2 = sos[s, 2]
+            a1 = sos[s, 4]
+            a2 = sos[s, 5]
+
+            out = _biquad_df1_fallback(section_input, b0, b1, b2, a1, a2, state_x[s], state_y[s])
+
+            # Update state from tail — in-place to avoid per-section allocation.
+            if T >= 2:
+                state_x[s, :, 0].copy_(section_input[:, -1])
+                state_x[s, :, 1].copy_(section_input[:, -2])
+                state_y[s, :, 0].copy_(out[:, -1])
+                state_y[s, :, 1].copy_(out[:, -2])
+
+            section_input = out
+
+        result = section_input.to(dtype=out_dtype)
+
+    # Restore original shape.
+    if len(orig_shape) == 1:
+        result = result.squeeze(0)
+    elif len(orig_shape) == 3:
+        result = result.reshape(orig_shape)
+
+    return result, cache, state_x, state_y
+
+
 class IIR(AbstractFilter):
     """Base class for Infinite Impulse Response (IIR) filters.
 
@@ -195,106 +296,10 @@ class IIR(AbstractFilter):
             self.compute_coefficients()
             self._sos_device_cache = None  # invalidate after recomputation
 
-        return self._forward_sos(x)
-
-    def _forward_sos(self, x: Tensor) -> Tensor:
-        """Process with SOS biquad cascade carrying state across calls.
-
-        Each second-order section uses Direct Form 1, vectorized across channels
-        and sequential across time.
-
-        Uses a CUDA parallel prefix scan kernel when available and the input
-        is on a CUDA device, falling back to the pure-PyTorch loop otherwise.
-
-        Ported from AudioNoise ``biquad.h`` ``biquad_step_df1``.
-
-        """
         assert self._sos is not None
-
-        orig_shape = x.shape
-        out_dtype = x.dtype
-        device = x.device
-
-        # Normalize to [C, T]
-        if x.ndim == 1:
-            x = x.unsqueeze(0)
-        elif x.ndim == 3:
-            B, C, T = x.shape
-            x = x.reshape(B * C, T)
-
-        C, T = x.shape
-        num_sections = self._sos.shape[0]
-
-        # Use cached device-matched SOS to avoid per-forward .to() calls.
-        # Cache is invalidated in reset_state() and forward() after recomputation.
-        cache = self._sos_device_cache
-        if cache is None or cache.device != device:
-            cache = self._sos.to(device=device, dtype=torch.float64)
-            self._sos_device_cache = cache
-        sos = cache
-
-        # Initialize or resize state
-        if self._state_x is None or self._state_x.shape[1] != C:
-            self._state_x = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
-            self._state_y = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
-        elif self._state_x.device != device:
-            self._state_x = self._state_x.to(device=device)
-            assert self._state_y is not None
-            self._state_y = self._state_y.to(device=device)
-
-        assert self._state_y is not None
-
-        # Try native (CUDA or C++) SOS cascade kernel.
-        # Pass the canonical CPU SOS to avoid per-call CUDA→CPU copies.
-        from torchfx._ops import parallel_iir_forward
-
-        native_result = parallel_iir_forward(
-            x,
-            sos,
-            self._state_x,
-            self._state_y,
-            sos_cpu=self._sos,
+        result, self._sos_device_cache, self._state_x, self._state_y = _sos_cascade_forward(
+            x, self._sos, self._sos_device_cache, self._state_x, self._state_y
         )
-        if native_result is not None:
-            out, self._state_x, self._state_y = native_result
-            result = out.to(dtype=out_dtype)
-            if len(orig_shape) == 1:
-                return result.squeeze(0)
-            elif len(orig_shape) == 3:
-                return result.reshape(orig_shape)
-            return result
-
-        # Single-pass DF1 fallback (replaces the 2x lfilter decomposition).
-        section_input = x.to(dtype=torch.float64)
-
-        for s in range(num_sections):
-            b0 = sos[s, 0]
-            b1 = sos[s, 1]
-            b2 = sos[s, 2]
-            a1 = sos[s, 4]
-            a2 = sos[s, 5]
-
-            sx = self._state_x[s]  # [C, 2] = [x[-1], x[-2]]
-            sy = self._state_y[s]  # [C, 2] = [y[-1], y[-2]]
-
-            out = _biquad_df1_fallback(section_input, b0, b1, b2, a1, a2, sx, sy)
-
-            # Update state from tail — in-place to avoid per-section allocation.
-            if T >= 2:
-                self._state_x[s, :, 0].copy_(section_input[:, -1])
-                self._state_x[s, :, 1].copy_(section_input[:, -2])
-                self._state_y[s, :, 0].copy_(out[:, -1])
-                self._state_y[s, :, 1].copy_(out[:, -2])
-
-            section_input = out
-
-        result = section_input.to(dtype=out_dtype)
-
-        # Restore original shape
-        if len(orig_shape) == 1:
-            return result.squeeze(0)
-        elif len(orig_shape) == 3:
-            return result.reshape(orig_shape)
         return result
 
     def reset_state(self) -> None:

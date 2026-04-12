@@ -244,6 +244,13 @@ class FX(nn.Module, abc.ABC):
     @abc.abstractmethod
     def forward(self, x: Tensor) -> Tensor: ...
 
+    def __or__(self, other: nn.Module) -> nn.Sequential:
+        if not isinstance(other, nn.Module):
+            return NotImplemented
+        from torchfx.chain import FilterChain
+
+        return FilterChain(self, other)
+
 
 class Gain(FX):
     r"""Adjust volume of audio waveforms with multiple gain modes and optional clamping.

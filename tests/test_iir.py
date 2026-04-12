@@ -195,21 +195,25 @@ class TestShelvingFilters:
         assert hi_filter.gain == pytest.approx(expected_linear_gain, rel=1e-6)
         assert lo_filter.gain == pytest.approx(expected_linear_gain, rel=1e-6)
 
-    def test_shelving_positive_gain(self, sample_signal_2d):
+    def test_shelving_positive_gain(self):
         """Test shelving filters with positive gain boost the signal."""
-        fs = 2000
-        cutoff = 400
+        fs = 16000
+        cutoff = 2000
         q = 0.707
         gain = 6.0  # dB
+
+        # Use broadband noise in float64 so the energy difference is measurable.
+        torch.manual_seed(42)
+        x = torch.randn(1, 8000, dtype=torch.float64)
 
         hi_filter = HiShelving(cutoff=cutoff, q=q, gain=gain, gain_scale="db", fs=fs)
         lo_filter = LoShelving(cutoff=cutoff, q=q, gain=gain, gain_scale="db", fs=fs)
 
-        hi_filtered = hi_filter.forward(sample_signal_2d)
-        lo_filtered = lo_filter.forward(sample_signal_2d)
+        hi_filtered = hi_filter.forward(x)
+        lo_filtered = lo_filter.forward(x)
 
         # With positive gain, output energy should be higher than input
-        input_energy = torch.sum(sample_signal_2d**2)
+        input_energy = torch.sum(x**2)
         hi_energy = torch.sum(hi_filtered**2)
         lo_energy = torch.sum(lo_filtered**2)
 

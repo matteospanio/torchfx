@@ -308,3 +308,99 @@ Visualize with `python -m torch.cuda.memory_viz memory_snapshot.pkl`.
 
 The master plan is at [`plans/starry-juggling-matsumoto.md`](../../../../.claude/plans/starry-juggling-matsumoto.md)
 (not in the repo tree — local to the planning workflow).
+
+---
+
+## Phase 3 results — 2026-04-12
+
+Artifacts at `benchmarks/results/cuda-phase3-20260412/` (benchmarks + profiles)
+and `benchmarks/results/local-cpu-phase3.json` (CPU benchmarks).
+
+### Changes applied
+
+1. **SOS device cache** (`iir.py`, `fused.py`): cache the device-matched SOS
+   tensor; invalidate only on `compute_coefficients()` re-run or device change.
+   Pass a CPU copy (`sos_cpu=self._sos`) to the native dispatch layer so the
+   per-call `sos.detach().to("cpu")` is eliminated.
+2. **Biquad coefficient pre-extraction** (`biquad.py`, `_ops.py`): cache `a1_f64`
+   and `a2_f64` as Python floats at design time so the per-call `float(a_f64[1])`
+   GPU→CPU sync is eliminated.
+3. **In-place state updates** (`iir.py`, `fused.py`, `biquad.py`): replaced
+   `torch.stack([...])` per section per chunk with `copy_()` into pre-shaped
+   buffers.
+4. **Reverb algebraic fusion** (`effect.py`): `(1-mix)*x + mix*(x + decay*d)` →
+   `x.clone().add_(d, alpha=mix*decay)` — 5 ops → 2 ops.
+5. **Delay wet/dry lerp** (`effect.py`): `(1-mix)*x + mix*d` → `torch.lerp(x,d,mix)`
+   — 3 ops → 1 kernel.
+
+### CUDA IIR — Phase 0 vs Phase 3
+
+| Scenario | Phase 0 | Phase 3 | Speedup |
+|---|---:|---:|---:|
+| 1 s, 1 ch | 1.14 ms | 0.95 ms | **1.20×** |
+| 1 s, 4 ch | 1.46 ms | 1.09 ms | **1.33×** |
+| 5 s, 1 ch | 1.76 ms | 1.39 ms | **1.27×** |
+| 5 s, 2 ch | 2.38 ms | 2.06 ms | **1.16×** |
+| 30 s, 1 ch | 7.86 ms | 7.53 ms | 1.04× |
+| 60 s, 8 ch | 75.80 ms | 75.62 ms | 1.00× |
+
+Short signals see 15–33% speedup because per-call overhead (SOS caching,
+`aten::item` elimination) is a larger fraction of runtime. Long signals
+converge to ~1× because the parallel-scan kernels dominate.
+
+### CUDA biquad (stateful) — Phase 0 vs Phase 3
+
+| Scenario | Phase 0 | Phase 3 | Speedup |
+|---|---:|---:|---:|
+| 0.1 s, 1 ch | 0.264 ms | 0.225 ms | **1.18×** |
+| 1.0 s, 1 ch | 0.271 ms | 0.228 ms | **1.19×** |
+| 5.0 s, 1 ch | 0.540 ms | 0.496 ms | **1.09×** |
+| 30 s, 1 ch | 1.978 ms | 1.941 ms | 1.02× |
+
+### Pipeline CUDA (NEW — was crashing in Phase 0)
+
+| Benchmark | Phase 3 |
+|---|---:|
+| `sos_cascade[4-cuda]` | 1.31 ms |
+| `sos_cascade[8-cuda]` | 2.48 ms |
+| `pipeline[cuda]` | 3.26 ms |
+
+These tests crashed in Phase 0 due to `move_coeff` removal. The fix
+(`.to(device)` in benchmark scripts) landed in Phase 2.
+
+### Profiler comparison — key metrics
+
+| Metric | Phase 0 | Phase 3 | Change |
+|---|---:|---:|---|
+| `aten::item` Self CPU % (batch chain) | **21.1%** | **0.02%** | ~1000× reduction |
+| `aten::item` calls (batch chain) | 135 | 129 | ~same call count, but negligible cost |
+| `aten::_to_copy` CUDA alloc (batch chain) | 5.15 GB | 5.15 GB | unchanged — dtype casts remain for input |
+| `aten::copy_` Self CUDA % (filter chain) | 1.4% | 1.4% | stable — signal dtype casts are inherent |
+| Custom kernels % CUDA (filter chain) | 95.3% | 95.4% | kernels dominate equally |
+| `aten::lerp` in realtime GPU | absent | **2.4%** | Delay optimization confirmed |
+
+The massive `aten::item` win (21.1% → 0.02%) comes from the `sos_cpu` parameter
+that pre-passes a CPU copy of the SOS matrix, and the `a1_f64`/`a2_f64`
+pre-extraction that avoids per-call `float()` GPU→CPU synchronization.
+
+The `aten::_to_copy` allocation remains because input signals arrive as float32
+and the SOS kernels operate in float64 — this is a correctness requirement, not
+churn. The Phase 0 baseline was measuring the same thing; the difference is that
+*coefficient* casts are now cached.
+
+### Cold import
+
+| Phase | Phase 0 | Phase 3 |
+|---|---:|---:|
+| `import torchfx` | 10.4 s | 9.6 s |
+| `_load_extension()` JIT | 5.3 s | 15.6 s |
+
+The JIT compile time tripled, likely due to cache invalidation from kernel
+source changes. On subsequent runs the cache is warm and the cost is zero.
+This reinforces the case for the deferred AOT build migration.
+
+### FIR / FFTConv (control group)
+
+GPU FIR and FFTConv numbers are flat (±5%), confirming no regressions on
+untouched paths. CPU numbers on the cluster are noisier due to shared-node
+variability, but all GPU numbers are stable.
