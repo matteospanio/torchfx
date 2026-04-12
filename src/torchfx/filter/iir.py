@@ -67,18 +67,16 @@ torchfx.filter.AbstractFilter : Base class for all filters
 
 import abc
 import math
-from collections.abc import Sequence
 
 import numpy as np
 import torch
-from scipy.signal import butter, cheby1, cheby2, ellip, tf2sos
-from torch import Tensor, dtype
-from torchaudio import functional as F  # noqa: N812
+from scipy.signal import butter, cheby1, cheby2, ellip
+from torch import Tensor
 from typing_extensions import override
 
 from torchfx.filter.__base import AbstractFilter
 from torchfx.filter.biquad import Biquad
-from torchfx.typing import Device, FilterOrderScale
+from torchfx.typing import FilterOrderScale
 
 NONE_FS_ERR = "Sample rate of the filter could not be None."
 
@@ -142,17 +140,10 @@ class IIR(AbstractFilter):
     in torchfx. It implements lazy coefficient computation, automatic device
     management, and the core filtering operation.
 
-    Two processing paths are provided:
-
-    * **Stateless (fast)**: delegates to ``torchaudio.functional.lfilter`` for
-      one-shot processing when no chunk-to-chunk state is needed.
-    * **Stateful (SOS cascade)**: a pure-PyTorch second-order-sections (SOS) cascade
-      using Direct Form 1 that carries state between calls. Activated after the
-      first ``forward()`` call — subsequent calls reuse state. Call
-      ``reset_state()`` to clear accumulated state.
-
-    Higher-order IIR filters are internally decomposed into second-order sections
-    (biquad cascade) for numerical stability.
+    Filtering is performed via a second-order-sections (SOS) cascade using
+    Direct Form 1 that carries state between calls. Call ``reset_state()`` to
+    clear accumulated state. Higher-order IIR filters are internally decomposed
+    into second-order sections (biquad cascade) for numerical stability.
 
     Attributes
     ----------
@@ -162,20 +153,13 @@ class IIR(AbstractFilter):
     cutoff : float
         The cutoff frequency in Hz. For different filter types, this may represent
         the -3dB point, center frequency, or transition frequency.
-    a : Sequence[float] | Tensor | None
-        Denominator (feedback) coefficients of the filter transfer function.
-        None until computed via `compute_coefficients()`.
-    b : Sequence[float] | Tensor | None
-        Numerator (feedforward) coefficients of the filter transfer function.
-        None until computed via `compute_coefficients()`.
 
     Notes
     -----
     Coefficient Computation Flow:
         1. Filter is instantiated with parameters (fs may be None)
-        2. On first forward pass, if coefficients are None, compute_coefficients() is called
-        3. Coefficients are converted to SOS matrix for stateful processing
-        4. Filtering is performed using lfilter (stateless) or SOS cascade (stateful)
+        2. On first forward pass, if SOS is None, compute_coefficients() is called
+        3. Filtering is performed via SOS cascade
 
     See Also
     --------
@@ -187,8 +171,6 @@ class IIR(AbstractFilter):
 
     fs: int | None
     cutoff: float
-    a: Sequence[float] | Tensor | None
-    b: Sequence[float] | Tensor | None
 
     @abc.abstractmethod
     def __init__(self, fs: int | None = None) -> None:
@@ -199,96 +181,17 @@ class IIR(AbstractFilter):
         # Per-section, per-channel DF1 state: [num_sections, C, 2] for x and y
         self._state_x: Tensor | None = None
         self._state_y: Tensor | None = None
-        self._stateful: bool = False
-
-    def _compute_sos(self) -> None:
-        """Convert transfer function coefficients to SOS matrix.
-
-        Uses ``scipy.signal.tf2sos`` to decompose higher-order transfer functions
-        into cascaded second-order sections for numerical stability.
-
-        """
-        if self.a is None or self.b is None:
-            return
-
-        a_np = np.asarray(
-            self.a if not isinstance(self.a, Tensor) else self.a.cpu().numpy(), dtype=np.float64
-        )
-        b_np = np.asarray(
-            self.b if not isinstance(self.b, Tensor) else self.b.cpu().numpy(), dtype=np.float64
-        )
-
-        # For 2nd-order filters (3 coefficients), build SOS directly
-        if len(a_np) <= 3 and len(b_np) <= 3:
-            # Pad to length 3 if needed
-            b_pad = np.zeros(3, dtype=np.float64)
-            a_pad = np.zeros(3, dtype=np.float64)
-            b_pad[: len(b_np)] = b_np
-            a_pad[: len(a_np)] = a_np
-            sos = np.array([[b_pad[0], b_pad[1], b_pad[2], a_pad[0], a_pad[1], a_pad[2]]])
-        else:
-            sos = tf2sos(b_np, a_np)
-
-        self._sos = torch.from_numpy(sos)
-
-    def move_coeff(self, device: Device, dtype: dtype = torch.float32) -> None:
-        """Move the filter coefficients to the specified device and dtype."""
-        self.a = torch.as_tensor(self.a, device=device, dtype=dtype)
-        self.b = torch.as_tensor(self.b, device=device, dtype=dtype)
 
     @override
     @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
-        dtype = x.dtype
-        device = x.device
         if self.fs is None:
             raise ValueError(NONE_FS_ERR)
 
-        if self.a is None or self.b is None:
+        if self._sos is None:
             self.compute_coefficients()
-            self._compute_sos()
 
-        if not isinstance(self.a, Tensor) or not isinstance(self.b, Tensor):
-            self.move_coeff(device, dtype)
-
-        # Stateful path: use SOS cascade in pure PyTorch
-        if self._stateful:
-            return self._forward_sos(x)
-
-        # Fast stateless path via torchaudio lfilter
-        result: Tensor = F.lfilter(x, self.a, self.b, clamp=False)
-        result = result.to(dtype=dtype)
-
-        # Bootstrap state for next chunk
-        if self._sos is None:
-            self._compute_sos()
-        self._bootstrap_state(x, result)
-        self._stateful = True
-
-        return result
-
-    def _bootstrap_state(self, x: Tensor, y: Tensor) -> None:  # noqa: ARG002
-        """Initialize SOS DF1 state from the tail of processed signals."""
-        if self._sos is None:
-            return
-
-        device = x.device
-        num_sections = self._sos.shape[0]
-
-        # Get channel count
-        if x.ndim == 1:
-            C = 1
-        elif x.ndim == 2:
-            C = x.shape[0]
-        else:
-            C = x.shape[-2]  # [B, C, T]
-
-        # We can't perfectly reconstruct intermediate SOS section states from
-        # only input/output. Initialize to zeros — this introduces a tiny
-        # transient on the first stateful chunk boundary, which is inaudible
-        # for typical chunk sizes (>256 samples).
-        self._state_x = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
-        self._state_y = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
+        return self._forward_sos(x)
 
     def _forward_sos(self, x: Tensor) -> Tensor:
         """Process with SOS biquad cascade carrying state across calls.
@@ -381,13 +284,11 @@ class IIR(AbstractFilter):
         """Reset filter state for chunk-to-chunk continuity.
 
         Call this when switching audio sources, seeking in a file, or after changing
-        filter coefficients. After calling this method, the next ``forward()`` will
-        use the fast ``lfilter`` path again.
+        filter coefficients.
 
         """
         self._state_x = None
         self._state_y = None
-        self._stateful = False
         self._sos = None
 
 
@@ -424,12 +325,6 @@ class Butterworth(IIR):
     fs : int | None, default=None
         Sampling frequency in Hz. If None, will be set automatically from the
         input signal.
-    a : Sequence[float] | None, default=None
-        Pre-computed denominator coefficients. If provided, coefficient computation
-        is skipped.
-    b : Sequence[float] | None, default=None
-        Pre-computed numerator coefficients. If provided, coefficient computation
-        is skipped.
 
     Attributes
     ----------
@@ -502,23 +397,19 @@ class Butterworth(IIR):
         order: int = 4,
         order_scale: FilterOrderScale = "linear",
         fs: int | None = None,
-        a: Sequence[float] | None = None,
-        b: Sequence[float] | None = None,
     ) -> None:
         super().__init__(fs)
         self.btype = btype
         self.cutoff = cutoff
         self.order = order if order_scale == "linear" else order // 6
-        self.a = a
-        self.b = b
 
     @override
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = butter(self.order, self.cutoff / (0.5 * self.fs), btype=self.btype)  # type: ignore
-        self.b = b
-        self.a = a
+        self._sos = torch.from_numpy(
+            butter(self.order, self.cutoff / (0.5 * self.fs), btype=self.btype, output="sos")  # type: ignore
+        )
 
 
 class Chebyshev1(IIR):
@@ -556,10 +447,6 @@ class Chebyshev1(IIR):
     fs : int | None, default=None
         Sampling frequency in Hz. If None, will be set automatically from the
         input signal.
-    a : Sequence[float] | None, default=None
-        Pre-computed denominator coefficients.
-    b : Sequence[float] | None, default=None
-        Pre-computed numerator coefficients.
 
     Attributes
     ----------
@@ -637,29 +524,26 @@ class Chebyshev1(IIR):
         order: int = 4,
         ripple: float = 0.1,
         fs: int | None = None,
-        a: Sequence[float] | None = None,
-        b: Sequence[float] | None = None,
     ) -> None:
         super().__init__(fs)
         self.btype = btype
         self.cutoff = cutoff
         self.order = order
         self.ripple = ripple
-        self.a = a
-        self.b = b
 
     @override
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = cheby1(
-            self.order,
-            self.ripple,
-            self.cutoff / (0.5 * self.fs),
-            btype=self.btype,  # type: ignore
+        self._sos = torch.from_numpy(
+            cheby1(
+                self.order,
+                self.ripple,
+                self.cutoff / (0.5 * self.fs),
+                btype=self.btype,  # type: ignore
+                output="sos",
+            )
         )
-        self.b = b
-        self.a = a
 
 
 class Chebyshev2(IIR):
@@ -782,14 +666,15 @@ class Chebyshev2(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = cheby2(
-            self.order,
-            self.ripple,
-            self.cutoff / (0.5 * self.fs),
-            btype=self.btype,  # type: ignore
+        self._sos = torch.from_numpy(
+            cheby2(
+                self.order,
+                self.ripple,
+                self.cutoff / (0.5 * self.fs),
+                btype=self.btype,  # type: ignore
+                output="sos",
+            )
         )
-        self.b = b
-        self.a = a
 
 
 class HiChebyshev1(Chebyshev1):
@@ -2087,17 +1972,13 @@ class LinkwitzRiley(IIR):
             raise ValueError("Linkwitz-Riley filter order must be a positive even integer.")
         self.btype = btype
         self.cutoff = cutoff
-        self.order = order
-        self.a = None
-        self.b = None
 
     @override
     def compute_coefficients(self) -> None:
         """Compute the filter coefficients.
 
-        The method calculates the coefficients for a Butterworth filter of half the
-        specified order and then cascades it with itself by convolving the numerator and
-        denominator coefficients.
+        The method calculates the SOS for a Butterworth filter of half the specified
+        order and then cascades it with itself by stacking the SOS sections.
 
         """
         assert self.fs is not None
@@ -2105,12 +1986,13 @@ class LinkwitzRiley(IIR):
         # An Nth-order Linkwitz-Riley filter is made from two (N/2)th-order Butterworth filters.
         butter_order = self.order // 2
 
-        # Get the coefficients for the base Butterworth filter
-        b_butter, a_butter = butter(butter_order, self.cutoff / (0.5 * self.fs), btype=self.btype)  # type: ignore
+        # Get SOS for the base Butterworth filter
+        sos_butter = butter(
+            butter_order, self.cutoff / (0.5 * self.fs), btype=self.btype, output="sos"
+        )  # type: ignore
 
-        # Cascade the filters by convolving the coefficients with themselves
-        self.b = np.convolve(b_butter, b_butter)  # type: ignore
-        self.a = np.convolve(a_butter, a_butter)  # type: ignore
+        # Cascade two identical filters by stacking their SOS sections
+        self._sos = torch.from_numpy(np.vstack([sos_butter, sos_butter]))
 
 
 class HiLinkwitzRiley(LinkwitzRiley):
@@ -2370,22 +2252,21 @@ class Elliptic(IIR):
         self.order = order
         self.passband_ripple = passband_ripple
         self.stopband_attenuation = stopband_attenuation
-        self.a = None
-        self.b = None
 
     @override
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        b, a = ellip(
-            self.order,
-            self.passband_ripple,
-            self.stopband_attenuation,
-            self.cutoff / (0.5 * self.fs),
-            btype=self.btype,  # type: ignore
+        self._sos = torch.from_numpy(
+            ellip(
+                self.order,
+                self.passband_ripple,
+                self.stopband_attenuation,
+                self.cutoff / (0.5 * self.fs),
+                btype=self.btype,  # type: ignore
+                output="sos",
+            )
         )
-        self.b = b
-        self.a = a
 
 
 class HiElliptic(Elliptic):

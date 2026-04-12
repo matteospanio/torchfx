@@ -424,6 +424,8 @@ class AbstractFilter(FX, abc.ABC):
 
     @property
     def _has_computed_coeff(self) -> bool:
+        if hasattr(self, "_sos") and self._sos is not None:
+            return True
         if hasattr(self, "b") and hasattr(self, "a"):
             return self.b is not None and self.a is not None
         return True

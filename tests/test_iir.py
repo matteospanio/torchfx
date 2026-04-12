@@ -31,9 +31,8 @@ def test_butterworth_coefficients():
     filter = Butterworth(btype="low", cutoff=cutoff, order=4, fs=fs)
     filter.compute_coefficients()
 
-    b, a = butter(4, cutoff / (0.5 * fs), btype="low")
-    assert filter.b == pytest.approx(b, rel=1e-3)
-    assert filter.a == pytest.approx(a, rel=1e-3)
+    sos = butter(4, cutoff / (0.5 * fs), btype="low", output="sos")
+    assert filter._sos.numpy() == pytest.approx(sos, rel=1e-3)
 
 
 def test_chebyshev1_coefficients():
@@ -43,9 +42,8 @@ def test_chebyshev1_coefficients():
     filter = Chebyshev1(btype="low", cutoff=cutoff, order=4, ripple=ripple, fs=fs)
     filter.compute_coefficients()
 
-    b, a = cheby1(4, ripple, cutoff / (0.5 * fs), btype="low")
-    assert filter.b == pytest.approx(b, rel=1e-3)
-    assert filter.a == pytest.approx(a, rel=1e-3)
+    sos = cheby1(4, ripple, cutoff / (0.5 * fs), btype="low", output="sos")
+    assert filter._sos.numpy() == pytest.approx(sos, rel=1e-3)
 
 
 def test_chebyshev2_coefficients():
@@ -55,9 +53,8 @@ def test_chebyshev2_coefficients():
     filter = Chebyshev2(btype="low", cutoff=cutoff, order=4, ripple=ripple, fs=fs)
     filter.compute_coefficients()
 
-    b, a = cheby2(4, ripple, cutoff / (0.5 * fs), btype="low")
-    assert filter.b == pytest.approx(b, rel=1e-3)
-    assert filter.a == pytest.approx(a, rel=1e-3)
+    sos = cheby2(4, ripple, cutoff / (0.5 * fs), btype="low", output="sos")
+    assert filter._sos.numpy() == pytest.approx(sos, rel=1e-3)
 
 
 def test_highpass_butterworth(sample_signal):
@@ -310,9 +307,8 @@ class TestEllipticFilters:
         filter = LoElliptic(cutoff=cutoff, order=order, fs=fs)
         filter.compute_coefficients()
 
-        # Verify coefficients exist
-        assert filter.a is not None
-        assert filter.b is not None
+        # Verify SOS matrix exists
+        assert filter._sos is not None
 
     def test_elliptic_highpass_coefficients(self):
         """Test high-pass Elliptic filter coefficient computation."""
@@ -323,9 +319,8 @@ class TestEllipticFilters:
         filter = HiElliptic(cutoff=cutoff, order=order, fs=fs)
         filter.compute_coefficients()
 
-        # Verify coefficients exist
-        assert filter.a is not None
-        assert filter.b is not None
+        # Verify SOS matrix exists
+        assert filter._sos is not None
 
     def test_elliptic_lowpass_forward(self, sample_signal_2d):
         """Test low-pass Elliptic filter forward pass."""
@@ -374,7 +369,6 @@ class TestEllipticFilters:
         )
         filter.compute_coefficients()
 
-        assert filter.a is not None
-        assert filter.b is not None
+        assert filter._sos is not None
         assert filter.passband_ripple == passband_ripple
         assert filter.stopband_attenuation == stopband_attenuation

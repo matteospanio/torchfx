@@ -809,11 +809,11 @@ class TestIIRFilterFixes:
 
         # Process a chunk to populate state
         lpf(signal)
-        assert lpf._stateful is True
+        assert lpf._state_x is not None
+        assert lpf._state_y is not None
 
         # Reset and verify state is cleared
         lpf.reset_state()
-        assert lpf._stateful is False
         assert lpf._state_x is None
         assert lpf._state_y is None
 

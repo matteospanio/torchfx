@@ -26,8 +26,7 @@ class FusedSOSCascade(nn.Module):
     ----------
     filters : IIR
         One or more IIR filter instances to fuse.  Coefficients are computed
-        eagerly (``compute_coefficients`` + ``_compute_sos`` are called at
-        construction time).
+        eagerly (``compute_coefficients`` is called at construction time).
 
     Examples
     --------
@@ -51,15 +50,13 @@ class FusedSOSCascade(nn.Module):
                 raise TypeError(f"Expected IIR filter, got {type(f).__name__}")
 
             # Ensure coefficients are computed.
-            if f.a is None or f.b is None:
+            if f._sos is None:
                 if f.fs is None:
                     raise ValueError(
                         f"Filter {type(f).__name__} has no sampling frequency set. "
                         "Set fs before fusing."
                     )
                 f.compute_coefficients()
-            if f._sos is None:
-                f._compute_sos()
 
             assert f._sos is not None
             sos_parts.append(f._sos)
