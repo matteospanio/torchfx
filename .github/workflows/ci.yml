@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master, dev]
 
+permissions:
+  contents: read
+
 jobs:
   prepare:
     name: Prepare (Python ${{ matrix.python-version }})
