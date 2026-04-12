@@ -177,7 +177,10 @@ class IIR(AbstractFilter):
         super().__init__()
         self.fs = fs
         # SOS matrix: [num_sections, 6] each row [b0, b1, b2, 1, a1, a2]
+        # Canonical copy is always CPU float64.
         self._sos: Tensor | None = None
+        # Cached device-matched copy — avoids per-forward .to() calls.
+        self._sos_device_cache: Tensor | None = None
         # Per-section, per-channel DF1 state: [num_sections, C, 2] for x and y
         self._state_x: Tensor | None = None
         self._state_y: Tensor | None = None
@@ -190,6 +193,7 @@ class IIR(AbstractFilter):
 
         if self._sos is None:
             self.compute_coefficients()
+            self._sos_device_cache = None  # invalidate after recomputation
 
         return self._forward_sos(x)
 
@@ -221,9 +225,13 @@ class IIR(AbstractFilter):
         C, T = x.shape
         num_sections = self._sos.shape[0]
 
-        sos = self._sos
-        if sos.device != device or sos.dtype != torch.float64:
-            sos = sos.to(device=device, dtype=torch.float64)
+        # Use cached device-matched SOS to avoid per-forward .to() calls.
+        # Cache is invalidated in reset_state() and forward() after recomputation.
+        cache = self._sos_device_cache
+        if cache is None or cache.device != device:
+            cache = self._sos.to(device=device, dtype=torch.float64)
+            self._sos_device_cache = cache
+        sos = cache
 
         # Initialize or resize state
         if self._state_x is None or self._state_x.shape[1] != C:
@@ -236,10 +244,17 @@ class IIR(AbstractFilter):
 
         assert self._state_y is not None
 
-        # Try native (CUDA or C++) SOS cascade kernel
+        # Try native (CUDA or C++) SOS cascade kernel.
+        # Pass the canonical CPU SOS to avoid per-call CUDA→CPU copies.
         from torchfx._ops import parallel_iir_forward
 
-        native_result = parallel_iir_forward(x, sos, self._state_x, self._state_y)
+        native_result = parallel_iir_forward(
+            x,
+            sos,
+            self._state_x,
+            self._state_y,
+            sos_cpu=self._sos,
+        )
         if native_result is not None:
             out, self._state_x, self._state_y = native_result
             result = out.to(dtype=out_dtype)
@@ -264,10 +279,12 @@ class IIR(AbstractFilter):
 
             out = _biquad_df1_fallback(section_input, b0, b1, b2, a1, a2, sx, sy)
 
-            # Update state from tail
+            # Update state from tail — in-place to avoid per-section allocation.
             if T >= 2:
-                self._state_x[s] = torch.stack([section_input[:, -1], section_input[:, -2]], dim=1)
-                self._state_y[s] = torch.stack([out[:, -1], out[:, -2]], dim=1)
+                self._state_x[s, :, 0].copy_(section_input[:, -1])
+                self._state_x[s, :, 1].copy_(section_input[:, -2])
+                self._state_y[s, :, 0].copy_(out[:, -1])
+                self._state_y[s, :, 1].copy_(out[:, -2])
 
             section_input = out
 
@@ -290,6 +307,7 @@ class IIR(AbstractFilter):
         self._state_x = None
         self._state_y = None
         self._sos = None
+        self._sos_device_cache = None
 
 
 class Butterworth(IIR):

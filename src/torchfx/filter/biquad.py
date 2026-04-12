@@ -168,6 +168,9 @@ class Biquad(AbstractFilter):
         """
         self.b = torch.tensor([b0, b1, b2], dtype=torch.float64)
         self.a = torch.tensor([1.0, a1, a2], dtype=torch.float64)
+        # Cache as Python floats to avoid per-forward GPU→CPU sync via float().
+        self._a1_f64: float = a1
+        self._a2_f64: float = a2
 
     @override
     @torch.no_grad()
@@ -253,12 +256,12 @@ class Biquad(AbstractFilter):
 
         if T >= 2:
             # x[0] = x[n-1], x[1] = x[n-2] (DF1 convention)
-            self._state_x = torch.stack([x_2d[:, T - 1], x_2d[:, T - 2]], dim=1).to(
-                dtype=torch.float64
-            )
-            self._state_y = torch.stack([y_2d[:, T - 1], y_2d[:, T - 2]], dim=1).to(
-                dtype=torch.float64
-            )
+            self._state_x = torch.empty(C, 2, device=x.device, dtype=torch.float64)
+            self._state_x[:, 0] = x_2d[:, T - 1].to(torch.float64)
+            self._state_x[:, 1] = x_2d[:, T - 2].to(torch.float64)
+            self._state_y = torch.empty(C, 2, device=x.device, dtype=torch.float64)
+            self._state_y[:, 0] = y_2d[:, T - 1].to(torch.float64)
+            self._state_y[:, 1] = y_2d[:, T - 2].to(torch.float64)
         elif T == 1:
             self._state_x = torch.zeros(C, 2, device=x.device, dtype=torch.float64)
             self._state_y = torch.zeros(C, 2, device=x.device, dtype=torch.float64)
@@ -301,10 +304,19 @@ class Biquad(AbstractFilter):
 
         assert self._state_y is not None
 
-        # Try native (CUDA or C++) kernel
+        # Try native (CUDA or C++) kernel.
+        # Pass pre-extracted floats to avoid per-call GPU→CPU sync.
         from torchfx._ops import biquad_forward
 
-        native_result = biquad_forward(x, self.b, self.a, self._state_x, self._state_y)
+        native_result = biquad_forward(
+            x,
+            self.b,
+            self.a,
+            self._state_x,
+            self._state_y,
+            a1_f64=self._a1_f64,
+            a2_f64=self._a2_f64,
+        )
         if native_result is not None:
             out, self._state_x, self._state_y = native_result
             result = out.to(dtype=dtype)
@@ -348,10 +360,12 @@ class Biquad(AbstractFilter):
 
         out = Tensor(y_zs + y_zi)
 
-        # Update state from the tail of input/output
+        # Update state in-place from the tail of input/output.
         if T >= 2:
-            self._state_x = torch.stack([x_f64[:, -1], x_f64[:, -2]], dim=1)
-            self._state_y = torch.stack([out[:, -1], out[:, -2]], dim=1)
+            self._state_x[:, 0].copy_(x_f64[:, -1])
+            self._state_x[:, 1].copy_(x_f64[:, -2])
+            self._state_y[:, 0].copy_(out[:, -1])
+            self._state_y[:, 1].copy_(out[:, -2])
 
         result = Tensor(out.to(dtype=dtype))
 

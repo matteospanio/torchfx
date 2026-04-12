@@ -122,11 +122,21 @@ def biquad_forward(
     a: Tensor,
     state_x: Tensor | None,
     state_y: Tensor | None,
+    *,
+    a1_f64: float | None = None,
+    a2_f64: float | None = None,
 ) -> tuple[Tensor, Tensor, Tensor] | None:
     """Dispatch biquad filter to native kernel.
 
     Returns ``(y, new_state_x, new_state_y)`` or ``None`` if native
     extension is unavailable.
+
+    Parameters
+    ----------
+    a1_f64, a2_f64 : float, optional
+        Pre-extracted feedback coefficients as Python floats.  When supplied,
+        avoids a ``float()`` call per forward — which on CUDA triggers a
+        GPU→CPU synchronisation.
 
     """
     ext = _load_extension()
@@ -144,11 +154,11 @@ def biquad_forward(
         state_y = torch.zeros(C, 2, device=device, dtype=dtype)
 
     try:
-        # Extract a1, a2 as Python floats before any device transfer to avoid
-        # GPU→CPU sync when coefficients are on CUDA.
-        a_f64 = a if a.dtype == dtype else a.to(dtype=dtype)
-        a1 = float(a_f64[1])
-        a2 = float(a_f64[2])
+        # Use pre-extracted floats when available to avoid GPU→CPU sync.
+        if a1_f64 is None or a2_f64 is None:
+            a_f64 = a if a.dtype == dtype else a.to(dtype=dtype)
+            a1_f64 = float(a_f64[1])
+            a2_f64 = float(a_f64[2])
 
         x_f64 = x if x.dtype == dtype else x.to(dtype=dtype)
         b_f64 = b if b.dtype == dtype else b.to(dtype=dtype)
@@ -166,8 +176,8 @@ def biquad_forward(
         result: tuple[Tensor, Tensor, Tensor] = ext.biquad_forward(
             x_f64,
             b_f64,
-            a1,
-            a2,
+            a1_f64,
+            a2_f64,
             sx,
             sy,
         )
@@ -182,11 +192,20 @@ def parallel_iir_forward(
     sos: Tensor,
     state_x: Tensor | None,
     state_y: Tensor | None,
+    *,
+    sos_cpu: Tensor | None = None,
 ) -> tuple[Tensor, Tensor, Tensor] | None:
     """Dispatch SOS cascade to native kernel.
 
     Returns ``(y, new_state_x, new_state_y)`` or ``None`` if native
     extension is unavailable.
+
+    Parameters
+    ----------
+    sos_cpu : Tensor, optional
+        Pre-computed CPU copy of the SOS matrix (float64).  When supplied,
+        avoids a per-call CUDA→CPU transfer that otherwise triggers a device
+        synchronisation.
 
     """
     ext = _load_extension()
@@ -221,9 +240,10 @@ def parallel_iir_forward(
             else state_y.to(device=device, dtype=dtype)
         )
 
-        # Pre-compute a CPU copy of the SOS matrix so the CUDA kernel can
-        # extract scalar coefficients without a GPU→CPU sync.
-        sos_cpu = sos.detach().to(dtype=dtype, device="cpu") if sos.is_cuda else sos_device
+        # Use pre-computed CPU copy when available to avoid per-call
+        # CUDA→CPU transfer.  Fall back to computing it here.
+        if sos_cpu is None:
+            sos_cpu = sos.detach().to(dtype=dtype, device="cpu") if sos.is_cuda else sos_device
 
         result: tuple[Tensor, Tensor, Tensor] = ext.sos_forward(
             x_f64,

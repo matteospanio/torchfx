@@ -928,15 +928,12 @@ class Reverb(FX):
             if result is not None:
                 return result
 
-        # PyTorch fallback
-        # Pad waveform for delay
-        padded = torch.nn.functional.pad(waveform, (self.delay, 0))
-        # Create delayed signal
-        delayed = padded[..., : -self.delay]
-        # Feedback comb filter
-        reverb_signal = waveform + self.decay * delayed
-        # Wet/dry mix
-        output = (1 - self.mix) * waveform + self.mix * reverb_signal
+        # PyTorch fallback — fused: algebraically
+        # (1-mix)*x + mix*(x + decay*delayed) = x + mix*decay*delayed.
+        # Uses clone + in-place add to avoid pad allocation and intermediate tensors.
+        coeff = self.mix * self.decay
+        output = waveform.clone()
+        output[..., self.delay :].add_(waveform[..., : -self.delay], alpha=coeff)
         return output
 
 
@@ -1543,6 +1540,5 @@ class Delay(FX):
         # Extend original waveform to match delayed length for mixing
         waveform = self._extend_waveform(waveform, delayed.size(-1))
 
-        # Wet/dry mix
-        output = (1 - self.mix) * waveform + self.mix * delayed
-        return output
+        # Wet/dry mix — fused via lerp (single kernel, avoids intermediates).
+        return torch.lerp(waveform, delayed, self.mix)

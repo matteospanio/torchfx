@@ -75,6 +75,9 @@ class FusedSOSCascade(nn.Module):
         self._num_sections: int = self._sos.shape[0]
         self.fs: int | None = fs_val
 
+        # Cached device-matched copy — avoids per-forward .to() calls.
+        self._sos_device_cache: Tensor | None = None
+
         # State for stateful processing (initialized lazily).
         self._state_x: Tensor | None = None
         self._state_y: Tensor | None = None
@@ -108,6 +111,7 @@ class FusedSOSCascade(nn.Module):
         self._state_x = None
         self._state_y = None
         self._stateful = False
+        self._sos_device_cache = None
 
     @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
@@ -131,9 +135,12 @@ class FusedSOSCascade(nn.Module):
         C, T = x.shape
         K = self._num_sections
 
-        sos = self._sos
-        if sos.device != device or sos.dtype != torch.float64:
-            sos = sos.to(device=device, dtype=torch.float64)
+        # Use cached device-matched SOS to avoid per-forward .to() calls.
+        cache = self._sos_device_cache
+        if cache is None or cache.device != device:
+            cache = self._sos.to(device=device, dtype=torch.float64)
+            self._sos_device_cache = cache
+        sos = cache
 
         # Initialize or resize state.
         if self._state_x is None or self._state_x.shape[1] != C:
@@ -147,9 +154,16 @@ class FusedSOSCascade(nn.Module):
         assert self._state_y is not None
 
         # Try native kernel (single call for the entire cascade).
+        # Pass canonical CPU SOS to avoid per-call CUDA→CPU copies.
         from torchfx._ops import parallel_iir_forward
 
-        native_result = parallel_iir_forward(x, sos, self._state_x, self._state_y)
+        native_result = parallel_iir_forward(
+            x,
+            sos,
+            self._state_x,
+            self._state_y,
+            sos_cpu=self._sos,
+        )
         if native_result is not None:
             out, self._state_x, self._state_y = native_result
             result = out.to(dtype=out_dtype)
@@ -177,9 +191,12 @@ class FusedSOSCascade(nn.Module):
 
             out = _biquad_df1_fallback(section_input, b0, b1, b2, a1, a2, sx, sy)
 
+            # In-place state update to avoid per-section allocation.
             if T >= 2:
-                self._state_x[s] = torch.stack([section_input[:, -1], section_input[:, -2]], dim=1)
-                self._state_y[s] = torch.stack([out[:, -1], out[:, -2]], dim=1)
+                self._state_x[s, :, 0].copy_(section_input[:, -1])
+                self._state_x[s, :, 1].copy_(section_input[:, -2])
+                self._state_y[s, :, 0].copy_(out[:, -1])
+                self._state_y[s, :, 1].copy_(out[:, -2])
 
             section_input = out
 

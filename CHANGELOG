@@ -32,6 +32,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `filter/__base.py` 44% → 89%, `filter/filterbank.py` 73% → 100%,
   `filter/iir.py` 71% → 86%, `_ops.py` 64% → 84%.
 
+### Changed
+
+- **SOS coefficient caching** (`iir.py`, `fused.py`): device-matched SOS tensor
+  is now cached between forward calls, eliminating per-call `.to()` transfers.
+  The canonical CPU copy is passed directly to native kernels, avoiding a
+  per-call CUDA→CPU synchronisation that was 21% of Self CPU in batch profiles.
+- **Biquad coefficient caching** (`biquad.py`, `_ops.py`): feedback coefficients
+  `a1`, `a2` are pre-extracted as Python floats at coefficient-computation time
+  and passed through to native dispatch, eliminating per-forward `float()` calls
+  that trigger GPU→CPU sync on CUDA.
+- **In-place state updates** (`iir.py`, `fused.py`, `biquad.py`): replaced
+  per-section `torch.stack([...])` allocations in fallback DF1 loops with
+  `copy_()` into pre-existing state buffers.
+- **Reverb op fusion** (`effect.py`): algebraically simplified the PyTorch
+  fallback from 5 tensor ops (`pad → slice → mul → add → lerp`) to 2
+  (`clone → add_` with alpha), eliminating one intermediate allocation.
+- **Delay wet/dry mix** (`effect.py`): replaced `(1-mix)*x + mix*y` (3 ops)
+  with `torch.lerp(x, y, mix)` (1 fused op).
+
 ### Fixed
 
 - `AbstractFilter._has_computed_coeff` returned `True` for IIR subclasses whose
