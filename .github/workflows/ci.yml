@@ -14,6 +14,10 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
+    env:
+      # Install CPU-only PyTorch wheels (no CUDA) on GitHub Actions runners
+      UV_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,7 +42,7 @@ jobs:
           path: |
             .venv
             ~/.cache/uv
-          key: uv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
       - name: Install dependencies
         run: uv sync --all-groups
@@ -50,7 +54,7 @@ jobs:
           path: |
             .venv
             ~/.cache/uv
-          key: uv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
   lint:
     name: Lint (Python ${{ matrix.python-version }})
@@ -60,6 +64,9 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
       fail-fast: false
+
+    env:
+      UV_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
 
     steps:
       - name: Checkout code
@@ -79,7 +86,7 @@ jobs:
           path: |
             .venv
             ~/.cache/uv
-          key: uv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
       - name: Install dependencies
         run: uv sync --all-groups
@@ -96,6 +103,9 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
       fail-fast: false
 
+    env:
+      UV_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -114,7 +124,7 @@ jobs:
           path: |
             .venv
             ~/.cache/uv
-          key: uv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
       - name: Install dependencies
         run: uv sync --all-groups
@@ -132,6 +142,9 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
       fail-fast: false
+
+    env:
+      UV_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
 
     steps:
       - name: Checkout code
@@ -156,7 +169,7 @@ jobs:
           path: |
             .venv
             ~/.cache/uv
-          key: uv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
       - name: Install dependencies
         run: uv sync --all-groups
@@ -168,6 +181,9 @@ jobs:
     name: Coverage (Python 3.12)
     needs: prepare
     runs-on: ubuntu-latest
+
+    env:
+      UV_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
 
     steps:
       - name: Checkout code
@@ -192,7 +208,7 @@ jobs:
           path: |
             .venv
             ~/.cache/uv
-          key: uv-3.12-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          key: uv-cpu-3.12-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
       - name: Install dependencies
         run: uv sync --all-groups
