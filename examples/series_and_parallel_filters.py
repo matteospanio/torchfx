@@ -7,8 +7,6 @@
 
 import torchfx as fx
 import torch
-import torchaudio.transforms as T
-import torchaudio
 
 signal = fx.Wave.from_file("sample_input.wav")
 signal = signal.to("cuda" if torch.cuda.is_available() else "cpu")
@@ -16,7 +14,7 @@ signal = signal.to("cuda" if torch.cuda.is_available() else "cpu")
 result = (signal
     | fx.filter.LoButterworth(100, order=2)
     | fx.filter.HiButterworth(2000, order=2) + fx.filter.HiChebyshev1(2000, order=2)
-    | T.Vol(0.5)
+    | fx.effect.Gain(0.5)
 )
 
-torchaudio.save("examples/out.wav", result.ys.cpu(), signal.fs)
+result.save("examples/out.wav")

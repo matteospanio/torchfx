@@ -2,18 +2,13 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+import soundfile as sf
 import torch
 from typer.testing import CliRunner
-
-try:
-    import torchaudio
-except OSError:
-    pytest.skip("torchaudio not loadable (CUDA libs missing)", allow_module_level=True)
 
 from cli.app import app
 from cli.parsing import (
@@ -38,7 +33,7 @@ def wav_file(tmp_path: Path) -> Path:
     """Create a short mono WAV file for testing."""
     path = tmp_path / "test.wav"
     waveform = torch.randn(1, 44100)  # 1 second mono
-    torchaudio.save(str(path), waveform, 44100)
+    sf.write(str(path), waveform.squeeze(0).numpy(), 44100)
     return path
 
 
@@ -47,7 +42,7 @@ def stereo_wav(tmp_path: Path) -> Path:
     """Create a short stereo WAV file for testing."""
     path = tmp_path / "stereo.wav"
     waveform = torch.randn(2, 44100)
-    torchaudio.save(str(path), waveform, 44100)
+    sf.write(str(path), waveform.T.numpy(), 44100)
     return path
 
 
@@ -252,7 +247,7 @@ class TestProcessCommand:
         # Create multiple wav files
         for i in range(3):
             p = tmp_path / f"input_{i}.wav"
-            torchaudio.save(str(p), torch.randn(1, 22050), 44100)
+            sf.write(str(p), torch.randn(22050).numpy(), 44100)
 
         out_dir = tmp_path / "output"
         result = runner.invoke(
@@ -380,14 +375,16 @@ class TestConvertCommand:
         result = runner.invoke(app, ["convert", str(wav_file), str(out), "--rate", "16000"])
         assert result.exit_code == 0
         assert out.exists()
-        w, sr = torchaudio.load(str(out))
+        w_np, sr = sf.read(str(out), dtype="float32", always_2d=True)
+        w = torch.from_numpy(w_np.T)
         assert sr == 16000
 
     def test_channels(self, stereo_wav: Path, tmp_path: Path) -> None:
         out = tmp_path / "mono.wav"
         result = runner.invoke(app, ["convert", str(stereo_wav), str(out), "--channels", "1"])
         assert result.exit_code == 0
-        w, sr = torchaudio.load(str(out))
+        w_np, sr = sf.read(str(out), dtype="float32", always_2d=True)
+        w = torch.from_numpy(w_np.T)
         assert w.shape[0] == 1
 
     def test_file_not_found(self, tmp_path: Path) -> None:
@@ -404,7 +401,8 @@ class TestTrimCommand:
             app, ["trim", str(wav_file), str(out), "--start", "0.0", "--end", "0.5"]
         )
         assert result.exit_code == 0
-        w, sr = torchaudio.load(str(out))
+        w_np, sr = sf.read(str(out), dtype="float32", always_2d=True)
+        w = torch.from_numpy(w_np.T)
         # Should be roughly 0.5s
         assert w.shape[1] == pytest.approx(sr * 0.5, abs=1)
 
@@ -412,7 +410,8 @@ class TestTrimCommand:
         out = tmp_path / "clip2.wav"
         result = runner.invoke(app, ["trim", str(wav_file), str(out), "--duration", "0.3"])
         assert result.exit_code == 0
-        w, sr = torchaudio.load(str(out))
+        w_np, sr = sf.read(str(out), dtype="float32", always_2d=True)
+        w = torch.from_numpy(w_np.T)
         assert w.shape[1] == pytest.approx(sr * 0.3, abs=1)
 
     def test_trim_file_not_found(self, tmp_path: Path) -> None:
@@ -433,20 +432,21 @@ class TestConcatCommand:
     def test_concat_two_files(self, tmp_path: Path) -> None:
         a = tmp_path / "a.wav"
         b = tmp_path / "b.wav"
-        torchaudio.save(str(a), torch.randn(1, 22050), 44100)
-        torchaudio.save(str(b), torch.randn(1, 22050), 44100)
+        sf.write(str(a), torch.randn(22050).numpy(), 44100)
+        sf.write(str(b), torch.randn(22050).numpy(), 44100)
 
         out = tmp_path / "combined.wav"
         result = runner.invoke(app, ["concat", str(a), str(b), "--output", str(out)])
         assert result.exit_code == 0
-        w, sr = torchaudio.load(str(out))
+        w_np, sr = sf.read(str(out), dtype="float32", always_2d=True)
+        w = torch.from_numpy(w_np.T)
         assert w.shape[1] == 44100  # 22050 + 22050
 
     def test_concat_mismatch_rate(self, tmp_path: Path) -> None:
         a = tmp_path / "a.wav"
         b = tmp_path / "b.wav"
-        torchaudio.save(str(a), torch.randn(1, 22050), 44100)
-        torchaudio.save(str(b), torch.randn(1, 16000), 16000)
+        sf.write(str(a), torch.randn(22050).numpy(), 44100)
+        sf.write(str(b), torch.randn(16000).numpy(), 16000)
 
         out = tmp_path / "combined.wav"
         result = runner.invoke(app, ["concat", str(a), str(b), "--output", str(out)])
@@ -454,7 +454,7 @@ class TestConcatCommand:
 
     def test_concat_too_few_files(self, tmp_path: Path) -> None:
         a = tmp_path / "a.wav"
-        torchaudio.save(str(a), torch.randn(1, 22050), 44100)
+        sf.write(str(a), torch.randn(22050).numpy(), 44100)
 
         out = tmp_path / "combined.wav"
         result = runner.invoke(app, ["concat", str(a), "--output", str(out)])

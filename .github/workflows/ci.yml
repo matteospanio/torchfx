@@ -47,7 +47,7 @@ jobs:
         run: uv sync --all-groups
 
       - name: Install CPU-only PyTorch
-        run: uv pip install torch torchaudio torchcodec --index-url https://download.pytorch.org/whl/cpu
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Save dependency cache
         if: steps.cache-restore.outputs.cache-hit != 'true'
@@ -168,7 +168,7 @@ jobs:
         run: uv sync --all-groups
 
       - name: Install CPU-only PyTorch
-        run: uv pip install torch torchaudio torchcodec --index-url https://download.pytorch.org/whl/cpu
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Run tests with pytest
         run: uv run pytest
@@ -207,7 +207,7 @@ jobs:
         run: uv sync --all-groups
 
       - name: Install CPU-only PyTorch
-        run: uv pip install torch torchaudio torchcodec --index-url https://download.pytorch.org/whl/cpu
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Run tests under coverage
         run: uv run coverage run -m pytest

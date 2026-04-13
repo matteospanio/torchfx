@@ -410,22 +410,27 @@ class Wave:
         return Wave(func(self._ys, *args, **kwargs), self.fs)
 
     @classmethod
-    def from_file(cls, path: str | Path, *args, **kwargs) -> "Wave":  # type: ignore
+    def from_file(
+        cls,
+        path: str | Path,
+        frame_offset: int = 0,
+        num_frames: int = -1,
+    ) -> "Wave":
         """Load a Wave object from an audio file.
 
-        This classmethod uses torchaudio.load to read audio files, automatically
-        detecting the format and extracting metadata. Supported formats include WAV,
-        MP3, FLAC, OGG, and others depending on the available torchaudio backend.
+        Reads audio files via ``soundfile``, automatically detecting the format
+        and extracting metadata. Supported formats include WAV, FLAC, OGG, and
+        others depending on the ``libsndfile`` build.
 
         Parameters
         ----------
         path : str or Path
             Path to the audio file to load. Can be a string or pathlib.Path object.
-        *args
-            Additional positional arguments passed to torchaudio.load.
-        **kwargs
-            Additional keyword arguments passed to torchaudio.load. Common options
-            include frame_offset, num_frames, normalize, channels_first, and format.
+        frame_offset : int, optional
+            Number of frames to skip from the beginning (default: 0).
+        num_frames : int, optional
+            Maximum number of frames to read. ``-1`` reads the entire file
+            (default: ``-1``).
 
         Returns
         -------
@@ -449,49 +454,24 @@ class Wave:
 
         >>> wave = Wave.from_file("audio.flac")
         >>> print(wave.metadata)
-        {'num_frames': 220500, 'num_channels': 2, 'bits_per_sample': 16, ...}
-
-        Load different formats:
-
-        >>> wav_wave = Wave.from_file("audio.wav")
-        >>> mp3_wave = Wave.from_file("audio.mp3")
-        >>> flac_wave = Wave.from_file("audio.flac")
-
-        Load with normalization:
-
-        >>> # Normalize to [-1, 1] range
-        >>> wave = Wave.from_file("audio.wav", normalize=True)
-
-        Notes
-        -----
-        The method automatically extracts metadata including num_frames, num_channels,
-        bits_per_sample, and encoding when available. If metadata extraction fails,
-        an empty metadata dictionary is used instead.
-
-        The loaded audio tensor will be on CPU by default. Use the to() method or
-        device parameter in subsequent processing to move to GPU:
-
-        >>> wave = Wave.from_file("audio.wav").to("cuda")
-
-        Format support depends on the torchaudio backend (SoX or FFmpeg). Check
-        torchaudio documentation for your installation's supported formats.
+        {'num_frames': 220500, 'num_channels': 2, ...}
 
         See Also
         --------
         __init__ : Direct constructor for creating Wave from array data
         save : Save a Wave object to an audio file
-        torchaudio.load : Underlying function used for loading
 
         """
-        import torchaudio
+        import soundfile as _sf  # type: ignore[import-untyped]
 
-        data, fs = torchaudio.load(path, *args, **kwargs)
+        stop = None if num_frames == -1 else frame_offset + num_frames
+        data_np, fs = _sf.read(
+            str(path), start=frame_offset, stop=stop, dtype="float32", always_2d=True
+        )
+        # soundfile returns [samples, channels]; torch convention is [channels, samples]
+        data = torch.from_numpy(data_np.T.copy())
 
-        # Extract metadata from the file using soundfile (torchaudio.info
-        # was removed in torchaudio 2.10+).
         try:
-            import soundfile as _sf  # type: ignore[import-untyped]
-
             info = _sf.info(str(path))
             metadata = {
                 "num_frames": info.frames,
@@ -500,7 +480,6 @@ class Wave:
                 "format": info.format,
             }
         except Exception:
-            # If metadata extraction fails, continue without it
             metadata = {}
 
         return cls(data, fs, metadata=metadata)

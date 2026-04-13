@@ -86,13 +86,13 @@ def _process_pipe(
 
     import soundfile as sf  # type: ignore[import-untyped]
     import torch
-    import torchaudio
 
     stdin_bytes = sys.stdin.buffer.read()
     buf = io.BytesIO(stdin_bytes)
 
     if fmt == "wav":
-        waveform, sr = torchaudio.load(buf, format="wav")
+        data_np, sr = sf.read(buf, dtype="float32", always_2d=True)
+        waveform = torch.from_numpy(data_np.T.copy())
     else:
         import numpy as np
 
