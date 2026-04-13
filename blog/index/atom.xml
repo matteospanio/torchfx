@@ -2,10 +2,224 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
   <id>https://matteospanio.github.io/torchfx/</id>
   <title>TorchFX Blog</title>
-  <updated>2026-04-02T14:28:39.811435+00:00</updated>
+  <updated>2026-04-13T19:44:54.997762+00:00</updated>
   <link href="https://matteospanio.github.io/torchfx/"/>
   <link href="https://matteospanio.github.io/torchfx/blog/index/atom.xml" rel="self"/>
   <generator uri="https://ablog.readthedocs.io/" version="0.11.12">ABlog</generator>
+  <entry>
+    <id>https://matteospanio.github.io/torchfx/blog/2026-04-13-release-052.html</id>
+    <title>TorchFX 0.5.2: Transparent Filter Fusion &amp; Unified Forward Paths</title>
+    <updated>2026-04-13T00:00:00+00:00</updated>
+    <author>
+      <name>Matteo Spanio</name>
+    </author>
+    <content type="html">&lt;section id="torchfx-0-5-2-transparent-filter-fusion-unified-forward-paths"&gt;
+
+&lt;p&gt;&lt;strong&gt;TorchFX 0.5.2&lt;/strong&gt; focuses on two things: making filter chains faster without changing your code, and cleaning up internal duplication so the library is easier to maintain and extend.&lt;/p&gt;
+&lt;p&gt;The headline feature is &lt;strong&gt;deferred pipeline fusion&lt;/strong&gt; — when you chain IIR and biquad filters together, TorchFX now automatically merges them into a single fused kernel call, eliminating per-filter Python dispatch overhead.&lt;/p&gt;
+&lt;section id="deferred-pipeline-with-auto-fusion"&gt;
+&lt;h2&gt;Deferred Pipeline with Auto-Fusion&lt;/h2&gt;
+&lt;p&gt;Previously, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;wave&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;f1&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;f2&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;f3&lt;/span&gt;&lt;/code&gt; executed each filter immediately, one at a time. Now, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Wave.__or__&lt;/span&gt;&lt;/code&gt; accumulates filters in a lazy pipeline that only materializes when you access &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;.ys&lt;/span&gt;&lt;/code&gt;. At materialization time, consecutive IIR and biquad filters are automatically fused into a single &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;FusedSOSCascade&lt;/span&gt;&lt;/code&gt; — their SOS matrices are concatenated into one &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;[K_total,&lt;/span&gt; &lt;span class="pre"&gt;6]&lt;/span&gt;&lt;/code&gt; tensor and processed in a single native kernel call.&lt;/p&gt;
+&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Wave&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.filter.iir&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;LoButterworth&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;HiButterworth&lt;/span&gt;
+
+&lt;span class="n"&gt;wave&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Wave&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;from_file&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;input.wav&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="c1"&gt;# All three syntaxes benefit from auto-fusion:&lt;/span&gt;
+&lt;span class="n"&gt;result&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;wave&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;LoButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;4000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;HiButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;200&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;result&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;wave&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;LoButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;4000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;HiButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;200&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+&lt;span class="n"&gt;result&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;wave&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;nn&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Sequential&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;LoButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;4000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;HiButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;200&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Fusion is transparent — the numerical result is identical to applying filters sequentially. Non-fusible effects (like &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Gain&lt;/span&gt;&lt;/code&gt;) break the chain naturally: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;wave&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;f1&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;f2&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;Gain(0.5)&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;f3&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;f4&lt;/span&gt;&lt;/code&gt; fuses &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;f1+f2&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;f3+f4&lt;/span&gt;&lt;/code&gt; independently, with &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Gain&lt;/span&gt;&lt;/code&gt; applied between them.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="filterchain-and-the-pipe-operator"&gt;
+&lt;h2&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;FilterChain&lt;/span&gt;&lt;/code&gt; and the Pipe Operator&lt;/h2&gt;
+&lt;p&gt;The pipe operator &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;|&lt;/span&gt;&lt;/code&gt; now works directly between filters and effects, not just with &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Wave&lt;/span&gt;&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.filter.iir&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;LoButterworth&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;HiButterworth&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.effect&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Gain&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Build reusable chains&lt;/span&gt;
+&lt;span class="n"&gt;bandpass&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;HiButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;200&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;LoButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;4000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;chain&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;bandpass&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;Gain&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;0.8&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Apply to audio&lt;/span&gt;
+&lt;span class="n"&gt;result&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;wave&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;chain&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;FilterChain&lt;/span&gt;&lt;/code&gt; is an auto-flattening &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;nn.Sequential&lt;/span&gt;&lt;/code&gt; subclass — &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;(f1&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;f2)&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;f3&lt;/span&gt;&lt;/code&gt; produces a flat &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;FilterChain(f1,&lt;/span&gt; &lt;span class="pre"&gt;f2,&lt;/span&gt; &lt;span class="pre"&gt;f3)&lt;/span&gt;&lt;/code&gt;, not nested containers. It’s exported from the top-level &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt;&lt;/code&gt; package.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="unified-biquad-iir-forward-path"&gt;
+&lt;h2&gt;Unified Biquad/IIR Forward Path&lt;/h2&gt;
+&lt;p&gt;A biquad filter is mathematically a single second-order IIR section (K=1). Its SOS matrix is simply &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;[[b0,&lt;/span&gt; &lt;span class="pre"&gt;b1,&lt;/span&gt; &lt;span class="pre"&gt;b2,&lt;/span&gt; &lt;span class="pre"&gt;1.0,&lt;/span&gt; &lt;span class="pre"&gt;a1,&lt;/span&gt; &lt;span class="pre"&gt;a2]]&lt;/span&gt;&lt;/code&gt; — a &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;[1,&lt;/span&gt; &lt;span class="pre"&gt;6]&lt;/span&gt;&lt;/code&gt; tensor. Yet previously, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Biquad&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;IIR&lt;/span&gt;&lt;/code&gt; had completely separate forward-path implementations: different state management, different native dispatch, different fallback paths — about 200 lines of duplicated logic.&lt;/p&gt;
+&lt;p&gt;In 0.5.2, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Biquad&lt;/span&gt;&lt;/code&gt; stores its coefficients as a &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;[1,&lt;/span&gt; &lt;span class="pre"&gt;6]&lt;/span&gt;&lt;/code&gt; SOS tensor and delegates its &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;forward()&lt;/span&gt;&lt;/code&gt; to the same &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;_sos_cascade_forward&lt;/span&gt;&lt;/code&gt; helper used by &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;IIR&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;FusedSOSCascade&lt;/span&gt;&lt;/code&gt;. This:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Removes ~150 lines&lt;/strong&gt; of duplicated forward-path code&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Enables mixed fusion&lt;/strong&gt; — &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;wave&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;BiquadLPF(...)&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;LoButterworth(...)&lt;/span&gt;&lt;/code&gt; now auto-fuses&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Retains the specialized CUDA kernel&lt;/strong&gt; — when &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;num_sections&lt;/span&gt; &lt;span class="pre"&gt;==&lt;/span&gt; &lt;span class="pre"&gt;1&lt;/span&gt;&lt;/code&gt; on CUDA, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;_sos_cascade_forward&lt;/span&gt;&lt;/code&gt; dispatches to the optimized &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;biquad_forward&lt;/span&gt;&lt;/code&gt; kernel (128-channel batching per thread block), so single-biquad performance is preserved&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Maintains backward compatibility&lt;/strong&gt; — &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Biquad.b&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Biquad.a&lt;/span&gt;&lt;/code&gt; are still accessible as read-only properties&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section id="performance-improvements"&gt;
+&lt;h2&gt;Performance Improvements&lt;/h2&gt;
+&lt;p&gt;Beyond fusion, several targeted optimizations reduce per-call overhead:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;SOS coefficient caching&lt;/strong&gt;: device-matched SOS tensors are cached between forward calls, eliminating per-call &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;.to()&lt;/span&gt;&lt;/code&gt; device transfers that accounted for 21% of Self CPU time in batch profiles&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;In-place state updates&lt;/strong&gt;: replaced per-section &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torch.stack()&lt;/span&gt;&lt;/code&gt; allocations with &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;copy_()&lt;/span&gt;&lt;/code&gt; into pre-existing state buffers&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Reverb op fusion&lt;/strong&gt;: simplified the PyTorch fallback from 5 tensor ops to 2 (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;clone&lt;/span&gt;&lt;/code&gt; + &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;add_&lt;/span&gt;&lt;/code&gt; with alpha)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Delay wet/dry mix&lt;/strong&gt;: replaced &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;(1-mix)*x&lt;/span&gt; &lt;span class="pre"&gt;+&lt;/span&gt; &lt;span class="pre"&gt;mix*y&lt;/span&gt;&lt;/code&gt; (3 ops) with &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torch.lerp&lt;/span&gt;&lt;/code&gt; (1 fused op)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Biquad coefficient caching&lt;/strong&gt;: feedback coefficients &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;a1&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;a2&lt;/span&gt;&lt;/code&gt; are pre-extracted as Python floats at coefficient-computation time, eliminating per-forward GPU-to-CPU sync&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section id="benchmark-results-quadro-rtx-6000"&gt;
+&lt;h2&gt;Benchmark Results (Quadro RTX 6000)&lt;/h2&gt;
+&lt;p&gt;Measured on a Quadro RTX 6000 (24 GB), CUDA 12.8, PyTorch 2.10.0:&lt;/p&gt;
+&lt;section id="full-pipeline-bandpass-gain-lowpass-chain-44-1-khz-2ch-5s"&gt;
+&lt;h3&gt;Full Pipeline (bandpass + gain + lowpass chain, 44.1 kHz, 2ch, 5s)&lt;/h3&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;Device&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Mean&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head"&gt;&lt;p&gt;Relative&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;&lt;strong&gt;CUDA&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.57 ms&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;1.0x&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;CPU&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;5.98 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;1.7x slower&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="sos-cascade-44-1-khz-2ch-5s"&gt;
+&lt;h3&gt;SOS Cascade (44.1 kHz, 2ch, 5s)&lt;/h3&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head text-right"&gt;&lt;p&gt;Sections&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;CPU&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;CUDA&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td class="text-right"&gt;&lt;p&gt;4&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;1.66 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;1.28 ms&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td class="text-right"&gt;&lt;p&gt;8&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;2.63 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;2.43 ms&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="biquad-stateful-44-1-khz-1ch"&gt;
+&lt;h3&gt;Biquad Stateful (44.1 kHz, 1ch)&lt;/h3&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head text-right"&gt;&lt;p&gt;Duration&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;CPU&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;CUDA&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td class="text-right"&gt;&lt;p&gt;0.1s&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;93 us&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;239 us&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td class="text-right"&gt;&lt;p&gt;5s&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;1.17 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;487 us&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td class="text-right"&gt;&lt;p&gt;30s&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;7.0 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;2.37 ms&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="iir-6th-order-butterworth-44-1-khz"&gt;
+&lt;h3&gt;IIR 6th-order Butterworth (44.1 kHz)&lt;/h3&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;Backend&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;60s / 1ch&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;60s / 8ch&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;&lt;strong&gt;TorchFX GPU&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;15.2 ms&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;75.3 ms&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;TorchFX CPU&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;53.2 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;129.9 ms&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;SciPy&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;61.5 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;857.9 ms&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;Numba &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;&amp;#64;njit&lt;/span&gt;&lt;/code&gt; CPU&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;71.6 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;95.4 ms&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;Numba &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;&amp;#64;cuda.jit&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;1,584 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;1,652 ms&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;TorchFX GPU is &lt;strong&gt;4x faster than SciPy&lt;/strong&gt; for single-channel and &lt;strong&gt;11x faster&lt;/strong&gt; for 8-channel workloads. The Numba CUDA baseline confirms that the custom parallel scan kernel significantly outperforms a naive GPU implementation.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+&lt;section id="test-coverage"&gt;
+&lt;h2&gt;Test Coverage&lt;/h2&gt;
+&lt;p&gt;Test coverage increased from &lt;strong&gt;74% to 88%&lt;/strong&gt;, with a &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;fail_under&lt;/span&gt; &lt;span class="pre"&gt;=&lt;/span&gt; &lt;span class="pre"&gt;87&lt;/span&gt;&lt;/code&gt; gate enforced in CI. New test files:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;test_fused.py&lt;/span&gt;&lt;/code&gt; — FusedSOSCascade edge cases (9% to 75%)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;test_filter_base.py&lt;/span&gt;&lt;/code&gt; — AbstractFilter and ParallelFilterCombination (44% to 89%)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;test_filter_utils.py&lt;/span&gt;&lt;/code&gt; — filter utilities (0% to 91%)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;test_ops_dispatch.py&lt;/span&gt;&lt;/code&gt; — native dispatch and fallback paths (64% to 84%)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;test_filterbank.py&lt;/span&gt;&lt;/code&gt; — LogFilterBank (73% to 100%)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;test_iir_gaps.py&lt;/span&gt;&lt;/code&gt; — IIR edge cases (71% to 86%)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;test_chain_fusion.py&lt;/span&gt;&lt;/code&gt; — deferred pipeline, fusion, and FilterChain&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section id="bug-fixes"&gt;
+&lt;h2&gt;Bug Fixes&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;AbstractFilter._has_computed_coeff&lt;/span&gt;&lt;/code&gt; incorrectly returned &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;True&lt;/span&gt;&lt;/code&gt; for IIR subclasses whose &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;_sos&lt;/span&gt; &lt;span class="pre"&gt;is&lt;/span&gt; &lt;span class="pre"&gt;None&lt;/span&gt;&lt;/code&gt; — silently claiming coefficients were ready before &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;compute_coefficients()&lt;/span&gt;&lt;/code&gt; had run&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;ParallelFilterCombination.__init__&lt;/span&gt;&lt;/code&gt; assigned &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;self.fs&lt;/span&gt;&lt;/code&gt; before &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;self.filters&lt;/span&gt;&lt;/code&gt;, crashing when &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;fs&lt;/span&gt;&lt;/code&gt; was passed at construction time&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;iir_cpu.cpp&lt;/span&gt;&lt;/code&gt; used a hardcoded &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;double&lt;/span&gt; &lt;span class="pre"&gt;sec_sx0[16]&lt;/span&gt;&lt;/code&gt; stack array, silently overflowing for filters with &amp;gt;16 SOS sections (order &amp;gt;32). Now falls back to heap allocation for high orders.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section id="installation"&gt;
+&lt;h2&gt;Installation&lt;/h2&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;==&lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.5.2
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;blockquote&gt;
+&lt;div&gt;&lt;p&gt;Benchmarks were run on a Quadro RTX 6000 (24 GB) with CUDA 12.8 and PyTorch 2.10.0. Performance varies by hardware and software configuration — always benchmark on your target system.&lt;/p&gt;
+&lt;/div&gt;&lt;/blockquote&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+</content>
+    <link href="https://matteospanio.github.io/torchfx/blog/2026-04-13-release-052.html"/>
+    <summary>TorchFX 0.5.2 focuses on two things: making filter chains faster without changing your code, and cleaning up internal duplication so the library is easier to maintain and extend.</summary>
+    <category term="fusion" label="fusion"/>
+    <category term="performance" label="performance"/>
+    <category term="pipeline" label="pipeline"/>
+    <category term="release" label="release"/>
+    <published>2026-04-13T00:00:00+00:00</published>
+  </entry>
   <entry>
     <id>https://matteospanio.github.io/torchfx/blog/2026-03-27-release-050.html</id>
     <title>TorchFX 0.5.0: Custom CUDA Kernels &amp; Native C++ Extension</title>
@@ -1336,13 +1550,13 @@ As the project grows, the documentation will continue to improve with feedback f
 This can be useful for offline exploration, archival purposes, or experimentation.&lt;/p&gt;
 &lt;p&gt;The documentation dump is available in the following branch:&lt;/p&gt;
 &lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;👉 &lt;a class="github reference external" href="https://github.com/kaigouthro/torchfx/tree/deepwiki-01-2026"&gt;kaigouthro/torchfx&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;👉 &lt;a class="reference external" href="https://github.com/kaigouthro/torchfx/tree/deepwiki-01-2026"&gt;https://github.com/kaigouthro/torchfx/tree/deepwiki-01-2026&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/section&gt;
 &lt;section id="a-community-driven-improvement"&gt;
 &lt;h2&gt;A Community-Driven Improvement&lt;/h2&gt;
 &lt;p&gt;This update is a great example of how community contributions can improve a project in ways that go beyond code alone. Better visibility and alternative documentation formats make TorchFX easier to approach, understand, and extend.&lt;/p&gt;
-&lt;p&gt;Many thanks to &lt;a class="github reference external" href="https://github.com/kaigouthro"&gt;kaigouthro&lt;/a&gt; for the contribution!&lt;/p&gt;
+&lt;p&gt;Many thanks to &lt;a class="reference external" href="https://github.com/kaigouthro"&gt;https://github.com/kaigouthro&lt;/a&gt; for the contribution!&lt;/p&gt;
 &lt;p&gt;As always, feedback and contributions are welcome — whether they come in the form of code, documentation, or ideas.&lt;/p&gt;
 &lt;/section&gt;
 &lt;/section&gt;
@@ -1368,7 +1582,7 @@ This can be useful for offline exploration, archival purposes, or experimentatio
 &lt;section id="added"&gt;
 &lt;h3&gt;Added&lt;/h3&gt;
 &lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Delay&lt;/span&gt;&lt;/code&gt; effect&lt;/strong&gt; with BPM synchronization option by &lt;a class="github reference external" href="https://github.com/itsuzef"&gt;itsuzef&lt;/a&gt;, supporting multiple delay strategies&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Delay&lt;/span&gt;&lt;/code&gt; effect&lt;/strong&gt; with BPM synchronization option by &lt;a class="reference external" href="https://github.com/itsuzef"&gt;https://github.com/itsuzef&lt;/a&gt;, supporting multiple delay strategies&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;New examples in the &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;examples/&lt;/span&gt;&lt;/code&gt; folder:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;delay.py&lt;/span&gt;&lt;/code&gt; showcasing the new Delay effect&lt;/p&gt;&lt;/li&gt;
@@ -1494,7 +1708,7 @@ TorchFX even appeared among the &lt;strong&gt;trending projects on Papers With C
 &lt;section id="project-links"&gt;
 &lt;h2&gt;🔗 Project Links&lt;/h2&gt;
 &lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;📦 GitHub repository: &lt;a class="github reference external" href="https://github.com/matteospanio/torchfx"&gt;matteospanio/torchfx&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;📦 GitHub repository: &lt;a class="reference external" href="https://github.com/matteospanio/torchfx"&gt;https://github.com/matteospanio/torchfx&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;📖 Documentation: &lt;a class="reference external" href="https://matteospanio.github.io/torchfx/"&gt;https://matteospanio.github.io/torchfx/&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;🧾 arXiv preprint: &lt;a class="reference external" href="https://arxiv.org/abs/2504.08624"&gt;https://arxiv.org/abs/2504.08624&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;

@@ -26,17 +26,17 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/fontawesome.js?digest=7f76b32a3354e82990f2"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2" />
 
     <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
@@ -479,11 +479,18 @@ mermaid.initialize(
 window.addEventListener("load", load);
 window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/torchfx/wave';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" /> 
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+   
 <link
   rel="alternate"
   type="application/atom+xml"
@@ -492,13 +499,11 @@ window.runMermaid = runMermaid;</script>
 />
   
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
@@ -530,7 +535,7 @@ window.runMermaid = runMermaid;</script>
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
   <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
@@ -882,7 +887,6 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
@@ -967,7 +971,6 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">ys</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">__device</span><span class="p">:</span> <span class="n">Device</span>  <span class="c1"># private field</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tp</span><span class="o">.</span><span class="n">Any</span><span class="p">]</span>
@@ -1026,9 +1029,73 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ys</span> <span class="o">=</span> <span class="n">Tensor</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Audio signal tensor with shape (channels, samples).&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_materialize</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span>
+
+    <span class="nd">@ys</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_materialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the deferred pipeline, fusing consecutive IIR/biquad filters.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.biquad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Biquad</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.fused</span><span class="w"> </span><span class="kn">import</span> <span class="n">FusedSOSCascade</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.iir</span><span class="w"> </span><span class="kn">import</span> <span class="n">IIR</span>
+
+        <span class="n">plan</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">iir_run</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IIR</span> <span class="o">|</span> <span class="n">Biquad</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">flush</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">nonlocal</span> <span class="n">iir_run</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">iir_run</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FusedSOSCascade</span><span class="p">(</span><span class="o">*</span><span class="n">iir_run</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">iir_run</span><span class="p">:</span>
+                <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iir_run</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">iir_run</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">IIR</span><span class="p">,</span> <span class="n">Biquad</span><span class="p">)):</span>
+                <span class="n">iir_run</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">flush</span><span class="p">()</span>
+                <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="n">flush</span><span class="p">()</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">plan</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">module</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_deferred</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">ys</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tp</span><span class="o">.</span><span class="n">Any</span><span class="p">],</span>
+        <span class="n">pipeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Wave&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a Wave with a deferred pipeline (internal use).&quot;&quot;&quot;</span>
+        <span class="n">wave</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="n">wave</span><span class="o">.</span><span class="n">_ys</span> <span class="o">=</span> <span class="n">ys</span>
+        <span class="n">wave</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="n">wave</span><span class="o">.</span><span class="n">_Wave__device</span> <span class="o">=</span> <span class="n">device</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">wave</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="n">wave</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="n">pipeline</span>
+        <span class="k">return</span> <span class="n">wave</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Device</span><span class="p">:</span>
@@ -1103,7 +1170,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__device</span> <span class="o">=</span> <span class="n">device</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_materialize</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
@@ -1184,28 +1252,34 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        to : Move the Wave to a different device before transformation</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Wave</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_materialize</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Wave</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ys</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Wave.from_file">
 <a class="viewcode-back" href="../../api/core.html#torchfx.Wave.from_file">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Wave&quot;</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_file</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">frame_offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">num_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Wave&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a Wave object from an audio file.</span>
 
-<span class="sd">        This classmethod uses torchaudio.load to read audio files, automatically</span>
-<span class="sd">        detecting the format and extracting metadata. Supported formats include WAV,</span>
-<span class="sd">        MP3, FLAC, OGG, and others depending on the available torchaudio backend.</span>
+<span class="sd">        Reads audio files via ``soundfile``, automatically detecting the format</span>
+<span class="sd">        and extracting metadata. Supported formats include WAV, FLAC, OGG, and</span>
+<span class="sd">        others depending on the ``libsndfile`` build.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        path : str or Path</span>
 <span class="sd">            Path to the audio file to load. Can be a string or pathlib.Path object.</span>
-<span class="sd">        *args</span>
-<span class="sd">            Additional positional arguments passed to torchaudio.load.</span>
-<span class="sd">        **kwargs</span>
-<span class="sd">            Additional keyword arguments passed to torchaudio.load. Common options</span>
-<span class="sd">            include frame_offset, num_frames, normalize, channels_first, and format.</span>
+<span class="sd">        frame_offset : int, optional</span>
+<span class="sd">            Number of frames to skip from the beginning (default: 0).</span>
+<span class="sd">        num_frames : int, optional</span>
+<span class="sd">            Maximum number of frames to read. ``-1`` reads the entire file</span>
+<span class="sd">            (default: ``-1``).</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -1229,47 +1303,24 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.flac&quot;)</span>
 <span class="sd">        &gt;&gt;&gt; print(wave.metadata)</span>
-<span class="sd">        {&#39;num_frames&#39;: 220500, &#39;num_channels&#39;: 2, &#39;bits_per_sample&#39;: 16, ...}</span>
-
-<span class="sd">        Load different formats:</span>
-
-<span class="sd">        &gt;&gt;&gt; wav_wave = Wave.from_file(&quot;audio.wav&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; mp3_wave = Wave.from_file(&quot;audio.mp3&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; flac_wave = Wave.from_file(&quot;audio.flac&quot;)</span>
-
-<span class="sd">        Load with normalization:</span>
-
-<span class="sd">        &gt;&gt;&gt; # Normalize to [-1, 1] range</span>
-<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;, normalize=True)</span>
-
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-<span class="sd">        The method automatically extracts metadata including num_frames, num_channels,</span>
-<span class="sd">        bits_per_sample, and encoding when available. If metadata extraction fails,</span>
-<span class="sd">        an empty metadata dictionary is used instead.</span>
-
-<span class="sd">        The loaded audio tensor will be on CPU by default. Use the to() method or</span>
-<span class="sd">        device parameter in subsequent processing to move to GPU:</span>
-
-<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;audio.wav&quot;).to(&quot;cuda&quot;)</span>
-
-<span class="sd">        Format support depends on the torchaudio backend (SoX or FFmpeg). Check</span>
-<span class="sd">        torchaudio documentation for your installation&#39;s supported formats.</span>
+<span class="sd">        {&#39;num_frames&#39;: 220500, &#39;num_channels&#39;: 2, ...}</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
 <span class="sd">        __init__ : Direct constructor for creating Wave from array data</span>
 <span class="sd">        save : Save a Wave object to an audio file</span>
-<span class="sd">        torchaudio.load : Underlying function used for loading</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">data</span><span class="p">,</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">torchaudio</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">soundfile</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_sf</span>  <span class="c1"># type: ignore[import-untyped]</span>
 
-        <span class="c1"># Extract metadata from the file using soundfile (torchaudio.info</span>
-        <span class="c1"># was removed in torchaudio 2.10+).</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">num_frames</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="n">frame_offset</span> <span class="o">+</span> <span class="n">num_frames</span>
+        <span class="n">data_np</span><span class="p">,</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">_sf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">start</span><span class="o">=</span><span class="n">frame_offset</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">always_2d</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="c1"># soundfile returns [samples, channels]; torch convention is [channels, samples]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">data_np</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+
         <span class="k">try</span><span class="p">:</span>
-            <span class="kn">import</span><span class="w"> </span><span class="nn">soundfile</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_sf</span>  <span class="c1"># type: ignore[import-untyped]</span>
-
             <span class="n">info</span> <span class="o">=</span> <span class="n">_sf</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
             <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;num_frames&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span>
@@ -1278,7 +1329,6 @@ window.runMermaid = runMermaid;</script>
                 <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">format</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="c1"># If metadata extraction fails, continue without it</span>
             <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
@@ -1486,15 +1536,23 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected nn.Module, but got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> instead.&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">FX</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__update_config</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="c1"># Walk all submodules (including f itself) so that arbitrarily nested</span>
+        <span class="c1"># Sequential / ModuleList structures get their fs configured.</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">FX</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__update_config</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span> <span class="o">|</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">)):</span>
-            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">FX</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">__update_config</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="c1"># Flatten Sequential into individual steps so consecutive IIR filters</span>
+        <span class="c1"># are visible for fusion at materialization time.</span>
+        <span class="n">new_steps</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">children</span><span class="p">())</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">f</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">forward</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Wave</span><span class="o">.</span><span class="n">_deferred</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">+</span> <span class="n">new_steps</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__update_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">FX</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the configuration of the filter with the wave&#39;s sampling frequency.&quot;&quot;&quot;</span>
@@ -1878,8 +1936,8 @@ window.runMermaid = runMermaid;</script>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1913,7 +1971,7 @@ window.runMermaid = runMermaid;</script>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.0.
 </p></div>
       
     </div>

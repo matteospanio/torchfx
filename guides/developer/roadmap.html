@@ -27,30 +27,37 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/fontawesome.js?digest=7f76b32a3354e82990f2"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2" />
 
     <script src="../../_static/documentation_options.js?v=6f8f3740"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/roadmap';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="API Reference" href="../../api/index.html" />
     <link rel="prev" title="Style Guide" href="style_guide.html" /> 
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" /> 
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+   
 <link
   rel="alternate"
   type="application/atom+xml"
@@ -59,13 +66,11 @@
 />
   
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
@@ -97,7 +102,7 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
   <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
@@ -347,7 +352,14 @@
   </div>
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar"><svg class="pst-icon svg-inline--fa" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
         <div class="sidebar-primary-item">
+
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
@@ -455,7 +467,7 @@
                 <article class="bd-article">
                    <section id="roadmap-to-v1-0-0">
 <h1>Roadmap to v1.0.0<a class="headerlink" href="#roadmap-to-v1-0-0" title="Link to this heading">#</a></h1>
-<p><strong>Current Version:</strong> 0.4.0-dev (Beta Track)
+<p><strong>Current Version:</strong> 0.5.2 (Beta Track)
 <strong>Target:</strong> v1.0.0 Stable Release</p>
 <p>This roadmap outlines the development path for TorchFX from the current beta state to a production-ready v1.0.0 release. The plan is organized into major epics, each containing specific deliverables and tasks.</p>
 <section id="vision">
@@ -477,10 +489,12 @@
 <h3>Strengths<a class="headerlink" href="#strengths" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>✅ Solid core DSP architecture (~2000 LOC)</p></li>
-<li><p>✅ GPU acceleration working</p></li>
-<li><p>✅ 393 tests with &gt;90% coverage</p></li>
+<li><p>✅ GPU acceleration with custom CUDA kernels (parallel scan IIR, biquad, delay)</p></li>
+<li><p>✅ JIT-compiled C++/CUDA native extension with automatic fallback</p></li>
+<li><p>✅ Transparent IIR/biquad filter fusion via deferred pipeline</p></li>
+<li><p>✅ 88% test coverage with coverage gate enforced in CI</p></li>
 <li><p>✅ Published research paper (arXiv:2504.08624)</p></li>
-<li><p>✅ Clean API with pipe operator support</p></li>
+<li><p>✅ Clean API with pipe operator support (<code class="docutils literal notranslate"><span class="pre">Wave</span> <span class="pre">|</span> <span class="pre">filter</span></code>, <code class="docutils literal notranslate"><span class="pre">filter</span> <span class="pre">|</span> <span class="pre">filter</span></code>)</p></li>
 <li><p>✅ Professional Sphinx documentation with tutorials</p></li>
 <li><p>✅ Real-time audio processing with circular buffers</p></li>
 <li><p>✅ Full-featured CLI with sox compatibility</p></li>
@@ -492,12 +506,11 @@
 <section id="gaps">
 <h3>Gaps<a class="headerlink" href="#gaps" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>❌ No custom CUDA kernels yet</p></li>
 <li><p>❌ Limited ML integration examples</p></li>
 <li><p>❌ Missing some advanced effects (compressor, phaser, pitch shift)</p></li>
 <li><p>❌ No VST3 wrapper</p></li>
 </ul>
-<p><strong>Estimated Completion:</strong> ~85% ready for v1.0.0</p>
+<p><strong>Estimated Completion:</strong> ~90% ready for v1.0.0</p>
 </section>
 </section>
 <hr class="docutils" />
@@ -931,56 +944,62 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <hr class="docutils" />
 <section id="epic-4-performance-optimization-cuda">
 <h2>Epic 4: Performance Optimization &amp; CUDA<a class="headerlink" href="#epic-4-performance-optimization-cuda" title="Link to this heading">#</a></h2>
-<p><strong>Priority:</strong> Medium (Can be v1.1)
+<p><strong>Priority:</strong> Medium — <strong>LARGELY COMPLETED</strong> (v0.5.0–v0.5.2)
 <strong>Goal:</strong> Maximize throughput with custom CUDA kernels.</p>
 <section id="cuda-development-infrastructure">
-<h3>4.1 CUDA Development Infrastructure<a class="headerlink" href="#cuda-development-infrastructure" title="Link to this heading">#</a></h3>
+<h3>4.1 CUDA Development Infrastructure ✅<a class="headerlink" href="#cuda-development-infrastructure" title="Link to this heading">#</a></h3>
 <ul class="contains-task-list simple">
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>CUDA extension build system</strong></p>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>CUDA extension build system</strong></p>
 <ul>
-<li><p>PyTorch C++ extension API</p></li>
-<li><p>Auto CUDA arch detection</p></li>
-<li><p>Fallback to PyTorch if CUDA unavailable</p></li>
+<li><p>✅ JIT-compiled C++/CUDA extension via <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension.load()</span></code></p></li>
+<li><p>✅ Auto CUDA arch detection</p></li>
+<li><p>✅ Automatic fallback to pure-PyTorch if compilation fails</p></li>
+<li><p>✅ CPU-only C++ extension support (no CUDA toolkit required)</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA=1</span></code> environment variable to force CPU-only</p></li>
+<li><p>✅ Cached in <code class="docutils literal notranslate"><span class="pre">~/.cache/torch_extensions/</span></code></p></li>
 </ul>
 </li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Kernel development tools</strong></p>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Kernel development tools</strong></p>
 <ul>
-<li><p>CUDA profiling integration (nvprof, Nsight)</p></li>
-<li><p>Unit tests for CUDA kernels</p></li>
-<li><p>Benchmarking harness</p></li>
+<li><p>✅ CUDA kernel unit tests and fallback behavior tests</p></li>
+<li><p>✅ pytest-benchmark harness with 5-backend comparison</p></li>
+<li><p>✅ SLURM harness for cluster GPU benchmarks (<code class="docutils literal notranslate"><span class="pre">benchmarks/slurm/</span></code>)</p></li>
+<li><p>✅ CPU + CUDA profile scenarios (<code class="docutils literal notranslate"><span class="pre">benchmarks/profiles/</span></code>)</p></li>
 </ul>
 </li>
 </ul>
 </section>
-<section id="iir-filter-cuda-kernels-priority-1">
-<h3>4.2 IIR Filter CUDA Kernels (Priority 1)<a class="headerlink" href="#iir-filter-cuda-kernels-priority-1" title="Link to this heading">#</a></h3>
+<section id="iir-filter-cuda-kernels">
+<h3>4.2 IIR Filter CUDA Kernels ✅<a class="headerlink" href="#iir-filter-cuda-kernels" title="Link to this heading">#</a></h3>
 <ul class="contains-task-list simple">
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Parallel IIR implementation</strong></p>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Parallel IIR implementation</strong></p>
 <ul>
-<li><p>Parallel prefix scan for state propagation</p></li>
-<li><p>Target: 2-3x speedup for batch processing</p></li>
+<li><p>✅ Blelloch parallel prefix scan — O(N) total work, 24 KB shared memory per block</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">PARALLEL_SCAN_THRESHOLD</span></code> (default 2048) for automatic sequential/parallel dispatch</p></li>
+<li><p>✅ 4x faster than SciPy (single-channel), 11x faster (8-channel) on RTX 6000</p></li>
 </ul>
 </li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Biquad cascade optimization</strong></p>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Biquad cascade optimization</strong></p>
 <ul>
-<li><p>Fuse multiple biquad sections</p></li>
-<li><p>Reduce memory traffic</p></li>
+<li><p>✅ Specialized biquad CUDA kernel — 128 channels batched per thread block</p></li>
+<li><p>✅ Scalar coefficient passing to eliminate GPU→CPU sync</p></li>
+<li><p>✅ Retained as fast path for K=1 in unified <code class="docutils literal notranslate"><span class="pre">_sos_cascade_forward</span></code></p></li>
 </ul>
 </li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Stability guarantees</strong></p>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Stability guarantees</strong></p>
 <ul>
-<li><p>Match scipy/PyTorch numerical behavior</p></li>
+<li><p>✅ SOS coefficients (v0.5.1) for numerical precision at high filter orders</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">torch.testing.assert_close</span></code> validation against SciPy reference</p></li>
 </ul>
 </li>
 </ul>
 </section>
-<section id="time-domain-effects-cuda-kernels-priority-2">
-<h3>4.3 Time-Domain Effects CUDA Kernels (Priority 2)<a class="headerlink" href="#time-domain-effects-cuda-kernels-priority-2" title="Link to this heading">#</a></h3>
+<section id="time-domain-effects-cuda-kernels">
+<h3>4.3 Time-Domain Effects CUDA Kernels<a class="headerlink" href="#time-domain-effects-cuda-kernels" title="Link to this heading">#</a></h3>
 <ul class="contains-task-list simple">
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Optimized delay line</strong></p>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Optimized delay line</strong></p>
 <ul>
-<li><p>Circular buffer with shared memory</p></li>
-<li><p>Interpolation for fractional delays</p></li>
+<li><p>✅ CUDA delay forward kernel</p></li>
 </ul>
 </li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Reverb optimization</strong></p>
@@ -991,35 +1010,49 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 </li>
 </ul>
 </section>
-<section id="batch-processing-optimizations-priority-3">
-<h3>4.4 Batch Processing Optimizations (Priority 3)<a class="headerlink" href="#batch-processing-optimizations-priority-3" title="Link to this heading">#</a></h3>
+<section id="batch-processing-optimizations">
+<h3>4.4 Batch Processing Optimizations<a class="headerlink" href="#batch-processing-optimizations" title="Link to this heading">#</a></h3>
 <ul class="contains-task-list simple">
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Operator fusion</strong></p>
+<ul class="contains-task-list">
+<li><p>✅ Deferred pipeline with auto-fusion — consecutive IIR/biquad filters merged
+into single <code class="docutils literal notranslate"><span class="pre">FusedSOSCascade</span></code> kernel call (~2.5x faster for IIR chains)</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">FilterChain</span></code> and <code class="docutils literal notranslate"><span class="pre">FX.__or__</span></code> for composable filter chains</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Fuse non-IIR effects: <code class="docutils literal notranslate"><span class="pre">gain</span> <span class="pre">+</span> <span class="pre">filter</span> <span class="pre">+</span> <span class="pre">normalize</span></code> → single kernel</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Memory optimization</strong></p>
+<ul>
+<li><p>✅ SOS coefficient device caching (eliminates per-forward <code class="docutils literal notranslate"><span class="pre">.to()</span></code>)</p></li>
+<li><p>✅ In-place state updates (<code class="docutils literal notranslate"><span class="pre">copy_()</span></code> instead of <code class="docutils literal notranslate"><span class="pre">torch.stack()</span></code>)</p></li>
+<li><p>✅ Reverb op fusion (5 tensor ops → 2)</p></li>
+<li><p>✅ Delay wet/dry mix via <code class="docutils literal notranslate"><span class="pre">torch.lerp</span></code> (3 ops → 1)</p></li>
+</ul>
+</li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Multi-file batch processing</strong></p>
 <ul>
 <li><p>Process multiple files in single kernel launch</p></li>
 <li><p>Maximize GPU occupancy</p></li>
 </ul>
 </li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Operator fusion</strong></p>
-<ul>
-<li><p>Fuse multiple effects: <code class="docutils literal notranslate"><span class="pre">gain</span> <span class="pre">+</span> <span class="pre">filter</span> <span class="pre">+</span> <span class="pre">normalize</span></code> → single kernel</p></li>
-</ul>
-</li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Memory optimization</strong></p>
-<ul>
-<li><p>Tensor memory pooling</p></li>
-<li><p>In-place operations</p></li>
-</ul>
-</li>
 </ul>
 </section>
 <section id="performance-benchmarking">
-<h3>4.5 Performance Benchmarking<a class="headerlink" href="#performance-benchmarking" title="Link to this heading">#</a></h3>
+<h3>4.5 Performance Benchmarking ✅<a class="headerlink" href="#performance-benchmarking" title="Link to this heading">#</a></h3>
 <ul class="contains-task-list simple">
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Comprehensive benchmark suite</strong></p>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Comprehensive benchmark suite</strong></p>
 <ul>
-<li><p>PyTorch vs. CUDA vs. CPU comparison</p></li>
-<li><p>Report throughput and latency</p></li>
+<li><p>✅ pytest-benchmark suite under <code class="docutils literal notranslate"><span class="pre">benchmarks/</span></code></p></li>
+<li><p>✅ 5 backends: TorchFX GPU, TorchFX CPU, SciPy, Numba <code class="docutils literal notranslate"><span class="pre">&#64;njit</span></code>, Numba <code class="docutils literal notranslate"><span class="pre">&#64;cuda.jit</span></code></p></li>
+<li><p>✅ IIR, biquad, pipeline, FIR, FFT convolution benchmarks</p></li>
+<li><p>✅ Signal durations 1–60s, 1–8 channels</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Performance baseline</strong></p>
+<ul>
+<li><p>✅ Phase 0 baseline documented (<code class="docutils literal notranslate"><span class="pre">docs/source/perf/baseline.md</span></code>)</p></li>
+<li><p>✅ CPU <code class="docutils literal notranslate"><span class="pre">torch.profiler</span></code> findings captured</p></li>
+<li><p>✅ Coverage gate <code class="docutils literal notranslate"><span class="pre">fail_under</span> <span class="pre">=</span> <span class="pre">87</span></code> enforced in CI</p></li>
 </ul>
 </li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Performance regression testing</strong></p>
@@ -1206,7 +1239,7 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <li><p>✅ REPL commands (add, remove, list, clear, load, save)</p></li>
 <li><p>✅ Watch mode (file monitoring)</p></li>
 <li><p>✅ 71 CLI tests</p></li>
-<li><p>✅ Total: <strong>393 tests</strong> with &gt;90% coverage</p></li>
+<li><p>✅ Total: <strong>400+ tests</strong> with 88% coverage</p></li>
 </ul>
 </li>
 </ul>
@@ -1281,32 +1314,30 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 </section>
 <section id="ci-cd-improvements">
 <h3>6.5 CI/CD Improvements<a class="headerlink" href="#ci-cd-improvements" title="Link to this heading">#</a></h3>
+<ul class="contains-task-list simple">
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Coverage reporting</strong></p>
 <ul class="contains-task-list">
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Coverage reporting</strong></p>
-<ul>
-<li><p>Codecov integration</p></li>
-<li><blockquote>
-<div><p>90% coverage enforcement</p>
-</div></blockquote>
-</li>
-<li><p>Coverage badge</p></li>
+<li><p>✅ HTML coverage CI job on Python 3.12</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">fail_under</span> <span class="pre">=</span> <span class="pre">87</span></code> coverage gate enforced</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Codecov integration</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Coverage badge</p></li>
 </ul>
 </li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Multi-platform testing</strong></p>
-<ul class="simple">
+<ul>
 <li><p>Linux, macOS, Windows</p></li>
 <li><p>Python 3.10-3.13</p></li>
 <li><p>With/without CUDA</p></li>
 </ul>
 </li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>GPU CI runner</strong></p>
-<ul class="simple">
+<ul>
 <li><p>Self-hosted or cloud GPU</p></li>
 <li><p>CUDA tests and benchmarks</p></li>
 </ul>
 </li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Automated releases</strong></p>
-<ul class="simple">
+<ul>
 <li><p>PyPI publishing on tag</p></li>
 <li><p>Changelog generation</p></li>
 </ul>
@@ -1414,14 +1445,143 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 </li>
 </ul>
 </section>
-<section id="phase-3-optimization-polish-v1-0">
-<h3>Phase 3: Optimization &amp; Polish (v1.0)<a class="headerlink" href="#phase-3-optimization-polish-v1-0" title="Link to this heading">#</a></h3>
-<p><strong>Priority:</strong> Medium — <strong>NEXT</strong></p>
+<section id="phase-3-cuda-kernels-native-extension-v0-5-0-completed">
+<h3>Phase 3: CUDA Kernels &amp; Native Extension (v0.5.0) ✅ <strong>COMPLETED</strong><a class="headerlink" href="#phase-3-cuda-kernels-native-extension-v0-5-0-completed" title="Link to this heading">#</a></h3>
+<p><strong>Priority:</strong> Medium</p>
 <ul class="simple">
-<li><p><strong>Epic 4: CUDA Kernels</strong> (can start early)</p>
+<li><p><strong>Epic 4: CUDA Kernels</strong> ✅</p>
 <ul>
-<li><p>IIR kernels (priority)</p></li>
-<li><p>Effect kernels</p></li>
+<li><p>✅ JIT-compiled C++/CUDA native extension with automatic fallback</p></li>
+<li><p>✅ Blelloch parallel prefix scan for IIR filters (O(N) total work)</p></li>
+<li><p>✅ Specialized biquad CUDA kernel (128-channel batching)</p></li>
+<li><p>✅ CUDA delay forward kernel</p></li>
+<li><p>✅ CPU-only C++ extension (~2400x faster than pure-Python for stateful IIR)</p></li>
+<li><p>✅ FFT-based FIR convolution (up to 10x faster for kernel sizes ≥ 64)</p></li>
+<li><p>✅ LogFilterBank for logarithmic frequency band decomposition</p></li>
+<li><p>✅ pytest-benchmark suite with 5-backend comparison</p></li>
+<li><p>✅ SLURM harness for cluster GPU benchmarks</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="phase-4-numerical-stability-sos-migration-v0-5-1-completed">
+<h3>Phase 4: Numerical Stability &amp; SOS Migration (v0.5.1) ✅ <strong>COMPLETED</strong><a class="headerlink" href="#phase-4-numerical-stability-sos-migration-v0-5-1-completed" title="Link to this heading">#</a></h3>
+<p><strong>Priority:</strong> High</p>
+<ul class="simple">
+<li><p>✅ IIR filters migrated to SOS-only coefficients (no more <code class="docutils literal notranslate"><span class="pre">ba</span></code> intermediate)</p></li>
+<li><p>✅ Fixed <code class="docutils literal notranslate"><span class="pre">BadCoefficients</span></code> scipy warning on high-order filters</p></li>
+<li><p>✅ Fixed <code class="docutils literal notranslate"><span class="pre">LinkwitzRiley</span></code> order parameter bug</p></li>
+<li><p>✅ Removed dead code: <code class="docutils literal notranslate"><span class="pre">_compute_ba_from_sos()</span></code>, <code class="docutils literal notranslate"><span class="pre">move_coeff()</span></code>, <code class="docutils literal notranslate"><span class="pre">_bootstrap_state()</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>/<code class="docutils literal notranslate"><span class="pre">b</span></code> attributes</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">LinkwitzRiley</span></code> cascades via <code class="docutils literal notranslate"><span class="pre">np.vstack</span></code> SOS sections instead of <code class="docutils literal notranslate"><span class="pre">ba</span></code> polynomial convolution</p></li>
+</ul>
+</section>
+<section id="phase-5-transparent-filter-fusion-code-unification-v0-5-2-completed">
+<h3>Phase 5: Transparent Filter Fusion &amp; Code Unification (v0.5.2) ✅ <strong>COMPLETED</strong><a class="headerlink" href="#phase-5-transparent-filter-fusion-code-unification-v0-5-2-completed" title="Link to this heading">#</a></h3>
+<p><strong>Priority:</strong> High</p>
+<ul class="simple">
+<li><p><strong>Deferred pipeline with auto-fusion</strong> ✅</p>
+<ul>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">Wave.__or__</span></code> accumulates filters in lazy pipeline, materializes on <code class="docutils literal notranslate"><span class="pre">.ys</span></code> access</p></li>
+<li><p>✅ Consecutive IIR/biquad filters auto-fused into single <code class="docutils literal notranslate"><span class="pre">FusedSOSCascade</span></code> (~2.5x faster)</p></li>
+<li><p>✅ All three syntaxes benefit: <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">f1</span> <span class="pre">|</span> <span class="pre">f2</span></code>, <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">(f1</span> <span class="pre">|</span> <span class="pre">f2)</span></code>, <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">nn.Sequential(...)</span></code></p></li>
+<li><p>✅ Non-fusible effects break chain naturally, independent runs fused separately</p></li>
+</ul>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">FilterChain</span></code> and pipe operator</strong> ✅</p>
+<ul>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">FX.__or__</span></code> enables <code class="docutils literal notranslate"><span class="pre">f1</span> <span class="pre">|</span> <span class="pre">f2</span> <span class="pre">→</span> <span class="pre">FilterChain</span></code> between any filters/effects</p></li>
+<li><p>✅ Auto-flattening <code class="docutils literal notranslate"><span class="pre">nn.Sequential</span></code> subclass — no nested containers</p></li>
+<li><p>✅ Exported from top-level <code class="docutils literal notranslate"><span class="pre">torchfx</span></code> package</p></li>
+</ul>
+</li>
+<li><p><strong>Unified Biquad/IIR forward path</strong> ✅</p>
+<ul>
+<li><p>✅ Biquad stores coefficients as <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">6]</span></code> SOS tensor</p></li>
+<li><p>✅ Delegates to shared <code class="docutils literal notranslate"><span class="pre">_sos_cascade_forward</span></code> helper (~150 lines of duplication removed)</p></li>
+<li><p>✅ Mixed Biquad+IIR chains auto-fuse in deferred pipeline</p></li>
+<li><p>✅ Specialized CUDA biquad kernel retained as fast path for K=1</p></li>
+<li><p>✅ Backward-compatible read-only <code class="docutils literal notranslate"><span class="pre">b</span></code>/<code class="docutils literal notranslate"><span class="pre">a</span></code> properties</p></li>
+</ul>
+</li>
+<li><p><strong>Performance caching</strong> ✅</p>
+<ul>
+<li><p>✅ Device-matched SOS tensor cached between forward calls</p></li>
+<li><p>✅ In-place state updates (<code class="docutils literal notranslate"><span class="pre">copy_()</span></code> instead of <code class="docutils literal notranslate"><span class="pre">torch.stack()</span></code>)</p></li>
+<li><p>✅ Reverb op fusion (5 ops → 2), delay wet/dry via <code class="docutils literal notranslate"><span class="pre">torch.lerp</span></code> (3 ops → 1)</p></li>
+<li><p>✅ Biquad feedback coefficients pre-extracted as Python floats</p></li>
+</ul>
+</li>
+<li><p><strong>Test coverage</strong> ✅</p>
+<ul>
+<li><p>✅ 74% → 88% coverage, <code class="docutils literal notranslate"><span class="pre">fail_under</span> <span class="pre">=</span> <span class="pre">87</span></code> gate in CI</p></li>
+<li><p>✅ 7 new test files covering fusion, dispatch, filter base, filterbank, utilities</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="phase-6-build-time-native-extension-compilation-next">
+<h3>Phase 6: Build-Time Native Extension Compilation — <strong>NEXT</strong><a class="headerlink" href="#phase-6-build-time-native-extension-compilation-next" title="Link to this heading">#</a></h3>
+<p><strong>Priority:</strong> High</p>
+<p>The current native extension (<code class="docutils literal notranslate"><span class="pre">torchfx._ops</span></code>) is JIT-compiled at runtime via
+<code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension.load()</span></code>. This has several drawbacks:</p>
+<ul class="simple">
+<li><p><strong>First-import latency</strong>: compilation takes 10–30s on first use, surprising users</p></li>
+<li><p><strong>Compiler requirement</strong>: end users need GCC ≥ 9 and matching CUDA toolkit installed</p></li>
+<li><p><strong>Reproducibility</strong>: compiled artifacts depend on the user’s exact toolchain</p></li>
+<li><p><strong>PyPI distribution</strong>: wheels contain no compiled code — every install recompiles</p></li>
+</ul>
+<p><strong>Goal:</strong> Migrate from runtime JIT compilation to <strong>build-time compilation</strong> using
+<a class="reference external" href="https://scikit-build-core.readthedocs.io/">scikit-build-core</a> as the build backend,
+so that compiled C++/CUDA extensions are included in distributed wheels.</p>
+<ul class="contains-task-list simple">
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>scikit-build-core migration</strong></p>
+<ul>
+<li><p>Replace <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension.load()</span></code> with CMake-based build</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> for CPU C++ extension (<code class="docutils literal notranslate"><span class="pre">iir_cpu.cpp</span></code>)</p></li>
+<li><p>Compile at <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> / <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> time, not at first import</p></li>
+<li><p>Maintain pure-PyTorch fallback when extension is unavailable</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>CUDA kernel packaging</strong></p>
+<ul>
+<li><p>Build CUDA kernels (<code class="docutils literal notranslate"><span class="pre">biquad_forward.cu</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel_scan.cu</span></code>, <code class="docutils literal notranslate"><span class="pre">delay_forward.cu</span></code>)
+at wheel build time</p></li>
+<li><p>Fat binaries or per-arch wheels for common CUDA architectures (sm_70, sm_80, sm_89, sm_90)</p></li>
+<li><p>Handle PyPI distribution: publish separate CPU-only and CUDA wheels
+(e.g., <code class="docutils literal notranslate"><span class="pre">torchfx</span></code> for CPU, <code class="docutils literal notranslate"><span class="pre">torchfx-cu128</span></code> for CUDA 12.8)</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>CI/CD wheel pipeline</strong></p>
+<ul>
+<li><p>Build matrix: Linux x86_64, Python 3.10–3.13, CPU + CUDA 12.x</p></li>
+<li><p>cibuildwheel or similar for reproducible wheel builds</p></li>
+<li><p>Automated PyPI publishing on tag</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Backward compatibility</strong></p>
+<ul>
+<li><p>Keep JIT fallback path for development (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code>) and unsupported platforms</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx.is_native_available()</span></code> works unchanged</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA=1</span></code> still forces CPU-only</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="phase-7-polish-v1-0-release">
+<h3>Phase 7: Polish &amp; v1.0 Release<a class="headerlink" href="#phase-7-polish-v1-0-release" title="Link to this heading">#</a></h3>
+<p><strong>Priority:</strong> Medium</p>
+<ul class="simple">
+<li><p><strong>Epic 5: Documentation</strong> (remaining items)</p>
+<ul>
+<li><p>Advanced tutorials (custom filter design, GPU optimization, ML integration)</p></li>
+<li><p>How-to guides and example gallery</p></li>
+</ul>
+</li>
+<li><p><strong>Epic 6: Quality Assurance</strong> (remaining items)</p>
+<ul>
+<li><p>Audio quality metrics (SNR, THD)</p></li>
+<li><p>Performance regression testing in CI</p></li>
+<li><p>Multi-platform CI (Linux, macOS, Windows)</p></li>
 </ul>
 </li>
 <li><p><strong>Epic 7: Additional Effects</strong></p>
@@ -1443,10 +1603,10 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <li><p>✅ Migration guide template created</p></li>
 </ul>
 </li>
-<li><p>✅ <strong>Test Coverage</strong>: &gt;90% code coverage</p>
+<li><p>✅ <strong>Test Coverage</strong>: 88% code coverage (gate: <code class="docutils literal notranslate"><span class="pre">fail_under</span> <span class="pre">=</span> <span class="pre">87</span></code>)</p>
 <ul class="simple">
-<li><p>✅ 393 tests across all modules</p></li>
-<li><p>✅ Unit, integration, and CLI tests</p></li>
+<li><p>✅ 400+ tests across all modules</p></li>
+<li><p>✅ Unit, integration, CLI, fusion, and dispatch tests</p></li>
 </ul>
 </li>
 <li><p>✅ <strong>Documentation</strong>: 100% of public API documented with examples</p>
@@ -1459,7 +1619,8 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <li><p>✅ <strong>Performance</strong>:</p>
 <ul class="simple">
 <li><p>✅ Real-time: 48kHz, 2048 buffer, ~46ms latency (tested in REPL)</p></li>
-<li><p>⚠️ Batch: &gt;100x real-time on modern GPU (needs CUDA kernels for further optimization)</p></li>
+<li><p>✅ Batch: custom CUDA kernels — 4x faster than SciPy (1ch), 11x faster (8ch)</p></li>
+<li><p>✅ Auto-fusion: ~2.5x faster IIR chains via deferred pipeline</p></li>
 </ul>
 </li>
 <li><p>✅ <strong>Platform Support</strong>: Linux, macOS, Windows with Python 3.10-3.13</p>
@@ -1480,7 +1641,7 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 </ul>
 </li>
 </ol>
-<p><strong>Status: 6.5/7 metrics achieved — ready for v1.0.0 RC</strong></p>
+<p><strong>Status: 7/7 metrics achieved — ready for v1.0.0 RC</strong></p>
 </section>
 <hr class="docutils" />
 <section id="code-quality-standards">
@@ -1511,8 +1672,8 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">#</a></h2>
 <p>We welcome contributions! See the <a class="reference internal" href="style_guide.html"><span class="std std-doc">style guide</span></a> for guidelines.</p>
 <ul class="simple">
-<li><p><strong>Current focus</strong>: Phase 3 (CUDA Optimization) &amp; additional effects</p></li>
-<li><p><strong>Phase 1 &amp; 2</strong>: ✅ COMPLETED</p></li>
+<li><p><strong>Current focus</strong>: Phase 6 (Build-Time Native Extension Compilation)</p></li>
+<li><p><strong>Phases 1–5</strong>: ✅ COMPLETED</p></li>
 <li><p><strong>Good first issues</strong>: Check GitHub issues tagged <code class="docutils literal notranslate"><span class="pre">good-first-issue</span></code></p></li>
 <li><p><strong>CLI Extension Ideas</strong>: Real-time visualization, AB comparison mode, spectrum analyzer</p></li>
 <li><p><strong>Questions</strong>: Open a discussion on GitHub</p></li>
@@ -1568,49 +1729,49 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
     class="page-toc tocsection onthispage">
     <i class="fa-solid fa-list"></i> On this page
   </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vision">Vision</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#current-state">Current State</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#current-state">Current State</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#strengths">Strengths</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaps">Gaps</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-1-core-library-stabilization">Epic 1: Core Library Stabilization</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-1-core-library-stabilization">Epic 1: Core Library Stabilization</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-missing-core-features">1.1 Complete Missing Core Features</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api-stabilization">1.2 API Stabilization</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#error-handling-validation">1.3 Error Handling &amp; Validation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-2-real-time-audio-processing">Epic 2: Real-Time Audio Processing</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-2-real-time-audio-processing">Epic 2: Real-Time Audio Processing</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-backend-integration">2.1 Audio Backend Integration</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#real-time-processing-pipeline">2.2 Real-Time Processing Pipeline</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#real-time-effect-adaptations">2.3 Real-Time Effect Adaptations</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-3-cli-application">Epic 3: CLI Application</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-3-cli-application">Epic 3: CLI Application</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-cli-architecture">3.1 Core CLI Architecture ✅</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-processing-sox-compatibility">3.2 Pipeline Processing &amp; Sox Compatibility ✅</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interactive-mode-repl">3.3 Interactive Mode (REPL) ✅</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watch-mode-automation">3.4 Watch Mode &amp; Automation ✅</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-4-performance-optimization-cuda">Epic 4: Performance Optimization &amp; CUDA</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-development-infrastructure">4.1 CUDA Development Infrastructure</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iir-filter-cuda-kernels-priority-1">4.2 IIR Filter CUDA Kernels (Priority 1)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#time-domain-effects-cuda-kernels-priority-2">4.3 Time-Domain Effects CUDA Kernels (Priority 2)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-processing-optimizations-priority-3">4.4 Batch Processing Optimizations (Priority 3)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-benchmarking">4.5 Performance Benchmarking</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-4-performance-optimization-cuda">Epic 4: Performance Optimization &amp; CUDA</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-development-infrastructure">4.1 CUDA Development Infrastructure ✅</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iir-filter-cuda-kernels">4.2 IIR Filter CUDA Kernels ✅</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#time-domain-effects-cuda-kernels">4.3 Time-Domain Effects CUDA Kernels</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-processing-optimizations">4.4 Batch Processing Optimizations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-benchmarking">4.5 Performance Benchmarking ✅</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-5-comprehensive-documentation">Epic 5: Comprehensive Documentation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-5-comprehensive-documentation">Epic 5: Comprehensive Documentation</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api-reference-completion">5.1 API Reference Completion</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tutorial-guide-documentation">5.2 Tutorial &amp; Guide Documentation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#example-gallery">5.3 Example Gallery</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#project-documentation">5.4 Project Documentation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-6-testing-quality-assurance">Epic 6: Testing &amp; Quality Assurance</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-6-testing-quality-assurance">Epic 6: Testing &amp; Quality Assurance</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#expand-unit-test-coverage">6.1 Expand Unit Test Coverage</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-tests">6.2 Integration Tests</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-quality-tests">6.3 Audio Quality Tests</a></li>
@@ -1618,7 +1779,7 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ci-cd-improvements">6.5 CI/CD Improvements</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-7-additional-effects">Epic 7: Additional Effects</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-7-additional-effects">Epic 7: Additional Effects</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dynamics-processing">7.1 Dynamics Processing</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#modulation-effects">7.2 Modulation Effects</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#distortion-saturation">7.3 Distortion &amp; Saturation</a></li>
@@ -1626,10 +1787,14 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#spatial-audio">7.5 Spatial Audio</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-phases">Implementation Phases</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-phases">Implementation Phases</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-1-foundation-completed">Phase 1: Foundation ✅ <strong>COMPLETED</strong></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-2-major-features-completed">Phase 2: Major Features ✅ <strong>COMPLETED</strong></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-3-optimization-polish-v1-0">Phase 3: Optimization &amp; Polish (v1.0)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-3-cuda-kernels-native-extension-v0-5-0-completed">Phase 3: CUDA Kernels &amp; Native Extension (v0.5.0) ✅ <strong>COMPLETED</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-4-numerical-stability-sos-migration-v0-5-1-completed">Phase 4: Numerical Stability &amp; SOS Migration (v0.5.1) ✅ <strong>COMPLETED</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-5-transparent-filter-fusion-code-unification-v0-5-2-completed">Phase 5: Transparent Filter Fusion &amp; Code Unification (v0.5.2) ✅ <strong>COMPLETED</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-6-build-time-native-extension-compilation-next">Phase 6: Build-Time Native Extension Compilation — <strong>NEXT</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-7-polish-v1-0-release">Phase 7: Polish &amp; v1.0 Release</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#success-metrics-for-v1-0-0">Success Metrics for v1.0.0</a></li>
@@ -1656,13 +1821,13 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 </div>
 
   <div class="sidebar-secondary-item">
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="../../_sources/guides/developer/roadmap.md.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div></div>
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/guides/developer/roadmap.md.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
 
 </div></div>
               
@@ -1677,8 +1842,8 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1712,7 +1877,7 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.0.
 </p></div>
       
     </div>

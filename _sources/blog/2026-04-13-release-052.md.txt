@@ -1,0 +1,134 @@
+---
+blogpost: true
+date: Apr 13, 2026
+author: Matteo Spanio
+category: releases
+tags: release, performance, fusion, pipeline
+---
+
+# TorchFX 0.5.2: Transparent Filter Fusion & Unified Forward Paths
+
+**TorchFX 0.5.2** focuses on two things: making filter chains faster without changing your code, and cleaning up internal duplication so the library is easier to maintain and extend.
+
+The headline feature is **deferred pipeline fusion** --- when you chain IIR and biquad filters together, TorchFX now automatically merges them into a single fused kernel call, eliminating per-filter Python dispatch overhead.
+
+## Deferred Pipeline with Auto-Fusion
+
+Previously, `wave | f1 | f2 | f3` executed each filter immediately, one at a time. Now, `Wave.__or__` accumulates filters in a lazy pipeline that only materializes when you access `.ys`. At materialization time, consecutive IIR and biquad filters are automatically fused into a single `FusedSOSCascade` --- their SOS matrices are concatenated into one `[K_total, 6]` tensor and processed in a single native kernel call.
+
+```python
+from torchfx import Wave
+from torchfx.filter.iir import LoButterworth, HiButterworth
+
+wave = Wave.from_file("input.wav")
+
+# All three syntaxes benefit from auto-fusion:
+result = wave | LoButterworth(4000, order=2) | HiButterworth(200, order=2)
+result = wave | (LoButterworth(4000, order=2) | HiButterworth(200, order=2))
+result = wave | nn.Sequential(LoButterworth(4000, order=2), HiButterworth(200, order=2))
+```
+
+Fusion is transparent --- the numerical result is identical to applying filters sequentially. Non-fusible effects (like `Gain`) break the chain naturally: `wave | f1 | f2 | Gain(0.5) | f3 | f4` fuses `f1+f2` and `f3+f4` independently, with `Gain` applied between them.
+
+## `FilterChain` and the Pipe Operator
+
+The pipe operator `|` now works directly between filters and effects, not just with `Wave`:
+
+```python
+from torchfx.filter.iir import LoButterworth, HiButterworth
+from torchfx.effect import Gain
+
+# Build reusable chains
+bandpass = HiButterworth(200, order=2) | LoButterworth(4000, order=2)
+chain = bandpass | Gain(0.8)
+
+# Apply to audio
+result = wave | chain
+```
+
+`FilterChain` is an auto-flattening `nn.Sequential` subclass --- `(f1 | f2) | f3` produces a flat `FilterChain(f1, f2, f3)`, not nested containers. It's exported from the top-level `torchfx` package.
+
+## Unified Biquad/IIR Forward Path
+
+A biquad filter is mathematically a single second-order IIR section (K=1). Its SOS matrix is simply `[[b0, b1, b2, 1.0, a1, a2]]` --- a `[1, 6]` tensor. Yet previously, `Biquad` and `IIR` had completely separate forward-path implementations: different state management, different native dispatch, different fallback paths --- about 200 lines of duplicated logic.
+
+In 0.5.2, `Biquad` stores its coefficients as a `[1, 6]` SOS tensor and delegates its `forward()` to the same `_sos_cascade_forward` helper used by `IIR` and `FusedSOSCascade`. This:
+
+- **Removes ~150 lines** of duplicated forward-path code
+- **Enables mixed fusion** --- `wave | BiquadLPF(...) | LoButterworth(...)` now auto-fuses
+- **Retains the specialized CUDA kernel** --- when `num_sections == 1` on CUDA, `_sos_cascade_forward` dispatches to the optimized `biquad_forward` kernel (128-channel batching per thread block), so single-biquad performance is preserved
+- **Maintains backward compatibility** --- `Biquad.b` and `Biquad.a` are still accessible as read-only properties
+
+## Performance Improvements
+
+Beyond fusion, several targeted optimizations reduce per-call overhead:
+
+- **SOS coefficient caching**: device-matched SOS tensors are cached between forward calls, eliminating per-call `.to()` device transfers that accounted for 21% of Self CPU time in batch profiles
+- **In-place state updates**: replaced per-section `torch.stack()` allocations with `copy_()` into pre-existing state buffers
+- **Reverb op fusion**: simplified the PyTorch fallback from 5 tensor ops to 2 (`clone` + `add_` with alpha)
+- **Delay wet/dry mix**: replaced `(1-mix)*x + mix*y` (3 ops) with `torch.lerp` (1 fused op)
+- **Biquad coefficient caching**: feedback coefficients `a1`, `a2` are pre-extracted as Python floats at coefficient-computation time, eliminating per-forward GPU-to-CPU sync
+
+## Benchmark Results (Quadro RTX 6000)
+
+Measured on a Quadro RTX 6000 (24 GB), CUDA 12.8, PyTorch 2.10.0:
+
+### Full Pipeline (bandpass + gain + lowpass chain, 44.1 kHz, 2ch, 5s)
+
+| Device | Mean | Relative |
+|--------|-----:|----------|
+| **CUDA** | **3.57 ms** | 1.0x |
+| CPU | 5.98 ms | 1.7x slower |
+
+### SOS Cascade (44.1 kHz, 2ch, 5s)
+
+| Sections | CPU | CUDA |
+|---------:|----:|-----:|
+| 4 | 1.66 ms | 1.28 ms |
+| 8 | 2.63 ms | 2.43 ms |
+
+### Biquad Stateful (44.1 kHz, 1ch)
+
+| Duration | CPU | CUDA |
+|---------:|----:|-----:|
+| 0.1s | 93 us | 239 us |
+| 5s | 1.17 ms | 487 us |
+| 30s | 7.0 ms | 2.37 ms |
+
+### IIR 6th-order Butterworth (44.1 kHz)
+
+| Backend | 60s / 1ch | 60s / 8ch |
+|---------|----------:|----------:|
+| **TorchFX GPU** | **15.2 ms** | **75.3 ms** |
+| TorchFX CPU | 53.2 ms | 129.9 ms |
+| SciPy | 61.5 ms | 857.9 ms |
+| Numba `@njit` CPU | 71.6 ms | 95.4 ms |
+| Numba `@cuda.jit` | 1,584 ms | 1,652 ms |
+
+TorchFX GPU is **4x faster than SciPy** for single-channel and **11x faster** for 8-channel workloads. The Numba CUDA baseline confirms that the custom parallel scan kernel significantly outperforms a naive GPU implementation.
+
+## Test Coverage
+
+Test coverage increased from **74% to 88%**, with a `fail_under = 87` gate enforced in CI. New test files:
+
+- `test_fused.py` --- FusedSOSCascade edge cases (9% to 75%)
+- `test_filter_base.py` --- AbstractFilter and ParallelFilterCombination (44% to 89%)
+- `test_filter_utils.py` --- filter utilities (0% to 91%)
+- `test_ops_dispatch.py` --- native dispatch and fallback paths (64% to 84%)
+- `test_filterbank.py` --- LogFilterBank (73% to 100%)
+- `test_iir_gaps.py` --- IIR edge cases (71% to 86%)
+- `test_chain_fusion.py` --- deferred pipeline, fusion, and FilterChain
+
+## Bug Fixes
+
+- `AbstractFilter._has_computed_coeff` incorrectly returned `True` for IIR subclasses whose `_sos is None` --- silently claiming coefficients were ready before `compute_coefficients()` had run
+- `ParallelFilterCombination.__init__` assigned `self.fs` before `self.filters`, crashing when `fs` was passed at construction time
+- `iir_cpu.cpp` used a hardcoded `double sec_sx0[16]` stack array, silently overflowing for filters with >16 SOS sections (order >32). Now falls back to heap allocation for high orders.
+
+## Installation
+
+```bash
+pip install torchfx==0.5.2
+```
+
+> Benchmarks were run on a Quadro RTX 6000 (24 GB) with CUDA 12.8 and PyTorch 2.10.0. Performance varies by hardware and software configuration --- always benchmark on your target system.

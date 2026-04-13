@@ -1,0 +1,1397 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Performance baseline — 2026-04-11 &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=7f76b32a3354e82990f2"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2" />
+
+    <script src="../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'perf/baseline';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+   
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../blog/index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../blog/index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Performance baseline — 2026-04-11</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="performance-baseline-2026-04-11">
+<h1>Performance baseline — 2026-04-11<a class="headerlink" href="#performance-baseline-2026-04-11" title="Link to this heading">#</a></h1>
+<p>This document captures the <strong>Phase 0</strong> baseline of the TorchFX performance
+campaign described in the master plan. It records the numbers measured <em>before</em>
+any optimization work so every follow-up PR has a concrete before/after.</p>
+<p>Baseline hardware: local workstation (no GPU), Python 3.10.19,
+PyTorch 2.10.0+cu128 (CUDA not available locally — CUDA baselines land from the
+SLURM cluster in a separate commit).</p>
+<p>Artifacts live under <a class="reference internal" href="#../../../benchmarks/results"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">benchmarks/results/</span></code></span></a>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">local-cpu-coverage-baseline/</span></code> — HTML coverage report</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">local-cpu-coverage-baseline.json</span></code>, <code class="docutils literal notranslate"><span class="pre">.xml</span></code> — machine-readable coverage</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">local-cpu-baseline.json</span></code> — pytest-benchmark JSON (117 CPU benchmarks)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">local-cpu-profile-baseline/*.json</span></code> — Chrome traces (open in
+<a class="reference external" href="https://ui.perfetto.dev">ui.perfetto.dev</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">local-cpu-profile-baseline/*.txt</span></code> — torch.profiler top-op tables</p></li>
+</ul>
+<section id="reproducing">
+<h2>Reproducing<a class="headerlink" href="#reproducing" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># coverage</span>
+uv<span class="w"> </span>run<span class="w"> </span>coverage<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>pytest
+uv<span class="w"> </span>run<span class="w"> </span>coverage<span class="w"> </span>report<span class="w"> </span>-m
+uv<span class="w"> </span>run<span class="w"> </span>coverage<span class="w"> </span>html<span class="w"> </span>-d<span class="w"> </span>benchmarks/results/local-cpu-coverage-baseline
+
+<span class="c1"># CPU benchmarks (≈8–9 min)</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>benchmarks/<span class="w"> </span>--benchmark-enable<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-k<span class="w"> </span><span class="s2">&quot;not cuda and not numba_cuda&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--benchmark-json<span class="o">=</span>benchmarks/results/local-cpu-baseline.json
+
+<span class="c1"># CPU profiles (scenarios live in benchmarks/profiles/scenarios.py)</span>
+<span class="nv">PYTHONPATH</span><span class="o">=</span>.<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>benchmarks/profiles/run_cpu_profile.py<span class="w"> </span>--all
+<span class="nv">PYTHONPATH</span><span class="o">=</span>.<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>benchmarks/profiles/run_cuda_profile.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--device<span class="w"> </span>cpu<span class="w"> </span>--out<span class="w"> </span>benchmarks/results/local-cpu-profile-baseline
+
+<span class="c1"># (cluster) CUDA baseline</span>
+sbatch<span class="w"> </span>benchmarks/run_benchmarks.slurm
+</pre></div>
+</div>
+</section>
+<section id="coverage-cpu-only-run">
+<h2>Coverage — CPU-only run<a class="headerlink" href="#coverage-cpu-only-run" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module</p></th>
+<th class="head text-right"><p>Stmts</p></th>
+<th class="head text-right"><p>Cover</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">filter/fused.py</span></code></p></td>
+<td class="text-right"><p>104</p></td>
+<td class="text-right"><p><strong>9%</strong></p></td>
+<td><p>no dedicated test file — Phase 1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">filter/utils.py</span></code></p></td>
+<td class="text-right"><p>7</p></td>
+<td class="text-right"><p><strong>0%</strong></p></td>
+<td><p>no dedicated test file — Phase 1</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">filter/__base.py</span></code></p></td>
+<td class="text-right"><p>62</p></td>
+<td class="text-right"><p><strong>44%</strong></p></td>
+<td><p>tested only indirectly via subclasses</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_ops.py</span></code></p></td>
+<td class="text-right"><p>105</p></td>
+<td class="text-right"><p><strong>64%</strong></p></td>
+<td><p>native-dispatch layer; CUDA branches unhit locally</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">wave.py</span></code></p></td>
+<td class="text-right"><p>105</p></td>
+<td class="text-right"><p><strong>66%</strong></p></td>
+<td><p>save/load paths, some error branches</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">filter/iir.py</span></code></p></td>
+<td class="text-right"><p>280</p></td>
+<td class="text-right"><p><strong>71%</strong></p></td>
+<td><p>higher-order filter classes thinly covered</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">filter/filterbank.py</span></code></p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p><strong>73%</strong></p></td>
+<td><p>CUDA-specific branches</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">filter/biquad.py</span></code></p></td>
+<td class="text-right"><p>184</p></td>
+<td class="text-right"><p><strong>80%</strong></p></td>
+<td><p>biquad fallback branches</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">realtime/processor.py</span></code></p></td>
+<td class="text-right"><p>121</p></td>
+<td class="text-right"><p><strong>80%</strong></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">effect.py</span></code></p></td>
+<td class="text-right"><p>228</p></td>
+<td class="text-right"><p><strong>94%</strong></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">filter/_fftconv.py</span></code></p></td>
+<td class="text-right"><p>41</p></td>
+<td class="text-right"><p><strong>100%</strong></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">realtime/sounddevice_backend.py</span></code></p></td>
+<td class="text-right"><p>121</p></td>
+<td class="text-right"><p><strong>0%</strong></p></td>
+<td><p>needs hardware — excluded from targets</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Overall</strong></p></td>
+<td class="text-right"><p><strong>2129</strong></p></td>
+<td class="text-right"><p><strong>74%</strong></p></td>
+<td><p>586 branches tracked</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Phase 1 raises the gap modules above to the ≥90%-line / ≥80%-branch target
+documented in the master plan.</p>
+<section id="phase-1-result-2026-04-11">
+<h3>Phase 1 result (2026-04-11)<a class="headerlink" href="#phase-1-result-2026-04-11" title="Link to this heading">#</a></h3>
+<p>After six targeted test files (<code class="docutils literal notranslate"><span class="pre">tests/test_fused.py</span></code>, <code class="docutils literal notranslate"><span class="pre">test_filter_base.py</span></code>,
+<code class="docutils literal notranslate"><span class="pre">test_filter_utils.py</span></code>, <code class="docutils literal notranslate"><span class="pre">test_ops_dispatch.py</span></code>, <code class="docutils literal notranslate"><span class="pre">test_filterbank.py</span></code>,
+<code class="docutils literal notranslate"><span class="pre">test_iir_gaps.py</span></code>) the gap modules land at:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module</p></th>
+<th class="head text-right"><p>Baseline</p></th>
+<th class="head text-right"><p>Post-Phase 1</p></th>
+<th class="head text-right"><p>Δ</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">filter/fused.py</span></code></p></td>
+<td class="text-right"><p>9%</p></td>
+<td class="text-right"><p><strong>75%</strong></p></td>
+<td class="text-right"><p>+66</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">filter/utils.py</span></code></p></td>
+<td class="text-right"><p>0%</p></td>
+<td class="text-right"><p><strong>91%</strong></p></td>
+<td class="text-right"><p>+91</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">filter/__base.py</span></code></p></td>
+<td class="text-right"><p>44%</p></td>
+<td class="text-right"><p><strong>89%</strong></p></td>
+<td class="text-right"><p>+45</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">filter/filterbank.py</span></code></p></td>
+<td class="text-right"><p>73%</p></td>
+<td class="text-right"><p><strong>100%</strong></p></td>
+<td class="text-right"><p>+27</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">filter/iir.py</span></code></p></td>
+<td class="text-right"><p>71%</p></td>
+<td class="text-right"><p><strong>86%</strong></p></td>
+<td class="text-right"><p>+15</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_ops.py</span></code></p></td>
+<td class="text-right"><p>64%</p></td>
+<td class="text-right"><p><strong>84%</strong></p></td>
+<td class="text-right"><p>+20</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Overall</strong> (sounddevice omitted)</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p><strong>88%</strong></p></td>
+<td class="text-right"><p>—</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">fail_under</span> <span class="pre">=</span> <span class="pre">87</span></code> is set in <code class="docutils literal notranslate"><span class="pre">[tool.coverage.report]</span></code> to lock the gain in.
+Remaining gaps are mostly CUDA-dependent (<code class="docutils literal notranslate"><span class="pre">fused.py</span></code> <code class="docutils literal notranslate"><span class="pre">move_coeff</span></code>) or in the
+biquad fallback paths that move in Phase 2. The <code class="docutils literal notranslate"><span class="pre">sounddevice_backend</span></code> is
+omitted from coverage because it requires real audio hardware — it still
+exists in the source tree but is not a Phase 1 test target.</p>
+<p>Phase 1 also surfaced <strong>four new Phase 2 bugs</strong> via the new tests:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AbstractFilter._has_computed_coeff</span></code> falls through to <code class="docutils literal notranslate"><span class="pre">return</span> <span class="pre">True</span></code> when
+an IIR subclass has <code class="docutils literal notranslate"><span class="pre">_sos</span> <span class="pre">=</span> <span class="pre">None</span></code> and no <code class="docutils literal notranslate"><span class="pre">b</span></code>/<code class="docutils literal notranslate"><span class="pre">a</span></code> attributes, silently
+claiming coefficients are ready before compute_coefficients has run.
+(<code class="docutils literal notranslate"><span class="pre">src/torchfx/filter/__base.py:425-431</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ParallelFilterCombination.__init__</span></code> sets <code class="docutils literal notranslate"><span class="pre">self.fs</span> <span class="pre">=</span> <span class="pre">fs</span></code> before
+<code class="docutils literal notranslate"><span class="pre">self.filters</span> <span class="pre">=</span> <span class="pre">filters</span></code>, so the fs setter iterates an unset attribute
+and crashes with <code class="docutils literal notranslate"><span class="pre">AttributeError</span></code> whenever <code class="docutils literal notranslate"><span class="pre">fs</span></code> is passed at
+construction time. (<code class="docutils literal notranslate"><span class="pre">src/torchfx/filter/__base.py:1008-1015</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FX</span></code> / <code class="docutils literal notranslate"><span class="pre">AbstractFilter</span></code> has no <code class="docutils literal notranslate"><span class="pre">__or__</span></code> method despite the docstring at
+<code class="docutils literal notranslate"><span class="pre">src/torchfx/filter/__base.py:617</span></code> claiming “inherited from FX”.
+<code class="docutils literal notranslate"><span class="pre">f1</span> <span class="pre">|</span> <span class="pre">f2</span></code> between two filters raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>. Only <code class="docutils literal notranslate"><span class="pre">Wave.__or__</span></code> is
+defined. Users rely on <code class="docutils literal notranslate"><span class="pre">nn.Sequential</span></code> in the meantime.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Delay</span></code> in its current form is non-streaming: feeding a
+<code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">512]</span></code> chunk produces a <code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">36512]</span></code> output because the tail buffer
+is appended to every call. See the realtime profile finding below.</p></li>
+</ol>
+<p>All four are marked with <code class="docutils literal notranslate"><span class="pre">pytest.mark.xfail(strict=True)</span></code> so the tests flip
+to passing the moment the bugs are fixed.</p>
+</section>
+</section>
+<section id="cpu-benchmarks-headline-numbers">
+<h2>CPU benchmarks — headline numbers<a class="headerlink" href="#cpu-benchmarks-headline-numbers" title="Link to this heading">#</a></h2>
+<p>Full pytest-benchmark JSON at
+<code class="docutils literal notranslate"><span class="pre">benchmarks/results/local-cpu-baseline.json</span></code>. Selected numbers (mean, 30 rounds):</p>
+<ul class="simple">
+<li><p><strong>SOS cascade</strong>, order 4, stereo, 5 s signal: <strong>2.05 ms/call</strong></p></li>
+<li><p><strong>SOS cascade</strong>, order 8, stereo, 5 s signal: <strong>2.92 ms/call</strong></p></li>
+<li><p><strong>2-filter pipeline</strong> (HiButter(2) + LoButter(4)), stereo, 10 s: <strong>36.6 ms/call</strong></p></li>
+<li><p><strong>IIR</strong> order 30 Butterworth, 30 s, 8 channels, torchfx C++ path: <strong>210 ms</strong>,
+scipy: <strong>267 ms</strong> (torchfx wins at high order / high channel count)</p></li>
+<li><p><strong>IIR</strong> order 1, 1 s, 1 channel, torchfx C++ path: <strong>1.41 ms</strong> (σ=0.80 ms),
+scipy: <strong>1.01 ms</strong>. Note the <strong>very high stddev</strong> — the per-call device/dtype
+churn and first-call compile overhead are bleeding into measurements at
+small signal sizes. This matches the profile findings below.</p></li>
+</ul>
+</section>
+<section id="cpu-profile-offline-filter-chain-10-min-stereo-48-khz">
+<h2>CPU profile — offline filter chain (10 min stereo &#64; 48 kHz)<a class="headerlink" href="#cpu-profile-offline-filter-chain-10-min-stereo-48-khz" title="Link to this heading">#</a></h2>
+<p>Chain: <code class="docutils literal notranslate"><span class="pre">LoButterworth(order=8)</span> <span class="pre">|</span> <span class="pre">HiChebyshev1(order=6)</span> <span class="pre">|</span> <span class="pre">Gain</span></code>, 3 recorded
+iterations under <code class="docutils literal notranslate"><span class="pre">torch.profiler</span></code>. Total Self CPU = <strong>1.787 s</strong>.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Op</p></th>
+<th class="head text-right"><p>Self CPU %</p></th>
+<th class="head text-right"><p>Calls</p></th>
+<th class="head"><p>Shape</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aten::_to_copy</span></code> / <code class="docutils literal notranslate"><span class="pre">aten::copy_</span></code></p></td>
+<td class="text-right"><p><strong>19.9 %</strong></p></td>
+<td class="text-right"><p>12</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">28.8M]</span></code></p></td>
+<td><p><strong>dtype conversion churn</strong> — entire signal copied float32↔float64 for each filter per call. Directly matches Phase 3.1 in the plan. <strong>3.86 GB</strong> of wasted data movement per iteration.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aten::mul</span></code></p></td>
+<td class="text-right"><p>3.2 %</p></td>
+<td class="text-right"><p>3</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">28.8M]</span></code></p></td>
+<td><p>gain stage — expected, cheap</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aten::empty_strided</span></code></p></td>
+<td class="text-right"><p>0.03 %</p></td>
+<td class="text-right"><p>33</p></td>
+<td><p>various</p></td>
+<td><p><strong>6.44 GB</strong> of temporaries allocated — downstream of the <code class="docutils literal notranslate"><span class="pre">_to_copy</span></code> path</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aten::clone</span></code></p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>6</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[4,</span> <span class="pre">2,</span> <span class="pre">2]</span></code> &amp; <code class="docutils literal notranslate"><span class="pre">[3,</span> <span class="pre">2,</span> <span class="pre">2]</span></code></p></td>
+<td><p>biquad state stacks — matches the <code class="docutils literal notranslate"><span class="pre">torch.stack</span></code> state-update pattern flagged in Phase 3.2</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Concrete Phase 3.1 target:</strong> the <code class="docutils literal notranslate"><span class="pre">aten::_to_copy</span></code> row must drop below 1 % of
+Self CPU and the 3.86 GB / iteration copy volume must drop to zero.</p>
+</section>
+<section id="cpu-profile-realtime-512-sample-chunk-biquadbpf-delay">
+<h2>CPU profile — realtime 512-sample chunk (BiquadBPF | Delay)<a class="headerlink" href="#cpu-profile-realtime-512-sample-chunk-biquadbpf-delay" title="Link to this heading">#</a></h2>
+<p>3 recorded iterations, Self CPU total = <strong>1.94 ms</strong>.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Op</p></th>
+<th class="head text-right"><p>Self CPU %</p></th>
+<th class="head text-right"><p>Calls</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aten::zeros</span></code> + <code class="docutils literal notranslate"><span class="pre">aten::zero_</span></code></p></td>
+<td class="text-right"><p><strong>~42 %</strong></p></td>
+<td class="text-right"><p>12</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">36512]</span></code> zero-allocation in Delay — see finding below</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aten::to</span></code> / <code class="docutils literal notranslate"><span class="pre">aten::_to_copy</span></code> / <code class="docutils literal notranslate"><span class="pre">aten::copy_</span></code></p></td>
+<td class="text-right"><p>~5 %</p></td>
+<td class="text-right"><p>~60</p></td>
+<td><p>coefficient/state device/dtype churn</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aten::mul</span></code></p></td>
+<td class="text-right"><p>~5 %</p></td>
+<td class="text-right"><p>24</p></td>
+<td><p>comb-filter decay path</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="finding-delay-has-no-streaming-mode">
+<h3>Finding: <code class="docutils literal notranslate"><span class="pre">Delay</span></code> has no streaming mode<a class="headerlink" href="#finding-delay-has-no-streaming-mode" title="Link to this heading">#</a></h3>
+<p>Feeding a <code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">512]</span></code> chunk into the Delay effect produces a <code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">36512]</span></code>
+output — Delay lengthens the signal to accommodate its tail buffer on every
+call. In real-time processing this is pathological:</p>
+<ul class="simple">
+<li><p>per-call output is <strong>~70× larger</strong> than input</p></li>
+<li><p>the entire <code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">36512]</span></code> output is zeroed (<code class="docutils literal notranslate"><span class="pre">aten::zeros</span></code> is 42% of CPU)</p></li>
+<li><p>means the “realtime” path re-allocates ≈285 KB and does ~850 KB of adds per
+512-sample chunk</p></li>
+</ul>
+<p>This goes into the Phase 2 bug list as <strong>streaming-Delay</strong> alongside the
+existing items; Phase 3.3 (Reverb / Delay fusion) becomes partly a behavioral
+fix, not just a micro-optimization. Add a streaming mode that yields
+block-aligned output and keeps tail state in a ring buffer.</p>
+</section>
+<section id="headroom-for-realtime">
+<h3>Headroom for realtime<a class="headerlink" href="#headroom-for-realtime" title="Link to this heading">#</a></h3>
+<p>At 48 kHz, a 512-sample chunk period is <strong>10.67 ms</strong>. Local CPU measured
+<strong>0.229 ms/call</strong> (all iterations, wall-clock). That is <strong>~46× headroom</strong> —
+the CPU realtime path is in no danger of underruns on this hardware even in
+its current state. The work in Phase 3 is mostly about not wasting it when
+scaled to multi-channel / multi-filter chains.</p>
+</section>
+</section>
+<section id="offline-batch-scenario-cpu">
+<h2>Offline batch scenario (CPU)<a class="headerlink" href="#offline-batch-scenario-cpu" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">(B=32,</span> <span class="pre">C=2,</span> <span class="pre">T=480000)</span></code> through a 6-filter chain: <strong>521 ms/call</strong>. Will be
+the main Phase 3 showcase once CUDA numbers come back from the cluster.</p>
+</section>
+<hr class="docutils" />
+<section id="cuda-baseline-2026-04-12">
+<h2>CUDA baseline — 2026-04-12<a class="headerlink" href="#cuda-baseline-2026-04-12" title="Link to this heading">#</a></h2>
+<p>Cluster hardware: Quadro RTX 6000 (24 GB), CUDA 12.8,
+PyTorch 2.10.0+cu128, node025.</p>
+<p>Artifacts at <code class="docutils literal notranslate"><span class="pre">benchmarks/results/cuda-baseline-20260412/</span></code> (benchmarks) and
+<code class="docutils literal notranslate"><span class="pre">benchmarks/results/cuda-profile-baseline-20260412/</span></code> (profiler traces +
+memory snapshot).</p>
+<section id="cold-import-jit-compile">
+<h3>Cold import + JIT compile<a class="headerlink" href="#cold-import-jit-compile" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Phase</p></th>
+<th class="head"><p>Time</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">torchfx</span></code></p></td>
+<td><p><strong>10.40 s</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_load_extension()</span></code> (JIT compile)</p></td>
+<td><p><strong>5.33 s</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The 5.3 s JIT compile is the headline baseline for the deferred AOT migration.
+In a batch pipeline that processes thousands of files this is amortized away;
+in a real-time context it’s a painful one-time stall.</p>
+</section>
+<section id="cuda-iir-benchmark-headline-numbers">
+<h3>CUDA IIR benchmark — headline numbers<a class="headerlink" href="#cuda-iir-benchmark-headline-numbers" title="Link to this heading">#</a></h3>
+<p>Format: <code class="docutils literal notranslate"><span class="pre">[duration_s-channels]</span></code>, mean across 5+ rounds. SOS cascade, all on
+Quadro RTX 6000 (GPU column) or on the same node’s CPU.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scenario</p></th>
+<th class="head text-right"><p>GPU (parallel scan)</p></th>
+<th class="head text-right"><p>CPU (C++ kernel)</p></th>
+<th class="head text-right"><p>scipy</p></th>
+<th class="head text-right"><p>Numba CUDA</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1 s, 1 ch</p></td>
+<td class="text-right"><p>1.13 ms</p></td>
+<td class="text-right"><p>1.41 ms</p></td>
+<td class="text-right"><p>1.15 ms</p></td>
+<td class="text-right"><p>23.8 ms</p></td>
+</tr>
+<tr class="row-odd"><td><p>5 s, 2 ch</p></td>
+<td class="text-right"><p>2.39 ms</p></td>
+<td class="text-right"><p>6.13 ms</p></td>
+<td class="text-right"><p>10.9 ms</p></td>
+<td class="text-right"><p>133 ms</p></td>
+</tr>
+<tr class="row-even"><td><p>30 s, 4 ch</p></td>
+<td class="text-right"><p>21.3 ms</p></td>
+<td class="text-right"><p>50.0 ms</p></td>
+<td class="text-right"><p>160 ms</p></td>
+<td class="text-right"><p>809 ms</p></td>
+</tr>
+<tr class="row-odd"><td><p>30 s, 8 ch</p></td>
+<td class="text-right"><p>38.2 ms</p></td>
+<td class="text-right"><p>83.5 ms</p></td>
+<td class="text-right"><p>320 ms</p></td>
+<td class="text-right"><p>821 ms</p></td>
+</tr>
+<tr class="row-even"><td><p>60 s, 8 ch</p></td>
+<td class="text-right"><p><strong>75.8 ms</strong></p></td>
+<td class="text-right"><p>168 ms</p></td>
+<td class="text-right"><p>859 ms</p></td>
+<td class="text-right"><p>1653 ms</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Key takeaways:</strong></p>
+<ul class="simple">
+<li><p>GPU parallel-scan is <strong>2.2× faster than the C++ CPU</strong> kernel at 60 s × 8 ch,
+<strong>11× faster than scipy</strong>, and <strong>22× faster than Numba CUDA</strong>.</p></li>
+<li><p>The C++ CPU kernel is <strong>4–5× faster than scipy</strong> at high channel counts
+(30+ s, 8 ch), validating the investment in native kernels.</p></li>
+<li><p>Numba CUDA is 20–40× slower than the custom CUDA kernel —
+the handwritten parallel-scan approach is justified.</p></li>
+<li><p>At short signals (1 s, 1 ch), GPU overhead makes it roughly even with CPU.
+The crossover point is ≈ 5 s × 2 ch.</p></li>
+</ul>
+</section>
+<section id="cuda-biquad-benchmark">
+<h3>CUDA biquad benchmark<a class="headerlink" href="#cuda-biquad-benchmark" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Signal</p></th>
+<th class="head text-right"><p>CPU</p></th>
+<th class="head text-right"><p>GPU</p></th>
+<th class="head text-right"><p>GPU/CPU</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0.1 s, 1 ch</p></td>
+<td class="text-right"><p>0.11 ms</p></td>
+<td class="text-right"><p>0.27 ms</p></td>
+<td class="text-right"><p>0.43× (GPU slower)</p></td>
+</tr>
+<tr class="row-odd"><td><p>1.0 s, 1 ch</p></td>
+<td class="text-right"><p>0.44 ms</p></td>
+<td class="text-right"><p>0.27 ms</p></td>
+<td class="text-right"><p>1.6×</p></td>
+</tr>
+<tr class="row-even"><td><p>5.0 s, 2 ch</p></td>
+<td class="text-right"><p>1.58 ms</p></td>
+<td class="text-right"><p>0.61 ms</p></td>
+<td class="text-right"><p>2.6×</p></td>
+</tr>
+<tr class="row-odd"><td><p>30 s, 2 ch</p></td>
+<td class="text-right"><p>9.30 ms</p></td>
+<td class="text-right"><p>3.16 ms</p></td>
+<td class="text-right"><p><strong>2.9×</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Biquad GPU wins above ~1 s signal length.</p>
+</section>
+<section id="pipeline-cuda-benchmark-move-coeff-crash">
+<h3>Pipeline CUDA benchmark — <code class="docutils literal notranslate"><span class="pre">move_coeff</span></code> crash<a class="headerlink" href="#pipeline-cuda-benchmark-move-coeff-crash" title="Link to this heading">#</a></h3>
+<p>The pipeline CUDA benchmarks <strong>failed</strong> because <code class="docutils literal notranslate"><span class="pre">LoButterworth.move_coeff(&quot;cuda&quot;)</span></code>
+was removed in v0.5.1 (see CHANGELOG). The benchmark script must be updated to
+use <code class="docutils literal notranslate"><span class="pre">.to(device)</span></code> instead. Added to Phase 2 bug list.</p>
+</section>
+<section id="cuda-profile-offline-filter-chain-10-min-stereo-48-khz">
+<h3>CUDA profile — offline filter chain (10 min stereo &#64; 48 kHz)<a class="headerlink" href="#cuda-profile-offline-filter-chain-10-min-stereo-48-khz" title="Link to this heading">#</a></h3>
+<p>Self CUDA total = <strong>1.345 s</strong> (3 iterations). The top entries are our custom
+parallel-scan kernels — exactly what we want to see dominating:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Op</p></th>
+<th class="head text-right"><p>Self CUDA %</p></th>
+<th class="head text-right"><p>Calls</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">prefix_scan_phase3</span></code></p></td>
+<td class="text-right"><p><strong>33.7%</strong></p></td>
+<td class="text-right"><p>21</p></td>
+<td><p>Our write-back kernel — correct</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">prefix_scan_phase2</span></code></p></td>
+<td class="text-right"><p><strong>31.1%</strong></p></td>
+<td class="text-right"><p>21</p></td>
+<td><p>Sweep kernel — correct</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">prefix_scan_phase1</span></code></p></td>
+<td class="text-right"><p><strong>30.6%</strong></p></td>
+<td class="text-right"><p>21</p></td>
+<td><p>Build kernel — correct</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">forcing_kernel</span></code></p></td>
+<td class="text-right"><p>3.0%</p></td>
+<td class="text-right"><p>21</p></td>
+<td><p>Input preparation — acceptable</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aten::copy_</span></code> (dtype)</p></td>
+<td class="text-right"><p><strong>1.4%</strong></p></td>
+<td class="text-right"><p>12</p></td>
+<td><p><strong>3.87 GB</strong> CUDA alloc → Phase 3.1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aten::mul</span></code> (Gain)</p></td>
+<td class="text-right"><p>0.2%</p></td>
+<td class="text-right"><p>3</p></td>
+<td><p>Negligible</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Phase 3.1 target (CUDA):</strong> <code class="docutils literal notranslate"><span class="pre">aten::copy_</span></code> at 1.4% Self CUDA is already lower
+than the CPU profile’s 19.9%, but it still copies <strong>3.87 GB</strong> per iteration.
+Eliminating the dtype churn will drop this to zero.</p>
+</section>
+<section id="cuda-profile-offline-batch-chain-b-32-c-2-t-480k">
+<h3>CUDA profile — offline batch chain (B=32, C=2, T=480k)<a class="headerlink" href="#cuda-profile-offline-batch-chain-b-32-c-2-t-480k" title="Link to this heading">#</a></h3>
+<p>Self CUDA total = <strong>668.6 ms</strong> (3 iterations).</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Op</p></th>
+<th class="head text-right"><p>Self CUDA %</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">prefix_scan_phase3</span></code></p></td>
+<td class="text-right"><p>46.4%</p></td>
+<td><p>Dominates — expected</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">prefix_scan_phase1</span></code></p></td>
+<td class="text-right"><p>42.1%</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">forcing_kernel</span></code></p></td>
+<td class="text-right"><p>4.1%</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aten::copy_</span></code> (dtype)</p></td>
+<td class="text-right"><p><strong>3.7%</strong></p></td>
+<td><p><strong>5.15 GB</strong> CUDA alloc</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">prefix_scan_phase2</span></code></p></td>
+<td class="text-right"><p>3.4%</p></td>
+<td><p>Lower % because batch shape is wider</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Additional CPU-side finding:</strong> <code class="docutils literal notranslate"><span class="pre">aten::item</span></code> calls: 135 per iteration,
+consuming <strong>21.1% of Self CPU time</strong>. This is Python-side scalar extraction
+from GPU — the SOS coefficient indexing (<code class="docutils literal notranslate"><span class="pre">sos[s,</span> <span class="pre">4]</span></code>, etc.) goes through
+<code class="docutils literal notranslate"><span class="pre">aten::_local_scalar_dense</span></code> which forces a GPU→CPU sync per scalar. This is
+a new Phase 3 optimization target: batch-extract SOS coefficients once per
+forward, not per-section.</p>
+</section>
+<section id="cuda-profile-realtime-gpu-512-sample-chunks">
+<h3>CUDA profile — realtime GPU (512-sample chunks)<a class="headerlink" href="#cuda-profile-realtime-gpu-512-sample-chunks" title="Link to this heading">#</a></h3>
+<p>Self CUDA total per 3-iteration block = <strong>246 µs</strong>.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Op</p></th>
+<th class="head text-right"><p>Self CUDA %</p></th>
+<th class="head"><p>Interpretation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sequential_biquad_kernel</span></code></p></td>
+<td class="text-right"><p>44.6%</p></td>
+<td><p>Short signals use sequential kernel — correct</p></td>
+</tr>
+<tr class="row-odd"><td><p>elementwise kernels (dtype)</p></td>
+<td class="text-right"><p>~27%</p></td>
+<td><p>Coefficient cast churn</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aten::add_</span></code> / <code class="docutils literal notranslate"><span class="pre">aten::mul</span></code> (Delay comb)</p></td>
+<td class="text-right"><p>~14%</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aten::zeros</span></code> + <code class="docutils literal notranslate"><span class="pre">fill_</span></code> (Delay tail)</p></td>
+<td class="text-right"><p>~5.5%</p></td>
+<td><p>Same pathological Delay behavior</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">delay_line_kernel</span></code></p></td>
+<td class="text-right"><p>2.0%</p></td>
+<td><p>Minimal — the native kernel itself is fast</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Per-chunk CUDA time ≈ <strong>82 µs</strong>. At 48 kHz / 512 samples, the chunk period is
+10.67 ms → <strong>~130× headroom</strong> on GPU. The realtime GPU path is in excellent
+shape; the biggest wins are behavioral (Delay streaming mode) not kernel-level.</p>
+</section>
+<section id="memory-snapshot">
+<h3>Memory snapshot<a class="headerlink" href="#memory-snapshot" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">torch.cuda.memory._snapshot()</span></code> pickle is at
+<code class="docutils literal notranslate"><span class="pre">benchmarks/results/cuda-profile-baseline-20260412/memory_snapshot.pkl</span></code>.
+Visualize with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">torch.cuda.memory_viz</span> <span class="pre">memory_snapshot.pkl</span></code>.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="summary-of-phase-3-optimization-targets-data-driven">
+<h2>Summary of Phase 3 optimization targets (data-driven)<a class="headerlink" href="#summary-of-phase-3-optimization-targets-data-driven" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Target</p></th>
+<th class="head"><p>Evidence</p></th>
+<th class="head"><p>Expected win</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>3.1 Eliminate dtype churn</strong></p></td>
+<td><p>CPU: 19.9% Self CPU, 3.86 GB/iter. CUDA: 1.4–3.7% Self CUDA, 3.87–5.15 GB/iter</p></td>
+<td><p>Largest single win on CPU; moderate on GPU</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>3.2 Batch SOS coefficient extraction</strong></p></td>
+<td><p>Batch CUDA: <code class="docutils literal notranslate"><span class="pre">aten::item</span></code> = 21.1% Self CPU, 135 calls/iter</p></td>
+<td><p>Major CPU-side win on GPU path</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>3.3 Delay streaming mode</strong></p></td>
+<td><p>CPU: 42% Self CPU (zeros). GPU: ~5.5% CUDA (zeros+fill)</p></td>
+<td><p>Critical for realtime correctness</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>3.4 State update allocation</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">aten::clone</span></code> / <code class="docutils literal notranslate"><span class="pre">torch.stack</span></code> per section per chunk</p></td>
+<td><p>Moderate win at high section counts</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>3.5 Pipeline benchmark fix</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">move_coeff</span></code> removed in v0.5.1</p></td>
+<td><p>Prerequisite for CUDA pipeline tracking</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The master plan is at <a class="reference internal" href="#../../../../.claude/plans/starry-juggling-matsumoto.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">plans/starry-juggling-matsumoto.md</span></code></span></a>
+(not in the repo tree — local to the planning workflow).</p>
+</section>
+<hr class="docutils" />
+<section id="phase-3-results-2026-04-12">
+<h2>Phase 3 results — 2026-04-12<a class="headerlink" href="#phase-3-results-2026-04-12" title="Link to this heading">#</a></h2>
+<p>Artifacts at <code class="docutils literal notranslate"><span class="pre">benchmarks/results/cuda-phase3-20260412/</span></code> (benchmarks + profiles)
+and <code class="docutils literal notranslate"><span class="pre">benchmarks/results/local-cpu-phase3.json</span></code> (CPU benchmarks).</p>
+<section id="changes-applied">
+<h3>Changes applied<a class="headerlink" href="#changes-applied" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p><strong>SOS device cache</strong> (<code class="docutils literal notranslate"><span class="pre">iir.py</span></code>, <code class="docutils literal notranslate"><span class="pre">fused.py</span></code>): cache the device-matched SOS
+tensor; invalidate only on <code class="docutils literal notranslate"><span class="pre">compute_coefficients()</span></code> re-run or device change.
+Pass a CPU copy (<code class="docutils literal notranslate"><span class="pre">sos_cpu=self._sos</span></code>) to the native dispatch layer so the
+per-call <code class="docutils literal notranslate"><span class="pre">sos.detach().to(&quot;cpu&quot;)</span></code> is eliminated.</p></li>
+<li><p><strong>Biquad coefficient pre-extraction</strong> (<code class="docutils literal notranslate"><span class="pre">biquad.py</span></code>, <code class="docutils literal notranslate"><span class="pre">_ops.py</span></code>): cache <code class="docutils literal notranslate"><span class="pre">a1_f64</span></code>
+and <code class="docutils literal notranslate"><span class="pre">a2_f64</span></code> as Python floats at design time so the per-call <code class="docutils literal notranslate"><span class="pre">float(a_f64[1])</span></code>
+GPU→CPU sync is eliminated.</p></li>
+<li><p><strong>In-place state updates</strong> (<code class="docutils literal notranslate"><span class="pre">iir.py</span></code>, <code class="docutils literal notranslate"><span class="pre">fused.py</span></code>, <code class="docutils literal notranslate"><span class="pre">biquad.py</span></code>): replaced
+<code class="docutils literal notranslate"><span class="pre">torch.stack([...])</span></code> per section per chunk with <code class="docutils literal notranslate"><span class="pre">copy_()</span></code> into pre-shaped
+buffers.</p></li>
+<li><p><strong>Reverb algebraic fusion</strong> (<code class="docutils literal notranslate"><span class="pre">effect.py</span></code>): <code class="docutils literal notranslate"><span class="pre">(1-mix)*x</span> <span class="pre">+</span> <span class="pre">mix*(x</span> <span class="pre">+</span> <span class="pre">decay*d)</span></code> →
+<code class="docutils literal notranslate"><span class="pre">x.clone().add_(d,</span> <span class="pre">alpha=mix*decay)</span></code> — 5 ops → 2 ops.</p></li>
+<li><p><strong>Delay wet/dry lerp</strong> (<code class="docutils literal notranslate"><span class="pre">effect.py</span></code>): <code class="docutils literal notranslate"><span class="pre">(1-mix)*x</span> <span class="pre">+</span> <span class="pre">mix*d</span></code> → <code class="docutils literal notranslate"><span class="pre">torch.lerp(x,d,mix)</span></code>
+— 3 ops → 1 kernel.</p></li>
+</ol>
+</section>
+<section id="cuda-iir-phase-0-vs-phase-3">
+<h3>CUDA IIR — Phase 0 vs Phase 3<a class="headerlink" href="#cuda-iir-phase-0-vs-phase-3" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scenario</p></th>
+<th class="head text-right"><p>Phase 0</p></th>
+<th class="head text-right"><p>Phase 3</p></th>
+<th class="head text-right"><p>Speedup</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1 s, 1 ch</p></td>
+<td class="text-right"><p>1.14 ms</p></td>
+<td class="text-right"><p>0.95 ms</p></td>
+<td class="text-right"><p><strong>1.20×</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>1 s, 4 ch</p></td>
+<td class="text-right"><p>1.46 ms</p></td>
+<td class="text-right"><p>1.09 ms</p></td>
+<td class="text-right"><p><strong>1.33×</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>5 s, 1 ch</p></td>
+<td class="text-right"><p>1.76 ms</p></td>
+<td class="text-right"><p>1.39 ms</p></td>
+<td class="text-right"><p><strong>1.27×</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>5 s, 2 ch</p></td>
+<td class="text-right"><p>2.38 ms</p></td>
+<td class="text-right"><p>2.06 ms</p></td>
+<td class="text-right"><p><strong>1.16×</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>30 s, 1 ch</p></td>
+<td class="text-right"><p>7.86 ms</p></td>
+<td class="text-right"><p>7.53 ms</p></td>
+<td class="text-right"><p>1.04×</p></td>
+</tr>
+<tr class="row-odd"><td><p>60 s, 8 ch</p></td>
+<td class="text-right"><p>75.80 ms</p></td>
+<td class="text-right"><p>75.62 ms</p></td>
+<td class="text-right"><p>1.00×</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Short signals see 15–33% speedup because per-call overhead (SOS caching,
+<code class="docutils literal notranslate"><span class="pre">aten::item</span></code> elimination) is a larger fraction of runtime. Long signals
+converge to ~1× because the parallel-scan kernels dominate.</p>
+</section>
+<section id="cuda-biquad-stateful-phase-0-vs-phase-3">
+<h3>CUDA biquad (stateful) — Phase 0 vs Phase 3<a class="headerlink" href="#cuda-biquad-stateful-phase-0-vs-phase-3" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scenario</p></th>
+<th class="head text-right"><p>Phase 0</p></th>
+<th class="head text-right"><p>Phase 3</p></th>
+<th class="head text-right"><p>Speedup</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0.1 s, 1 ch</p></td>
+<td class="text-right"><p>0.264 ms</p></td>
+<td class="text-right"><p>0.225 ms</p></td>
+<td class="text-right"><p><strong>1.18×</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>1.0 s, 1 ch</p></td>
+<td class="text-right"><p>0.271 ms</p></td>
+<td class="text-right"><p>0.228 ms</p></td>
+<td class="text-right"><p><strong>1.19×</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>5.0 s, 1 ch</p></td>
+<td class="text-right"><p>0.540 ms</p></td>
+<td class="text-right"><p>0.496 ms</p></td>
+<td class="text-right"><p><strong>1.09×</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>30 s, 1 ch</p></td>
+<td class="text-right"><p>1.978 ms</p></td>
+<td class="text-right"><p>1.941 ms</p></td>
+<td class="text-right"><p>1.02×</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="pipeline-cuda-new-was-crashing-in-phase-0">
+<h3>Pipeline CUDA (NEW — was crashing in Phase 0)<a class="headerlink" href="#pipeline-cuda-new-was-crashing-in-phase-0" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Benchmark</p></th>
+<th class="head text-right"><p>Phase 3</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sos_cascade[4-cuda]</span></code></p></td>
+<td class="text-right"><p>1.31 ms</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sos_cascade[8-cuda]</span></code></p></td>
+<td class="text-right"><p>2.48 ms</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pipeline[cuda]</span></code></p></td>
+<td class="text-right"><p>3.26 ms</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>These tests crashed in Phase 0 due to <code class="docutils literal notranslate"><span class="pre">move_coeff</span></code> removal. The fix
+(<code class="docutils literal notranslate"><span class="pre">.to(device)</span></code> in benchmark scripts) landed in Phase 2.</p>
+</section>
+<section id="profiler-comparison-key-metrics">
+<h3>Profiler comparison — key metrics<a class="headerlink" href="#profiler-comparison-key-metrics" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Metric</p></th>
+<th class="head text-right"><p>Phase 0</p></th>
+<th class="head text-right"><p>Phase 3</p></th>
+<th class="head"><p>Change</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aten::item</span></code> Self CPU % (batch chain)</p></td>
+<td class="text-right"><p><strong>21.1%</strong></p></td>
+<td class="text-right"><p><strong>0.02%</strong></p></td>
+<td><p>~1000× reduction</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aten::item</span></code> calls (batch chain)</p></td>
+<td class="text-right"><p>135</p></td>
+<td class="text-right"><p>129</p></td>
+<td><p>~same call count, but negligible cost</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aten::_to_copy</span></code> CUDA alloc (batch chain)</p></td>
+<td class="text-right"><p>5.15 GB</p></td>
+<td class="text-right"><p>5.15 GB</p></td>
+<td><p>unchanged — dtype casts remain for input</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aten::copy_</span></code> Self CUDA % (filter chain)</p></td>
+<td class="text-right"><p>1.4%</p></td>
+<td class="text-right"><p>1.4%</p></td>
+<td><p>stable — signal dtype casts are inherent</p></td>
+</tr>
+<tr class="row-even"><td><p>Custom kernels % CUDA (filter chain)</p></td>
+<td class="text-right"><p>95.3%</p></td>
+<td class="text-right"><p>95.4%</p></td>
+<td><p>kernels dominate equally</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aten::lerp</span></code> in realtime GPU</p></td>
+<td class="text-right"><p>absent</p></td>
+<td class="text-right"><p><strong>2.4%</strong></p></td>
+<td><p>Delay optimization confirmed</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The massive <code class="docutils literal notranslate"><span class="pre">aten::item</span></code> win (21.1% → 0.02%) comes from the <code class="docutils literal notranslate"><span class="pre">sos_cpu</span></code> parameter
+that pre-passes a CPU copy of the SOS matrix, and the <code class="docutils literal notranslate"><span class="pre">a1_f64</span></code>/<code class="docutils literal notranslate"><span class="pre">a2_f64</span></code>
+pre-extraction that avoids per-call <code class="docutils literal notranslate"><span class="pre">float()</span></code> GPU→CPU synchronization.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">aten::_to_copy</span></code> allocation remains because input signals arrive as float32
+and the SOS kernels operate in float64 — this is a correctness requirement, not
+churn. The Phase 0 baseline was measuring the same thing; the difference is that
+<em>coefficient</em> casts are now cached.</p>
+</section>
+<section id="cold-import">
+<h3>Cold import<a class="headerlink" href="#cold-import" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Phase</p></th>
+<th class="head text-right"><p>Phase 0</p></th>
+<th class="head text-right"><p>Phase 3</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">torchfx</span></code></p></td>
+<td class="text-right"><p>10.4 s</p></td>
+<td class="text-right"><p>9.6 s</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_load_extension()</span></code> JIT</p></td>
+<td class="text-right"><p>5.3 s</p></td>
+<td class="text-right"><p>15.6 s</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The JIT compile time tripled, likely due to cache invalidation from kernel
+source changes. On subsequent runs the cache is warm and the cost is zero.
+This reinforces the case for the deferred AOT build migration.</p>
+</section>
+<section id="fir-fftconv-control-group">
+<h3>FIR / FFTConv (control group)<a class="headerlink" href="#fir-fftconv-control-group" title="Link to this heading">#</a></h3>
+<p>GPU FIR and FFTConv numbers are flat (±5%), confirming no regressions on
+untouched paths. CPU numbers on the cluster are noisier due to shared-node
+variability, but all GPU numbers are stable.</p>
+</section>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+   
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reproducing">Reproducing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coverage-cpu-only-run">Coverage — CPU-only run</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-1-result-2026-04-11">Phase 1 result (2026-04-11)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-benchmarks-headline-numbers">CPU benchmarks — headline numbers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-profile-offline-filter-chain-10-min-stereo-48-khz">CPU profile — offline filter chain (10 min stereo @ 48 kHz)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-profile-realtime-512-sample-chunk-biquadbpf-delay">CPU profile — realtime 512-sample chunk (BiquadBPF | Delay)</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#finding-delay-has-no-streaming-mode">Finding: <code class="docutils literal notranslate"><span class="pre">Delay</span></code> has no streaming mode</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#headroom-for-realtime">Headroom for realtime</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#offline-batch-scenario-cpu">Offline batch scenario (CPU)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-baseline-2026-04-12">CUDA baseline — 2026-04-12</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cold-import-jit-compile">Cold import + JIT compile</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-iir-benchmark-headline-numbers">CUDA IIR benchmark — headline numbers</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-biquad-benchmark">CUDA biquad benchmark</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-cuda-benchmark-move-coeff-crash">Pipeline CUDA benchmark — <code class="docutils literal notranslate"><span class="pre">move_coeff</span></code> crash</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-profile-offline-filter-chain-10-min-stereo-48-khz">CUDA profile — offline filter chain (10 min stereo @ 48 kHz)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-profile-offline-batch-chain-b-32-c-2-t-480k">CUDA profile — offline batch chain (B=32, C=2, T=480k)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-profile-realtime-gpu-512-sample-chunks">CUDA profile — realtime GPU (512-sample chunks)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#memory-snapshot">Memory snapshot</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-of-phase-3-optimization-targets-data-driven">Summary of Phase 3 optimization targets (data-driven)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-3-results-2026-04-12">Phase 3 results — 2026-04-12</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changes-applied">Changes applied</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-iir-phase-0-vs-phase-3">CUDA IIR — Phase 0 vs Phase 3</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-biquad-stateful-phase-0-vs-phase-3">CUDA biquad (stateful) — Phase 0 vs Phase 3</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-cuda-new-was-crashing-in-phase-0">Pipeline CUDA (NEW — was crashing in Phase 0)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#profiler-comparison-key-metrics">Profiler comparison — key metrics</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cold-import">Cold import</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fir-fftconv-control-group">FIR / FFTConv (control group)</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/perf/baseline.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/perf/baseline.md.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

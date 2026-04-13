@@ -1,0 +1,998 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>TorchFX 0.5.2: Transparent Filter Fusion &amp; Unified Forward Paths &#8212; TorchFX 1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=7f76b32a3354e82990f2"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2" />
+
+    <script src="../_static/documentation_options.js?v=6f8f3740"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-04-13-release-052';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+   
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="index/atom.xml"
+  title="TorchFX Blog"
+/>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/tfx_black.svg" class="logo__image only-light" alt=""/>
+    <img src="../_static/tfx.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">TorchFX</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guides/index.html">
+    Guides
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Blog
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../glossary.html">
+    Glossary
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__postcard">
+   
+  <h2>
+     
+    <i class="fa fa-calendar"></i>
+    
+    <span>13 April 2026</span>
+    
+  </h2>
+  <ul>
+    <div class="ablog-sidebar-item ablog__postcard2">
+   
+  <li id="ablog-sidebar-item author ablog__author">
+    <span>
+      
+      <i class="fa-fw fa fa-user"></i>
+      
+    </span>
+     
+    <a href="index/author/matteo-spanio.html">Matteo Spanio</a>
+      
+  </li>
+     
+  <li id="ablog-sidebar-item category ablog__category">
+    <span>
+      
+      <i class="fa-fw fa fa-folder-open"></i>
+      
+    </span>
+     
+    <a href="index/category/releases.html">releases</a>
+      
+  </li>
+   
+  <li id="ablog-sidebar-item tags ablog__tags">
+    <span>
+       
+      <i class="fa-fw fa fa-tags"></i>
+       
+    </span>
+     
+    <a href="index/tag/release.html">release</a>
+        
+    <a href="index/tag/performance.html">performance</a>
+        
+    <a href="index/tag/fusion.html">fusion</a>
+        
+    <a href="index/tag/pipeline.html">pipeline</a>
+      
+  </li>
+   
+</div>
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__recentposts">
+  <h3>
+    <a href="index.html">Recent Posts</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="2026-03-27-release-050.html">
+        27 March - TorchFX 0.5.0: Custom CUDA Kernels & Native C++ Extension
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-02-15-cli-interface.html">
+        15 February - TorchFX CLI: GPU-Accelerated Audio Processing from the Terminal
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-02-15-release-040.html">
+        15 February - TorchFX 0.4.0: Production-Ready Audio DSP 🚀
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-02-15-repl-live-performance.html">
+        15 February - Interactive Audio Magic: The TorchFX REPL
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-01-11-new-docs.html">
+        11 January - TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉
+      </a>
+    </li>
+    
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__tagcloud">
+  <link
+    rel="stylesheet"
+    href="../_static/ablog/tagcloud.css"
+    type="text/css"
+  />
+  <h3><a href="index/tag.html">Tags</a></h3>
+  <ul class="ablog-cloud">
+     
+    <li class="ablog-cloud ablog-cloud-2">
+      <a href="index/tag/cli.html">cli</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/cuda.html">cuda</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/dafx.html">dafx</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-2">
+      <a href="index/tag/documentation.html">documentation</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/fft.html">fft</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/fusion.html">fusion</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/interactive.html">interactive</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/live-performance.html">live-performance</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/logging.html">logging</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/native-extension.html">native-extension</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-3">
+      <a href="index/tag/open-source.html">open-source</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-2">
+      <a href="index/tag/performance.html">performance</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/pipeline.html">pipeline</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-2">
+      <a href="index/tag/real-time.html">real-time</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-5">
+      <a href="index/tag/release.html">release</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/repl.html">repl</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/tools.html">tools</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/validation.html">validation</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/welcome.html">welcome</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/workflow.html">workflow</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__categories">
+  <h3>
+    <a href="index/category.html">Categories</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="index/category/announcements.html">announcements (4)</a>
+    </li>
+      
+    <li>
+      <a href="index/category/features.html">features (2)</a>
+    </li>
+      
+    <li>
+      <a href="index/category/releases.html">releases (3)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__authors">
+  <h3>
+    <a href="index/author.html">Authors</a>
+  </h3>
+  <ul>
+       
+    <li>
+      <a href="index/author/matteo-spanio.html">Matteo Spanio (9)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+        <div class="sidebar-primary-item">
+<div class="ablog-sidebar-item ablog__archives">
+  <h3>
+    <a href="index/archive.html">Archives</a>
+  </h3>
+  <ul>
+     
+    <li>
+      <a href="index/2026.html">2026 (7)</a>
+    </li>
+      
+    <li>
+      <a href="index/2025.html">2025 (2)</a>
+    </li>
+     
+  </ul>
+</div>
+</div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX 0.5.2: Transparent Filter Fusion &amp; Unified Forward Paths</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                   <section id="torchfx-0-5-2-transparent-filter-fusion-unified-forward-paths">
+<h1>TorchFX 0.5.2: Transparent Filter Fusion &amp; Unified Forward Paths<a class="headerlink" href="#torchfx-0-5-2-transparent-filter-fusion-unified-forward-paths" title="Link to this heading">#</a></h1>
+<p><strong>TorchFX 0.5.2</strong> focuses on two things: making filter chains faster without changing your code, and cleaning up internal duplication so the library is easier to maintain and extend.</p>
+<p>The headline feature is <strong>deferred pipeline fusion</strong> — when you chain IIR and biquad filters together, TorchFX now automatically merges them into a single fused kernel call, eliminating per-filter Python dispatch overhead.</p>
+<section id="deferred-pipeline-with-auto-fusion">
+<h2>Deferred Pipeline with Auto-Fusion<a class="headerlink" href="#deferred-pipeline-with-auto-fusion" title="Link to this heading">#</a></h2>
+<p>Previously, <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">f1</span> <span class="pre">|</span> <span class="pre">f2</span> <span class="pre">|</span> <span class="pre">f3</span></code> executed each filter immediately, one at a time. Now, <code class="docutils literal notranslate"><span class="pre">Wave.__or__</span></code> accumulates filters in a lazy pipeline that only materializes when you access <code class="docutils literal notranslate"><span class="pre">.ys</span></code>. At materialization time, consecutive IIR and biquad filters are automatically fused into a single <code class="docutils literal notranslate"><span class="pre">FusedSOSCascade</span></code> — their SOS matrices are concatenated into one <code class="docutils literal notranslate"><span class="pre">[K_total,</span> <span class="pre">6]</span></code> tensor and processed in a single native kernel call.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.iir</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span><span class="p">,</span> <span class="n">HiButterworth</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span>
+
+<span class="c1"># All three syntaxes benefit from auto-fusion:</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="n">HiButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="p">(</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="n">HiButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">HiButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Fusion is transparent — the numerical result is identical to applying filters sequentially. Non-fusible effects (like <code class="docutils literal notranslate"><span class="pre">Gain</span></code>) break the chain naturally: <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">f1</span> <span class="pre">|</span> <span class="pre">f2</span> <span class="pre">|</span> <span class="pre">Gain(0.5)</span> <span class="pre">|</span> <span class="pre">f3</span> <span class="pre">|</span> <span class="pre">f4</span></code> fuses <code class="docutils literal notranslate"><span class="pre">f1+f2</span></code> and <code class="docutils literal notranslate"><span class="pre">f3+f4</span></code> independently, with <code class="docutils literal notranslate"><span class="pre">Gain</span></code> applied between them.</p>
+</section>
+<section id="filterchain-and-the-pipe-operator">
+<h2><code class="docutils literal notranslate"><span class="pre">FilterChain</span></code> and the Pipe Operator<a class="headerlink" href="#filterchain-and-the-pipe-operator" title="Link to this heading">#</a></h2>
+<p>The pipe operator <code class="docutils literal notranslate"><span class="pre">|</span></code> now works directly between filters and effects, not just with <code class="docutils literal notranslate"><span class="pre">Wave</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.iir</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span><span class="p">,</span> <span class="n">HiButterworth</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+
+<span class="c1"># Build reusable chains</span>
+<span class="n">bandpass</span> <span class="o">=</span> <span class="n">HiButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">bandpass</span> <span class="o">|</span> <span class="n">Gain</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># Apply to audio</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">chain</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">FilterChain</span></code> is an auto-flattening <code class="docutils literal notranslate"><span class="pre">nn.Sequential</span></code> subclass — <code class="docutils literal notranslate"><span class="pre">(f1</span> <span class="pre">|</span> <span class="pre">f2)</span> <span class="pre">|</span> <span class="pre">f3</span></code> produces a flat <code class="docutils literal notranslate"><span class="pre">FilterChain(f1,</span> <span class="pre">f2,</span> <span class="pre">f3)</span></code>, not nested containers. It’s exported from the top-level <code class="docutils literal notranslate"><span class="pre">torchfx</span></code> package.</p>
+</section>
+<section id="unified-biquad-iir-forward-path">
+<h2>Unified Biquad/IIR Forward Path<a class="headerlink" href="#unified-biquad-iir-forward-path" title="Link to this heading">#</a></h2>
+<p>A biquad filter is mathematically a single second-order IIR section (K=1). Its SOS matrix is simply <code class="docutils literal notranslate"><span class="pre">[[b0,</span> <span class="pre">b1,</span> <span class="pre">b2,</span> <span class="pre">1.0,</span> <span class="pre">a1,</span> <span class="pre">a2]]</span></code> — a <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">6]</span></code> tensor. Yet previously, <code class="docutils literal notranslate"><span class="pre">Biquad</span></code> and <code class="docutils literal notranslate"><span class="pre">IIR</span></code> had completely separate forward-path implementations: different state management, different native dispatch, different fallback paths — about 200 lines of duplicated logic.</p>
+<p>In 0.5.2, <code class="docutils literal notranslate"><span class="pre">Biquad</span></code> stores its coefficients as a <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">6]</span></code> SOS tensor and delegates its <code class="docutils literal notranslate"><span class="pre">forward()</span></code> to the same <code class="docutils literal notranslate"><span class="pre">_sos_cascade_forward</span></code> helper used by <code class="docutils literal notranslate"><span class="pre">IIR</span></code> and <code class="docutils literal notranslate"><span class="pre">FusedSOSCascade</span></code>. This:</p>
+<ul class="simple">
+<li><p><strong>Removes ~150 lines</strong> of duplicated forward-path code</p></li>
+<li><p><strong>Enables mixed fusion</strong> — <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">BiquadLPF(...)</span> <span class="pre">|</span> <span class="pre">LoButterworth(...)</span></code> now auto-fuses</p></li>
+<li><p><strong>Retains the specialized CUDA kernel</strong> — when <code class="docutils literal notranslate"><span class="pre">num_sections</span> <span class="pre">==</span> <span class="pre">1</span></code> on CUDA, <code class="docutils literal notranslate"><span class="pre">_sos_cascade_forward</span></code> dispatches to the optimized <code class="docutils literal notranslate"><span class="pre">biquad_forward</span></code> kernel (128-channel batching per thread block), so single-biquad performance is preserved</p></li>
+<li><p><strong>Maintains backward compatibility</strong> — <code class="docutils literal notranslate"><span class="pre">Biquad.b</span></code> and <code class="docutils literal notranslate"><span class="pre">Biquad.a</span></code> are still accessible as read-only properties</p></li>
+</ul>
+</section>
+<section id="performance-improvements">
+<h2>Performance Improvements<a class="headerlink" href="#performance-improvements" title="Link to this heading">#</a></h2>
+<p>Beyond fusion, several targeted optimizations reduce per-call overhead:</p>
+<ul class="simple">
+<li><p><strong>SOS coefficient caching</strong>: device-matched SOS tensors are cached between forward calls, eliminating per-call <code class="docutils literal notranslate"><span class="pre">.to()</span></code> device transfers that accounted for 21% of Self CPU time in batch profiles</p></li>
+<li><p><strong>In-place state updates</strong>: replaced per-section <code class="docutils literal notranslate"><span class="pre">torch.stack()</span></code> allocations with <code class="docutils literal notranslate"><span class="pre">copy_()</span></code> into pre-existing state buffers</p></li>
+<li><p><strong>Reverb op fusion</strong>: simplified the PyTorch fallback from 5 tensor ops to 2 (<code class="docutils literal notranslate"><span class="pre">clone</span></code> + <code class="docutils literal notranslate"><span class="pre">add_</span></code> with alpha)</p></li>
+<li><p><strong>Delay wet/dry mix</strong>: replaced <code class="docutils literal notranslate"><span class="pre">(1-mix)*x</span> <span class="pre">+</span> <span class="pre">mix*y</span></code> (3 ops) with <code class="docutils literal notranslate"><span class="pre">torch.lerp</span></code> (1 fused op)</p></li>
+<li><p><strong>Biquad coefficient caching</strong>: feedback coefficients <code class="docutils literal notranslate"><span class="pre">a1</span></code>, <code class="docutils literal notranslate"><span class="pre">a2</span></code> are pre-extracted as Python floats at coefficient-computation time, eliminating per-forward GPU-to-CPU sync</p></li>
+</ul>
+</section>
+<section id="benchmark-results-quadro-rtx-6000">
+<h2>Benchmark Results (Quadro RTX 6000)<a class="headerlink" href="#benchmark-results-quadro-rtx-6000" title="Link to this heading">#</a></h2>
+<p>Measured on a Quadro RTX 6000 (24 GB), CUDA 12.8, PyTorch 2.10.0:</p>
+<section id="full-pipeline-bandpass-gain-lowpass-chain-44-1-khz-2ch-5s">
+<h3>Full Pipeline (bandpass + gain + lowpass chain, 44.1 kHz, 2ch, 5s)<a class="headerlink" href="#full-pipeline-bandpass-gain-lowpass-chain-44-1-khz-2ch-5s" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Device</p></th>
+<th class="head text-right"><p>Mean</p></th>
+<th class="head"><p>Relative</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>CUDA</strong></p></td>
+<td class="text-right"><p><strong>3.57 ms</strong></p></td>
+<td><p>1.0x</p></td>
+</tr>
+<tr class="row-odd"><td><p>CPU</p></td>
+<td class="text-right"><p>5.98 ms</p></td>
+<td><p>1.7x slower</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="sos-cascade-44-1-khz-2ch-5s">
+<h3>SOS Cascade (44.1 kHz, 2ch, 5s)<a class="headerlink" href="#sos-cascade-44-1-khz-2ch-5s" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head text-right"><p>Sections</p></th>
+<th class="head text-right"><p>CPU</p></th>
+<th class="head text-right"><p>CUDA</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-right"><p>4</p></td>
+<td class="text-right"><p>1.66 ms</p></td>
+<td class="text-right"><p>1.28 ms</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>8</p></td>
+<td class="text-right"><p>2.63 ms</p></td>
+<td class="text-right"><p>2.43 ms</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="biquad-stateful-44-1-khz-1ch">
+<h3>Biquad Stateful (44.1 kHz, 1ch)<a class="headerlink" href="#biquad-stateful-44-1-khz-1ch" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head text-right"><p>Duration</p></th>
+<th class="head text-right"><p>CPU</p></th>
+<th class="head text-right"><p>CUDA</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-right"><p>0.1s</p></td>
+<td class="text-right"><p>93 us</p></td>
+<td class="text-right"><p>239 us</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>5s</p></td>
+<td class="text-right"><p>1.17 ms</p></td>
+<td class="text-right"><p>487 us</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>30s</p></td>
+<td class="text-right"><p>7.0 ms</p></td>
+<td class="text-right"><p>2.37 ms</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="iir-6th-order-butterworth-44-1-khz">
+<h3>IIR 6th-order Butterworth (44.1 kHz)<a class="headerlink" href="#iir-6th-order-butterworth-44-1-khz" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Backend</p></th>
+<th class="head text-right"><p>60s / 1ch</p></th>
+<th class="head text-right"><p>60s / 8ch</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>TorchFX GPU</strong></p></td>
+<td class="text-right"><p><strong>15.2 ms</strong></p></td>
+<td class="text-right"><p><strong>75.3 ms</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>TorchFX CPU</p></td>
+<td class="text-right"><p>53.2 ms</p></td>
+<td class="text-right"><p>129.9 ms</p></td>
+</tr>
+<tr class="row-even"><td><p>SciPy</p></td>
+<td class="text-right"><p>61.5 ms</p></td>
+<td class="text-right"><p>857.9 ms</p></td>
+</tr>
+<tr class="row-odd"><td><p>Numba <code class="docutils literal notranslate"><span class="pre">&#64;njit</span></code> CPU</p></td>
+<td class="text-right"><p>71.6 ms</p></td>
+<td class="text-right"><p>95.4 ms</p></td>
+</tr>
+<tr class="row-even"><td><p>Numba <code class="docutils literal notranslate"><span class="pre">&#64;cuda.jit</span></code></p></td>
+<td class="text-right"><p>1,584 ms</p></td>
+<td class="text-right"><p>1,652 ms</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>TorchFX GPU is <strong>4x faster than SciPy</strong> for single-channel and <strong>11x faster</strong> for 8-channel workloads. The Numba CUDA baseline confirms that the custom parallel scan kernel significantly outperforms a naive GPU implementation.</p>
+</section>
+</section>
+<section id="test-coverage">
+<h2>Test Coverage<a class="headerlink" href="#test-coverage" title="Link to this heading">#</a></h2>
+<p>Test coverage increased from <strong>74% to 88%</strong>, with a <code class="docutils literal notranslate"><span class="pre">fail_under</span> <span class="pre">=</span> <span class="pre">87</span></code> gate enforced in CI. New test files:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">test_fused.py</span></code> — FusedSOSCascade edge cases (9% to 75%)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_filter_base.py</span></code> — AbstractFilter and ParallelFilterCombination (44% to 89%)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_filter_utils.py</span></code> — filter utilities (0% to 91%)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_ops_dispatch.py</span></code> — native dispatch and fallback paths (64% to 84%)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_filterbank.py</span></code> — LogFilterBank (73% to 100%)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_iir_gaps.py</span></code> — IIR edge cases (71% to 86%)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_chain_fusion.py</span></code> — deferred pipeline, fusion, and FilterChain</p></li>
+</ul>
+</section>
+<section id="bug-fixes">
+<h2>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AbstractFilter._has_computed_coeff</span></code> incorrectly returned <code class="docutils literal notranslate"><span class="pre">True</span></code> for IIR subclasses whose <code class="docutils literal notranslate"><span class="pre">_sos</span> <span class="pre">is</span> <span class="pre">None</span></code> — silently claiming coefficients were ready before <code class="docutils literal notranslate"><span class="pre">compute_coefficients()</span></code> had run</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ParallelFilterCombination.__init__</span></code> assigned <code class="docutils literal notranslate"><span class="pre">self.fs</span></code> before <code class="docutils literal notranslate"><span class="pre">self.filters</span></code>, crashing when <code class="docutils literal notranslate"><span class="pre">fs</span></code> was passed at construction time</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">iir_cpu.cpp</span></code> used a hardcoded <code class="docutils literal notranslate"><span class="pre">double</span> <span class="pre">sec_sx0[16]</span></code> stack array, silently overflowing for filters with &gt;16 SOS sections (order &gt;32). Now falls back to heap allocation for high orders.</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torchfx</span><span class="o">==</span><span class="m">0</span>.5.2
+</pre></div>
+</div>
+<blockquote>
+<div><p>Benchmarks were run on a Quadro RTX 6000 (24 GB) with CUDA 12.8 and PyTorch 2.10.0. Performance varies by hardware and software configuration — always benchmark on your target system.</p>
+</div></blockquote>
+</section>
+</section>
+
+<div class="section ablog__blog_comments">
+     
+<div class="section ablog__prev-next">
+  <span class="ablog__prev">
+     
+    <a href="2026-03-27-release-050.html">
+      
+      <i class="fa fa-arrow-circle-left"></i>
+      
+      <span>TorchFX 0.5.0: Custom CUDA Kernels & Native C++ Extension</span>
+    </a>
+    
+  </span>
+  <span class="ablog__spacer">&nbsp;</span>
+  <span class="ablog__next">
+    
+  </span>
+</div>
+  
+</div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deferred-pipeline-with-auto-fusion">Deferred Pipeline with Auto-Fusion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#filterchain-and-the-pipe-operator"><code class="docutils literal notranslate"><span class="pre">FilterChain</span></code> and the Pipe Operator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unified-biquad-iir-forward-path">Unified Biquad/IIR Forward Path</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-improvements">Performance Improvements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmark-results-quadro-rtx-6000">Benchmark Results (Quadro RTX 6000)</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#full-pipeline-bandpass-gain-lowpass-chain-44-1-khz-2ch-5s">Full Pipeline (bandpass + gain + lowpass chain, 44.1 kHz, 2ch, 5s)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sos-cascade-44-1-khz-2ch-5s">SOS Cascade (44.1 kHz, 2ch, 5s)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#biquad-stateful-44-1-khz-1ch">Biquad Stateful (44.1 kHz, 1ch)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#iir-6th-order-butterworth-44-1-khz">IIR 6th-order Butterworth (44.1 kHz)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-coverage">Test Coverage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-fixes">Bug Fixes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-04-13-release-052.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/blog/2026-04-13-release-052.md.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Matteo Spanio.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
