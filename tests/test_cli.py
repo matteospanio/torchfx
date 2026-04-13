@@ -8,8 +8,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torchaudio
 from typer.testing import CliRunner
+
+try:
+    import torchaudio
+except OSError:
+    pytest.skip("torchaudio not loadable (CUDA libs missing)", allow_module_level=True)
 
 from cli.app import app
 from cli.parsing import (

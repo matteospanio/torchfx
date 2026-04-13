@@ -126,8 +126,14 @@ from collections.abc import Callable
 
 import torch
 from torch import Tensor, nn
-from torchaudio import functional as F
 from typing_extensions import override
+
+
+def _gain_db(waveform: Tensor, gain_db: float) -> Tensor:
+    """Apply dB gain to waveform (replaces torchaudio.functional.gain)."""
+    if gain_db == 0:
+        return waveform
+    return waveform * 10 ** (gain_db / 20)
 
 
 class FX(nn.Module, abc.ABC):
@@ -373,10 +379,10 @@ class Gain(FX):
             waveform = waveform * self.gain
 
         if self.gain_type == "db":
-            waveform = F.gain(waveform, self.gain)
+            waveform = _gain_db(waveform, self.gain)
 
         if self.gain_type == "power":
-            waveform = F.gain(waveform, 10 * math.log10(self.gain))
+            waveform = _gain_db(waveform, 10 * math.log10(self.gain))
 
         if self.clamp:
             waveform = torch.clamp(waveform, -1.0, 1.0)

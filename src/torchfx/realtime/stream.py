@@ -27,7 +27,6 @@ from typing import cast
 
 import soundfile as sf  # type: ignore[import-untyped]
 import torch
-import torchaudio
 from torch import Tensor, nn
 
 from torchfx.effect import FX
@@ -239,6 +238,8 @@ class StreamProcessor:
             while offset < num_frames:
                 # Read chunk (with overlap)
                 read_size = min(self._chunk_size, num_frames - offset)
+                import torchaudio
+
                 waveform, sample_rate = torchaudio.load(
                     str(input_path),
                     frame_offset=offset,
@@ -316,6 +317,8 @@ class StreamProcessor:
 
         while offset < num_frames:
             read_size = min(self._chunk_size, num_frames - offset)
+            import torchaudio
+
             waveform, _sample_rate = torchaudio.load(
                 str(input_path),
                 frame_offset=offset,

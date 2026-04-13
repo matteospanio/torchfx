@@ -11,6 +11,16 @@ from torchfx.filter import (
     LoButterworth,
 )
 
+_torchaudio_available = True
+try:
+    import torchaudio  # noqa: F401
+except OSError:
+    _torchaudio_available = False
+
+requires_torchaudio = pytest.mark.skipif(
+    not _torchaudio_available, reason="torchaudio not loadable (CUDA libs missing)"
+)
+
 
 @pytest.fixture
 def sample_wave():
@@ -70,6 +80,7 @@ def test_wave_transform(sample_wave):
     assert transformed_wave.ys.shape == sample_wave.ys.shape
 
 
+@requires_torchaudio
 class TestWaveSave:
     """Test suite for Wave.save() method."""
 

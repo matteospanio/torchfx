@@ -48,7 +48,6 @@ from collections.abc import Callable
 from pathlib import Path
 
 import torch
-import torchaudio
 from numpy.typing import ArrayLike
 from torch import Tensor, nn
 from typing_extensions import Self
@@ -484,6 +483,8 @@ class Wave:
         torchaudio.load : Underlying function used for loading
 
         """
+        import torchaudio
+
         data, fs = torchaudio.load(path, *args, **kwargs)
 
         # Extract metadata from the file using soundfile (torchaudio.info
