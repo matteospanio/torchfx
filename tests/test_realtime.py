@@ -15,7 +15,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 import soundfile as sf
 import torch
-import torchaudio
 from torch import Tensor
 
 from torchfx.effect import FX, Gain
@@ -589,7 +588,7 @@ class TestStreamProcessor:
         fs = 44100
         t = torch.linspace(0, 1, fs)
         waveform = torch.sin(2 * torch.pi * 440 * t).unsqueeze(0)
-        torchaudio.save(str(path), waveform, fs)
+        sf.write(str(path), waveform.squeeze(0).numpy(), fs)
         return path
 
     @pytest.fixture
@@ -601,7 +600,7 @@ class TestStreamProcessor:
         left = torch.sin(2 * torch.pi * 440 * t)
         right = torch.sin(2 * torch.pi * 880 * t)
         waveform = torch.stack([left, right])
-        torchaudio.save(str(path), waveform, fs)
+        sf.write(str(path), waveform.T.numpy(), fs)
         return path
 
     def test_create_processor(self) -> None:
@@ -628,7 +627,8 @@ class TestStreamProcessor:
         processor.process_file(wav_file, output_path)
 
         assert output_path.exists()
-        waveform, fs = torchaudio.load(str(output_path))
+        w_np, fs = sf.read(str(output_path), dtype="float32", always_2d=True)
+        waveform = torch.from_numpy(w_np.T)
         assert fs == 44100
         assert waveform.shape[0] == 1  # Mono
         assert waveform.shape[1] > 0
@@ -638,7 +638,8 @@ class TestStreamProcessor:
         processor = StreamProcessor(effects=[Gain(0.5)], chunk_size=8192)
         processor.process_file(stereo_wav_file, output_path)
 
-        waveform, fs = torchaudio.load(str(output_path))
+        w_np, fs = sf.read(str(output_path), dtype="float32", always_2d=True)
+        waveform = torch.from_numpy(w_np.T)
         assert waveform.shape[0] == 2  # Stereo
 
     def test_process_file_with_gain(self, wav_file: Path, tmp_path: Path) -> None:
@@ -646,8 +647,10 @@ class TestStreamProcessor:
         processor = StreamProcessor(effects=[Gain(0.5)], chunk_size=8192)
         processor.process_file(wav_file, output_path)
 
-        original, _ = torchaudio.load(str(wav_file))
-        processed, _ = torchaudio.load(str(output_path))
+        o_np, _ = sf.read(str(wav_file), dtype="float32", always_2d=True)
+        original = torch.from_numpy(o_np.T)
+        p_np, _ = sf.read(str(output_path), dtype="float32", always_2d=True)
+        processed = torch.from_numpy(p_np.T)
 
         # Processed should be approximately half the original amplitude
         # (allow small tolerance due to float conversion)
@@ -844,7 +847,7 @@ class TestIIRFilterFixes:
             fs = 44100
             t = torch.linspace(0, 1, fs).unsqueeze(0)
             signal = 0.5 * torch.sin(2 * torch.pi * 440 * t)
-            torchaudio.save(str(input_path), signal, fs)
+            sf.write(str(input_path), signal.squeeze(0).numpy(), fs)
 
             # Process with small chunks to test boundary handling
             from torchfx.realtime import StreamProcessor
@@ -856,7 +859,8 @@ class TestIIRFilterFixes:
                 processor.process_file(str(input_path), str(output_path))
 
             # Load and verify output is clean (no NaN, no sudden spikes)
-            output, out_fs = torchaudio.load(str(output_path))
+            out_np, out_fs = sf.read(str(output_path), dtype="float32", always_2d=True)
+            output = torch.from_numpy(out_np.T)
             assert not torch.isnan(output).any()
             assert not torch.isinf(output).any()
             # Output should be quieter than input (440Hz through 2000Hz LPF)

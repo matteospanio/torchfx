@@ -5,7 +5,7 @@ import pytest
 import soundfile as sf
 import torch
 
-from torchfx import Wave  # Replace with the actual module name
+from torchfx import Wave
 from torchfx.filter import (
     HiButterworth,
     LoButterworth,

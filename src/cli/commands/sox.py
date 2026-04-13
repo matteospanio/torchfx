@@ -49,7 +49,6 @@ def convert_cmd(
 
     """
     import torch
-    from torchaudio import functional as F
 
     from torchfx.wave import Wave
 
@@ -60,9 +59,12 @@ def convert_cmd(
 
     wave = Wave.from_file(src)
 
-    # Resample
+    # Resample via linear interpolation
     if sample_rate is not None and sample_rate != wave.fs:
-        wave.ys = F.resample(wave.ys, wave.fs, sample_rate)
+        new_length = int(wave.ys.shape[1] * sample_rate / wave.fs)
+        wave.ys = torch.nn.functional.interpolate(
+            wave.ys.unsqueeze(0), size=new_length, mode="linear", align_corners=False
+        ).squeeze(0)
         wave.fs = sample_rate
 
     # Channel conversion

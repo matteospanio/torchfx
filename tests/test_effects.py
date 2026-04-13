@@ -1,3 +1,5 @@
+import math
+
 import pytest
 import torch
 
@@ -30,35 +32,28 @@ def test_gain_amplitude():
     torch.testing.assert_close(out, waveform * 2.0)
 
 
-def test_gain_db(monkeypatch):
+def test_gain_db():
     waveform = torch.tensor([0.1, -0.2, 0.3])
-    called = {}
-
-    def fake_gain(waveform, gain):
-        called["args"] = (waveform, gain)
-        return waveform + gain
-
-    monkeypatch.setattr("torchaudio.functional.gain", fake_gain)
     gain = Gain(gain=6.0, gain_type="db")
     out = gain(waveform)
-    assert torch.allclose(out, waveform + 6.0)
-    assert called["args"][1] == 6.0
+    expected = waveform * 10 ** (6.0 / 20)
+    torch.testing.assert_close(out, expected)
 
 
-def test_gain_power(monkeypatch):
+def test_gain_db_zero():
     waveform = torch.tensor([0.1, -0.2, 0.3])
-    called = {}
+    gain = Gain(gain=0.0, gain_type="db")
+    out = gain(waveform)
+    torch.testing.assert_close(out, waveform)
 
-    def fake_gain(waveform, gain):
-        called["args"] = (waveform, gain)
-        return waveform + gain
 
-    monkeypatch.setattr("torchaudio.functional.gain", fake_gain)
+def test_gain_power():
+    waveform = torch.tensor([0.1, -0.2, 0.3])
     gain = Gain(gain=10.0, gain_type="power")
     out = gain(waveform)
-    expected_gain = 10 * torch.log10(torch.tensor(10.0)).item()
-    assert torch.allclose(out, waveform + expected_gain)
-    assert called["args"][1] == expected_gain
+    expected_db = 10 * math.log10(10.0)
+    expected = waveform * 10 ** (expected_db / 20)
+    torch.testing.assert_close(out, expected)
 
 
 def test_gain_clamp():
@@ -518,9 +513,12 @@ def test_delay_lazy_fs_inference_with_wave():
     assert delay.fs is None
 
     wave = Wave(torch.randn(2, 44100), fs=44100)
-    _ = wave | delay
+    result = wave | delay
 
+    # fs is set eagerly by the pipeline config
     assert delay.fs == 44100
+    # delay_samples is computed lazily during forward — trigger materialization
+    _ = result.ys
     assert delay.delay_samples == 11025
 
 

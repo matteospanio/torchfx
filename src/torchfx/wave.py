@@ -48,7 +48,6 @@ from collections.abc import Callable
 from pathlib import Path
 
 import torch
-import torchaudio
 from numpy.typing import ArrayLike
 from torch import Tensor, nn
 from typing_extensions import Self
@@ -131,7 +130,6 @@ class Wave:
 
     """
 
-    ys: Tensor
     fs: int
     __device: Device  # private field
     metadata: dict[str, tp.Any]
@@ -190,9 +188,73 @@ class Wave:
 
         """
         self.fs = fs
+        self._pipeline: list[nn.Module] = []
         self.ys = Tensor(ys)
         self.metadata = metadata or {}
         self.to(device)
+
+    @property
+    def ys(self) -> Tensor:
+        """Audio signal tensor with shape (channels, samples)."""
+        self._materialize()
+        return self._ys
+
+    @ys.setter
+    def ys(self, value: Tensor) -> None:
+        self._ys = value
+        self._pipeline = []
+
+    def _materialize(self) -> None:
+        """Execute the deferred pipeline, fusing consecutive IIR/biquad filters."""
+        if not self._pipeline:
+            return
+
+        from torchfx.filter.biquad import Biquad
+        from torchfx.filter.fused import FusedSOSCascade
+        from torchfx.filter.iir import IIR
+
+        plan: list[nn.Module] = []
+        iir_run: list[IIR | Biquad] = []
+
+        def flush() -> None:
+            nonlocal iir_run
+            if len(iir_run) >= 2:
+                plan.append(FusedSOSCascade(*iir_run))
+            elif iir_run:
+                plan.append(iir_run[0])
+            iir_run = []
+
+        for module in self._pipeline:
+            if isinstance(module, (IIR, Biquad)):
+                iir_run.append(module)
+            else:
+                flush()
+                plan.append(module)
+        flush()
+
+        data = self._ys
+        for module in plan:
+            data = module(data)
+        self._ys = data
+        self._pipeline = []
+
+    @classmethod
+    def _deferred(
+        cls,
+        ys: Tensor,
+        fs: int,
+        device: Device,
+        metadata: dict[str, tp.Any],
+        pipeline: list[nn.Module],
+    ) -> "Wave":
+        """Create a Wave with a deferred pipeline (internal use)."""
+        wave = object.__new__(cls)
+        wave._ys = ys
+        wave.fs = fs
+        wave._Wave__device = device  # type: ignore[attr-defined]
+        wave.metadata = metadata
+        wave._pipeline = pipeline
+        return wave
 
     @property
     def device(self) -> Device:
@@ -265,7 +327,8 @@ class Wave:
 
         """
         self.__device = device
-        self.ys = self.ys.to(device)
+        self._materialize()
+        self._ys = self._ys.to(device)
         return self
 
     def transform(self, func: Callable[..., Tensor], *args, **kwargs) -> "Wave":  # type: ignore
@@ -343,25 +406,31 @@ class Wave:
         to : Move the Wave to a different device before transformation
 
         """
-        return Wave(func(self.ys, *args, **kwargs), self.fs)
+        self._materialize()
+        return Wave(func(self._ys, *args, **kwargs), self.fs)
 
     @classmethod
-    def from_file(cls, path: str | Path, *args, **kwargs) -> "Wave":  # type: ignore
+    def from_file(
+        cls,
+        path: str | Path,
+        frame_offset: int = 0,
+        num_frames: int = -1,
+    ) -> "Wave":
         """Load a Wave object from an audio file.
 
-        This classmethod uses torchaudio.load to read audio files, automatically
-        detecting the format and extracting metadata. Supported formats include WAV,
-        MP3, FLAC, OGG, and others depending on the available torchaudio backend.
+        Reads audio files via ``soundfile``, automatically detecting the format
+        and extracting metadata. Supported formats include WAV, FLAC, OGG, and
+        others depending on the ``libsndfile`` build.
 
         Parameters
         ----------
         path : str or Path
             Path to the audio file to load. Can be a string or pathlib.Path object.
-        *args
-            Additional positional arguments passed to torchaudio.load.
-        **kwargs
-            Additional keyword arguments passed to torchaudio.load. Common options
-            include frame_offset, num_frames, normalize, channels_first, and format.
+        frame_offset : int, optional
+            Number of frames to skip from the beginning (default: 0).
+        num_frames : int, optional
+            Maximum number of frames to read. ``-1`` reads the entire file
+            (default: ``-1``).
 
         Returns
         -------
@@ -385,47 +454,24 @@ class Wave:
 
         >>> wave = Wave.from_file("audio.flac")
         >>> print(wave.metadata)
-        {'num_frames': 220500, 'num_channels': 2, 'bits_per_sample': 16, ...}
-
-        Load different formats:
-
-        >>> wav_wave = Wave.from_file("audio.wav")
-        >>> mp3_wave = Wave.from_file("audio.mp3")
-        >>> flac_wave = Wave.from_file("audio.flac")
-
-        Load with normalization:
-
-        >>> # Normalize to [-1, 1] range
-        >>> wave = Wave.from_file("audio.wav", normalize=True)
-
-        Notes
-        -----
-        The method automatically extracts metadata including num_frames, num_channels,
-        bits_per_sample, and encoding when available. If metadata extraction fails,
-        an empty metadata dictionary is used instead.
-
-        The loaded audio tensor will be on CPU by default. Use the to() method or
-        device parameter in subsequent processing to move to GPU:
-
-        >>> wave = Wave.from_file("audio.wav").to("cuda")
-
-        Format support depends on the torchaudio backend (SoX or FFmpeg). Check
-        torchaudio documentation for your installation's supported formats.
+        {'num_frames': 220500, 'num_channels': 2, ...}
 
         See Also
         --------
         __init__ : Direct constructor for creating Wave from array data
         save : Save a Wave object to an audio file
-        torchaudio.load : Underlying function used for loading
 
         """
-        data, fs = torchaudio.load(path, *args, **kwargs)
+        import soundfile as _sf  # type: ignore[import-untyped]
 
-        # Extract metadata from the file using soundfile (torchaudio.info
-        # was removed in torchaudio 2.10+).
+        stop = None if num_frames == -1 else frame_offset + num_frames
+        data_np, fs = _sf.read(
+            str(path), start=frame_offset, stop=stop, dtype="float32", always_2d=True
+        )
+        # soundfile returns [samples, channels]; torch convention is [channels, samples]
+        data = torch.from_numpy(data_np.T.copy())
+
         try:
-            import soundfile as _sf  # type: ignore[import-untyped]
-
             info = _sf.info(str(path))
             metadata = {
                 "num_frames": info.frames,
@@ -434,7 +480,6 @@ class Wave:
                 "format": info.format,
             }
         except Exception:
-            # If metadata extraction fails, continue without it
             metadata = {}
 
         return cls(data, fs, metadata=metadata)
@@ -638,15 +683,23 @@ class Wave:
         if not isinstance(f, nn.Module):
             raise TypeError(f"Expected nn.Module, but got {type(f).__name__} instead.")
 
-        if isinstance(f, FX):
-            self.__update_config(f)
+        # Walk all submodules (including f itself) so that arbitrarily nested
+        # Sequential / ModuleList structures get their fs configured.
+        for m in f.modules():
+            if isinstance(m, FX):
+                self.__update_config(m)
 
-        elif isinstance(f, (nn.Sequential | nn.ModuleList)):
-            for a in f:
-                if isinstance(a, FX):
-                    self.__update_config(a)
+        # Flatten Sequential into individual steps so consecutive IIR filters
+        # are visible for fusion at materialization time.
+        new_steps = list(f.children()) if isinstance(f, nn.Sequential) else [f]
 
-        return self.transform(f.forward)
+        return Wave._deferred(
+            self._ys,
+            self.fs,
+            self.device,
+            self.metadata,
+            self._pipeline + new_steps,
+        )
 
     def __update_config(self, f: FX) -> None:
         """Update the configuration of the filter with the wave's sampling frequency."""

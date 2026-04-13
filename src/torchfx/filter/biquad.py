@@ -65,11 +65,9 @@ import math
 
 import torch
 from torch import Tensor
-from torchaudio import functional as F  # noqa: N812
 from typing_extensions import override
 
 from torchfx.filter.__base import AbstractFilter
-from torchfx.typing import Device
 
 
 class Biquad(AbstractFilter):
@@ -77,19 +75,13 @@ class Biquad(AbstractFilter):
 
     A biquad filter is defined by five normalized coefficients
     (``b0, b1, b2, a1, a2``). The denominator coefficient ``a0`` is always
-    normalized to 1. Filter state (two samples of input and output history
-    per channel) is maintained as registered buffers so that it moves
-    automatically with ``.to(device)`` calls.
+    normalized to 1. Internally, coefficients are stored as a single SOS
+    (second-order section) row ``[b0, b1, b2, 1, a1, a2]`` and processed
+    via the shared SOS cascade forward path.
 
-    Two processing paths are provided:
+    Processing uses Direct Form 1, which is numerically robust for floating-point:
 
-    * **Stateless (fast)**: delegates to ``torchaudio.functional.lfilter``
-      when no chunk-to-chunk state continuity is needed. This is the default
-      for one-shot ``wave | filter`` usage.
-    * **Stateful (DF1 loop)**: a pure-PyTorch sample-by-sample loop
-      (vectorized across channels) that carries state between calls.
-      Activated after calling ``forward()`` — subsequent calls reuse state.
-      Call ``reset_state()`` to clear accumulated state.
+        y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
 
     Parameters
     ----------
@@ -106,14 +98,16 @@ class Biquad(AbstractFilter):
     q : float
     fs : int | None
     b : Tensor | None
-        Numerator coefficients ``[b0, b1, b2]`` after ``compute_coefficients()``.
+        Numerator coefficients ``[b0, b1, b2]`` (read-only view into SOS).
     a : Tensor | None
-        Denominator coefficients ``[1, a1, a2]`` after ``compute_coefficients()``.
+        Denominator coefficients ``[1, a1, a2]`` (read-only view into SOS).
 
     Notes
     -----
-    Direct Form 1 processing is ported from AudioNoise ``biquad.h``
-    ``biquad_step_df1``.
+    Coefficient formulas are derived from the AudioNoise project's ``biquad.h``
+    (MIT License). The forward path delegates to ``_sos_cascade_forward`` from
+    ``iir.py``, sharing the same native C++/CUDA dispatch and JIT-compiled DF1
+    fallback used by higher-order IIR filters.
 
     """
 
@@ -128,25 +122,28 @@ class Biquad(AbstractFilter):
         self.q = q
         self.fs = fs
 
-        # Coefficients (set by compute_coefficients)
-        self.a: Tensor | None = None
-        self.b: Tensor | None = None
+        # SOS coefficients: [1, 6] tensor set by compute_coefficients()
+        self._sos: Tensor | None = None
+        self._sos_device_cache: Tensor | None = None
 
-        # Per-channel DF1 state: None until first stateful forward
-        self._state_x: Tensor | None = None  # [C, 2]
-        self._state_y: Tensor | None = None  # [C, 2]
-        self._stateful: bool = False
+        # Per-section DF1 state: [K=1, C, 2], None until first forward
+        self._state_x: Tensor | None = None
+        self._state_y: Tensor | None = None
 
-    def move_coeff(
-        self,
-        device: Device,
-        dtype: torch.dtype = torch.float32,
-    ) -> None:
-        """Move coefficients to the specified device and dtype."""
-        if self.a is not None:
-            self.a = self.a.to(device=torch.device(device), dtype=dtype)
-        if self.b is not None:
-            self.b = self.b.to(device=torch.device(device), dtype=dtype)
+    @property
+    def b(self) -> Tensor | None:
+        """Numerator coefficients ``[b0, b1, b2]`` (read-only view into SOS)."""
+        return self._sos[0, :3] if self._sos is not None else None
+
+    @property
+    def a(self) -> Tensor | None:
+        """Denominator coefficients ``[1, a1, a2]`` (read-only view into SOS)."""
+        if self._sos is None:
+            return None
+        return torch.tensor(
+            [1.0, self._sos[0, 4].item(), self._sos[0, 5].item()],
+            dtype=torch.float64,
+        )
 
     def _set_coefficients(
         self,
@@ -156,7 +153,7 @@ class Biquad(AbstractFilter):
         a1: float,
         a2: float,
     ) -> None:
-        """Store pre-normalized biquad coefficients as tensors.
+        """Store pre-normalized biquad coefficients as a single SOS row.
 
         Parameters
         ----------
@@ -166,18 +163,13 @@ class Biquad(AbstractFilter):
             Denominator (feedback) coefficients. ``a0`` is implicitly 1.
 
         """
-        self.b = torch.tensor([b0, b1, b2], dtype=torch.float64)
-        self.a = torch.tensor([1.0, a1, a2], dtype=torch.float64)
+        self._sos = torch.tensor([[b0, b1, b2, 1.0, a1, a2]], dtype=torch.float64)
+        self._sos_device_cache = None
 
     @override
     @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
         """Apply the biquad filter to the input tensor.
-
-        On first call, coefficients are computed if needed and moved to the
-        input device. Processing uses the stateless ``lfilter`` path for the
-        first call; subsequent calls use the stateful DF1 loop for chunk
-        continuity.
 
         Parameters
         ----------
@@ -192,186 +184,26 @@ class Biquad(AbstractFilter):
         """
         if self.fs is None:
             raise ValueError("Sample rate (fs) must be set before filtering.")
-
-        if self.a is None or self.b is None:
+        if self._sos is None:
             self.compute_coefficients()
+            self._sos_device_cache = None
+        assert self._sos is not None
+        from torchfx.filter.iir import _sos_cascade_forward
 
-        assert self.a is not None and self.b is not None
-
-        device = x.device
-        dtype = x.dtype
-
-        if not isinstance(self.a, Tensor):
-            self.a = torch.as_tensor(self.a, device=device, dtype=torch.float64)
-            self.b = torch.as_tensor(self.b, device=device, dtype=torch.float64)
-        elif self.a.device != device:
-            self.a = self.a.to(device=device)
-            self.b = self.b.to(device=device)
-
-        if self._stateful:
-            return self._forward_stateful(x)
-
-        # Cast coefficients to input dtype for lfilter compatibility
-        a_cast = self.a.to(dtype=dtype)
-        b_cast = self.b.to(dtype=dtype)
-
-        # First call: use fast lfilter path, then mark stateful for next calls
-        result: Tensor = F.lfilter(x, a_cast, b_cast, clamp=False)
-        result = result.to(dtype=dtype)
-
-        # Bootstrap state from the last 2 samples for next chunk
-        self._bootstrap_state(x, result)
-        self._stateful = True
-
-        return result
-
-    def _bootstrap_state(self, x: Tensor, y: Tensor) -> None:
-        """Initialize DF1 state from the tail of processed signals.
-
-        Parameters
-        ----------
-        x : Tensor
-            Input signal (original shape).
-        y : Tensor
-            Output signal (same shape as x).
-
-        """
-        # Ensure 2D [C, T] for state extraction
-        if x.ndim == 1:
-            x_2d = x.unsqueeze(0)
-            y_2d = y.unsqueeze(0)
-        elif x.ndim == 2:
-            x_2d = x
-            y_2d = y
-        else:
-            # [B, C, T] — use last batch element for state
-            x_2d = x[-1]
-            y_2d = y[-1]
-
-        C = x_2d.shape[0]
-        T = x_2d.shape[1]
-
-        if T >= 2:
-            # x[0] = x[n-1], x[1] = x[n-2] (DF1 convention)
-            self._state_x = torch.stack([x_2d[:, T - 1], x_2d[:, T - 2]], dim=1).to(
-                dtype=torch.float64
-            )
-            self._state_y = torch.stack([y_2d[:, T - 1], y_2d[:, T - 2]], dim=1).to(
-                dtype=torch.float64
-            )
-        elif T == 1:
-            self._state_x = torch.zeros(C, 2, device=x.device, dtype=torch.float64)
-            self._state_y = torch.zeros(C, 2, device=x.device, dtype=torch.float64)
-            self._state_x[:, 0] = x_2d[:, 0].to(torch.float64)
-            self._state_y[:, 0] = y_2d[:, 0].to(torch.float64)
-
-    def _forward_stateful(self, x: Tensor) -> Tensor:
-        """Process with Direct Form 1 carrying state across calls.
-
-        Vectorized across channels, sequential across time samples.
-        Ported from AudioNoise ``biquad.h`` ``biquad_step_df1``.
-
-        Uses a CUDA parallel prefix scan kernel when available and the input
-        is on a CUDA device, falling back to the pure-PyTorch loop otherwise.
-
-        """
-        assert self.a is not None and self.b is not None
-
-        orig_shape = x.shape
-        dtype = x.dtype
-
-        # Normalize to [C, T]
-        if x.ndim == 1:
-            x = x.unsqueeze(0)
-        elif x.ndim == 3:
-            B, C, T = x.shape
-            x = x.reshape(B * C, T)
-
-        C, T = x.shape
-        device = x.device
-
-        # Initialize or resize state
-        if self._state_x is None or self._state_x.shape[0] != C:
-            self._state_x = torch.zeros(C, 2, device=device, dtype=torch.float64)
-            self._state_y = torch.zeros(C, 2, device=device, dtype=torch.float64)
-        elif self._state_x.device != device:
-            self._state_x = self._state_x.to(device=device)
-            assert self._state_y is not None
-            self._state_y = self._state_y.to(device=device)
-
-        assert self._state_y is not None
-
-        # Try native (CUDA or C++) kernel
-        from torchfx._ops import biquad_forward
-
-        native_result = biquad_forward(x, self.b, self.a, self._state_x, self._state_y)
-        if native_result is not None:
-            out, self._state_x, self._state_y = native_result
-            result = out.to(dtype=dtype)
-            if len(orig_shape) == 1:
-                return result.squeeze(0)
-            elif len(orig_shape) == 3:
-                return result.reshape(orig_shape)
-            return result
-
-        # Vectorized PyTorch fallback using lfilter with state decomposition.
-        # Decomposes into zero-state + zero-input responses to avoid sample loops.
-        x_f64 = x.to(dtype=torch.float64)
-        a_f64 = self.a.to(dtype=torch.float64)
-        a1 = a_f64[1]
-        a2 = a_f64[2]
-
-        # Cache constant tensors on first fallback call to avoid per-call allocation.
-        if (
-            not hasattr(self, "_fb_kernel")
-            or self._fb_kernel is None  # type: ignore
-            or self._fb_kernel.device != device  # type: ignore
-        ):
-            b_f64 = self.b.to(dtype=torch.float64)
-            self._fb_kernel = b_f64.flip(0).reshape(1, 1, 3).to(device=device)
-            self._fb_b_delta = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64, device=device)
-
-        # Step 1: Compute forcing function f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2]
-        # by prepending x-state and using conv1d
-        x_ext = torch.cat([self._state_x[:, 1:2], self._state_x[:, 0:1], x_f64], dim=1)
-        f = torch.nn.functional.conv1d(x_ext.unsqueeze(1), self._fb_kernel, padding=0).squeeze(1)
-
-        # Step 2: Zero-state response via lfilter (y[n] = f[n] - a1*y[n-1] - a2*y[n-2])
-        y_zs = F.lfilter(f, a_f64, self._fb_b_delta, clamp=False)
-
-        # Step 3: Zero-input response for initial y-state
-        g = torch.zeros_like(f)
-        g[:, 0] = -a1 * self._state_y[:, 0] - a2 * self._state_y[:, 1]
-        if T > 1:
-            g[:, 1] = -a2 * self._state_y[:, 0]
-        y_zi = F.lfilter(g, a_f64, self._fb_b_delta, clamp=False)
-
-        out = Tensor(y_zs + y_zi)
-
-        # Update state from the tail of input/output
-        if T >= 2:
-            self._state_x = torch.stack([x_f64[:, -1], x_f64[:, -2]], dim=1)
-            self._state_y = torch.stack([out[:, -1], out[:, -2]], dim=1)
-
-        result = Tensor(out.to(dtype=dtype))
-
-        # Restore original shape
-        if len(orig_shape) == 1:
-            return result.squeeze(0)
-        elif len(orig_shape) == 3:
-            return result.reshape(orig_shape)
+        result, self._sos_device_cache, self._state_x, self._state_y = _sos_cascade_forward(
+            x, self._sos, self._sos_device_cache, self._state_x, self._state_y
+        )
         return result
 
     def reset_state(self) -> None:
         """Clear accumulated filter state.
 
-        After calling this method, the next ``forward()`` will use the fast
-        ``lfilter`` path again. Call when switching audio sources or seeking.
+        Call when switching audio sources or seeking to reset DF1 state.
 
         """
         self._state_x = None
         self._state_y = None
-        self._stateful = False
+        self._sos_device_cache = None
 
     @staticmethod
     def _compute_omega_alpha(

@@ -98,10 +98,30 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cpu(
   // Fused loop: for each channel, process all K sections per sample.
   // This keeps all section states in registers/L1 and eliminates K-1
   // intermediate tensor allocations.
+  //
+  // Use stack arrays for K <= 16 (covers up to order-32 Butterworth),
+  // falling back to heap allocation for higher orders.
+  static constexpr int64_t STACK_MAX = 16;
+
   #pragma omp parallel for schedule(static) if(C > 1)
   for (int64_t c = 0; c < C; ++c) {
-    // Load per-section state into stack-local arrays.
-    double sec_sx0[16], sec_sx1[16], sec_sy0[16], sec_sy1[16];
+    // Load per-section state into local arrays.
+    double stack_sx0[STACK_MAX], stack_sx1[STACK_MAX],
+           stack_sy0[STACK_MAX], stack_sy1[STACK_MAX];
+
+    // Heap fallback for very high order filters.
+    std::vector<double> heap_sx0, heap_sx1, heap_sy0, heap_sy1;
+    double *sec_sx0, *sec_sx1, *sec_sy0, *sec_sy1;
+    if (K <= STACK_MAX) {
+      sec_sx0 = stack_sx0; sec_sx1 = stack_sx1;
+      sec_sy0 = stack_sy0; sec_sy1 = stack_sy1;
+    } else {
+      heap_sx0.resize(K); heap_sx1.resize(K);
+      heap_sy0.resize(K); heap_sy1.resize(K);
+      sec_sx0 = heap_sx0.data(); sec_sx1 = heap_sx1.data();
+      sec_sy0 = heap_sy0.data(); sec_sy1 = heap_sy1.data();
+    }
+
     for (int64_t s = 0; s < K; ++s) {
       sec_sx0[s] = sx_acc[s][c][0];
       sec_sx1[s] = sx_acc[s][c][1];

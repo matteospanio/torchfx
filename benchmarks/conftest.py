@@ -11,8 +11,8 @@ import torch
 SAMPLE_RATE = 44100
 
 # Filter benchmark grid
-DURATIONS = [1, 5, 30, 60, 120, 300]  # seconds
-CHANNELS = [1, 2, 4, 8, 12]
+DURATIONS = [1, 5, 30, 60]  # seconds
+CHANNELS = [1, 2, 4, 8]
 
 # Biquad-specific (shorter signals, fewer channels)
 BIQUAD_DURATIONS = [0.1, 1.0, 5.0, 30.0]

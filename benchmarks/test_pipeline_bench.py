@@ -27,7 +27,7 @@ def test_sos_cascade(cuda_sync_benchmark, order, device):
     x = create_signal_torch(2, dur, device)
 
     if device == "cuda":
-        filt.move_coeff("cuda")
+        filt = filt.to("cuda")
 
     # Force stateful mode
     _ = filt(x)
@@ -57,7 +57,7 @@ def test_pipeline(cuda_sync_benchmark, device):
     for f in chain:
         f.compute_coefficients()
         if device == "cuda":
-            f.move_coeff("cuda")
+            f.to("cuda")
 
     x = create_signal_torch(2, dur, device)
 

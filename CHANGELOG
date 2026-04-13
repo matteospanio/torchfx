@@ -7,6 +7,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [0.5.2] - 2026-04-13
+
+### Added
+
+- **`FilterChain`** (`chain.py`): auto-flattening `nn.Sequential` subclass so
+  that `(f1 | f2) | f3` produces a flat `FilterChain(f1, f2, f3)` rather than
+  nested containers. Exported from the top-level `torchfx` package.
+- **`FX.__or__`**: the pipe operator now works directly between filters/effects
+  (`f1 | f2` → `FilterChain`), fixing the long-standing Phase 2 doc/API bug
+  where only `Wave.__or__` was defined.
+- **Performance baseline** (`docs/source/perf/baseline.md`): Phase 0 of the
+  optimization campaign — captures pre-optimization coverage, CPU benchmark
+  numbers, and CPU `torch.profiler` findings so every follow-up PR has a
+  concrete before/after to diff against.
+- **SLURM harness for CUDA runs** (`benchmarks/slurm/`): `run_profiles.sbatch`
+  + README covering the `sbatch → rsync → pytest-benchmark compare` cycle for
+  CUDA benchmarks and profiles measured on the cluster.
+- **Profile scenarios** (`benchmarks/profiles/scenarios.py`) plus `run_cpu_profile.py`
+  and `run_cuda_profile.py` so the same scenarios run on local CPU and on
+  cluster GPUs.
+- **Coverage gate**: `[tool.coverage.report] fail_under = 87` plus an HTML
+  coverage CI job on Python 3.12. Local CPU coverage (with the sounddevice
+  backend omitted) is now **88%** — up from the Phase 0 baseline of 74%.
+- New test files closing Phase 0 coverage gaps:
+  `tests/test_fused.py`, `tests/test_filter_base.py`,
+  `tests/test_filter_utils.py`, `tests/test_ops_dispatch.py`,
+  `tests/test_filterbank.py`, `tests/test_iir_gaps.py`. Per-module jumps:
+  `filter/fused.py` 9% → 75%, `filter/utils.py` 0% → 91%,
+  `filter/__base.py` 44% → 89%, `filter/filterbank.py` 73% → 100%,
+  `filter/iir.py` 71% → 86%, `_ops.py` 64% → 84%.
+
+### Changed
+
+- **Deferred pipeline with auto-fusion** (`wave.py`): `Wave.__or__` now
+  accumulates filters in a deferred pipeline instead of executing immediately.
+  Materialization happens lazily on `.ys` access, at which point consecutive IIR
+  and biquad filters are automatically fused into a single `FusedSOSCascade` —
+  eliminating per-filter Python dispatch and kernel launch overhead (~2.5× faster
+  for IIR chains). All three chaining syntaxes benefit: `wave | f1 | f2 | f3`,
+  `wave | (f1 | f2 | f3)`, and `wave | nn.Sequential(f1, f2, f3)`.
+- **Unified Biquad/IIR forward path** (`biquad.py`): `Biquad` now stores
+  coefficients as a `[1, 6]` SOS tensor and delegates its `forward()` to the
+  shared `_sos_cascade_forward` helper, eliminating ~150 lines of duplicated
+  forward logic (shape normalization, state management, native dispatch, fallback).
+  Biquad filters now auto-fuse with IIR filters in the deferred pipeline.
+  Backward-compatible `b`/`a` properties provide read-only access to coefficients.
+- **SOS coefficient caching** (`iir.py`, `fused.py`): device-matched SOS tensor
+  is now cached between forward calls, eliminating per-call `.to()` transfers.
+  The canonical CPU copy is passed directly to native kernels, avoiding a
+  per-call CUDA→CPU synchronisation that was 21% of Self CPU in batch profiles.
+- **Biquad coefficient caching** (`biquad.py`, `_ops.py`): feedback coefficients
+  `a1`, `a2` are pre-extracted as Python floats at coefficient-computation time
+  and passed through to native dispatch, eliminating per-forward `float()` calls
+  that trigger GPU→CPU sync on CUDA.
+- **In-place state updates** (`iir.py`, `fused.py`, `biquad.py`): replaced
+  per-section `torch.stack([...])` allocations in fallback DF1 loops with
+  `copy_()` into pre-existing state buffers.
+- **Reverb op fusion** (`effect.py`): algebraically simplified the PyTorch
+  fallback from 5 tensor ops (`pad → slice → mul → add → lerp`) to 2
+  (`clone → add_` with alpha), eliminating one intermediate allocation.
+- **Delay wet/dry mix** (`effect.py`): replaced `(1-mix)*x + mix*y` (3 ops)
+  with `torch.lerp(x, y, mix)` (1 fused op).
+- **Consolidated SOS cascade logic** (`iir.py`, `fused.py`): extracted the
+  shared SOS forward path (device caching, state init, native dispatch, DF1
+  fallback) into a single `_sos_cascade_forward` helper. `FusedSOSCascade` now
+  delegates to the same code as `IIR`, eliminating ~80 lines of duplication.
+- **Wave pipeline nested module support** (`wave.py`): `Wave.__or__` now walks
+  all submodules via `nn.Module.modules()` instead of only one level of
+  `nn.Sequential`, so arbitrarily nested module trees get their `fs` configured.
+
+### Fixed
+
+- `AbstractFilter._has_computed_coeff` returned `True` for IIR subclasses whose
+  `_sos is None` and which have no `b`/`a` attributes — silently claiming
+  coefficients were ready before `compute_coefficients()` had run. The fallthrough
+  now correctly returns `False`.
+- `ParallelFilterCombination.__init__` assigned `self.fs = fs` before
+  `self.filters = filters`, crashing with `AttributeError` when `fs` was passed
+  at construction. Swapped assignment order so the `fs` setter can safely
+  iterate child filters.
+- `iir_cpu.cpp` `sos_forward_cpu` used a hardcoded `double sec_sx0[16]` stack
+  array for per-section state, silently overflowing for filters with >16 SOS
+  sections (order >32). Now uses stack arrays for K≤16 and falls back to
+  heap-allocated `std::vector<double>` for higher orders.
+- Benchmark scripts (`test_pipeline_bench.py`, `test_biquad_bench.py`,
+  `scenarios.py`) called the removed `move_coeff()` method on IIR filters.
+  Replaced with standard `nn.Module.to(device)`.
+
 ## [0.5.1] - 2026-04-02
 
 ### Fixed

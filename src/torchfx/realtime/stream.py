@@ -27,7 +27,6 @@ from typing import cast
 
 import soundfile as sf  # type: ignore[import-untyped]
 import torch
-import torchaudio
 from torch import Tensor, nn
 
 from torchfx.effect import FX
@@ -199,7 +198,6 @@ class StreamProcessor:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Get file metadata without loading (torchaudio.info removed in 2.10+)
         info = sf.info(str(input_path))
         fs = info.samplerate
         num_frames = info.frames
@@ -239,11 +237,14 @@ class StreamProcessor:
             while offset < num_frames:
                 # Read chunk (with overlap)
                 read_size = min(self._chunk_size, num_frames - offset)
-                waveform, sample_rate = torchaudio.load(
+                data_np, sample_rate = sf.read(
                     str(input_path),
-                    frame_offset=offset,
-                    num_frames=read_size,
+                    start=offset,
+                    stop=offset + read_size,
+                    dtype="float32",
+                    always_2d=True,
                 )
+                waveform = torch.from_numpy(data_np.T.copy())
 
                 # Move to processing device
                 if self._device != "cpu":
@@ -316,11 +317,14 @@ class StreamProcessor:
 
         while offset < num_frames:
             read_size = min(self._chunk_size, num_frames - offset)
-            waveform, _sample_rate = torchaudio.load(
+            data_np, _sample_rate = sf.read(
                 str(input_path),
-                frame_offset=offset,
-                num_frames=read_size,
+                start=offset,
+                stop=offset + read_size,
+                dtype="float32",
+                always_2d=True,
             )
+            waveform = torch.from_numpy(data_np.T.copy())
 
             if self._device != "cpu":
                 waveform = waveform.to(self._device)

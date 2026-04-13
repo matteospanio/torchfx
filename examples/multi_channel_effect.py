@@ -3,11 +3,9 @@
 # The effect consists of two channels, each with a different sequence of filters and transformations.
 
 import torch
-import torchaudio
-import torchaudio.transforms as T
 from torch import Tensor, nn
 
-from torchfx import FX, Wave
+from torchfx import FX, Wave, effect
 from torchfx.filter import HiButterworth, LoButterworth
 
 
@@ -36,7 +34,7 @@ class ComplexEffect(FX):
         return nn.Sequential(
             HiButterworth(2000, fs=self.fs),
             LoButterworth(4000, fs=self.fs),
-            T.Vol(0.5),
+            effect.Gain(0.5),
         )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -71,4 +69,4 @@ if __name__ == "__main__":
     result = wave | fx
 
     # Save the output
-    torchaudio.save(args.output_file, result.ys, wave.fs)
+    result.save(args.output_file)
