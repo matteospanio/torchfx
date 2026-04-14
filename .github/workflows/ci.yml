@@ -43,11 +43,11 @@ jobs:
             ~/.cache/uv
           key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
-      - name: Install dependencies
-        run: uv sync --all-groups
-
       - name: Install CPU-only PyTorch
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install dependencies (builds C++ extension)
+        run: TORCHFX_NO_CUDA=1 uv sync --all-groups
 
       - name: Save dependency cache
         if: steps.cache-restore.outputs.cache-hit != 'true'
@@ -164,11 +164,11 @@ jobs:
             ~/.cache/uv
           key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
-      - name: Install dependencies
-        run: uv sync --all-groups
-
       - name: Install CPU-only PyTorch
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install dependencies (builds C++ extension)
+        run: TORCHFX_NO_CUDA=1 uv sync --all-groups
 
       - name: Run tests with pytest
         run: uv run pytest
@@ -203,11 +203,11 @@ jobs:
             ~/.cache/uv
           key: uv-cpu-3.12-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
-      - name: Install dependencies
-        run: uv sync --all-groups
-
       - name: Install CPU-only PyTorch
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install dependencies (builds C++ extension)
+        run: TORCHFX_NO_CUDA=1 uv sync --all-groups
 
       - name: Run tests under coverage
         run: uv run coverage run -m pytest

@@ -1,119 +1,40 @@
-"""CUDA extension dispatch layer for torchfx.
+"""Native C++/CUDA extension dispatch for torchfx.
 
-This module handles JIT compilation of the C++/CUDA extension and provides
-dispatch functions that route to native kernels when available, falling back
-to ``None`` so callers can use the existing pure-PyTorch implementation.
+The extension is compiled at build time via scikit-build-core / CMake.
+Import ``torchfx_ext`` provides the pre-built C++ module with:
 
-The extension is compiled on first use via ``torch.utils.cpp_extension.load()``
-and cached in ``~/.cache/torch_extensions/``. Compilation requires a CUDA
-toolkit and (optionally) ninja for faster builds.
+- ``biquad_forward``  — single biquad section (DF1, CUDA or CPU)
+- ``sos_forward``     — K-section SOS cascade (CUDA or CPU)
+- ``delay_line_forward`` — fused delay with feedback & mix (CUDA or CPU)
 
 """
 
 from __future__ import annotations
 
 import logging
-import os
-import warnings
-from types import ModuleType
 from typing import TYPE_CHECKING
 
 import torch
+
+from torchfx import torchfx_ext as _ext  # type: ignore[attr-defined]
 
 if TYPE_CHECKING:
     from torch import Tensor
 
 logger = logging.getLogger(__name__)
 
-_ext = None
-_ext_load_attempted = False
-
-_CSRC_DIR = os.path.join(os.path.dirname(__file__), "_csrc")
-_INCLUDE_DIR = os.path.join(_CSRC_DIR, "include")
-
 # Minimum signal length for parallel scan to be worthwhile.
 # Below this, the sequential C++ kernel is faster.
 PARALLEL_SCAN_THRESHOLD = 2048
 
 
-def _load_extension() -> ModuleType | None:
-    """JIT-compile the CUDA/C++ extension on first use.
-
-    Returns the compiled module, or ``None`` if compilation fails.
-
-    """
-    global _ext, _ext_load_attempted
-
-    if _ext_load_attempted:
-        return _ext
-    _ext_load_attempted = True
-
-    cpp_sources = [os.path.join(_CSRC_DIR, "binding.cpp")]
-    cpu_sources = [os.path.join(_CSRC_DIR, "cpu", "iir_cpu.cpp")]
-
-    all_sources = cpp_sources + cpu_sources
-    extra_cflags: list[str] = ["-O3", "-march=native", "-ffast-math", "-fopenmp"]
-    extra_cuda_cflags: list[str] = []
-    extra_ldflags: list[str] = ["-lgomp"]
-
-    use_cuda = torch.cuda.is_available() and not os.environ.get("TORCHFX_NO_CUDA")
-    if use_cuda:
-        cuda_dir = os.path.join(_CSRC_DIR, "cuda")
-        cuda_sources = [
-            os.path.join(cuda_dir, "parallel_scan.cu"),
-            os.path.join(cuda_dir, "biquad_forward.cu"),
-            os.path.join(cuda_dir, "delay_forward.cu"),
-        ]
-        all_sources += cuda_sources
-        extra_cflags.append("-DWITH_CUDA")
-        extra_cuda_cflags.append("-DWITH_CUDA")
-
-    # Verify all source files exist before attempting compilation
-    for src in all_sources:
-        if not os.path.isfile(src):
-            logger.warning("Missing source file %s; skipping extension compilation", src)
-            return None
-
-    try:
-        from torch.utils.cpp_extension import load
-
-        _ext = load(
-            name="torchfx_ext",
-            sources=all_sources,
-            extra_include_paths=[_INCLUDE_DIR],
-            extra_cflags=extra_cflags,
-            extra_cuda_cflags=extra_cuda_cflags,
-            extra_ldflags=extra_ldflags,
-            verbose=False,
-        )
-        logger.info("torchfx native extension compiled successfully (CUDA=%s)", use_cuda)
-    except Exception as exc:
-        # Print the full error to stderr so it's not truncated by warnings.warn
-        import sys
-
-        print(
-            f"\n[torchfx] EXTENSION COMPILATION FAILED:\n{exc}\n",
-            file=sys.stderr,
-            flush=True,
-        )
-        warnings.warn(
-            "torchfx: native C++/CUDA extension failed to compile. "
-            "Falling back to pure-PyTorch implementation which is significantly slower. "
-            "See stderr output above for full compiler error.",
-            stacklevel=2,
-        )
-        _ext = None
-
-    return _ext
-
-
 def is_native_available() -> bool:
     """Check whether the native C++/CUDA extension is available.
 
-    Triggers JIT compilation on first call if not already attempted.
+    Always returns ``True`` since the extension is compiled at install time.
 
     """
-    return _load_extension() is not None
+    return True
 
 
 def biquad_forward(
@@ -125,11 +46,10 @@ def biquad_forward(
     *,
     a1_f64: float | None = None,
     a2_f64: float | None = None,
-) -> tuple[Tensor, Tensor, Tensor] | None:
+) -> tuple[Tensor, Tensor, Tensor]:
     """Dispatch biquad filter to native kernel.
 
-    Returns ``(y, new_state_x, new_state_y)`` or ``None`` if native
-    extension is unavailable.
+    Returns ``(y, new_state_x, new_state_y)``.
 
     Parameters
     ----------
@@ -139,10 +59,6 @@ def biquad_forward(
         GPU→CPU synchronisation.
 
     """
-    ext = _load_extension()
-    if ext is None:
-        return None
-
     # Ensure state tensors exist
     C = x.shape[0] if x.ndim >= 2 else 1
     device = x.device
@@ -153,38 +69,34 @@ def biquad_forward(
     if state_y is None:
         state_y = torch.zeros(C, 2, device=device, dtype=dtype)
 
-    try:
-        # Use pre-extracted floats when available to avoid GPU→CPU sync.
-        if a1_f64 is None or a2_f64 is None:
-            a_f64 = a if a.dtype == dtype else a.to(dtype=dtype)
-            a1_f64 = float(a_f64[1])
-            a2_f64 = float(a_f64[2])
+    # Use pre-extracted floats when available to avoid GPU→CPU sync.
+    if a1_f64 is None or a2_f64 is None:
+        a_f64 = a if a.dtype == dtype else a.to(dtype=dtype)
+        a1_f64 = float(a_f64[1])
+        a2_f64 = float(a_f64[2])
 
-        x_f64 = x if x.dtype == dtype else x.to(dtype=dtype)
-        b_f64 = b if b.dtype == dtype else b.to(dtype=dtype)
-        sx = (
-            state_x
-            if (state_x.device == device and state_x.dtype == dtype)
-            else state_x.to(device=device, dtype=dtype)
-        )
-        sy = (
-            state_y
-            if (state_y.device == device and state_y.dtype == dtype)
-            else state_y.to(device=device, dtype=dtype)
-        )
+    x_f64 = x if x.dtype == dtype else x.to(dtype=dtype)
+    b_f64 = b if b.dtype == dtype else b.to(dtype=dtype)
+    sx = (
+        state_x
+        if (state_x.device == device and state_x.dtype == dtype)
+        else state_x.to(device=device, dtype=dtype)
+    )
+    sy = (
+        state_y
+        if (state_y.device == device and state_y.dtype == dtype)
+        else state_y.to(device=device, dtype=dtype)
+    )
 
-        result: tuple[Tensor, Tensor, Tensor] = ext.biquad_forward(
-            x_f64,
-            b_f64,
-            a1_f64,
-            a2_f64,
-            sx,
-            sy,
-        )
-        return result
-    except Exception:
-        logger.debug("Native biquad_forward failed; falling back to PyTorch", exc_info=True)
-        return None
+    result: tuple[Tensor, Tensor, Tensor] = _ext.biquad_forward(
+        x_f64,
+        b_f64,
+        a1_f64,
+        a2_f64,
+        sx,
+        sy,
+    )
+    return result
 
 
 def parallel_iir_forward(
@@ -194,11 +106,10 @@ def parallel_iir_forward(
     state_y: Tensor | None,
     *,
     sos_cpu: Tensor | None = None,
-) -> tuple[Tensor, Tensor, Tensor] | None:
+) -> tuple[Tensor, Tensor, Tensor]:
     """Dispatch SOS cascade to native kernel.
 
-    Returns ``(y, new_state_x, new_state_y)`` or ``None`` if native
-    extension is unavailable.
+    Returns ``(y, new_state_x, new_state_y)``.
 
     Parameters
     ----------
@@ -208,10 +119,6 @@ def parallel_iir_forward(
         synchronisation.
 
     """
-    ext = _load_extension()
-    if ext is None:
-        return None
-
     C = x.shape[0] if x.ndim >= 2 else 1
     K = sos.shape[0]
     device = x.device
@@ -222,40 +129,34 @@ def parallel_iir_forward(
     if state_y is None:
         state_y = torch.zeros(K, C, 2, device=device, dtype=dtype)
 
-    try:
-        x_f64 = x if x.dtype == dtype else x.to(dtype=dtype)
-        sos_device = (
-            sos
-            if (sos.device == device and sos.dtype == dtype)
-            else sos.to(device=device, dtype=dtype)
-        )
-        sx = (
-            state_x
-            if (state_x.device == device and state_x.dtype == dtype)
-            else state_x.to(device=device, dtype=dtype)
-        )
-        sy = (
-            state_y
-            if (state_y.device == device and state_y.dtype == dtype)
-            else state_y.to(device=device, dtype=dtype)
-        )
+    x_f64 = x if x.dtype == dtype else x.to(dtype=dtype)
+    sos_device = (
+        sos if (sos.device == device and sos.dtype == dtype) else sos.to(device=device, dtype=dtype)
+    )
+    sx = (
+        state_x
+        if (state_x.device == device and state_x.dtype == dtype)
+        else state_x.to(device=device, dtype=dtype)
+    )
+    sy = (
+        state_y
+        if (state_y.device == device and state_y.dtype == dtype)
+        else state_y.to(device=device, dtype=dtype)
+    )
 
-        # Use pre-computed CPU copy when available to avoid per-call
-        # CUDA→CPU transfer.  Fall back to computing it here.
-        if sos_cpu is None:
-            sos_cpu = sos.detach().to(dtype=dtype, device="cpu") if sos.is_cuda else sos_device
+    # Use pre-computed CPU copy when available to avoid per-call
+    # CUDA→CPU transfer.  Fall back to computing it here.
+    if sos_cpu is None:
+        sos_cpu = sos.detach().to(dtype=dtype, device="cpu") if sos.is_cuda else sos_device
 
-        result: tuple[Tensor, Tensor, Tensor] = ext.sos_forward(
-            x_f64,
-            sos_device,
-            sos_cpu,
-            sx,
-            sy,
-        )
-        return result
-    except Exception:
-        logger.debug("Native sos_forward failed; falling back to PyTorch", exc_info=True)
-        return None
+    result: tuple[Tensor, Tensor, Tensor] = _ext.sos_forward(
+        x_f64,
+        sos_device,
+        sos_cpu,
+        sx,
+        sy,
+    )
+    return result
 
 
 def delay_line_forward(
@@ -263,23 +164,11 @@ def delay_line_forward(
     delay_samples: int,
     decay: float,
     mix: float,
-) -> Tensor | None:
-    """Dispatch delay line to native CUDA kernel.
+) -> Tensor:
+    """Dispatch delay line to native kernel (CUDA or CPU).
 
-    Returns the processed tensor or ``None`` if native extension is
-    unavailable or input is not on CUDA.
+    Returns the processed tensor.
 
     """
-    if not x.is_cuda:
-        return None
-
-    ext = _load_extension()
-    if ext is None:
-        return None
-
-    try:
-        result: Tensor = ext.delay_line_forward(x, delay_samples, decay, mix)
-        return result
-    except Exception:
-        logger.debug("Native delay_line_forward failed; falling back to PyTorch", exc_info=True)
-        return None
+    result: Tensor = _ext.delay_line_forward(x, delay_samples, decay, mix)
+    return result

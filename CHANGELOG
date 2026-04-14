@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## Unreleased
+
+### Changed
+
+- **Build system migration**: replaced hatchling + runtime JIT compilation with
+  scikit-build-core + CMake. The C++/CUDA extension is now compiled at install
+  time (no more 10-30s first-import delay, no compiler requirement for end users
+  installing from wheels).
+- **Removed pure-PyTorch fallback**: the C++ extension is now required. The slow
+  Python fallback paths for IIR filtering and delay have been removed.
+
+### Added
+
+- **CPU delay C++ kernel** (`delay_cpu.cpp`): `delay_line_forward` now dispatches
+  to a C++ kernel on CPU (previously CUDA-only, with Python fallback for CPU).
+- **CI/CD wheel pipeline** (`.github/workflows/wheels.yml`): automated CPU wheel
+  builds for Python 3.10-3.13 on Linux x86_64, with PyPI publishing on tag.
+
+### Removed
+
+- `setuptools` runtime dependency (was only needed for JIT compilation).
+- `_biquad_df1_fallback` Python DF1 loop (replaced by C++ `iir_cpu.cpp`).
+- JIT compilation logic in `_ops.py` (`_load_extension`, `torch.utils.cpp_extension.load`).
+
 ## [0.5.2] - 2026-04-13
 
 ### Added

@@ -933,21 +933,9 @@ class Reverb(FX):
         if waveform.size(-1) <= self.delay:
             return waveform
 
-        # Try native CUDA kernel for fused delay+mix
-        if waveform.is_cuda:
-            from torchfx._ops import delay_line_forward
+        from torchfx._ops import delay_line_forward
 
-            result = delay_line_forward(waveform, self.delay, self.decay, self.mix)
-            if result is not None:
-                return result
-
-        # PyTorch fallback — fused: algebraically
-        # (1-mix)*x + mix*(x + decay*delayed) = x + mix*decay*delayed.
-        # Uses clone + in-place add to avoid pad allocation and intermediate tensors.
-        coeff = self.mix * self.decay
-        output = waveform.clone()
-        output[..., self.delay :].add_(waveform[..., : -self.delay], alpha=coeff)
-        return output
+        return delay_line_forward(waveform, self.delay, self.decay, self.mix)
 
 
 class DelayStrategy(abc.ABC):

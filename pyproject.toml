@@ -1,6 +1,6 @@
 [project]
 name = "torchfx"
-version = "0.5.2"
+version = "0.5.3"
 description = "A GPU accelerated library for audio DSP based on PyTorch"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -12,7 +12,6 @@ dependencies = [
     "annotated-types>=0.7.0",
     "numpy>=2.2.4",
     "scipy>=1.15.2",
-    "setuptools",
     "soundfile>=0.13.1",
     "torch>=2.6.0",
 ]
@@ -67,7 +66,6 @@ mypy_path = "src"
 module = [
   "torchfx.*",
   "cli.*",
-  "torchaudio.*",
 ]
 ignore_missing_imports = true
 
@@ -131,8 +129,12 @@ recursive = true
 blank = true
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["scikit-build-core>=0.10", "torch>=2.6.0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+wheel.packages = ["src/torchfx", "src/cli"]
+cmake.build-type = "Release"
 
 [dependency-groups]
 cli = [
