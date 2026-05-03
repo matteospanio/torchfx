@@ -23,7 +23,18 @@ Install TorchFX using pip:
 pip install torchfx
 ```
 
-This command installs TorchFX along with its dependencies: PyTorch, torchaudio, NumPy, SciPy, and soundfile. For advanced installation options, dependency management with `uv`, or platform-specific PyTorch builds (CPU vs CUDA), see {doc}`installation`.
+This command installs TorchFX along with its dependencies: PyTorch, NumPy, SciPy, and soundfile. On Linux x86_64, macOS (Intel and Apple Silicon), or Windows x86_64 with Python 3.10–3.14, pip downloads a prebuilt CPU wheel; on other targets a source build runs (which needs CMake and a C++ compiler).
+
+For Linux GPU users, prebuilt CUDA wheels (cu124 and cu128) are available from a separate index:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu124
+pip install torchfx \
+    --index-url https://matteospanio.github.io/torchfx/wheels/cu124/ \
+    --extra-index-url https://pypi.org/simple
+```
+
+For dependency management with `uv`, custom CUDA versions, or full system requirements, see {doc}`installation`.
 
 ```{seealso}
 {doc}`installation` - Complete installation guide with GPU setup and development options
@@ -128,6 +139,17 @@ print(f"Channels: {wave.channels()}")
 
 The {class}`~torchfx.Wave` object automatically handles stereo or multichannel data and ensures that filters retain sample rate context.
 
+The following block is executed by `sphinx-build -b doctest` (and exercised in CI), demonstrating the Wave fields against a synthetic input:
+
+```{doctest}
+>>> wave.ys.shape
+torch.Size([1, 44100])
+>>> wave.fs
+44100
+>>> wave.channels()
+1
+```
+
 ```{seealso}
 {doc}`/guides/core-concepts/wave` - Complete guide to the Wave class with detailed examples
 ```
@@ -139,7 +161,6 @@ Here's a complete example that loads a file, processes it, and saves the output:
 ```python
 import torch
 import torchfx as fx
-import torchaudio
 
 # Load audio
 signal = fx.Wave.from_file("input.wav")
@@ -153,11 +174,11 @@ result = (
     signal
     | fx.filter.LoButterworth(100, order=2)
     | fx.filter.HiButterworth(2000, order=2)
-    | fx.effect.Gain(db=-6)
+    | fx.effect.Gain(0.5, gain_type="amplitude")  # -6 dB ≈ amplitude 0.5
 )
 
 # Save output (move back to CPU for I/O)
-torchaudio.save("output.wav", result.ys.cpu(), result.fs)
+result.to("cpu").save("output.wav")
 ```
 
 This example demonstrates the complete workflow including:
@@ -178,7 +199,7 @@ sequenceDiagram
     participant WaveObj as "Wave object"
     participant GPU as "GPU Device"
     participant Filter as "Filter/Effect Module"
-    participant TorchAudio as "torchaudio.save()"
+    participant WaveSave as "Wave.save()"
 
     User->>WaveFromFile: "load audio file"
     WaveFromFile->>WaveObj: "create Wave(ys, fs)"
@@ -192,12 +213,12 @@ sequenceDiagram
     Filter->>Filter: "process ys tensor on GPU"
     Filter-->>WaveObj: "return new Wave on GPU"
 
-    User->>WaveObj: "result.ys.cpu()"
+    User->>WaveObj: "result.to('cpu')"
     WaveObj->>GPU: "move tensor to CPU"
-    GPU-->>WaveObj: "return CPU tensor"
+    GPU-->>WaveObj: "return CPU Wave"
 
-    User->>TorchAudio: "save(path, ys, fs)"
-    TorchAudio-->>User: "file written"
+    User->>WaveSave: "result.save(path)"
+    WaveSave-->>User: "file written"
 ```
 
 ### Key Points
@@ -205,8 +226,8 @@ sequenceDiagram
 1. {meth}`Wave.from_file() <torchfx.Wave.from_file>` loads audio onto CPU by default
 2. {meth}`wave.to("cuda") <torchfx.Wave.to>` moves the {class}`~torchfx.Wave` and its {attr}`ys <torchfx.Wave.ys>` tensor to GPU
 3. Filters and effects process tensors on whatever device they reside
-4. {meth}`ys.cpu() <torch.Tensor.cpu>` moves the tensor back to CPU for file I/O
-5. {func}`torchaudio.save` requires CPU tensors for writing to disk
+4. {meth}`wave.to("cpu") <torchfx.Wave.to>` moves the Wave back to CPU before file I/O
+5. {meth}`Wave.save() <torchfx.Wave.save>` writes the audio to disk via `soundfile`
 
 ```{seealso}
 {doc}`/guides/advanced/gpu-acceleration` - GPU acceleration best practices and performance optimization

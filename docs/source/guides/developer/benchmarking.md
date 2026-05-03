@@ -491,28 +491,24 @@ graph TB
     subgraph "GPU Execution Path"
         GPU_Wave["Wave.to('cuda')"]
         GPU_Chain["fchain.to('cuda')"]
-        GPU_Coeff["f.compute_coefficients()<br/>f.move_coeff('cuda')<br/>for each filter"]
         GPU_Execute["fchain(wave.ys)"]
 
         GPU_Wave --> GPU_Chain
-        GPU_Chain --> GPU_Coeff
-        GPU_Coeff --> GPU_Execute
+        GPU_Chain --> GPU_Execute
     end
 
     subgraph "CPU Execution Path"
         CPU_Wave["Wave.to('cpu')"]
         CPU_Chain["fchain.to('cpu')"]
-        CPU_Coeff["f.move_coeff('cpu')<br/>for each filter"]
         CPU_Execute["fchain(wave.ys)"]
 
         CPU_Wave --> CPU_Chain
-        CPU_Chain --> CPU_Coeff
-        CPU_Coeff --> CPU_Execute
+        CPU_Chain --> CPU_Execute
     end
 
     subgraph "SciPy Execution Path"
-        SciPy_Design["butter() / cheby1()<br/>Design filter coefficients"]
-        SciPy_Filter["lfilter()<br/>Apply filters"]
+        SciPy_Design["butter() / cheby1()<br/>Design SOS coefficients"]
+        SciPy_Filter["sosfilt()<br/>Apply filters"]
 
         SciPy_Design --> SciPy_Filter
     end
@@ -523,23 +519,16 @@ graph TB
 ```python
 def gpu_iir(wave):
     """Apply IIR filter chain on GPU."""
-    # CRITICAL: Move both module and coefficients to GPU
-    for f in fchain:
-        f.compute_coefficients()
-        f.move_coeff("cuda")
     return (wave | fchain).ys
 ```
 
-**Important**: IIR filters require explicit coefficient movement to GPU.
+`fchain.to("cuda")` moves the module and its cached SOS coefficients in one step --- no separate coefficient transfer is needed.
 
 #### CPU Filter Function
 
 ```python
 def cpu_iir(wave):
     """Apply IIR filter chain on CPU."""
-    # Move coefficients back to CPU
-    for f in fchain:
-        f.move_coeff("cpu")
     return (wave | fchain).ys
 ```
 
@@ -548,12 +537,12 @@ def cpu_iir(wave):
 ```python
 def scipy_iir(audio):
     """Apply IIR filters using SciPy."""
-    # Design Butterworth coefficients
-    b1, a1 = signal.butter(N=2, Wn=1000, btype='high', fs=44100)
+    # Design Butterworth SOS coefficients
+    sos1 = signal.butter(N=2, Wn=1000, btype='high', fs=44100, output='sos')
     # ... design other filters ...
 
-    # Apply filters sequentially
-    audio = signal.lfilter(b1, a1, audio)
+    # Apply filters sequentially using the same SOS form TorchFX uses internally
+    audio = signal.sosfilt(sos1, audio)
     # ... apply other filters ...
     return audio
 ```

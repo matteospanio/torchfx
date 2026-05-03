@@ -81,58 +81,6 @@ from torchfx.typing import FilterOrderScale
 NONE_FS_ERR = "Sample rate of the filter could not be None."
 
 
-@torch.jit.script
-def _biquad_df1_fallback(
-    x: Tensor,
-    b0: Tensor,
-    b1: Tensor,
-    b2: Tensor,
-    a1: Tensor,
-    a2: Tensor,
-    sx: Tensor,
-    sy: Tensor,
-) -> Tensor:
-    """Single-pass Direct Form 1 biquad, JIT-compiled for speed.
-
-    Parameters
-    ----------
-    x : Tensor
-        Input signal ``[C, T]``.
-    b0, b1, b2 : Tensor
-        Numerator (feedforward) coefficients (scalars).
-    a1, a2 : Tensor
-        Denominator (feedback) coefficients (scalars, excluding a0=1).
-    sx : Tensor
-        Input state ``[C, 2]`` = ``[x[-1], x[-2]]``.
-    sy : Tensor
-        Output state ``[C, 2]`` = ``[y[-1], y[-2]]``.
-
-    Returns
-    -------
-    Tensor
-        Filtered output ``[C, T]``.
-
-    """
-    T = x.shape[1]
-    y = torch.empty_like(x)
-
-    xn_1 = sx[:, 0]
-    xn_2 = sx[:, 1]
-    yn_1 = sy[:, 0]
-    yn_2 = sy[:, 1]
-
-    for n in range(T):
-        xn = x[:, n]
-        yn = b0 * xn + b1 * xn_1 + b2 * xn_2 - a1 * yn_1 - a2 * yn_2
-        y[:, n] = yn
-        xn_2 = xn_1
-        xn_1 = xn
-        yn_2 = yn_1
-        yn_1 = yn
-
-    return y
-
-
 def _sos_cascade_forward(
     x: Tensor,
     sos_canonical: Tensor,
@@ -140,11 +88,10 @@ def _sos_cascade_forward(
     state_x: Tensor | None,
     state_y: Tensor | None,
 ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
-    """Shared SOS biquad cascade with state, native dispatch, and DF1 fallback.
+    """Shared SOS biquad cascade with state via native C++/CUDA kernels.
 
     Normalizes input to ``[C, T]``, manages device-cached SOS and per-section
-    DF1 state, tries the native CUDA/C++ kernel, and falls back to a
-    JIT-compiled Python loop.
+    DF1 state, and dispatches to the native kernel.
 
     Parameters
     ----------
@@ -163,6 +110,8 @@ def _sos_cascade_forward(
         ``(output, sos_device_cache, state_x, state_y)``
 
     """
+    from torchfx._ops import biquad_forward, parallel_iir_forward
+
     orig_shape = x.shape
     out_dtype = x.dtype
     device = x.device
@@ -194,17 +143,15 @@ def _sos_cascade_forward(
 
     assert state_y is not None
 
-    # Fast path: for a single SOS section (biquad), use the specialized CUDA
+    # Fast path: for a single SOS section (biquad) on CUDA, use the specialized
     # kernel which batches 128 channels per thread block — faster than the
     # general SOS cascade kernel for K=1.
     if num_sections == 1 and x.is_cuda:
-        from torchfx._ops import biquad_forward
-
         # Extract a1/a2 from the canonical CPU SOS to avoid GPU→CPU sync.
         a1_f64 = float(sos_canonical[0, 4])
         a2_f64 = float(sos_canonical[0, 5])
 
-        biquad_result = biquad_forward(
+        out, state_x_0, state_y_0 = biquad_forward(
             x,
             sos[0, :3],  # b on device
             sos[0, 3:],  # a on device (only used if a1/a2 floats missing)
@@ -213,49 +160,20 @@ def _sos_cascade_forward(
             a1_f64=a1_f64,
             a2_f64=a2_f64,
         )
-        if biquad_result is not None:
-            out, state_x_0, state_y_0 = biquad_result
-            state_x[0] = state_x_0
-            state_y[0] = state_y_0
-            result = out.to(dtype=out_dtype)
-
-            if len(orig_shape) == 1:
-                result = result.squeeze(0)
-            elif len(orig_shape) == 3:
-                result = result.reshape(orig_shape)
-
-            return result, cache, state_x, state_y
-
-    # Try native (CUDA or C++) SOS cascade kernel.
-    from torchfx._ops import parallel_iir_forward
-
-    native_result = parallel_iir_forward(x, sos, state_x, state_y, sos_cpu=sos_canonical)
-    if native_result is not None:
-        out, state_x, state_y = native_result
+        state_x[0] = state_x_0
+        state_y[0] = state_y_0
         result = out.to(dtype=out_dtype)
-    else:
-        # Single-pass DF1 fallback.
-        section_input = x.to(dtype=torch.float64)
 
-        for s in range(num_sections):
-            b0 = sos[s, 0]
-            b1 = sos[s, 1]
-            b2 = sos[s, 2]
-            a1 = sos[s, 4]
-            a2 = sos[s, 5]
+        if len(orig_shape) == 1:
+            result = result.squeeze(0)
+        elif len(orig_shape) == 3:
+            result = result.reshape(orig_shape)
 
-            out = _biquad_df1_fallback(section_input, b0, b1, b2, a1, a2, state_x[s], state_y[s])
+        return result, cache, state_x, state_y
 
-            # Update state from tail — in-place to avoid per-section allocation.
-            if T >= 2:
-                state_x[s, :, 0].copy_(section_input[:, -1])
-                state_x[s, :, 1].copy_(section_input[:, -2])
-                state_y[s, :, 0].copy_(out[:, -1])
-                state_y[s, :, 1].copy_(out[:, -2])
-
-            section_input = out
-
-        result = section_input.to(dtype=out_dtype)
+    # General SOS cascade via native kernel (CUDA or C++).
+    out, state_x, state_y = parallel_iir_forward(x, sos, state_x, state_y, sos_cpu=sos_canonical)
+    result = out.to(dtype=out_dtype)
 
     # Restore original shape.
     if len(orig_shape) == 1:

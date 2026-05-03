@@ -110,7 +110,6 @@ This project is licensed under the terms of the GNU General Public License v3.0.
 This project uses the following third-party libraries:
 
 - [PyTorch](https://pytorch.org/) – BSD-style license
-- [Torchaudio](https://pytorch.org/audio/) – BSD 2-Clause License
 - [NumPy](https://numpy.org/) – BSD 3-Clause License
 - [SciPy](https://scipy.org/) – BSD 3-Clause License
 - [SoundFile](https://pysoundfile.readthedocs.io/) – BSD 3-Clause License

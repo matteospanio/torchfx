@@ -42,16 +42,18 @@ Enable INFO level logging:
 Profile a filter chain:
 
 >>> from torchfx.logging import log_performance
+>>> from torchfx.filter import LoButterworth
+>>> lpf = LoButterworth(8000, order=2)
 >>> with log_performance("filter_chain"):
-...     result = wave | filter1 | filter2
-# Logs: "filter_chain completed in 0.045s"
+...     result = wave | lpf  # logs e.g. "filter_chain completed in 0.045s"
 
 Use the performance decorator:
 
 >>> from torchfx.logging import LogPerformance
->>> @LogPerformance("my_function")
-... def process_audio(wave):
-...     return wave | some_filter
+>>> @LogPerformance("process_audio")
+... def process_audio(w):
+...     return w | LoButterworth(8000, order=2)
+>>> _ = process_audio(wave)
 
 Standard Python logging configuration also works:
 

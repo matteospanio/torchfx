@@ -1,9 +1,7 @@
-"""Tests verifying the pure-PyTorch fallback when CUDA extension is unavailable.
+"""Tests verifying CPU-only operation via native C++ extension.
 
-These tests ensure that torchfx works correctly when:
-1. CUDA is not available
-2. The native extension fails to compile
-3. Input tensors are on CPU
+These tests ensure that torchfx works correctly on CPU via the pre-built C++ extension
+(no CUDA required).
 
 """
 
@@ -21,8 +19,8 @@ ATOL = 1e-4
 RTOL = 1e-4
 
 
-class TestCPUFallback:
-    """Verify filters work correctly on CPU (fallback path)."""
+class TestCPUKernels:
+    """Verify filters work correctly on CPU via native C++ kernels."""
 
     def test_biquad_cpu_works(self):
         """Biquad filter processes correctly on CPU."""
@@ -63,42 +61,6 @@ class TestCPUFallback:
 
         assert y1.shape == x.shape
         assert y2.shape == x.shape
-
-
-class TestExtensionLoadFailure:
-    """Verify graceful handling of extension load failures."""
-
-    def test_ops_returns_none_when_unavailable(self, monkeypatch):
-        """_ops dispatch functions return None when extension unavailable."""
-        import torchfx._ops as ops
-
-        # Simulate a failed extension load
-        monkeypatch.setattr(ops, "_ext", None)
-        monkeypatch.setattr(ops, "_ext_load_attempted", True)
-
-        x = torch.randn(2, 1000)
-        b = torch.tensor([0.1, 0.2, 0.1])
-        a = torch.tensor([1.0, -0.5, 0.1])
-
-        result = ops.biquad_forward(x, b, a, None, None)
-        assert result is None
-
-    def test_filter_works_after_ops_failure(self, monkeypatch):
-        """Filters still work when _ops returns None."""
-        import torchfx._ops as ops
-
-        monkeypatch.setattr(ops, "_ext", None)
-        monkeypatch.setattr(ops, "_ext_load_attempted", True)
-
-        filt = BiquadLPF(cutoff=2000, q=0.707, fs=SAMPLE_RATE)
-        x = torch.randn(2, SAMPLE_RATE)
-
-        # Force stateful mode
-        _ = filt(x)
-        y = filt(x)
-
-        assert y.shape == x.shape
-        assert torch.isfinite(y).all()
 
 
 class TestLogFilterBankCPU:

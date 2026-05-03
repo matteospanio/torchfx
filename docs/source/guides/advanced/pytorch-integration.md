@@ -389,13 +389,13 @@ class VocalProcessor(nn.Module):
 
         # Stage 2: Tonal shaping (using Sequential)
         self.eq_chain = nn.Sequential(
-            fx.filter.PeakingEQ(freq=200, gain_db=-2, q=0.7, fs=sample_rate),    # Reduce mud
-            fx.filter.PeakingEQ(freq=3000, gain_db=3, q=1.0, fs=sample_rate),    # Presence
-            fx.filter.PeakingEQ(freq=10000, gain_db=2, q=0.7, fs=sample_rate),   # Brightness
+            fx.filter.ParametricEQ(frequency=200, gain=-2, q=0.7, fs=sample_rate),    # Reduce mud
+            fx.filter.ParametricEQ(frequency=3000, gain=3, q=1.0, fs=sample_rate),    # Presence
+            fx.filter.ParametricEQ(frequency=10000, gain=2, q=0.7, fs=sample_rate),   # Brightness
         )
 
-        # Stage 3: Dynamics and final polish
-        self.compressor = fx.effect.Compressor(threshold=0.5, ratio=4.0)
+        # Stage 3: Trim level and limit
+        self.gain = fx.effect.Gain(0.7, gain_type="amplitude")
         self.limiter = fx.effect.Normalize(peak=0.95)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -407,7 +407,7 @@ class VocalProcessor(nn.Module):
         x = self.eq_chain(x)
 
         # Stage 3
-        x = self.compressor(x)
+        x = self.gain(x)
         x = self.limiter(x)
 
         return x
@@ -631,6 +631,10 @@ TorchFX filters work great as **fixed augmentation layers** in neural network pi
 ## Mixing with torchaudio.transforms
 
 TorchFX modules can be mixed with [torchaudio](https://pytorch.org/audio/) transforms in the same processing pipeline, leveraging the best of both libraries.
+
+```{note}
+`torchaudio` is **not** a dependency of TorchFX --- install it separately if you want to use the patterns in this section: `pip install torchaudio`. For pure TorchFX gain control, use {class}`~torchfx.effect.Gain` instead of `torchaudio.transforms.Vol`.
+```
 
 ### Integration Pattern
 

@@ -5,7 +5,7 @@
 #include "torchfx/delay_kernel.h"
 #endif
 
-// CPU fallback declarations
+// CPU implementation declarations
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cpu(
     const torch::Tensor& x,
     const torch::Tensor& b,
@@ -19,6 +19,12 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cpu(
     const torch::Tensor& sos,
     const torch::Tensor& state_x,
     const torch::Tensor& state_y);
+
+torch::Tensor delay_line_forward_cpu(
+    const torch::Tensor& x,
+    int delay_samples,
+    double decay,
+    double mix);
 
 // Dispatch: select CUDA or CPU implementation based on tensor device.
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward(
@@ -68,8 +74,10 @@ torch::Tensor delay_line_forward(
   if (x.is_cuda()) {
     return torchfx::delay_line_forward_cuda(x, delay_samples, decay, mix);
   }
+#else
+  TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
 #endif
-  TORCH_CHECK(false, "delay_line_forward CPU not implemented in C++; use Python fallback");
+  return delay_line_forward_cpu(x, delay_samples, decay, mix);
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {

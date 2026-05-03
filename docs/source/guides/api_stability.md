@@ -81,13 +81,15 @@ If current behavior is a bug, fixing it is not considered a breaking change.
 
 ## Public API Surface
 
-### Stable APIs (v0.3.0+)
+### Stable APIs (v0.5.x)
 
 These APIs are considered stable and will follow the versioning policy:
 
-#### Core Classes
+#### Top-level (torchfx)
 - `Wave` - Audio waveform representation
 - `FX` - Base effect class
+- `FilterChain` - Auto-flattening sequential container (since 0.5.2)
+- `is_native_available()` - Native extension status check
 
 #### Filters (torchfx.filter)
 - IIR Filters:
@@ -96,16 +98,27 @@ These APIs are considered stable and will follow the versioning policy:
   - `Chebyshev2`, `HiChebyshev2`, `LoChebyshev2`
   - `Elliptic`, `HiElliptic`, `LoElliptic`
   - `LinkwitzRiley`, `HiLinkwitzRiley`, `LoLinkwitzRiley`
-  - `HiShelving`, `LoShelving`
-  - `ParametricEQ`
-  - `Notch`, `AllPass`, `Peaking`
-
+  - `Shelving`, `HiShelving`, `LoShelving`
+  - `ParametricEQ`, `Peaking`
+- Biquad filters:
+  - `Biquad`, `BiquadLPF`, `BiquadHPF`, `BiquadBPF`, `BiquadNotch`, `BiquadAllPass`
+  - `Notch`, `AllPass`
 - FIR Filters:
   - `FIR`, `DesignableFIR`
+- Filterbanks and fused cascades:
+  - `LogFilterBank`
+  - `FusedSOSCascade` (the fused container produced by the deferred pipeline)
 
 #### Effects (torchfx.effect)
+- `Gain`
+- `Normalize` (and its strategy classes: `PercentileNormalization`, `CustomNormalizationStrategy`, etc.)
 - `Reverb`
 - `Delay`
+
+#### Validation, logging, realtime
+- `torchfx.validation` --- validators (`validate_positive`, `validate_range`, `validate_sample_rate`, `validate_in_set`) and exception hierarchy (`TorchFXError`, `InvalidParameterError`, `InvalidRangeError`, `InvalidSampleRateError`, `InvalidShapeError`, `InvalidTypeError`, `AudioProcessingError`, `CoefficientComputationError`, `FilterInstabilityError`).
+- `torchfx.logging` --- `enable_logging`, `enable_debug_logging`, `disable_logging`, `get_logger`, `log_performance`, `LogPerformance`.
+- `torchfx.realtime` --- streaming processor and audio backends (the `sounddevice` backend requires the `realtime` dependency group).
 
 ### Parameter Stability
 
@@ -114,13 +127,11 @@ These APIs are considered stable and will follow the versioning policy:
 These parameter names will not change:
 
 - `fs` - Sampling frequency (Hz)
-- `cutoff` - Cutoff frequency for filters (Hz)
-- `frequency` - Center frequency for parametric EQ (Hz)
+- `cutoff` - Cutoff frequency for lowpass / highpass / shelving filters (Hz)
+- `frequency` - Center frequency for parametric / peaking filters (Hz)
 - `order` - Filter order
-- `gain` - Gain value
-- `gain_scale` - Gain units ("linear" or "db")
-- `Q` - Quality factor (uppercase for Peaking, Notch, AllPass)
-- `q` - Quality factor (lowercase for Shelving, ParametricEQ)
+- `gain` - Gain value (units selected by a sibling `gain_type` or `gain_scale` parameter)
+- `q` - Quality factor (lowercase, applied uniformly across all filters since 0.3.0)
 
 ### Type Signature Stability
 

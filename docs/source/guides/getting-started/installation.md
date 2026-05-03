@@ -1,290 +1,283 @@
 # Installation
 
-TorchFX can be installed either from the Python Package Index (PyPI) or by cloning the repository from GitHub. This guide covers system requirements, installation methods, platform-specific configuration, and dependency management.
+TorchFX can be installed from the Python Package Index (PyPI) or from source. This guide covers system requirements, build-time system dependencies, installation methods, and troubleshooting.
 
 :::{admonition} Quick Start
 :class: tip
 
-For most users, a simple `pip install torchfx` is all you need to get started. For development or advanced configurations, see the sections below.
+For most users on Linux x86_64, macOS (Intel or Apple Silicon), or Windows x86_64, a simple `pip install torchfx` is all you need --- prebuilt CPU wheels for Python 3.10–3.14 mean no compiler is required. For GPU builds, less common platforms, or development setups, see the sections below.
 :::
 
 ## Purpose and Scope
 
-This document describes the installation procedures for TorchFX, including system requirements, installation methods, platform-specific PyTorch configuration, and dependency management. For a quick start guide with minimal setup, see {doc}`getting_started`. For details on the development environment setup, see {doc}`../developer/index`.
+This document describes the installation procedures for TorchFX, including system requirements, the build system, installation methods, and dependency management. For a quick start guide with minimal setup, see {doc}`getting_started`. For details on the development environment, see {doc}`../developer/index`.
 
 ## System Requirements
 
-TorchFX requires **Python 3.10 or higher**. The library is designed to run on multiple platforms with different hardware acceleration capabilities:
+### Runtime requirements
 
-| Platform | PyTorch Backend | CUDA Support |
-|----------|----------------|--------------|
-| Linux | CUDA 12.4 | Yes |
-| macOS | CPU | No |
-| Windows | CPU | No |
+| Requirement | Version |
+|-------------|---------|
+| Python | 3.10, 3.11, 3.12, 3.13, or 3.14 |
+| Operating system | Linux x86_64, macOS (Intel + Apple Silicon), or Windows x86_64 |
+| GPU (optional) | NVIDIA GPU with CUDA 12.4 or 12.8. Prebuilt CUDA wheels exist for Linux x86_64 only --- see [GPU (CUDA) wheels](#gpu-wheels). Other configurations build from source. |
 
-:::{note}
-The platform-specific PyTorch configuration is automatically handled using the `uv` package manager's source selection mechanism based on your operating system.
-:::
+**Prebuilt CPU wheels** are published to PyPI for every supported Python version on:
 
-### Core Dependencies
+| Platform | Wheel tag |
+|----------|-----------|
+| Linux x86_64 | `manylinux_2_28_x86_64` |
+| macOS x86_64 (Intel) | `macosx_*_x86_64` |
+| macOS arm64 (Apple Silicon) | `macosx_*_arm64` |
+| Windows x86_64 | `win_amd64` |
 
-TorchFX requires the following Python packages:
+On any of these targets, `pip install torchfx` downloads a wheel and does **not** require a C++ compiler or CMake. The wheels are produced by the [`wheels.yml`](https://github.com/matteospanio/torchfx/blob/master/.github/workflows/wheels.yml) workflow on every tagged release.
 
-- `torch>=2.6.0` - PyTorch tensor library
-- `torchaudio>=2.6.0` - Audio I/O and transforms
-- `numpy>=2.2.4` - Numerical computing
-- `scipy>=1.15.2` - Signal processing algorithms
-- `soundfile>=0.13.1` - Audio file reading/writing
-- `annotated-types>=0.7.0` - Type annotation support
+On other platforms (musllinux, aarch64 Linux, etc.), pip falls back to the source distribution and triggers a CMake build --- see [System dependencies (source builds)](#system-dependencies-source-builds) below.
 
-:::{tip}
-These dependencies are installed automatically when you install TorchFX via pip or uv.
-:::
+CUDA wheels for Linux x86_64 (CUDA 12.4 and 12.8) are published to a separate index --- see [GPU (CUDA) wheels](#gpu-wheels). On unsupported configurations (Windows + CUDA, other CUDA versions, etc.) install from source with `nvcc` on `PATH`; the build detects CUDA automatically.
+
+### Core Python dependencies
+
+The following packages are installed automatically by pip or uv:
+
+- `torch>=2.6.0` --- PyTorch tensor library
+- `numpy>=2.2.4` --- numerical computing
+- `scipy>=1.15.2` --- signal-processing algorithms (filter design)
+- `soundfile>=0.13.1` --- audio file reading and writing
+- `annotated-types>=0.7.0` --- type-annotation support
+
+(system-dependencies-source-builds)=
+### System dependencies (source builds)
+
+When pip cannot find a matching wheel, the source distribution is built locally. The build invokes CMake (configured by [CMakeLists.txt](https://github.com/matteospanio/torchfx/blob/master/CMakeLists.txt)) to compile the C++/CUDA extension. You will need:
+
+| Dependency | Minimum version | Purpose |
+|------------|----------------|---------|
+| C++17 compiler | GCC ≥ 9, Clang ≥ 10, or MSVC 2019+ | Compile the native extension |
+| CMake | 3.18 | Drive the build |
+| Python development headers | Matching your Python (e.g. `python3-dev` on Debian/Ubuntu) | Required by CMake's `find_package(Python ... Development.Module)` |
+| `torch>=2.6.0` (already installed) | 2.6.0 | The build queries `torch.utils.cpp_extension` for include and library paths and links against `torch_cpu` / `c10` |
+| OpenMP *(optional)* | --- | Linked automatically if found, enables multi-channel parallelism in the CPU kernels |
+| CUDA toolkit + `nvcc` *(optional)* | matching your `torch` build | Required to compile the CUDA kernels; auto-detected by CMake |
+
+Set `TORCHFX_NO_CUDA=1` in the environment to force a CPU-only build even when `nvcc` is available --- this matches what the wheel-publishing CI does and is the simplest way to get a fast, reproducible build without GPU support.
+
+Per-platform installation of the build toolchain:
+
+```bash
+# Debian / Ubuntu
+sudo apt-get install build-essential cmake python3-dev
+
+# Fedora / RHEL
+sudo dnf install gcc-c++ cmake python3-devel
+
+# macOS (Xcode Command Line Tools provide clang; CMake via Homebrew)
+xcode-select --install
+brew install cmake
+
+# Windows (PowerShell, with winget)
+# Install Visual Studio 2022 Build Tools with the "Desktop development with C++"
+# workload, then:
+winget install Kitware.CMake
+```
 
 ## Installation Methods
 
-### Installing from PyPI
-
-The simplest installation method is through PyPI:
+### From PyPI (recommended)
 
 ```bash
 pip install torchfx
 ```
 
-This installs the latest stable release published on PyPI, along with all required dependencies. On Linux systems, this will attempt to install CUDA 12.4-enabled PyTorch; on macOS and Windows, it will install CPU-only versions.
+On Linux x86_64, macOS (Intel and Apple Silicon), or Windows x86_64 with Python 3.10–3.14, pip downloads a prebuilt CPU wheel and installation finishes in seconds. The C++ extension is precompiled inside the wheel; no compiler or CMake is needed.
 
-### Installing from Source
+On other platforms (musllinux, aarch64 Linux, etc.), pip falls through to the source distribution and runs the CMake build. Make sure the [system dependencies](#system-dependencies-source-builds) above are installed first.
 
-To install the latest development version of TorchFX directly from GitHub, follow these steps:
+(from-source-with-pip)=
+### From source with pip
 
 ```bash
 git clone https://github.com/matteospanio/torchfx
 cd torchfx
-pip install -e .
+pip install .
 ```
 
-This approach is useful if you plan to contribute to the project or want access to the latest features and updates that may not yet be available on PyPI.
+Use this path if you are on a platform without a published wheel, or want a custom build. Add `-e` for an editable install when developing.
 
-### Installation from Source with uv
+(gpu-wheels)=
+### GPU (CUDA) wheels
 
-For development or to use the latest unreleased features with reproducible builds, install from source using the `uv` package manager:
+Prebuilt CUDA wheels for **Linux x86_64 / Python 3.10–3.14** are published to a project-managed PEP 503 index hosted on GitHub Pages, one index per CUDA toolkit version:
+
+| CUDA | Index URL |
+|------|-----------|
+| 12.4 | `https://matteospanio.github.io/torchfx/wheels/cu124/` |
+| 12.8 | `https://matteospanio.github.io/torchfx/wheels/cu128/` |
+
+Pick the index whose CUDA version matches your installed `torch`, install `torch` first, then point `pip` at the matching index for `torchfx`:
+
+```bash
+# 1. PyTorch with the CUDA toolkit you want to target
+pip install torch --index-url https://download.pytorch.org/whl/cu124
+
+# 2. TorchFX from the matching CUDA index
+pip install torchfx \
+    --index-url https://matteospanio.github.io/torchfx/wheels/cu124/ \
+    --extra-index-url https://pypi.org/simple
+```
+
+The wheels carry a PEP 440 local-version segment (`torchfx==0.5.3+cu124`) so they will not collide with the CPU wheels on PyPI, and they link against the CUDA shared libraries that `torch` already provides --- the wheel itself stays small. CUDA wheels are not on PyPI; PyPI does not accept locally-versioned platform-specific wheels.
+
+For platforms or CUDA versions not on the table above (Windows + CUDA, CUDA 11, etc.), build from source --- see [From source with pip](#from-source-with-pip) and make sure `nvcc` is on `PATH`. CMake auto-detects CUDA and links the CUDA kernels into `torchfx_ext`.
+
+### From source with uv
+
+For development with reproducible builds:
 
 ```bash
 # Install uv if not already installed
 pip install uv
 
-# Clone the repository
+# Clone and sync
 git clone https://github.com/matteospanio/torchfx
 cd torchfx
-
-# Install in editable mode with all dependencies
 uv sync
 ```
 
-The `uv sync` command reads `pyproject.toml` and `uv.lock` to install all dependencies with exact versions for reproducible builds.
+`uv sync` reads [pyproject.toml](https://github.com/matteospanio/torchfx/blob/master/pyproject.toml) and `uv.lock` and installs dependencies at exact versions. The CMake build runs the same way as with pip.
 
 ### Installation Workflow
-
-The following diagram illustrates the complete installation workflow for both PyPI and source-based installations:
 
 ```{mermaid}
 graph TB
     User["User"]
 
     subgraph "Installation Methods"
-        PipInstall["pip install torchfx"]
-        SourceInstall["Clone + uv sync"]
+        PipPyPI["pip install torchfx"]
+        PipSource["pip install . (source)"]
+        UvSync["uv sync (source)"]
     end
 
-    subgraph "PyPI Distribution"
-        PyPI["PyPI Registry"]
-        Wheel["torchfx-0.2.1-*.whl"]
+    subgraph "PyPI prebuilt wheels (CPU)"
+        ManyLinux["manylinux x86_64<br/>cp310 .. cp314"]
+        MacIntel["macOS x86_64<br/>cp310 .. cp314"]
+        MacArm["macOS arm64<br/>cp310 .. cp314"]
+        Win["Windows x86_64<br/>cp310 .. cp314"]
+        Sdist["torchfx-X.Y.Z.tar.gz<br/>(source)"]
     end
 
-    subgraph "Source Installation"
-        GitRepo["GitHub Repository<br/>matteospanio/torchfx"]
-        PyProject["pyproject.toml<br/>Dependencies definition"]
-        UVLock["uv.lock<br/>Locked versions"]
-        UV["uv package manager"]
+    subgraph "GitHub Pages CUDA wheels (Linux only)"
+        CU124["manylinux x86_64<br/>+cu124, cp310 .. cp314"]
+        CU128["manylinux x86_64<br/>+cu128, cp310 .. cp314"]
     end
 
-    subgraph "Dependency Resolution"
-        DepResolver["Platform Detection"]
-        LinuxPath["Linux:<br/>pytorch-cu124 index"]
-        NonLinuxPath["macOS/Windows:<br/>pytorch-cpu index"]
-        PyTorchCUDA["torch 2.6.0+cu124"]
-        PyTorchCPU["torch 2.6.0+cpu"]
-        OtherDeps["numpy, scipy<br/>soundfile, torchaudio"]
+    subgraph "Source build (scikit-build-core + CMake)"
+        SBC["scikit-build-core"]
+        CMake["CMake ≥ 3.18"]
+        Cxx["C++17 compiler<br/>(GCC / Clang / MSVC)"]
+        Nvcc["nvcc<br/>(optional, CUDA kernels)"]
+        Ext["torchfx_ext<br/>(compiled .so / .dylib / .pyd)"]
     end
 
-    subgraph "Installed Package"
-        TorchFXPkg["torchfx package<br/>in site-packages"]
-    end
+    Installed["torchfx package<br/>in site-packages"]
 
-    User -->|pip install| PipInstall
-    User -->|git clone + uv sync| SourceInstall
+    User --> PipPyPI
+    User --> PipSource
+    User --> UvSync
 
-    PipInstall --> PyPI
-    PyPI --> Wheel
-    Wheel --> DepResolver
+    PipPyPI -->|matching wheel| ManyLinux
+    PipPyPI -->|matching wheel| MacIntel
+    PipPyPI -->|matching wheel| MacArm
+    PipPyPI -->|matching wheel| Win
+    PipPyPI -->|"--index-url cu124"| CU124
+    PipPyPI -->|"--index-url cu128"| CU128
+    PipPyPI -->|no wheel for platform| Sdist
+    ManyLinux --> Installed
+    MacIntel --> Installed
+    MacArm --> Installed
+    Win --> Installed
+    CU124 --> Installed
+    CU128 --> Installed
 
-    SourceInstall --> GitRepo
-    GitRepo --> PyProject
-    GitRepo --> UVLock
-    PyProject --> UV
-    UVLock --> UV
-    UV --> DepResolver
+    Sdist --> SBC
+    PipSource --> SBC
+    UvSync --> SBC
 
-    DepResolver -->|sys_platform == 'linux'| LinuxPath
-    DepResolver -->|sys_platform != 'linux'| NonLinuxPath
-
-    LinuxPath --> PyTorchCUDA
-    NonLinuxPath --> PyTorchCPU
-
-    PyTorchCUDA --> TorchFXPkg
-    PyTorchCPU --> TorchFXPkg
-    DepResolver --> OtherDeps
-    OtherDeps --> TorchFXPkg
+    SBC --> CMake
+    CMake --> Cxx
+    CMake -. optional .-> Nvcc
+    Cxx --> Ext
+    Nvcc --> Ext
+    Ext --> Installed
 ```
 
-## Platform-Specific PyTorch Configuration
+(build-system)=
+## Build System
 
-The `uv` package manager uses **platform markers** to select the appropriate PyTorch distribution. This configuration ensures that Linux users get CUDA-enabled builds while macOS and Windows users receive CPU-only builds.
+The build backend is **scikit-build-core**, configured in [pyproject.toml](https://github.com/matteospanio/torchfx/blob/master/pyproject.toml):
 
-### PyTorch Source Selection Logic
+```toml
+[build-system]
+requires = ["scikit-build-core>=0.10", "torch>=2.6.0"]
+build-backend = "scikit_build_core.build"
 
-The following diagram shows how PyTorch sources are selected based on the platform:
-
-```{mermaid}
-graph TD
-    Start["Dependency Resolution Start"]
-
-    PlatformCheck{"sys_platform == 'linux'?"}
-
-    subgraph "Linux Path"
-        CUDAIndex["[[tool.uv.index]]<br/>name = 'pytorch-cu124'<br/>url = download.pytorch.org/whl/cu124"]
-        CUDASource["torch source:<br/>index = 'pytorch-cu124'<br/>marker = sys_platform == 'linux'"]
-        CUDAPackage["torch 2.6.0+cu124<br/>torchaudio 2.6.0+cu124<br/>CUDA 12.4 support"]
-    end
-
-    subgraph "Non-Linux Path"
-        CPUIndex["[[tool.uv.index]]<br/>name = 'pytorch-cpu'<br/>url = download.pytorch.org/whl/cpu"]
-        CPUSource["torch source:<br/>index = 'pytorch-cpu'<br/>marker = sys_platform != 'linux'"]
-        CPUPackage["torch 2.6.0+cpu<br/>torchaudio 2.6.0+cpu<br/>CPU-only"]
-    end
-
-    Result["Resolved torch package"]
-
-    Start --> PlatformCheck
-    PlatformCheck -->|Yes| CUDASource
-    PlatformCheck -->|No| CPUSource
-
-    CUDASource --> CUDAIndex
-    CUDAIndex --> CUDAPackage
-    CPUSource --> CPUIndex
-    CPUIndex --> CPUPackage
-
-    CUDAPackage --> Result
-    CPUPackage --> Result
+[tool.scikit-build]
+wheel.packages = ["src/torchfx", "src/cli"]
+cmake.build-type = "Release"
 ```
 
-The platform detection uses Python's `sys_platform` to determine which PyTorch index to use:
+```{versionchanged} 0.5.3
+Build backend migrated to scikit-build-core; the native extension is compiled
+at install time and bundled into the wheel. Older releases JIT-compiled it on
+first import via ``torch.utils.cpp_extension.load``.
+```
 
-- **Linux systems**: Resolves `torch` and `torchaudio` from the `pytorch-cu124` index at `https://download.pytorch.org/whl/cu124`, providing CUDA 12.4 GPU acceleration.
-- **macOS and Windows**: Resolves from the `pytorch-cpu` index at `https://download.pytorch.org/whl/cpu`, providing CPU-only builds.
+### Building locally
 
-The `explicit = true` flag in the configuration ensures these indices are only used when explicitly specified by the source configuration.
-
-### GPU Support
-
-TorchFX is built on top of **PyTorch**, which means GPU support depends on your local PyTorch installation. To enable GPU acceleration:
-
-1. Make sure you have a compatible NVIDIA GPU
-2. Ensure you're running on a Linux system (CUDA support is currently Linux-only in the default configuration)
-3. Install PyTorch with CUDA support
-
-If you need a specific CUDA version different from 12.4, you can manually install PyTorch:
+To build a distribution package:
 
 ```bash
-# Example: Installing PyTorch with CUDA 12.1
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# CPU-only wheel (matches the CI flow)
+TORCHFX_NO_CUDA=1 python -m build --wheel
+
+# Full build (CUDA if nvcc is found)
+python -m build
+
+# Or with uv
+uv build
 ```
 
-Replace `cu121` with the correct CUDA version for your system. Visit the [official PyTorch website](https://pytorch.org/get-started/locally/) for the correct installation command for your configuration.
+Wheels land in `dist/`. The CI workflow at [`.github/workflows/wheels.yml`](https://github.com/matteospanio/torchfx/blob/master/.github/workflows/wheels.yml) runs the CPU-only command above for Python 3.10–3.13 on every tagged release.
+
+### Installing a specific PyTorch build
+
+The build links the extension against whichever `torch` is installed in the build environment, so to use a particular CUDA version:
+
+1. Install `torch` first from the [official PyTorch install matrix](https://pytorch.org/get-started/locally/), e.g.
+   ```bash
+   pip install torch --index-url https://download.pytorch.org/whl/cu121
+   ```
+2. Then install TorchFX from source without rebuilding the build environment:
+   ```bash
+   pip install torchfx --no-build-isolation
+   ```
 
 ## Dependency Management with uv
 
 The project uses **uv** as its primary dependency manager, which provides faster dependency resolution and reproducible builds through lock files.
 
-### Dependency Resolution Components
-
-The following diagram illustrates how dependencies are resolved and installed:
-
-```{mermaid}
-graph TB
-    subgraph "Configuration Files"
-        PyProject["pyproject.toml"]
-        UVLock["uv.lock"]
-    end
-
-    subgraph "Dependency Specifications"
-        CoreDeps["[project.dependencies]<br/>torch>=2.6.0<br/>torchaudio>=2.6.0<br/>numpy>=2.2.4<br/>scipy>=1.15.2<br/>soundfile>=0.13.1<br/>annotated-types>=0.7.0"]
-
-        DevGroups["[dependency-groups]<br/>cli: typer<br/>dev: black, mypy, pytest, ruff<br/>docs: sphinx, sphinx-immaterial"]
-
-        UVSources["[tool.uv.sources]<br/>Platform-specific torch sources"]
-
-        UVIndices["[[tool.uv.index]]<br/>pytorch-cpu<br/>pytorch-cu124"]
-    end
-
-    subgraph "Resolution Process"
-        UVResolver["uv resolver engine"]
-        PlatformDetect["Platform detection<br/>sys_platform"]
-        VersionConstraints["Version constraint solver"]
-    end
-
-    subgraph "Lock File"
-        LockedVersions["Exact package versions<br/>with hashes"]
-        ResolvedDeps["Resolved dependency tree"]
-    end
-
-    subgraph "Installation"
-        Download["Download packages"]
-        Install["Install to environment"]
-    end
-
-    PyProject --> CoreDeps
-    PyProject --> DevGroups
-    PyProject --> UVSources
-    PyProject --> UVIndices
-
-    CoreDeps --> UVResolver
-    DevGroups --> UVResolver
-    UVSources --> PlatformDetect
-    UVIndices --> PlatformDetect
-
-    UVResolver --> VersionConstraints
-    PlatformDetect --> VersionConstraints
-
-    VersionConstraints --> LockedVersions
-    VersionConstraints --> ResolvedDeps
-
-    LockedVersions --> UVLock
-    ResolvedDeps --> UVLock
-
-    UVLock --> Download
-    Download --> Install
-```
-
 ### Dependency Groups
 
-The project defines optional dependency groups for different use cases:
+The optional dependency groups defined in [pyproject.toml](https://github.com/matteospanio/torchfx/blob/master/pyproject.toml) cover different use cases:
 
-| Group | Purpose | Key Packages |
+| Group | Purpose | Key packages |
 |-------|---------|--------------|
-| `cli` | Command-line interface | `typer>=0.16.0` |
-| `dev` | Development tools | `black`, `mypy`, `pytest`, `ruff`, `coverage`, `scalene` |
-| `docs` | Documentation building | `sphinx>=8.1.3`, `sphinx-immaterial>=0.13.5` |
+| `cli` | Command-line interface | `typer`, `rich`, `prompt-toolkit`, `watchdog` |
+| `dev` | Development tools | `black`, `mypy`, `pytest`, `pytest-benchmark`, `ruff`, `coverage`, `numba`, `scalene` |
+| `realtime` | Real-time audio I/O | `sounddevice` |
+| `cuda` | CUDA build helpers | `ninja` |
+| `docs` | Documentation building | `sphinx`, `pydata-sphinx-theme`, `myst-parser`, `ablog`, `sphinx-design`, `sphinxcontrib-bibtex`, `sphinxcontrib-mermaid` |
 
 To install with specific groups:
 
@@ -292,157 +285,125 @@ To install with specific groups:
 # Install with dev dependencies
 uv sync --group dev
 
-# Install with all groups
-uv sync --all-groups
+# Install only CLI dependencies
+uv sync --group cli
 
-# Install only docs dependencies
-uv sync --group docs
+# Install everything
+uv sync --all-groups
 ```
 
 :::{note}
-For contributors and developers, we recommend using `uv sync --all-groups` to install all development dependencies including testing, documentation, and CLI tools.
+For contributors and developers, we recommend `uv sync --all-groups` to install all development dependencies including testing, documentation, CLI, and realtime tools.
 :::
 
 ## Developers
 
-If you are a developer and want to contribute to the TorchFX project, you can set up a development environment by following these steps:
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/matteospanio/torchfx
-   ```
-
-2. Navigate to the project directory:
-
-   ```bash
-   cd torchfx
-   ```
-
-3. Create a virtual environment (optional but recommended). The project is built using `uv`, hence we suggest using it:
-
-   ```bash
-   # The flag --all-groups will install also dev dependencies
-   uv sync --all-groups
-   ```
-
-For more information on the development workflow, see {doc}`../developer/index`.
-
-## Build System
-
-The project uses **hatchling** as its build backend. The build system configuration is defined in `pyproject.toml`:
-
-```toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-```
-
-To build a distribution package:
+If you want to contribute to TorchFX, set up a development environment with:
 
 ```bash
-# Using uv
-uv build
-
-# Or using standard tools
-python -m build
+git clone https://github.com/matteospanio/torchfx
+cd torchfx
+uv sync --all-groups
+uv run pre-commit install
 ```
 
-This produces a wheel file (`.whl`) in the `dist/` directory that can be distributed or installed with pip.
+This installs all dependency groups and registers the project's pre-commit hooks. For more on the development workflow, see {doc}`../developer/index`.
 
 ## Verification
 
-After installation, verify that TorchFX is correctly installed and can import all core components.
+After installation, confirm that TorchFX is correctly installed and that the native extension loaded.
 
-### Basic Installation Check
-
-To verify that the package has been correctly installed, run the following command in Python:
+### Basic check
 
 ```python
+from importlib.metadata import version
 import torchfx
-print(torchfx.__version__)  # Should print '0.2.1'
+
+print(version("torchfx"))              # e.g. '0.5.3'
+print(torchfx.is_native_available())   # True if torchfx_ext compiled successfully
 ```
 
-### Comprehensive Verification
+`is_native_available()` is the canonical way to check that the C++ extension is loaded. Since 0.5.3 there is no Python fallback, so a `False` return value means the install is broken --- see [Troubleshooting](#troubleshooting).
 
-For a more thorough verification, check that all core components can be imported and that PyTorch is correctly configured:
+### Comprehensive check
 
 ```python
-import torchfx
-from torchfx import Wave, FX, Gain, Normalize
-from torchfx.filter import Butterworth, LowPass
-
-# Check version
-print(torchfx.__version__)  # Should print '0.2.1'
-
-# Verify PyTorch backend
+from importlib.metadata import version
 import torch
-print(f"CUDA available: {torch.cuda.is_available()}")
-print(f"PyTorch version: {torch.__version__}")
+import torchfx
+from torchfx import Wave, FX
+from torchfx.effect import Gain, Normalize
+from torchfx.filter import LoButterworth, HiButterworth, Butterworth
+
+print(f"torchfx version:   {version('torchfx')}")
+print(f"PyTorch version:   {torch.__version__}")
+print(f"Native extension:  {torchfx.is_native_available()}")
+print(f"CUDA available:    {torch.cuda.is_available()}")
 ```
 
-On Linux systems with NVIDIA GPUs, `torch.cuda.is_available()` should return `True`. On macOS and Windows, it will return `False`, indicating CPU-only operation.
+On a Linux machine with an NVIDIA GPU and a CUDA-enabled `torch`, `torch.cuda.is_available()` should return `True`. On macOS, Windows, or any CPU-only install, it returns `False`.
 
-### Audio I/O Verification
+### Functional smoke test
 
-To verify audio I/O capabilities:
-
-```python
-import torchaudio
-print(f"torchaudio version: {torchaudio.__version__}")
-print(f"Available backends: {torchaudio.list_audio_backends()}")
-```
-
-Expected output should show the available audio backends for your platform (e.g., `soundfile`, `sox`, `ffmpeg`).
-
-## Checking Installation
-
-You can perform a quick functional test to ensure TorchFX is working correctly:
+A quick test that exercises the full pipeline:
 
 ```python
+import torch
 import torchfx as fx
 
-# Create a simple sine wave
-wave = fx.Wave.from_function(lambda t: fx.sin(2 * fx.pi * 440 * t), duration=1.0, fs=44100)
+# 1 second of 440 Hz mono sine at 44.1 kHz
+t = torch.linspace(0, 1, 44100)
+ys = torch.sin(2 * torch.pi * 440 * t).unsqueeze(0)  # shape (1, 44100)
+wave = fx.Wave(ys, fs=44100)
 
-# Apply a gain effect
-gained = wave | fx.Gain(db=6.0)
+# Apply a -6 dB gain
+gained = wave | fx.effect.Gain(0.5, gain_type="amplitude")
 
-# Verify the operation succeeded
-print(f"Original wave: {wave.shape}")
-print(f"Processed wave: {gained.shape}")
-print(f"Sample rate: {gained.fs} Hz")
+print(f"Original: shape={wave.ys.shape}, fs={wave.fs} Hz")
+print(f"Processed: shape={gained.ys.shape}")
 ```
 
 If this runs without errors, your installation is working correctly.
 
+(troubleshooting)=
 ## Troubleshooting
 
-### PyTorch CUDA Version Mismatch
+### `ImportError: cannot import name 'torchfx_ext'` (or `is_native_available()` returns `False`)
 
-If you have an existing PyTorch installation with a different CUDA version, you may need to uninstall it first:
+The native C++ extension is missing. The extension is required to use TorchFX. Possible causes:
+
+- **You installed from sdist on a platform where the build silently skipped a step.** Reinstall with `pip install --force-reinstall --no-binary torchfx torchfx` and watch the build log for errors.
+- **You're missing system dependencies.** Install a C++17 compiler, CMake ≥ 3.18, and Python development headers (see [System dependencies](#system-dependencies-source-builds)).
+- **PyTorch is not installed in the build environment.** The build links the extension against `torch`. If you use build isolation, the build env installs its own `torch` automatically; if you use `--no-build-isolation`, install `torch` first.
+
+### Source install fails with `cmake: command not found`
+
+CMake ≥ 3.18 is required for source builds. Install it with your system package manager:
 
 ```bash
-pip uninstall torch torchaudio torchvision
-uv sync --reinstall-package torch
+# Debian/Ubuntu
+sudo apt-get install cmake
+
+# macOS (Homebrew)
+brew install cmake
+
+# Windows
+# Install from https://cmake.org/download/ and add to PATH
 ```
 
-This ensures that the correct PyTorch version is installed according to the platform-specific configuration.
+### CUDA kernels not compiled (CPU-only build, GPU available)
 
-### Platform Detection Issues
+CMake reports `TORCHFX_USE_CUDA = OFF` if it cannot find `nvcc` or the CUDA toolkit. Verify:
 
-If the wrong PyTorch variant is installed, verify your platform:
+- `nvcc --version` works in your shell.
+- The CUDA toolkit version matches your `torch` CUDA version.
+- The `TORCHFX_NO_CUDA` env var is **not** set (`echo $TORCHFX_NO_CUDA` should print empty).
 
-```python
-import sys
-print(f"Platform: {sys.platform}")
-```
+Then rebuild from source: `pip install torchfx --no-build-isolation --force-reinstall`.
 
-The marker `sys_platform == 'linux'` should be `True` on Linux systems. If you're on Linux but getting the CPU-only version, check your Python installation and ensure `sys.platform` returns `'linux'`.
+### Dependency conflicts with uv
 
-### Dependency Conflicts
-
-If you encounter dependency conflicts when using uv, regenerate the lock file:
+If `uv sync` fails to resolve dependencies, regenerate the lock file:
 
 ```bash
 rm uv.lock
@@ -450,51 +411,28 @@ uv lock
 uv sync
 ```
 
-This will resolve dependencies from scratch and create a new lock file with compatible versions.
+### Audio backend issues
 
-### Import Errors
-
-If you encounter import errors after installation, ensure that:
-
-1. You're using the correct Python environment where TorchFX was installed
-2. All dependencies were installed successfully
-3. There are no naming conflicts with other packages
-
-You can verify your Python environment:
+If you hit `RuntimeError` reading audio files, ensure `soundfile` and its system library are installed:
 
 ```bash
-which python
-pip list | grep torchfx
-```
+pip install --upgrade soundfile
 
-### Audio Backend Issues
-
-If you encounter issues loading audio files, ensure that `soundfile` is properly installed:
-
-```bash
-pip install soundfile --upgrade
-```
-
-On some systems, you may need to install system-level audio libraries:
-
-```bash
-# Ubuntu/Debian
+# Linux: libsndfile system library
 sudo apt-get install libsndfile1
 
 # macOS
 brew install libsndfile
 
-# Windows
-# Usually included with soundfile package
+# Windows: usually bundled with the soundfile wheel
 ```
 
 :::{admonition} Still Having Issues?
 :class: tip
 
 If you continue to experience problems, please:
-- Check the [GitHub Issues](https://github.com/matteospanio/torchfx/issues) for similar problems
-- Create a new issue with details about your system, Python version, and the error message
-- Include the output of `pip list` to show installed packages and versions
+- Check the [GitHub Issues](https://github.com/matteospanio/torchfx/issues) for similar reports.
+- Open a new issue with your OS, Python version, full error traceback, and the output of `pip list` and `python -c "import torchfx; print(torchfx.is_native_available())"`.
 :::
 
 ## Next Steps
@@ -507,7 +445,7 @@ Now that you have TorchFX installed, you can:
 - Learn about {doc}`../advanced/gpu-acceleration` for performance optimization
 
 :::{seealso}
-- {doc}`getting_started` - Your first steps with TorchFX
-- {doc}`../developer/index` - Contributing to TorchFX development
-- {doc}`../advanced/performance` - Optimizing performance
+- {doc}`getting_started` --- Your first steps with TorchFX
+- {doc}`../developer/index` --- Contributing to TorchFX development
+- {doc}`../advanced/performance` --- Optimizing performance
 :::

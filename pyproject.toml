@@ -1,6 +1,6 @@
 [project]
 name = "torchfx"
-version = "0.5.2"
+version = "0.5.3"
 description = "A GPU accelerated library for audio DSP based on PyTorch"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -12,7 +12,6 @@ dependencies = [
     "annotated-types>=0.7.0",
     "numpy>=2.2.4",
     "scipy>=1.15.2",
-    "setuptools",
     "soundfile>=0.13.1",
     "torch>=2.6.0",
 ]
@@ -67,7 +66,6 @@ mypy_path = "src"
 module = [
   "torchfx.*",
   "cli.*",
-  "torchaudio.*",
 ]
 ignore_missing_imports = true
 
@@ -119,20 +117,66 @@ omit = [
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "--strict-markers --tb=short --benchmark-disable"
-testpaths = ["tests"]
+addopts = "--strict-markers --tb=short --benchmark-disable --doctest-modules"
+testpaths = ["tests", "src/torchfx"]
 pythonpath = ["src"]
 markers = [
     "benchmark: performance benchmark (enable with --benchmark-enable)",
 ]
+# Doctest options. Enabled for the `pytest --doctest-modules src/torchfx`
+# invocation in CI; ELLIPSIS lets long outputs use `...` and
+# IGNORE_EXCEPTION_DETAIL ignores module-path prefixes on exception names.
+doctest_optionflags = ["ELLIPSIS", "IGNORE_EXCEPTION_DETAIL", "NORMALIZE_WHITESPACE"]
 
 [tool.docformatter]
 recursive = true
 blank = true
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["scikit-build-core>=0.10", "torch>=2.6.0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+wheel.packages = ["src/torchfx", "src/cli"]
+cmake.build-type = "Release"
+
+# ---------- cibuildwheel ---------------------------------------------------
+# Cross-platform CPU-only wheel builds for PyPI. The wheel CI workflow
+# (.github/workflows/wheels.yml) runs cibuildwheel on Linux x86_64,
+# macOS (x86_64 + arm64), and Windows x86_64 for every supported Python
+# version. The C++ extension is linked against PyTorch's CPU build,
+# but PyTorch's shared libraries are NOT bundled into the wheel --
+# users install their preferred PyTorch build separately.
+[tool.cibuildwheel]
+build = ["cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]
+skip = ["*-musllinux_*", "*-win32", "*-manylinux_i686"]
+# Opt cp314 into the build set: cibuildwheel still classifies 3.14 as a
+# CPython prerelease and refuses to match `cp314-*` selectors without
+# this flag. Once cibuildwheel promotes 3.14 to its stable channel the
+# flag becomes a no-op for it.
+enable = ["cpython-prerelease"]
+build-frontend = "build"
+before-build = "pip install torch --index-url https://download.pytorch.org/whl/cpu"
+environment = { TORCHFX_NO_CUDA = "1" }
+# Forwarded into the manylinux container so pip resolves torch from the
+# CPU index inside the build/test envs as well.
+environment-pass = ["PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL"]
+# Smoke-test the built wheel: install + import + verify the native
+# extension loaded.
+test-command = 'python -c "import torchfx; assert torchfx.is_native_available()"'
+
+[tool.cibuildwheel.linux]
+# auditwheel sees libtorch_*.so as deps and would otherwise bundle
+# hundreds of MB of PyTorch internals into the wheel. Exclude them so
+# the wheel stays small and links against the user's torch install.
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel} --exclude libtorch.so --exclude libtorch_cpu.so --exclude libtorch_python.so --exclude libc10.so"
+
+[tool.cibuildwheel.macos]
+repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel} --ignore-missing-dependencies --exclude libtorch --exclude libc10"
+
+[tool.cibuildwheel.windows]
+before-build = "pip install delvewheel torch --index-url https://download.pytorch.org/whl/cpu"
+repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --exclude torch_python.dll --exclude torch_cpu.dll --exclude c10.dll"
 
 [dependency-groups]
 cli = [

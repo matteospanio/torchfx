@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [0.5.3] - 2026-05-03
+
+### Changed
+
+- **Build system migration**: replaced hatchling + runtime JIT compilation with
+  scikit-build-core + CMake. The C++/CUDA extension is now compiled at install
+  time (no more 10-30s first-import delay, no compiler requirement for end users
+  installing from wheels).
+- **Removed pure-PyTorch fallback**: the C++ extension is now required. The slow
+  Python fallback paths for IIR filtering and delay have been removed.
+
+### Added
+
+- **CPU delay C++ kernel** (`delay_cpu.cpp`): `delay_line_forward` now dispatches
+  to a C++ kernel on CPU (previously CUDA-only, with Python fallback for CPU).
+- **CI/CD wheel pipeline** (`.github/workflows/wheels.yml`): automated CPU wheel
+  builds via `cibuildwheel` for Python 3.10-3.14 across manylinux x86_64,
+  macOS x86_64 + arm64, and Windows x86_64, with PyPI publishing on tag.
+  PyTorch's shared libraries are excluded from the repaired wheels so the
+  install stays small and links against the user's PyTorch build.
+- **Doctest in CI**: `pytest --doctest-modules` now runs in the test job and
+  `make doctest` runs in the docs job, exercising docstring and `.. doctest::`
+  examples across the codebase.
+- **CUDA wheels for Linux x86_64** (`.github/workflows/wheels-cuda.yml`):
+  cu124 and cu128 wheels for Python 3.10-3.14, published as a PEP 503 index
+  on GitHub Pages at `https://matteospanio.github.io/torchfx/wheels/cuXXX/`
+  on every tagged release. Wheels carry a `+cuXXX` local-version segment
+  and exclude PyTorch / CUDA shared libraries from the bundle.
+- **Auto-release on version bump** (`.github/workflows/release.yml`):
+  pushes to `master` are scanned for a change in `pyproject.toml`'s
+  `version`. When a new version lands, the workflow tags the commit
+  `vX.Y.Z` and dispatches `wheels.yml` + `wheels-cuda.yml` against the
+  tag, so a merged version-bump PR automatically yields a PyPI release
+  and refreshed CUDA wheel index without any manual `git tag`.
+
+### Removed
+
+- `setuptools` runtime dependency (was only needed for JIT compilation).
+- `_biquad_df1_fallback` Python DF1 loop (replaced by C++ `iir_cpu.cpp`).
+- JIT compilation logic in `_ops.py` (`_load_extension`, `torch.utils.cpp_extension.load`).
+
 ## [0.5.2] - 2026-04-13
 
 ### Added

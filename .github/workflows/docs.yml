@@ -3,31 +3,72 @@ name: Deploy Sphinx documentation to GitHub Pages
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master, dev]
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write  # necessario per pubblicare su gh-pages
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install uv and dependencies
-        run: |
-          curl -Ls https://astral.sh/uv/install.sh | sh
-          uv sync --all-groups
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Create project venv
+        # uv 0.11+ requires .venv before `uv pip install` in project
+        # context. There's no cache restore in this workflow so always
+        # create one.
+        run: uv venv
+
+      - name: Install CPU-only PyTorch (build dependency)
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install dependencies (builds C++ extension)
+        run: TORCHFX_NO_CUDA=1 uv sync --all-groups
+
+      - name: Run sphinx doctests
+        run: cd docs && uv run make doctest
 
       - name: Build HTML documentation
         run: |
           cd docs && uv run make html && cd ..
           touch docs/build/html/.nojekyll
 
+      - name: Upload built docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-html
+          path: docs/build/html
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # required to publish to gh-pages
+
+    steps:
+      - name: Download built docs
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-html
+          path: docs/build/html
+
+      # `keep_files: true` preserves the `wheels/` subtree published by
+      # the CUDA wheels workflow at gh-pages root.
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/build/html
+          keep_files: true

@@ -1,0 +1,81 @@
+name: Release
+
+# Auto-tag on version bump.
+#
+# When the version field in pyproject.toml changes on master/main, this
+# workflow:
+#   1. creates and pushes a git tag matching the new version (e.g. v0.5.4),
+#   2. dispatches `wheels.yml` and `wheels-cuda.yml` against that tag.
+#
+# Both wheel workflows then run with `github.ref == refs/tags/vX.Y.Z`, so
+# their existing `if: startsWith(github.ref, 'refs/tags/v')` publish gates
+# fire and they upload to PyPI / publish the CUDA wheel index.
+#
+# The job is idempotent: if the tag already exists (re-running on a master
+# push that didn't bump the version), nothing happens.
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create and push tags
+  actions: write    # dispatch wheels.yml / wheels-cuda.yml
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need full tag history
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Read version from pyproject.toml
+        id: ver
+        run: |
+          v=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Detected project version: $v"
+
+      - name: Check if tag already exists
+        id: check
+        run: |
+          tag="v${{ steps.ver.outputs.version }}"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "Tag $tag already exists; nothing to release."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Tag $tag does not exist yet; will create it."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.check.outputs.should_release == 'true'
+        run: |
+          tag="v${{ steps.ver.outputs.version }}"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git tag -a "$tag" -m "Release $tag"
+          git push origin "$tag"
+
+      # Tag pushes from GITHUB_TOKEN do not retrigger workflows, so kick the
+      # wheel builds off explicitly. Each runs with --ref pointing at the
+      # new tag, so github.ref inside wheels.yml/wheels-cuda.yml is
+      # refs/tags/vX.Y.Z and their publish gates fire.
+      - name: Dispatch CPU wheel build
+        if: steps.check.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run wheels.yml --ref "v${{ steps.ver.outputs.version }}"
+
+      - name: Dispatch CUDA wheel build
+        if: steps.check.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run wheels-cuda.yml --ref "v${{ steps.ver.outputs.version }}"

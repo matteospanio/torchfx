@@ -106,8 +106,8 @@ class Biquad(AbstractFilter):
     -----
     Coefficient formulas are derived from the AudioNoise project's ``biquad.h``
     (MIT License). The forward path delegates to ``_sos_cascade_forward`` from
-    ``iir.py``, sharing the same native C++/CUDA dispatch and JIT-compiled DF1
-    fallback used by higher-order IIR filters.
+    ``iir.py``, sharing the precompiled C++/CUDA SOS cascade kernel used by
+    higher-order IIR filters.
 
     """
 

@@ -5,10 +5,7 @@ coverage. :file:`tests/test_iir.py` already covers the Butterworth,
 Chebyshev1/2, Shelving, ParametricEQ, and Elliptic families. This file fills
 the remaining holes:
 
-* the pure-PyTorch Direct-Form-1 fallback path in ``_forward_sos`` (triggered
-  by forcing ``_ops.parallel_iir_forward`` to return ``None``)
-* the ``_biquad_df1_fallback`` helper
-* the 1-D and 3-D shape branches of ``_forward_sos``
+* the 1-D and 3-D shape branches of ``_sos_cascade_forward``
 * ``IIR.forward`` raising when ``fs`` is unset
 * the ``LinkwitzRiley`` family (base class + convenience subclasses + the
   positive-even-order validation)
@@ -29,7 +26,6 @@ from torchfx.filter.iir import (
     HiShelving,
     LinkwitzRiley,
     LoLinkwitzRiley,
-    _biquad_df1_fallback,
 )
 
 SAMPLE_RATE = 44100
@@ -48,23 +44,11 @@ class TestForwardNoFs:
             _ = f(x)
 
 
-# ---------- Pure-PyTorch fallback path ----------
+# ---------- Native kernel shape handling ----------
 
 
-def _force_pure_python_fallback(monkeypatch):
-    """Make ``parallel_iir_forward`` return ``None`` so the fallback runs."""
-    from torchfx import _ops
-
-    def _none(*args, **kwargs):  # noqa: ARG001
-        return None
-
-    monkeypatch.setattr(_ops, "parallel_iir_forward", _none)
-
-
-class TestPurePythonFallback:
-    def test_fallback_matches_scipy(self, monkeypatch):
-        _force_pure_python_fallback(monkeypatch)
-
+class TestNativeKernelShapes:
+    def test_native_matches_scipy(self):
         torch.manual_seed(0)
         f = LoButterworth(cutoff=2000, order=4, fs=SAMPLE_RATE)
         x = torch.randn(2, 1024, dtype=torch.float64)
@@ -77,64 +61,23 @@ class TestPurePythonFallback:
 
         np.testing.assert_allclose(y.numpy(), ref, atol=1e-4, rtol=1e-4)
 
-    def test_fallback_1d_input(self, monkeypatch):
-        _force_pure_python_fallback(monkeypatch)
+    def test_1d_input(self):
         f = LoButterworth(cutoff=2000, order=4, fs=SAMPLE_RATE)
         x = torch.randn(512, dtype=torch.float64)
         y = f(x)
         assert y.shape == x.shape
 
-    def test_fallback_3d_input(self, monkeypatch):
-        _force_pure_python_fallback(monkeypatch)
+    def test_3d_input(self):
         f = LoButterworth(cutoff=2000, order=4, fs=SAMPLE_RATE)
         x = torch.randn(4, 2, 512, dtype=torch.float64)
         y = f(x)
         assert y.shape == x.shape
 
-    def test_fallback_preserves_dtype_f32(self, monkeypatch):
-        _force_pure_python_fallback(monkeypatch)
+    def test_preserves_dtype_f32(self):
         f = LoButterworth(cutoff=2000, order=4, fs=SAMPLE_RATE)
         x = torch.randn(2, 512, dtype=torch.float32)
         y = f(x)
         assert y.dtype == torch.float32
-
-
-class TestDF1Helper:
-    def test_biquad_df1_fallback_matches_scipy_sosfilt(self):
-        """Direct call with a pass-through biquad returns the input unchanged."""
-        torch.manual_seed(1)
-        x = torch.randn(2, 512, dtype=torch.float64)
-        # Pass-through biquad (b=[1,0,0], a=[1,0,0]).
-        b0 = torch.tensor(1.0, dtype=torch.float64)
-        b1 = torch.tensor(0.0, dtype=torch.float64)
-        b2 = torch.tensor(0.0, dtype=torch.float64)
-        a1 = torch.tensor(0.0, dtype=torch.float64)
-        a2 = torch.tensor(0.0, dtype=torch.float64)
-        sx = torch.zeros(2, 2, dtype=torch.float64)
-        sy = torch.zeros(2, 2, dtype=torch.float64)
-        y = _biquad_df1_fallback(x, b0, b1, b2, a1, a2, sx, sy)
-        torch.testing.assert_close(y, x)
-
-    def test_biquad_df1_fallback_nontrivial(self):
-        """A real lowpass biquad matches scipy.signal.sosfilt."""
-        torch.manual_seed(2)
-        sos = sps.butter(2, 2000 / (0.5 * SAMPLE_RATE), btype="lowpass", output="sos")
-        assert sos.shape == (1, 6)  # single section
-
-        x = torch.randn(2, 1024, dtype=torch.float64)
-        ref = sps.sosfilt(sos, x.numpy(), axis=-1)
-
-        b0 = torch.tensor(float(sos[0, 0]), dtype=torch.float64)
-        b1 = torch.tensor(float(sos[0, 1]), dtype=torch.float64)
-        b2 = torch.tensor(float(sos[0, 2]), dtype=torch.float64)
-        a1 = torch.tensor(float(sos[0, 4]), dtype=torch.float64)
-        a2 = torch.tensor(float(sos[0, 5]), dtype=torch.float64)
-
-        sx = torch.zeros(2, 2, dtype=torch.float64)
-        sy = torch.zeros(2, 2, dtype=torch.float64)
-        y = _biquad_df1_fallback(x, b0, b1, b2, a1, a2, sx, sy)
-
-        np.testing.assert_allclose(y.numpy(), ref, atol=1e-6, rtol=1e-6)
 
 
 # ---------- LinkwitzRiley family ----------

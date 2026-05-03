@@ -12,7 +12,7 @@ Audio signals are represented as 2D tensors with shape (channels, samples):
 - Stereo audio: (2, N)
 - Multi-channel: (C, N) where C is the channel count
 
-This convention is consistent with torchaudio and PyTorch audio processing standards.
+This is the standard channel-first convention used by PyTorch audio tooling.
 
 Typical Usage Pattern
 ---------------------
@@ -62,7 +62,7 @@ class Wave:
 
     The Wave class is the fundamental data structure in torchfx, wrapping a PyTorch
     tensor containing audio samples along with its sampling frequency. It provides
-    device management (CPU/CUDA), file I/O integration with torchaudio, functional
+    device management (CPU/CUDA), file I/O via ``soundfile``, functional
     transformations, and a pipeline operator for chaining effects and filters.
 
     Attributes
@@ -342,7 +342,9 @@ class Wave:
         ----------
         func : Callable[..., Tensor]
             Function that takes a tensor as its first argument and returns a tensor.
-            Can be any PyTorch or torchaudio function, or a custom callable.
+            Any callable that operates on a ``torch.Tensor`` works -- a PyTorch
+            function, a custom user function, or a transform from another
+            ecosystem package such as ``torchaudio`` (installed separately).
         *args
             Additional positional arguments passed to func after the tensor.
         **kwargs
@@ -367,15 +369,7 @@ class Wave:
         ...     return tensor / tensor.abs().max()
         >>> normalized = wave.transform(normalize_peak)
 
-        Apply torchaudio transforms with parameters:
-
-        >>> import torchaudio.transforms as T
-        >>> # Resample to 16kHz (requires passing sample rate)
-        >>> resampled = wave.transform(
-        ...     T.Resample(wave.fs, 16000).forward
-        ... )
-
-        Apply custom function with arguments:
+        Apply a custom function with arguments:
 
         >>> def add_noise(tensor, noise_level=0.01):
         ...     noise = torch.randn_like(tensor) * noise_level
@@ -493,22 +487,25 @@ class Wave:
     ) -> None:
         """Save the wave to an audio file.
 
+        Audio is written via ``soundfile.write`` (libsndfile under the hood).
+        Parent directories are created automatically and the underlying tensor
+        is moved to CPU before encoding.
+
         Parameters
         ----------
         path : str or Path
             The path where to save the audio file.
         format : str, optional
             Override the audio format. If not specified, the format is inferred
-            from the file extension. Valid values include: "wav", "flac".
+            from the file extension. Valid values include ``"wav"``, ``"flac"``,
+            ``"ogg"``.
         encoding : str, optional
-            Changes the encoding for supported formats (wav, flac).
-            Valid values: "PCM_S" (signed int), "PCM_U" (unsigned int),
-            "PCM_F" (float), "ULAW", "ALAW".
+            Encoding for supported formats. One of ``"PCM_S"`` (signed int),
+            ``"PCM_U"`` (unsigned int), ``"PCM_F"`` (float), ``"ULAW"``,
+            ``"ALAW"``.
         bits_per_sample : int, optional
-            Changes the bit depth for supported formats.
-            Valid values: 8, 16, 24, 32, 64.
-        **kwargs
-            Additional keyword arguments to pass to `torchaudio.save`.
+            Bit depth. One of 8, 16, 24, 32, 64. The combination of ``encoding``
+            and ``bits_per_sample`` is mapped to a libsndfile subtype.
 
         Returns
         -------
@@ -516,29 +513,25 @@ class Wave:
 
         Examples
         --------
-        Save as WAV file:
+        Save as WAV (using the synthetic ``wave`` from the doctest fixture):
 
-        >>> wave = Wave.from_file("input.wav")
-        >>> wave.save("output.wav")
+        >>> import tempfile, os
+        >>> with tempfile.TemporaryDirectory() as d:
+        ...     wave.save(os.path.join(d, "out.wav"))
+        ...     os.path.exists(os.path.join(d, "out.wav"))
+        True
 
-        Save as FLAC with specific encoding:
+        Save as 24-bit FLAC:
 
-        >>> wave.save("output.flac", encoding="PCM_S", bits_per_sample=24)
-
-        Save with high bit depth:
-
-        >>> wave.save("output.wav", encoding="PCM_F", bits_per_sample=32)
-
-        Notes
-        -----
-        - The method automatically creates parent directories if they don't exist.
-        - The audio data is moved to CPU before saving.
-        - Supported formats depend on the available torchaudio backend.
+        >>> with tempfile.TemporaryDirectory() as d:
+        ...     wave.save(os.path.join(d, "out.flac"),
+        ...               encoding="PCM_S", bits_per_sample=24)
 
         See Also
         --------
         from_file : Load a wave from an audio file.
-        torchaudio.save : Underlying function used for saving.
+
+        .. versionadded:: 0.3.0
 
         """
         import soundfile as _sf
