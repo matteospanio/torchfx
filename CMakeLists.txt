@@ -94,9 +94,21 @@ target_link_libraries(torchfx_ext PRIVATE torch torch_python torch_cpu c10)
 
 target_compile_features(torchfx_ext PRIVATE cxx_std_17)
 
-# CXX flags -- no -march=native so wheels are portable.
+# Compiler-specific optimisation and standard flags. We avoid `-march=native`
+# / `/arch:` so wheels stay portable across CPUs.
+#
+# - GCC / Clang / AppleClang: `-O3 -ffast-math`.
+# - MSVC: `/O2 /fp:fast`, plus an explicit `/std:c++17` because some
+#   torch headers use C++17-only constructs (nested namespaces,
+#   `std::optional`, `std::string_view`) that MSVC otherwise rejects with
+#   "language feature requires compiler flag '/std:c++17'", and
+#   `/Zc:__cplusplus` so torch's feature-detection macros see the right
+#   `__cplusplus` value (MSVC defaults to reporting 199711L unless this
+#   conformance flag is set).
 target_compile_options(torchfx_ext PRIVATE
-  $<$<COMPILE_LANGUAGE:CXX>:-O3 -ffast-math>)
+  $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:GNU,Clang,AppleClang>>:-O3 -ffast-math>
+  $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:MSVC>>:/O2 /fp:fast /std:c++17 /Zc:__cplusplus>
+)
 
 find_package(OpenMP QUIET)
 if(OpenMP_CXX_FOUND)
