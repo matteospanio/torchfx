@@ -13,22 +13,29 @@ Examples
 --------
 Validate a sample rate:
 
->>> from torchfx.validation import validate_sample_rate
->>> validate_sample_rate(44100)  # OK
->>> validate_sample_rate(-1)  # Raises InvalidSampleRateError
+>>> from torchfx.validation import validate_sample_rate, InvalidSampleRateError
+>>> validate_sample_rate(44100)  # returns silently on success
+>>> try:
+...     validate_sample_rate(-1)
+... except InvalidSampleRateError as exc:
+...     print(type(exc).__name__)
+InvalidSampleRateError
 
 Validate a parameter range:
 
->>> from torchfx.validation import validate_range
->>> validate_range(0.5, "decay", min_value=0, max_value=1)  # OK
->>> validate_range(1.5, "decay", min_value=0, max_value=1)  # Raises InvalidRangeError
+>>> from torchfx.validation import validate_range, InvalidRangeError
+>>> validate_range(0.5, "decay", min_value=0, max_value=1)
+>>> try:
+...     validate_range(1.5, "decay", min_value=0, max_value=1)
+... except InvalidRangeError as exc:
+...     print(type(exc).__name__)
+InvalidRangeError
 
 Validate an audio tensor:
 
->>> import torch
 >>> from torchfx.validation import validate_audio_tensor
->>> waveform = torch.randn(2, 44100)
->>> validate_audio_tensor(waveform)  # OK
+>>> waveform = torch.zeros(2, 44100)
+>>> validate_audio_tensor(waveform)
 
 """
 
@@ -102,9 +109,12 @@ def validate_sample_rate(
 
     Examples
     --------
-    >>> validate_sample_rate(44100)  # OK
-    >>> validate_sample_rate(None, allow_none=True)  # OK
-    >>> validate_sample_rate(-1)  # Raises InvalidSampleRateError
+    >>> validate_sample_rate(44100)
+    >>> validate_sample_rate(None, allow_none=True)
+    >>> validate_sample_rate(-1)
+    Traceback (most recent call last):
+        ...
+    InvalidSampleRateError: ...
 
     """
     if fs is None:
@@ -157,9 +167,12 @@ def validate_positive(
 
     Examples
     --------
-    >>> validate_positive(1.0, "cutoff")  # OK
-    >>> validate_positive(0, "cutoff", allow_zero=True)  # OK
-    >>> validate_positive(-1, "cutoff")  # Raises InvalidRangeError
+    >>> validate_positive(1.0, "cutoff")
+    >>> validate_positive(0, "cutoff", allow_zero=True)
+    >>> validate_positive(-1, "cutoff")
+    Traceback (most recent call last):
+        ...
+    InvalidRangeError: ...
 
     """
     if allow_zero:
@@ -215,8 +228,11 @@ def validate_range(
 
     Examples
     --------
-    >>> validate_range(0.5, "decay", min_value=0, max_value=1)  # OK
-    >>> validate_range(0, "decay", min_value=0, max_value=1, min_inclusive=False)  # Raises
+    >>> validate_range(0.5, "decay", min_value=0, max_value=1)
+    >>> validate_range(0, "decay", min_value=0, max_value=1, min_inclusive=False)
+    Traceback (most recent call last):
+        ...
+    InvalidRangeError: ...
 
     """
     if min_value is not None:
@@ -287,8 +303,11 @@ def validate_in_set(
 
     Examples
     --------
-    >>> validate_in_set("amplitude", "gain_type", ["amplitude", "db", "power"])  # OK
-    >>> validate_in_set("invalid", "gain_type", ["amplitude", "db", "power"])  # Raises
+    >>> validate_in_set("amplitude", "gain_type", ["amplitude", "db", "power"])
+    >>> validate_in_set("invalid", "gain_type", ["amplitude", "db", "power"])
+    Traceback (most recent call last):
+        ...
+    InvalidParameterError: ...
 
     """
     if value not in valid_values:
@@ -470,8 +489,11 @@ def validate_type(
 
     Examples
     --------
-    >>> validate_type(1.0, "gain", (int, float))  # OK
-    >>> validate_type("hello", "gain", (int, float))  # Raises InvalidTypeError
+    >>> validate_type(1.0, "gain", (int, float))
+    >>> validate_type("hello", "gain", (int, float))
+    Traceback (most recent call last):
+        ...
+    InvalidTypeError: ...
 
     """
     if isinstance(expected_types, type):
@@ -515,8 +537,11 @@ def validate_cutoff_frequency(
 
     Examples
     --------
-    >>> validate_cutoff_frequency(1000, 44100)  # OK
-    >>> validate_cutoff_frequency(30000, 44100)  # Raises (above Nyquist)
+    >>> validate_cutoff_frequency(1000, 44100)
+    >>> validate_cutoff_frequency(30000, 44100)  # above Nyquist
+    Traceback (most recent call last):
+        ...
+    InvalidRangeError: ...
 
     """
     validate_positive(cutoff, parameter_name)
@@ -563,8 +588,11 @@ def validate_filter_order(
 
     Examples
     --------
-    >>> validate_filter_order(4)  # OK
-    >>> validate_filter_order(0)  # Raises InvalidRangeError
+    >>> validate_filter_order(4)
+    >>> validate_filter_order(0)
+    Traceback (most recent call last):
+        ...
+    InvalidRangeError: ...
 
     """
     validate_type(order, parameter_name, int)
@@ -603,8 +631,11 @@ def validate_q_factor(
 
     Examples
     --------
-    >>> validate_q_factor(0.707)  # OK
-    >>> validate_q_factor(0)  # Raises InvalidRangeError
+    >>> validate_q_factor(0.707)
+    >>> validate_q_factor(0)
+    Traceback (most recent call last):
+        ...
+    InvalidRangeError: ...
 
     """
     validate_positive(q, parameter_name)

@@ -22,6 +22,40 @@ bibtex_bibfiles = ["references.bib"]
 bibtex_reference_style = "author_year"
 bibtex_default_style = "alpha"
 myst_update_mathjax = False
+
+# ---------- Sphinx doctest configuration ---------------------------------
+# Names made available to every doctest block. Mirrors the
+# `doctest_namespace` fixture used by pytest so that examples in
+# docstrings and Markdown sources can rely on the same setup
+# (`torch`, `np`, `fx`, `Wave`, and a deterministic `wave`).
+doctest_global_setup = """
+import numpy as np
+import torch
+import torchfx as fx
+from torchfx import Wave
+
+torch.manual_seed(0)
+_t = torch.linspace(0.0, 1.0, 44100)
+_ys = torch.sin(2 * torch.pi * 440 * _t).unsqueeze(0)
+wave = Wave(_ys, fs=44100)
+"""
+
+# Match pytest's option flags so behaviour is identical between
+# `pytest --doctest-modules` and `sphinx-build -b doctest`.
+import doctest as _doctest
+
+doctest_default_flags = (
+    _doctest.ELLIPSIS
+    | _doctest.IGNORE_EXCEPTION_DETAIL
+    | _doctest.NORMALIZE_WHITESPACE
+)
+
+# Opt out of auto-collecting every `>>>` block embedded in literal_blocks.
+# Source-level docstring examples (those rendered into the generated API
+# pages by autodoc) are already exercised by `pytest --doctest-modules`
+# with the same fixtures. Here we only run examples that are wrapped in
+# explicit `.. doctest::` (or `.. testcode::`) directives in prose pages.
+doctest_test_doctest_blocks = ""
 myst_enable_extensions = [
     "amsmath",
     "attrs_inline",

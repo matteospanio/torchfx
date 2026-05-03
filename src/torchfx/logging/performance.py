@@ -49,15 +49,17 @@ def log_performance(
     Basic usage:
 
     >>> from torchfx.logging import log_performance
+    >>> from torchfx.filter import LoButterworth
+    >>> lpf = LoButterworth(8000, order=2)
     >>> with log_performance("filter_chain"):
-    ...     result = wave | filter1 | filter2
-    # Logs: "filter_chain completed in 0.045s"
+    ...     result = wave | lpf  # logs e.g. "filter_chain completed in 0.045s"
 
     Capture timing information:
 
     >>> with log_performance("processing") as timing:
-    ...     result = wave | effect
-    >>> print(f"Took {timing['elapsed_seconds']:.3f}s")
+    ...     result = wave | lpf
+    >>> isinstance(timing["elapsed_seconds"], float)
+    True
 
     With custom logger:
 
@@ -99,16 +101,17 @@ class LogPerformance:
     Basic usage with automatic naming:
 
     >>> from torchfx.logging import LogPerformance
+    >>> from torchfx.filter import LoButterworth
     >>> @LogPerformance()
-    ... def process_audio(wave):
-    ...     return wave | filter1 | filter2
-    # Each call logs: "process_audio completed in X.XXXs"
+    ... def process_audio(w):
+    ...     return w | LoButterworth(8000, order=2)
+    >>> _ = process_audio(wave)  # logs e.g. "process_audio completed in 0.001s"
 
     Custom operation name:
 
     >>> @LogPerformance("audio_processing_pipeline")
-    ... def process(wave):
-    ...     return wave | filter
+    ... def process(w):
+    ...     return w | LoButterworth(8000, order=2)
 
     With custom logger:
 

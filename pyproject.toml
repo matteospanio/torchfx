@@ -117,12 +117,16 @@ omit = [
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "--strict-markers --tb=short --benchmark-disable"
-testpaths = ["tests"]
+addopts = "--strict-markers --tb=short --benchmark-disable --doctest-modules"
+testpaths = ["tests", "src/torchfx"]
 pythonpath = ["src"]
 markers = [
     "benchmark: performance benchmark (enable with --benchmark-enable)",
 ]
+# Doctest options. Enabled for the `pytest --doctest-modules src/torchfx`
+# invocation in CI; ELLIPSIS lets long outputs use `...` and
+# IGNORE_EXCEPTION_DETAIL ignores module-path prefixes on exception names.
+doctest_optionflags = ["ELLIPSIS", "IGNORE_EXCEPTION_DETAIL", "NORMALIZE_WHITESPACE"]
 
 [tool.docformatter]
 recursive = true
