@@ -15,11 +15,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install uv and dependencies
-        run: |
-          curl -Ls https://astral.sh/uv/install.sh | sh
-          uv pip install torch --index-url https://download.pytorch.org/whl/cpu --system
-          TORCHFX_NO_CUDA=1 uv sync --all-groups
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install CPU-only PyTorch (build dependency)
+        run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install dependencies (builds C++ extension)
+        run: TORCHFX_NO_CUDA=1 uv sync --all-groups
 
       - name: Run sphinx doctests
         run: cd docs && uv run make doctest
