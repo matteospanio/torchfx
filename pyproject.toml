@@ -150,6 +150,11 @@ cmake.build-type = "Release"
 [tool.cibuildwheel]
 build = ["cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]
 skip = ["*-musllinux_*", "*-win32", "*-manylinux_i686"]
+# Opt cp314 into the build set: cibuildwheel still classifies 3.14 as a
+# CPython prerelease and refuses to match `cp314-*` selectors without
+# this flag. Once cibuildwheel promotes 3.14 to its stable channel the
+# flag becomes a no-op for it.
+enable = ["cpython-prerelease"]
 build-frontend = "build"
 before-build = "pip install torch --index-url https://download.pytorch.org/whl/cpu"
 environment = { TORCHFX_NO_CUDA = "1" }
