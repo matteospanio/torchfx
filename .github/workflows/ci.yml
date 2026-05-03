@@ -43,6 +43,12 @@ jobs:
             ~/.cache/uv
           key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
+      - name: Ensure project venv exists
+        # uv 0.11+ requires .venv before `uv pip install` in project
+        # context; cache miss leaves no .venv. Create one only if the
+        # cache restore did not bring it in.
+        run: '[ -d .venv ] || uv venv'
+
       - name: Install CPU-only PyTorch
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 
@@ -164,6 +170,12 @@ jobs:
             ~/.cache/uv
           key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
+      - name: Ensure project venv exists
+        # uv 0.11+ requires .venv before `uv pip install` in project
+        # context; cache miss leaves no .venv. Create one only if the
+        # cache restore did not bring it in.
+        run: '[ -d .venv ] || uv venv'
+
       - name: Install CPU-only PyTorch
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 
@@ -202,6 +214,12 @@ jobs:
             .venv
             ~/.cache/uv
           key: uv-cpu-3.12-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+
+      - name: Ensure project venv exists
+        # uv 0.11+ requires .venv before `uv pip install` in project
+        # context; cache miss leaves no .venv. Create one only if the
+        # cache restore did not bring it in.
+        run: '[ -d .venv ] || uv venv'
 
       - name: Install CPU-only PyTorch
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu

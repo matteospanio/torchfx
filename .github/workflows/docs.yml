@@ -23,6 +23,12 @@ jobs:
       - name: Install uv
         run: pip install uv
 
+      - name: Create project venv
+        # uv 0.11+ requires .venv before `uv pip install` in project
+        # context. There's no cache restore in this workflow so always
+        # create one.
+        run: uv venv
+
       - name: Install CPU-only PyTorch (build dependency)
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 
