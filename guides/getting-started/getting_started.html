@@ -836,6 +836,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -923,7 +924,15 @@ window.runMermaid = runMermaid;</script>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx
 </pre></div>
 </div>
-<p>This command installs TorchFX along with its dependencies: PyTorch, torchaudio, NumPy, SciPy, and soundfile. For advanced installation options, dependency management with <code class="docutils literal notranslate"><span class="pre">uv</span></code>, or platform-specific PyTorch builds (CPU vs CUDA), see <a class="reference internal" href="installation.html"><span class="doc">Installation</span></a>.</p>
+<p>This command installs TorchFX along with its dependencies: PyTorch, NumPy, SciPy, and soundfile. On Linux x86_64, macOS (Intel and Apple Silicon), or Windows x86_64 with Python 3.10–3.14, pip downloads a prebuilt CPU wheel; on other targets a source build runs (which needs CMake and a C++ compiler).</p>
+<p>For Linux GPU users, prebuilt CUDA wheels (cu124 and cu128) are available from a separate index:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu124
+pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--index-url<span class="w"> </span>https://matteospanio.github.io/torchfx/wheels/cu124/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--extra-index-url<span class="w"> </span>https://pypi.org/simple
+</pre></div>
+</div>
+<p>For dependency management with <code class="docutils literal notranslate"><span class="pre">uv</span></code>, custom CUDA versions, or full system requirements, see <a class="reference internal" href="installation.html"><span class="doc">Installation</span></a>.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><a class="reference internal" href="installation.html"><span class="doc">Installation</span></a> - Complete installation guide with GPU setup and development options</p>
@@ -1022,6 +1031,15 @@ window.runMermaid = runMermaid;</script>
 </pre></div>
 </div>
 <p>The <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> object automatically handles stereo or multichannel data and ensures that filters retain sample rate context.</p>
+<p>The following block is executed by <code class="docutils literal notranslate"><span class="pre">sphinx-build</span> <span class="pre">-b</span> <span class="pre">doctest</span></code> (and exercised in CI), demonstrating the Wave fields against a synthetic input:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([1, 44100])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span>
+<span class="go">44100</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span><span class="o">.</span><span class="n">channels</span><span class="p">()</span>
+<span class="go">1</span>
+</pre></div>
+</div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><a class="reference internal" href="../core-concepts/wave.html"><span class="doc">Wave - Digital Audio Representation</span></a> - Complete guide to the Wave class with detailed examples</p>
@@ -1032,7 +1050,6 @@ window.runMermaid = runMermaid;</script>
 <p>Here’s a complete example that loads a file, processes it, and saves the output:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
 
 <span class="c1"># Load audio</span>
 <span class="n">signal</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span>
@@ -1046,11 +1063,11 @@ window.runMermaid = runMermaid;</script>
     <span class="n">signal</span>
     <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">db</span><span class="o">=-</span><span class="mi">6</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>  <span class="c1"># -6 dB ≈ amplitude 0.5</span>
 <span class="p">)</span>
 
 <span class="c1"># Save output (move back to CPU for I/O)</span>
-<span class="n">torchaudio</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">result</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+<span class="n">result</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This example demonstrates the complete workflow including:</p>
@@ -1071,7 +1088,7 @@ window.runMermaid = runMermaid;</script>
     participant WaveObj as &quot;Wave object&quot;
     participant GPU as &quot;GPU Device&quot;
     participant Filter as &quot;Filter/Effect Module&quot;
-    participant TorchAudio as &quot;torchaudio.save()&quot;
+    participant WaveSave as &quot;Wave.save()&quot;
 
     User-&gt;&gt;WaveFromFile: &quot;load audio file&quot;
     WaveFromFile-&gt;&gt;WaveObj: &quot;create Wave(ys, fs)&quot;
@@ -1085,20 +1102,20 @@ window.runMermaid = runMermaid;</script>
     Filter-&gt;&gt;Filter: &quot;process ys tensor on GPU&quot;
     Filter--&gt;&gt;WaveObj: &quot;return new Wave on GPU&quot;
 
-    User-&gt;&gt;WaveObj: &quot;result.ys.cpu()&quot;
+    User-&gt;&gt;WaveObj: &quot;result.to('cpu')&quot;
     WaveObj-&gt;&gt;GPU: &quot;move tensor to CPU&quot;
-    GPU--&gt;&gt;WaveObj: &quot;return CPU tensor&quot;
+    GPU--&gt;&gt;WaveObj: &quot;return CPU Wave&quot;
 
-    User-&gt;&gt;TorchAudio: &quot;save(path, ys, fs)&quot;
-    TorchAudio--&gt;&gt;User: &quot;file written&quot;
+    User-&gt;&gt;WaveSave: &quot;result.save(path)&quot;
+    WaveSave--&gt;&gt;User: &quot;file written&quot;
     </pre><section id="key-points">
 <h3>Key Points<a class="headerlink" href="#key-points" title="Link to this heading">#</a></h3>
 <ol class="arabic simple">
 <li><p><a class="reference internal" href="../../api/core.html#torchfx.Wave.from_file" title="torchfx.Wave.from_file"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Wave.from_file()</span></code></a> loads audio onto CPU by default</p></li>
 <li><p><a class="reference internal" href="../../api/core.html#torchfx.Wave.to" title="torchfx.Wave.to"><code class="xref py py-meth docutils literal notranslate"><span class="pre">wave.to(&quot;cuda&quot;)</span></code></a> moves the <a class="reference internal" href="../../api/core.html#torchfx.Wave" title="torchfx.Wave"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wave</span></code></a> and its <a class="reference internal" href="../../api/core.html#id1" title="torchfx.Wave.ys"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ys</span></code></a> tensor to GPU</p></li>
 <li><p>Filters and effects process tensors on whatever device they reside</p></li>
-<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.Tensor.cpu.html#torch.Tensor.cpu" title="(in PyTorch v2.11)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ys.cpu()</span></code></a> moves the tensor back to CPU for file I/O</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">torchaudio.save()</span></code> requires CPU tensors for writing to disk</p></li>
+<li><p><a class="reference internal" href="../../api/core.html#torchfx.Wave.to" title="torchfx.Wave.to"><code class="xref py py-meth docutils literal notranslate"><span class="pre">wave.to(&quot;cpu&quot;)</span></code></a> moves the Wave back to CPU before file I/O</p></li>
+<li><p><a class="reference internal" href="../../api/core.html#torchfx.Wave.save" title="torchfx.Wave.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Wave.save()</span></code></a> writes the audio to disk via <code class="docutils literal notranslate"><span class="pre">soundfile</span></code></p></li>
 </ol>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
@@ -1261,7 +1278,7 @@ window.runMermaid = runMermaid;</script>
 <td><p>High-frequency shelving filter</p></td>
 </tr>
 <tr class="row-odd"><td><p></p></td>
-<td><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Peaking</span></code></p></td>
+<td><p><a class="reference internal" href="../../api/filters.html#torchfx.filter.Peaking" title="torchfx.filter.Peaking"><code class="xref py py-class docutils literal notranslate"><span class="pre">Peaking</span></code></a></p></td>
 <td><p>Peaking/notch filter</p></td>
 </tr>
 <tr class="row-even"><td><p><strong>FIR Filters</strong></p></td>

@@ -205,8 +205,8 @@ Use {class}`torch.nn.ModuleList` to store per-channel processing chains:
 import torch
 from torch import Tensor, nn
 from torchfx import FX, Wave
+from torchfx.effect import Gain
 from torchfx.filter import iir
-import torchaudio.transforms as T
 
 class StereoProcessor(FX):
     """Apply different processing to left and right channels."""
@@ -233,7 +233,7 @@ class StereoProcessor(FX):
         return nn.Sequential(
             iir.HiButterworth(cutoff=150, order=2, fs=self.fs),   # Different HPF
             iir.LoButterworth(cutoff=10000, order=4, fs=self.fs),  # Different LPF
-            T.Vol(0.9),  # Slight volume reduction
+            Gain(0.9, gain_type="amplitude"),                     # Slight attenuation
         )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -346,16 +346,16 @@ Here's a complete, production-ready example adapted from the TorchFX examples:
 ```python
 import torch
 from torch import Tensor, nn
-import torchaudio.transforms as T
 
 from torchfx import FX, Wave
+from torchfx.effect import Gain
 from torchfx.filter import iir
 
 class ComplexEffect(FX):
     """Multi-channel effect with different processing per channel.
 
     Channel 1: Bandpass 1000-2000 Hz
-    Channel 2: Bandpass 2000-4000 Hz with volume reduction
+    Channel 2: Bandpass 2000-4000 Hz with -6 dB attenuation
 
     Parameters
     ----------
@@ -394,7 +394,7 @@ class ComplexEffect(FX):
         return nn.Sequential(
             iir.HiButterworth(2000, fs=self.fs),  # High-pass at 2000 Hz
             iir.LoButterworth(4000, fs=self.fs),  # Low-pass at 4000 Hz
-            T.Vol(0.5),  # Reduce volume by 50%
+            Gain(0.5, gain_type="amplitude"),     # -6 dB attenuation
         )
 
     def forward(self, x: Tensor) -> Tensor:

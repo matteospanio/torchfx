@@ -145,15 +145,15 @@ Use {class}`torch.nn.ModuleList` to store separate processing chains for each ch
 ```python
 import torch
 from torch import Tensor, nn
-import torchaudio.transforms as T
 from torchfx import FX, Wave
+from torchfx.effect import Gain
 from torchfx.filter import iir
 
 class StereoProcessor(FX):
     """Apply different processing to left and right channels.
 
     Left channel: Remove rumble, gentle high-pass
-    Right channel: Different EQ curve with volume reduction
+    Right channel: Different EQ curve with -1 dB attenuation
 
     Parameters
     ----------
@@ -189,7 +189,7 @@ class StereoProcessor(FX):
         return nn.Sequential(
             iir.HiButterworth(cutoff=150, order=2, fs=self.fs),    # Higher HPF
             iir.LoButterworth(cutoff=10000, order=4, fs=self.fs),  # Different LPF
-            T.Vol(0.9),  # Slight volume reduction
+            Gain(0.9, gain_type="amplitude"),                      # Slight attenuation
         )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -357,9 +357,9 @@ Here's a complete, production-ready multi-channel effect based on the TorchFX ex
 ```python
 import torch
 from torch import Tensor, nn
-import torchaudio.transforms as T
 
 from torchfx import FX, Wave
+from torchfx.effect import Gain
 from torchfx.filter import HiButterworth, LoButterworth
 
 class ComplexEffect(FX):
@@ -369,7 +369,7 @@ class ComplexEffect(FX):
     multi-channel processing with independent channel chains.
 
     Channel 1: Bandpass 1000-2000 Hz (mid-range focus)
-    Channel 2: Bandpass 2000-4000 Hz with 50% volume (presence range)
+    Channel 2: Bandpass 2000-4000 Hz with -6 dB attenuation (presence range)
 
     Parameters
     ----------
@@ -418,12 +418,12 @@ class ComplexEffect(FX):
         """Processing chain for channel 2.
 
         Creates a bandpass filter focusing on presence range
-        with volume reduction.
+        with -6 dB attenuation.
         """
         return nn.Sequential(
             HiButterworth(2000, fs=self.fs),  # High-pass at 2 kHz
             LoButterworth(4000, fs=self.fs),  # Low-pass at 4 kHz
-            T.Vol(0.5),  # Reduce volume by 50%
+            Gain(0.5, gain_type="amplitude"), # -6 dB attenuation
         )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -881,8 +881,8 @@ Process surround sound with channel-specific effects:
 ```python
 from torch import Tensor, nn
 from torchfx import FX, Wave
+from torchfx.effect import Gain
 from torchfx.filter import iir
-import torchaudio.transforms as T
 
 class SurroundProcessor(FX):
     """Process 5.1 surround sound with channel-specific effects.
@@ -937,7 +937,7 @@ class SurroundProcessor(FX):
         return nn.Sequential(
             iir.HiButterworth(cutoff=100, order=2, fs=self.fs),
             iir.LoButterworth(cutoff=12000, order=4, fs=self.fs),
-            T.Vol(0.8),  # Slightly quieter for ambience
+            Gain(0.8, gain_type="amplitude"),  # Slightly quieter for ambience
         )
 
     def forward(self, x: Tensor) -> Tensor:

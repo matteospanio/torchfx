@@ -836,6 +836,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -903,304 +904,346 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                    <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h1>
-<p>TorchFX can be installed either from the Python Package Index (PyPI) or by cloning the repository from GitHub. This guide covers system requirements, installation methods, platform-specific configuration, and dependency management.</p>
+<p>TorchFX can be installed from the Python Package Index (PyPI) or from source. This guide covers system requirements, build-time system dependencies, installation methods, and troubleshooting.</p>
 <div class="tip admonition">
 <p class="admonition-title">Quick Start</p>
-<p>For most users, a simple <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchfx</span></code> is all you need to get started. For development or advanced configurations, see the sections below.</p>
+<p>For most users on Linux x86_64, macOS (Intel or Apple Silicon), or Windows x86_64, a simple <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchfx</span></code> is all you need — prebuilt CPU wheels for Python 3.10–3.14 mean no compiler is required. For GPU builds, less common platforms, or development setups, see the sections below.</p>
 </div>
 <section id="purpose-and-scope">
 <h2>Purpose and Scope<a class="headerlink" href="#purpose-and-scope" title="Link to this heading">#</a></h2>
-<p>This document describes the installation procedures for TorchFX, including system requirements, installation methods, platform-specific PyTorch configuration, and dependency management. For a quick start guide with minimal setup, see <a class="reference internal" href="getting_started.html"><span class="doc">Getting Started</span></a>. For details on the development environment setup, see <a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a>.</p>
+<p>This document describes the installation procedures for TorchFX, including system requirements, the build system, installation methods, and dependency management. For a quick start guide with minimal setup, see <a class="reference internal" href="getting_started.html"><span class="doc">Getting Started</span></a>. For details on the development environment, see <a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a>.</p>
 </section>
 <section id="system-requirements">
 <h2>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading">#</a></h2>
-<p>TorchFX requires <strong>Python 3.10 or higher</strong>. The library is designed to run on multiple platforms with different hardware acceleration capabilities:</p>
+<section id="runtime-requirements">
+<h3>Runtime requirements<a class="headerlink" href="#runtime-requirements" title="Link to this heading">#</a></h3>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>Platform</p></th>
-<th class="head"><p>PyTorch Backend</p></th>
-<th class="head"><p>CUDA Support</p></th>
+<tr class="row-odd"><th class="head"><p>Requirement</p></th>
+<th class="head"><p>Version</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Linux</p></td>
-<td><p>CUDA 12.4</p></td>
-<td><p>Yes</p></td>
+<tr class="row-even"><td><p>Python</p></td>
+<td><p>3.10, 3.11, 3.12, 3.13, or 3.14</p></td>
 </tr>
-<tr class="row-odd"><td><p>macOS</p></td>
-<td><p>CPU</p></td>
-<td><p>No</p></td>
+<tr class="row-odd"><td><p>Operating system</p></td>
+<td><p>Linux x86_64, macOS (Intel + Apple Silicon), or Windows x86_64</p></td>
 </tr>
-<tr class="row-even"><td><p>Windows</p></td>
-<td><p>CPU</p></td>
-<td><p>No</p></td>
+<tr class="row-even"><td><p>GPU (optional)</p></td>
+<td><p>NVIDIA GPU with CUDA 12.4 or 12.8. Prebuilt CUDA wheels exist for Linux x86_64 only — see <a class="reference internal" href="#gpu-wheels">GPU (CUDA) wheels</a>. Other configurations build from source.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The platform-specific PyTorch configuration is automatically handled using the <code class="docutils literal notranslate"><span class="pre">uv</span></code> package manager’s source selection mechanism based on your operating system.</p>
+<p><strong>Prebuilt CPU wheels</strong> are published to PyPI for every supported Python version on:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>Wheel tag</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Linux x86_64</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">manylinux_2_28_x86_64</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>macOS x86_64 (Intel)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">macosx_*_x86_64</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>macOS arm64 (Apple Silicon)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">macosx_*_arm64</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Windows x86_64</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">win_amd64</span></code></p></td>
+</tr>
+</tbody>
+</table>
 </div>
-<section id="core-dependencies">
-<h3>Core Dependencies<a class="headerlink" href="#core-dependencies" title="Link to this heading">#</a></h3>
-<p>TorchFX requires the following Python packages:</p>
+<p>On any of these targets, <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchfx</span></code> downloads a wheel and does <strong>not</strong> require a C++ compiler or CMake. The wheels are produced by the <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/.github/workflows/wheels.yml"><code class="docutils literal notranslate"><span class="pre">wheels.yml</span></code></a> workflow on every tagged release.</p>
+<p>On other platforms (musllinux, aarch64 Linux, etc.), pip falls back to the source distribution and triggers a CMake build — see <a class="reference internal" href="#system-dependencies-source-builds">System dependencies (source builds)</a> below.</p>
+<p>CUDA wheels for Linux x86_64 (CUDA 12.4 and 12.8) are published to a separate index — see <a class="reference internal" href="#gpu-wheels">GPU (CUDA) wheels</a>. On unsupported configurations (Windows + CUDA, other CUDA versions, etc.) install from source with <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>; the build detects CUDA automatically.</p>
+</section>
+<section id="core-python-dependencies">
+<h3>Core Python dependencies<a class="headerlink" href="#core-python-dependencies" title="Link to this heading">#</a></h3>
+<p>The following packages are installed automatically by pip or uv:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">torch&gt;=2.6.0</span></code> - PyTorch tensor library</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">torchaudio&gt;=2.6.0</span></code> - Audio I/O and transforms</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">numpy&gt;=2.2.4</span></code> - Numerical computing</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">scipy&gt;=1.15.2</span></code> - Signal processing algorithms</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">soundfile&gt;=0.13.1</span></code> - Audio file reading/writing</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">annotated-types&gt;=0.7.0</span></code> - Type annotation support</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torch&gt;=2.6.0</span></code> — PyTorch tensor library</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">numpy&gt;=2.2.4</span></code> — numerical computing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scipy&gt;=1.15.2</span></code> — signal-processing algorithms (filter design)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">soundfile&gt;=0.13.1</span></code> — audio file reading and writing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">annotated-types&gt;=0.7.0</span></code> — type-annotation support</p></li>
 </ul>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>These dependencies are installed automatically when you install TorchFX via pip or uv.</p>
+</section>
+<section id="system-dependencies-source-builds">
+<span id="id1"></span><h3>System dependencies (source builds)<a class="headerlink" href="#system-dependencies-source-builds" title="Link to this heading">#</a></h3>
+<p>When pip cannot find a matching wheel, the source distribution is built locally. The build invokes CMake (configured by <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/CMakeLists.txt">CMakeLists.txt</a>) to compile the C++/CUDA extension. You will need:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Dependency</p></th>
+<th class="head"><p>Minimum version</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>C++17 compiler</p></td>
+<td><p>GCC ≥ 9, Clang ≥ 10, or MSVC 2019+</p></td>
+<td><p>Compile the native extension</p></td>
+</tr>
+<tr class="row-odd"><td><p>CMake</p></td>
+<td><p>3.18</p></td>
+<td><p>Drive the build</p></td>
+</tr>
+<tr class="row-even"><td><p>Python development headers</p></td>
+<td><p>Matching your Python (e.g. <code class="docutils literal notranslate"><span class="pre">python3-dev</span></code> on Debian/Ubuntu)</p></td>
+<td><p>Required by CMake’s <code class="docutils literal notranslate"><span class="pre">find_package(Python</span> <span class="pre">...</span> <span class="pre">Development.Module)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">torch&gt;=2.6.0</span></code> (already installed)</p></td>
+<td><p>2.6.0</p></td>
+<td><p>The build queries <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension</span></code> for include and library paths and links against <code class="docutils literal notranslate"><span class="pre">torch_cpu</span></code> / <code class="docutils literal notranslate"><span class="pre">c10</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>OpenMP <em>(optional)</em></p></td>
+<td><p>—</p></td>
+<td><p>Linked automatically if found, enables multi-channel parallelism in the CPU kernels</p></td>
+</tr>
+<tr class="row-odd"><td><p>CUDA toolkit + <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> <em>(optional)</em></p></td>
+<td><p>matching your <code class="docutils literal notranslate"><span class="pre">torch</span></code> build</p></td>
+<td><p>Required to compile the CUDA kernels; auto-detected by CMake</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Set <code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA=1</span></code> in the environment to force a CPU-only build even when <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> is available — this matches what the wheel-publishing CI does and is the simplest way to get a fast, reproducible build without GPU support.</p>
+<p>Per-platform installation of the build toolchain:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Debian / Ubuntu</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>build-essential<span class="w"> </span>cmake<span class="w"> </span>python3-dev
+
+<span class="c1"># Fedora / RHEL</span>
+sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>gcc-c++<span class="w"> </span>cmake<span class="w"> </span>python3-devel
+
+<span class="c1"># macOS (Xcode Command Line Tools provide clang; CMake via Homebrew)</span>
+xcode-select<span class="w"> </span>--install
+brew<span class="w"> </span>install<span class="w"> </span>cmake
+
+<span class="c1"># Windows (PowerShell, with winget)</span>
+<span class="c1"># Install Visual Studio 2022 Build Tools with the &quot;Desktop development with C++&quot;</span>
+<span class="c1"># workload, then:</span>
+winget<span class="w"> </span>install<span class="w"> </span>Kitware.CMake
+</pre></div>
 </div>
 </section>
 </section>
 <section id="installation-methods">
 <h2>Installation Methods<a class="headerlink" href="#installation-methods" title="Link to this heading">#</a></h2>
-<section id="installing-from-pypi">
-<h3>Installing from PyPI<a class="headerlink" href="#installing-from-pypi" title="Link to this heading">#</a></h3>
-<p>The simplest installation method is through PyPI:</p>
+<section id="from-pypi-recommended">
+<h3>From PyPI (recommended)<a class="headerlink" href="#from-pypi-recommended" title="Link to this heading">#</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx
 </pre></div>
 </div>
-<p>This installs the latest stable release published on PyPI, along with all required dependencies. On Linux systems, this will attempt to install CUDA 12.4-enabled PyTorch; on macOS and Windows, it will install CPU-only versions.</p>
+<p>On Linux x86_64, macOS (Intel and Apple Silicon), or Windows x86_64 with Python 3.10–3.14, pip downloads a prebuilt CPU wheel and installation finishes in seconds. The C++ extension is precompiled inside the wheel; no compiler or CMake is needed.</p>
+<p>On other platforms (musllinux, aarch64 Linux, etc.), pip falls through to the source distribution and runs the CMake build. Make sure the <a class="reference internal" href="#system-dependencies-source-builds">system dependencies</a> above are installed first.</p>
 </section>
-<section id="installing-from-source">
-<h3>Installing from Source<a class="headerlink" href="#installing-from-source" title="Link to this heading">#</a></h3>
-<p>To install the latest development version of TorchFX directly from GitHub, follow these steps:</p>
+<section id="from-source-with-pip">
+<span id="id2"></span><h3>From source with pip<a class="headerlink" href="#from-source-with-pip" title="Link to this heading">#</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/matteospanio/torchfx
 <span class="nb">cd</span><span class="w"> </span>torchfx
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+pip<span class="w"> </span>install<span class="w"> </span>.
 </pre></div>
 </div>
-<p>This approach is useful if you plan to contribute to the project or want access to the latest features and updates that may not yet be available on PyPI.</p>
+<p>Use this path if you are on a platform without a published wheel, or want a custom build. Add <code class="docutils literal notranslate"><span class="pre">-e</span></code> for an editable install when developing.</p>
 </section>
-<section id="installation-from-source-with-uv">
-<h3>Installation from Source with uv<a class="headerlink" href="#installation-from-source-with-uv" title="Link to this heading">#</a></h3>
-<p>For development or to use the latest unreleased features with reproducible builds, install from source using the <code class="docutils literal notranslate"><span class="pre">uv</span></code> package manager:</p>
+<section id="gpu-cuda-wheels">
+<span id="gpu-wheels"></span><h3>GPU (CUDA) wheels<a class="headerlink" href="#gpu-cuda-wheels" title="Link to this heading">#</a></h3>
+<p>Prebuilt CUDA wheels for <strong>Linux x86_64 / Python 3.10–3.14</strong> are published to a project-managed PEP 503 index hosted on GitHub Pages, one index per CUDA toolkit version:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>CUDA</p></th>
+<th class="head"><p>Index URL</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>12.4</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">https://matteospanio.github.io/torchfx/wheels/cu124/</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>12.8</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">https://matteospanio.github.io/torchfx/wheels/cu128/</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Pick the index whose CUDA version matches your installed <code class="docutils literal notranslate"><span class="pre">torch</span></code>, install <code class="docutils literal notranslate"><span class="pre">torch</span></code> first, then point <code class="docutils literal notranslate"><span class="pre">pip</span></code> at the matching index for <code class="docutils literal notranslate"><span class="pre">torchfx</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. PyTorch with the CUDA toolkit you want to target</span>
+pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu124
+
+<span class="c1"># 2. TorchFX from the matching CUDA index</span>
+pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--index-url<span class="w"> </span>https://matteospanio.github.io/torchfx/wheels/cu124/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--extra-index-url<span class="w"> </span>https://pypi.org/simple
+</pre></div>
+</div>
+<p>The wheels carry a PEP 440 local-version segment (<code class="docutils literal notranslate"><span class="pre">torchfx==0.5.3+cu124</span></code>) so they will not collide with the CPU wheels on PyPI, and they link against the CUDA shared libraries that <code class="docutils literal notranslate"><span class="pre">torch</span></code> already provides — the wheel itself stays small. CUDA wheels are not on PyPI; PyPI does not accept locally-versioned platform-specific wheels.</p>
+<p>For platforms or CUDA versions not on the table above (Windows + CUDA, CUDA 11, etc.), build from source — see <a class="reference internal" href="#from-source-with-pip">From source with pip</a> and make sure <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> is on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>. CMake auto-detects CUDA and links the CUDA kernels into <code class="docutils literal notranslate"><span class="pre">torchfx_ext</span></code>.</p>
+</section>
+<section id="from-source-with-uv">
+<h3>From source with uv<a class="headerlink" href="#from-source-with-uv" title="Link to this heading">#</a></h3>
+<p>For development with reproducible builds:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install uv if not already installed</span>
 pip<span class="w"> </span>install<span class="w"> </span>uv
 
-<span class="c1"># Clone the repository</span>
+<span class="c1"># Clone and sync</span>
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/matteospanio/torchfx
 <span class="nb">cd</span><span class="w"> </span>torchfx
-
-<span class="c1"># Install in editable mode with all dependencies</span>
 uv<span class="w"> </span>sync
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> command reads <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">uv.lock</span></code> to install all dependencies with exact versions for reproducible builds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> reads <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/pyproject.toml">pyproject.toml</a> and <code class="docutils literal notranslate"><span class="pre">uv.lock</span></code> and installs dependencies at exact versions. The CMake build runs the same way as with pip.</p>
 </section>
 <section id="installation-workflow">
 <h3>Installation Workflow<a class="headerlink" href="#installation-workflow" title="Link to this heading">#</a></h3>
-<p>The following diagram illustrates the complete installation workflow for both PyPI and source-based installations:</p>
 <pre  class="mermaid">
         graph TB
     User[&quot;User&quot;]
 
     subgraph &quot;Installation Methods&quot;
-        PipInstall[&quot;pip install torchfx&quot;]
-        SourceInstall[&quot;Clone + uv sync&quot;]
+        PipPyPI[&quot;pip install torchfx&quot;]
+        PipSource[&quot;pip install . (source)&quot;]
+        UvSync[&quot;uv sync (source)&quot;]
     end
 
-    subgraph &quot;PyPI Distribution&quot;
-        PyPI[&quot;PyPI Registry&quot;]
-        Wheel[&quot;torchfx-0.2.1-*.whl&quot;]
+    subgraph &quot;PyPI prebuilt wheels (CPU)&quot;
+        ManyLinux[&quot;manylinux x86_64&lt;br/&gt;cp310 .. cp314&quot;]
+        MacIntel[&quot;macOS x86_64&lt;br/&gt;cp310 .. cp314&quot;]
+        MacArm[&quot;macOS arm64&lt;br/&gt;cp310 .. cp314&quot;]
+        Win[&quot;Windows x86_64&lt;br/&gt;cp310 .. cp314&quot;]
+        Sdist[&quot;torchfx-X.Y.Z.tar.gz&lt;br/&gt;(source)&quot;]
     end
 
-    subgraph &quot;Source Installation&quot;
-        GitRepo[&quot;GitHub Repository&lt;br/&gt;matteospanio/torchfx&quot;]
-        PyProject[&quot;pyproject.toml&lt;br/&gt;Dependencies definition&quot;]
-        UVLock[&quot;uv.lock&lt;br/&gt;Locked versions&quot;]
-        UV[&quot;uv package manager&quot;]
+    subgraph &quot;GitHub Pages CUDA wheels (Linux only)&quot;
+        CU124[&quot;manylinux x86_64&lt;br/&gt;+cu124, cp310 .. cp314&quot;]
+        CU128[&quot;manylinux x86_64&lt;br/&gt;+cu128, cp310 .. cp314&quot;]
     end
 
-    subgraph &quot;Dependency Resolution&quot;
-        DepResolver[&quot;Platform Detection&quot;]
-        LinuxPath[&quot;Linux:&lt;br/&gt;pytorch-cu124 index&quot;]
-        NonLinuxPath[&quot;macOS/Windows:&lt;br/&gt;pytorch-cpu index&quot;]
-        PyTorchCUDA[&quot;torch 2.6.0+cu124&quot;]
-        PyTorchCPU[&quot;torch 2.6.0+cpu&quot;]
-        OtherDeps[&quot;numpy, scipy&lt;br/&gt;soundfile, torchaudio&quot;]
+    subgraph &quot;Source build (scikit-build-core + CMake)&quot;
+        SBC[&quot;scikit-build-core&quot;]
+        CMake[&quot;CMake ≥ 3.18&quot;]
+        Cxx[&quot;C++17 compiler&lt;br/&gt;(GCC / Clang / MSVC)&quot;]
+        Nvcc[&quot;nvcc&lt;br/&gt;(optional, CUDA kernels)&quot;]
+        Ext[&quot;torchfx_ext&lt;br/&gt;(compiled .so / .dylib / .pyd)&quot;]
     end
 
-    subgraph &quot;Installed Package&quot;
-        TorchFXPkg[&quot;torchfx package&lt;br/&gt;in site-packages&quot;]
-    end
+    Installed[&quot;torchfx package&lt;br/&gt;in site-packages&quot;]
 
-    User --&gt;|pip install| PipInstall
-    User --&gt;|git clone + uv sync| SourceInstall
+    User --&gt; PipPyPI
+    User --&gt; PipSource
+    User --&gt; UvSync
 
-    PipInstall --&gt; PyPI
-    PyPI --&gt; Wheel
-    Wheel --&gt; DepResolver
+    PipPyPI --&gt;|matching wheel| ManyLinux
+    PipPyPI --&gt;|matching wheel| MacIntel
+    PipPyPI --&gt;|matching wheel| MacArm
+    PipPyPI --&gt;|matching wheel| Win
+    PipPyPI --&gt;|&quot;--index-url cu124&quot;| CU124
+    PipPyPI --&gt;|&quot;--index-url cu128&quot;| CU128
+    PipPyPI --&gt;|no wheel for platform| Sdist
+    ManyLinux --&gt; Installed
+    MacIntel --&gt; Installed
+    MacArm --&gt; Installed
+    Win --&gt; Installed
+    CU124 --&gt; Installed
+    CU128 --&gt; Installed
 
-    SourceInstall --&gt; GitRepo
-    GitRepo --&gt; PyProject
-    GitRepo --&gt; UVLock
-    PyProject --&gt; UV
-    UVLock --&gt; UV
-    UV --&gt; DepResolver
+    Sdist --&gt; SBC
+    PipSource --&gt; SBC
+    UvSync --&gt; SBC
 
-    DepResolver --&gt;|sys_platform == 'linux'| LinuxPath
-    DepResolver --&gt;|sys_platform != 'linux'| NonLinuxPath
-
-    LinuxPath --&gt; PyTorchCUDA
-    NonLinuxPath --&gt; PyTorchCPU
-
-    PyTorchCUDA --&gt; TorchFXPkg
-    PyTorchCPU --&gt; TorchFXPkg
-    DepResolver --&gt; OtherDeps
-    OtherDeps --&gt; TorchFXPkg
+    SBC --&gt; CMake
+    CMake --&gt; Cxx
+    CMake -. optional .-&gt; Nvcc
+    Cxx --&gt; Ext
+    Nvcc --&gt; Ext
+    Ext --&gt; Installed
     </pre></section>
 </section>
-<section id="platform-specific-pytorch-configuration">
-<h2>Platform-Specific PyTorch Configuration<a class="headerlink" href="#platform-specific-pytorch-configuration" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">uv</span></code> package manager uses <strong>platform markers</strong> to select the appropriate PyTorch distribution. This configuration ensures that Linux users get CUDA-enabled builds while macOS and Windows users receive CPU-only builds.</p>
-<section id="pytorch-source-selection-logic">
-<h3>PyTorch Source Selection Logic<a class="headerlink" href="#pytorch-source-selection-logic" title="Link to this heading">#</a></h3>
-<p>The following diagram shows how PyTorch sources are selected based on the platform:</p>
-<pre  class="mermaid">
-        graph TD
-    Start[&quot;Dependency Resolution Start&quot;]
+<section id="build-system">
+<span id="id3"></span><h2>Build System<a class="headerlink" href="#build-system" title="Link to this heading">#</a></h2>
+<p>The build backend is <strong>scikit-build-core</strong>, configured in <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/pyproject.toml">pyproject.toml</a>:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[build-system]</span>
+<span class="n">requires</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;scikit-build-core&gt;=0.10&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;torch&gt;=2.6.0&quot;</span><span class="p">]</span>
+<span class="n">build-backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;scikit_build_core.build&quot;</span>
 
-    PlatformCheck{&quot;sys_platform == 'linux'?&quot;}
-
-    subgraph &quot;Linux Path&quot;
-        CUDAIndex[&quot;[[tool.uv.index]]&lt;br/&gt;name = 'pytorch-cu124'&lt;br/&gt;url = download.pytorch.org/whl/cu124&quot;]
-        CUDASource[&quot;torch source:&lt;br/&gt;index = 'pytorch-cu124'&lt;br/&gt;marker = sys_platform == 'linux'&quot;]
-        CUDAPackage[&quot;torch 2.6.0+cu124&lt;br/&gt;torchaudio 2.6.0+cu124&lt;br/&gt;CUDA 12.4 support&quot;]
-    end
-
-    subgraph &quot;Non-Linux Path&quot;
-        CPUIndex[&quot;[[tool.uv.index]]&lt;br/&gt;name = 'pytorch-cpu'&lt;br/&gt;url = download.pytorch.org/whl/cpu&quot;]
-        CPUSource[&quot;torch source:&lt;br/&gt;index = 'pytorch-cpu'&lt;br/&gt;marker = sys_platform != 'linux'&quot;]
-        CPUPackage[&quot;torch 2.6.0+cpu&lt;br/&gt;torchaudio 2.6.0+cpu&lt;br/&gt;CPU-only&quot;]
-    end
-
-    Result[&quot;Resolved torch package&quot;]
-
-    Start --&gt; PlatformCheck
-    PlatformCheck --&gt;|Yes| CUDASource
-    PlatformCheck --&gt;|No| CPUSource
-
-    CUDASource --&gt; CUDAIndex
-    CUDAIndex --&gt; CUDAPackage
-    CPUSource --&gt; CPUIndex
-    CPUIndex --&gt; CPUPackage
-
-    CUDAPackage --&gt; Result
-    CPUPackage --&gt; Result
-    </pre><p>The platform detection uses Python’s <code class="docutils literal notranslate"><span class="pre">sys_platform</span></code> to determine which PyTorch index to use:</p>
-<ul class="simple">
-<li><p><strong>Linux systems</strong>: Resolves <code class="docutils literal notranslate"><span class="pre">torch</span></code> and <code class="docutils literal notranslate"><span class="pre">torchaudio</span></code> from the <code class="docutils literal notranslate"><span class="pre">pytorch-cu124</span></code> index at <code class="docutils literal notranslate"><span class="pre">https://download.pytorch.org/whl/cu124</span></code>, providing CUDA 12.4 GPU acceleration.</p></li>
-<li><p><strong>macOS and Windows</strong>: Resolves from the <code class="docutils literal notranslate"><span class="pre">pytorch-cpu</span></code> index at <code class="docutils literal notranslate"><span class="pre">https://download.pytorch.org/whl/cpu</span></code>, providing CPU-only builds.</p></li>
-</ul>
-<p>The <code class="docutils literal notranslate"><span class="pre">explicit</span> <span class="pre">=</span> <span class="pre">true</span></code> flag in the configuration ensures these indices are only used when explicitly specified by the source configuration.</p>
-</section>
-<section id="gpu-support">
-<h3>GPU Support<a class="headerlink" href="#gpu-support" title="Link to this heading">#</a></h3>
-<p>TorchFX is built on top of <strong>PyTorch</strong>, which means GPU support depends on your local PyTorch installation. To enable GPU acceleration:</p>
-<ol class="arabic simple">
-<li><p>Make sure you have a compatible NVIDIA GPU</p></li>
-<li><p>Ensure you’re running on a Linux system (CUDA support is currently Linux-only in the default configuration)</p></li>
-<li><p>Install PyTorch with CUDA support</p></li>
-</ol>
-<p>If you need a specific CUDA version different from 12.4, you can manually install PyTorch:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example: Installing PyTorch with CUDA 12.1</span>
-pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>torchvision<span class="w"> </span>torchaudio<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu121
+<span class="k">[tool.scikit-build]</span>
+<span class="n">wheel</span><span class="p">.</span><span class="n">packages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;src/torchfx&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;src/cli&quot;</span><span class="p">]</span>
+<span class="n">cmake</span><span class="p">.</span><span class="n">build-type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Release&quot;</span>
 </pre></div>
 </div>
-<p>Replace <code class="docutils literal notranslate"><span class="pre">cu121</span></code> with the correct CUDA version for your system. Visit the <a class="reference external" href="https://pytorch.org/get-started/locally/">official PyTorch website</a> for the correct installation command for your configuration.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.5.3: </span>Build backend migrated to scikit-build-core; the native extension is compiled
+at install time and bundled into the wheel. Older releases JIT-compiled it on
+first import via <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension.load</span></code>.</p>
+</div>
+<section id="building-locally">
+<h3>Building locally<a class="headerlink" href="#building-locally" title="Link to this heading">#</a></h3>
+<p>To build a distribution package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># CPU-only wheel (matches the CI flow)</span>
+<span class="nv">TORCHFX_NO_CUDA</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>build<span class="w"> </span>--wheel
+
+<span class="c1"># Full build (CUDA if nvcc is found)</span>
+python<span class="w"> </span>-m<span class="w"> </span>build
+
+<span class="c1"># Or with uv</span>
+uv<span class="w"> </span>build
+</pre></div>
+</div>
+<p>Wheels land in <code class="docutils literal notranslate"><span class="pre">dist/</span></code>. The CI workflow at <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/.github/workflows/wheels.yml"><code class="docutils literal notranslate"><span class="pre">.github/workflows/wheels.yml</span></code></a> runs the CPU-only command above for Python 3.10–3.13 on every tagged release.</p>
+</section>
+<section id="installing-a-specific-pytorch-build">
+<h3>Installing a specific PyTorch build<a class="headerlink" href="#installing-a-specific-pytorch-build" title="Link to this heading">#</a></h3>
+<p>The build links the extension against whichever <code class="docutils literal notranslate"><span class="pre">torch</span></code> is installed in the build environment, so to use a particular CUDA version:</p>
+<ol class="arabic">
+<li><p>Install <code class="docutils literal notranslate"><span class="pre">torch</span></code> first from the <a class="reference external" href="https://pytorch.org/get-started/locally/">official PyTorch install matrix</a>, e.g.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu121
+</pre></div>
+</div>
+</li>
+<li><p>Then install TorchFX from source without rebuilding the build environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="w"> </span>--no-build-isolation
+</pre></div>
+</div>
+</li>
+</ol>
 </section>
 </section>
 <section id="dependency-management-with-uv">
 <h2>Dependency Management with uv<a class="headerlink" href="#dependency-management-with-uv" title="Link to this heading">#</a></h2>
 <p>The project uses <strong>uv</strong> as its primary dependency manager, which provides faster dependency resolution and reproducible builds through lock files.</p>
-<section id="dependency-resolution-components">
-<h3>Dependency Resolution Components<a class="headerlink" href="#dependency-resolution-components" title="Link to this heading">#</a></h3>
-<p>The following diagram illustrates how dependencies are resolved and installed:</p>
-<pre  class="mermaid">
-        graph TB
-    subgraph &quot;Configuration Files&quot;
-        PyProject[&quot;pyproject.toml&quot;]
-        UVLock[&quot;uv.lock&quot;]
-    end
-
-    subgraph &quot;Dependency Specifications&quot;
-        CoreDeps[&quot;[project.dependencies]&lt;br/&gt;torch&gt;=2.6.0&lt;br/&gt;torchaudio&gt;=2.6.0&lt;br/&gt;numpy&gt;=2.2.4&lt;br/&gt;scipy&gt;=1.15.2&lt;br/&gt;soundfile&gt;=0.13.1&lt;br/&gt;annotated-types&gt;=0.7.0&quot;]
-
-        DevGroups[&quot;[dependency-groups]&lt;br/&gt;cli: typer&lt;br/&gt;dev: black, mypy, pytest, ruff&lt;br/&gt;docs: sphinx, sphinx-immaterial&quot;]
-
-        UVSources[&quot;[tool.uv.sources]&lt;br/&gt;Platform-specific torch sources&quot;]
-
-        UVIndices[&quot;[[tool.uv.index]]&lt;br/&gt;pytorch-cpu&lt;br/&gt;pytorch-cu124&quot;]
-    end
-
-    subgraph &quot;Resolution Process&quot;
-        UVResolver[&quot;uv resolver engine&quot;]
-        PlatformDetect[&quot;Platform detection&lt;br/&gt;sys_platform&quot;]
-        VersionConstraints[&quot;Version constraint solver&quot;]
-    end
-
-    subgraph &quot;Lock File&quot;
-        LockedVersions[&quot;Exact package versions&lt;br/&gt;with hashes&quot;]
-        ResolvedDeps[&quot;Resolved dependency tree&quot;]
-    end
-
-    subgraph &quot;Installation&quot;
-        Download[&quot;Download packages&quot;]
-        Install[&quot;Install to environment&quot;]
-    end
-
-    PyProject --&gt; CoreDeps
-    PyProject --&gt; DevGroups
-    PyProject --&gt; UVSources
-    PyProject --&gt; UVIndices
-
-    CoreDeps --&gt; UVResolver
-    DevGroups --&gt; UVResolver
-    UVSources --&gt; PlatformDetect
-    UVIndices --&gt; PlatformDetect
-
-    UVResolver --&gt; VersionConstraints
-    PlatformDetect --&gt; VersionConstraints
-
-    VersionConstraints --&gt; LockedVersions
-    VersionConstraints --&gt; ResolvedDeps
-
-    LockedVersions --&gt; UVLock
-    ResolvedDeps --&gt; UVLock
-
-    UVLock --&gt; Download
-    Download --&gt; Install
-    </pre></section>
 <section id="dependency-groups">
 <h3>Dependency Groups<a class="headerlink" href="#dependency-groups" title="Link to this heading">#</a></h3>
-<p>The project defines optional dependency groups for different use cases:</p>
+<p>The optional dependency groups defined in <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/pyproject.toml">pyproject.toml</a> cover different use cases:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Group</p></th>
 <th class="head"><p>Purpose</p></th>
-<th class="head"><p>Key Packages</p></th>
+<th class="head"><p>Key packages</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cli</span></code></p></td>
 <td><p>Command-line interface</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">typer&gt;=0.16.0</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">typer</span></code>, <code class="docutils literal notranslate"><span class="pre">rich</span></code>, <code class="docutils literal notranslate"><span class="pre">prompt-toolkit</span></code>, <code class="docutils literal notranslate"><span class="pre">watchdog</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dev</span></code></p></td>
 <td><p>Development tools</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">black</span></code>, <code class="docutils literal notranslate"><span class="pre">mypy</span></code>, <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, <code class="docutils literal notranslate"><span class="pre">ruff</span></code>, <code class="docutils literal notranslate"><span class="pre">coverage</span></code>, <code class="docutils literal notranslate"><span class="pre">scalene</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">black</span></code>, <code class="docutils literal notranslate"><span class="pre">mypy</span></code>, <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, <code class="docutils literal notranslate"><span class="pre">pytest-benchmark</span></code>, <code class="docutils literal notranslate"><span class="pre">ruff</span></code>, <code class="docutils literal notranslate"><span class="pre">coverage</span></code>, <code class="docutils literal notranslate"><span class="pre">numba</span></code>, <code class="docutils literal notranslate"><span class="pre">scalene</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">realtime</span></code></p></td>
+<td><p>Real-time audio I/O</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sounddevice</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cuda</span></code></p></td>
+<td><p>CUDA build helpers</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ninja</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">docs</span></code></p></td>
 <td><p>Documentation building</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">sphinx&gt;=8.1.3</span></code>, <code class="docutils literal notranslate"><span class="pre">sphinx-immaterial&gt;=0.13.5</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sphinx</span></code>, <code class="docutils literal notranslate"><span class="pre">pydata-sphinx-theme</span></code>, <code class="docutils literal notranslate"><span class="pre">myst-parser</span></code>, <code class="docutils literal notranslate"><span class="pre">ablog</span></code>, <code class="docutils literal notranslate"><span class="pre">sphinx-design</span></code>, <code class="docutils literal notranslate"><span class="pre">sphinxcontrib-bibtex</span></code>, <code class="docutils literal notranslate"><span class="pre">sphinxcontrib-mermaid</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -1209,187 +1252,146 @@ pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> 
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install with dev dependencies</span>
 uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>dev
 
-<span class="c1"># Install with all groups</span>
-uv<span class="w"> </span>sync<span class="w"> </span>--all-groups
+<span class="c1"># Install only CLI dependencies</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>cli
 
-<span class="c1"># Install only docs dependencies</span>
-uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>docs
+<span class="c1"># Install everything</span>
+uv<span class="w"> </span>sync<span class="w"> </span>--all-groups
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>For contributors and developers, we recommend using <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span> <span class="pre">--all-groups</span></code> to install all development dependencies including testing, documentation, and CLI tools.</p>
+<p>For contributors and developers, we recommend <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span> <span class="pre">--all-groups</span></code> to install all development dependencies including testing, documentation, CLI, and realtime tools.</p>
 </div>
 </section>
 </section>
 <section id="developers">
 <h2>Developers<a class="headerlink" href="#developers" title="Link to this heading">#</a></h2>
-<p>If you are a developer and want to contribute to the TorchFX project, you can set up a development environment by following these steps:</p>
-<ol class="arabic">
-<li><p>Clone the repository:</p>
+<p>If you want to contribute to TorchFX, set up a development environment with:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/matteospanio/torchfx
-</pre></div>
-</div>
-</li>
-<li><p>Navigate to the project directory:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>torchfx
-</pre></div>
-</div>
-</li>
-<li><p>Create a virtual environment (optional but recommended). The project is built using <code class="docutils literal notranslate"><span class="pre">uv</span></code>, hence we suggest using it:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># The flag --all-groups will install also dev dependencies</span>
+<span class="nb">cd</span><span class="w"> </span>torchfx
 uv<span class="w"> </span>sync<span class="w"> </span>--all-groups
+uv<span class="w"> </span>run<span class="w"> </span>pre-commit<span class="w"> </span>install
 </pre></div>
 </div>
-</li>
-</ol>
-<p>For more information on the development workflow, see <a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a>.</p>
-</section>
-<section id="build-system">
-<h2>Build System<a class="headerlink" href="#build-system" title="Link to this heading">#</a></h2>
-<p>The project uses <strong>hatchling</strong> as its build backend. The build system configuration is defined in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>:</p>
-<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[build-system]</span>
-<span class="n">requires</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;hatchling&quot;</span><span class="p">]</span>
-<span class="n">build-backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hatchling.build&quot;</span>
-</pre></div>
-</div>
-<p>To build a distribution package:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Using uv</span>
-uv<span class="w"> </span>build
-
-<span class="c1"># Or using standard tools</span>
-python<span class="w"> </span>-m<span class="w"> </span>build
-</pre></div>
-</div>
-<p>This produces a wheel file (<code class="docutils literal notranslate"><span class="pre">.whl</span></code>) in the <code class="docutils literal notranslate"><span class="pre">dist/</span></code> directory that can be distributed or installed with pip.</p>
+<p>This installs all dependency groups and registers the project’s pre-commit hooks. For more on the development workflow, see <a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a>.</p>
 </section>
 <section id="verification">
 <h2>Verification<a class="headerlink" href="#verification" title="Link to this heading">#</a></h2>
-<p>After installation, verify that TorchFX is correctly installed and can import all core components.</p>
-<section id="basic-installation-check">
-<h3>Basic Installation Check<a class="headerlink" href="#basic-installation-check" title="Link to this heading">#</a></h3>
-<p>To verify that the package has been correctly installed, run the following command in Python:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">torchfx</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>  <span class="c1"># Should print &#39;0.2.1&#39;</span>
+<p>After installation, confirm that TorchFX is correctly installed and that the native extension loaded.</p>
+<section id="basic-check">
+<h3>Basic check<a class="headerlink" href="#basic-check" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">version</span><span class="p">(</span><span class="s2">&quot;torchfx&quot;</span><span class="p">))</span>              <span class="c1"># e.g. &#39;0.5.3&#39;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">torchfx</span><span class="o">.</span><span class="n">is_native_available</span><span class="p">())</span>   <span class="c1"># True if torchfx_ext compiled successfully</span>
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">is_native_available()</span></code> is the canonical way to check that the C++ extension is loaded. Since 0.5.3 there is no Python fallback, so a <code class="docutils literal notranslate"><span class="pre">False</span></code> return value means the install is broken — see <a class="reference internal" href="#troubleshooting">Troubleshooting</a>.</p>
 </section>
-<section id="comprehensive-verification">
-<h3>Comprehensive Verification<a class="headerlink" href="#comprehensive-verification" title="Link to this heading">#</a></h3>
-<p>For a more thorough verification, check that all core components can be imported and that PyTorch is correctly configured:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span><span class="p">,</span> <span class="n">FX</span><span class="p">,</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Normalize</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Butterworth</span><span class="p">,</span> <span class="n">LowPass</span>
-
-<span class="c1"># Check version</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">torchfx</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>  <span class="c1"># Should print &#39;0.2.1&#39;</span>
-
-<span class="c1"># Verify PyTorch backend</span>
+<section id="comprehensive-check">
+<h3>Comprehensive check<a class="headerlink" href="#comprehensive-check" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CUDA available: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PyTorch version: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span><span class="p">,</span> <span class="n">FX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span><span class="p">,</span> <span class="n">Normalize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span><span class="p">,</span> <span class="n">HiButterworth</span><span class="p">,</span> <span class="n">Butterworth</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;torchfx version:   </span><span class="si">{</span><span class="n">version</span><span class="p">(</span><span class="s1">&#39;torchfx&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PyTorch version:   </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Native extension:  </span><span class="si">{</span><span class="n">torchfx</span><span class="o">.</span><span class="n">is_native_available</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CUDA available:    </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>On Linux systems with NVIDIA GPUs, <code class="docutils literal notranslate"><span class="pre">torch.cuda.is_available()</span></code> should return <code class="docutils literal notranslate"><span class="pre">True</span></code>. On macOS and Windows, it will return <code class="docutils literal notranslate"><span class="pre">False</span></code>, indicating CPU-only operation.</p>
+<p>On a Linux machine with an NVIDIA GPU and a CUDA-enabled <code class="docutils literal notranslate"><span class="pre">torch</span></code>, <code class="docutils literal notranslate"><span class="pre">torch.cuda.is_available()</span></code> should return <code class="docutils literal notranslate"><span class="pre">True</span></code>. On macOS, Windows, or any CPU-only install, it returns <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </section>
-<section id="audio-i-o-verification">
-<h3>Audio I/O Verification<a class="headerlink" href="#audio-i-o-verification" title="Link to this heading">#</a></h3>
-<p>To verify audio I/O capabilities:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;torchaudio version: </span><span class="si">{</span><span class="n">torchaudio</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Available backends: </span><span class="si">{</span><span class="n">torchaudio</span><span class="o">.</span><span class="n">list_audio_backends</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Expected output should show the available audio backends for your platform (e.g., <code class="docutils literal notranslate"><span class="pre">soundfile</span></code>, <code class="docutils literal notranslate"><span class="pre">sox</span></code>, <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code>).</p>
-</section>
-</section>
-<section id="checking-installation">
-<h2>Checking Installation<a class="headerlink" href="#checking-installation" title="Link to this heading">#</a></h2>
-<p>You can perform a quick functional test to ensure TorchFX is working correctly:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<section id="functional-smoke-test">
+<h3>Functional smoke test<a class="headerlink" href="#functional-smoke-test" title="Link to this heading">#</a></h3>
+<p>A quick test that exercises the full pipeline:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
 
-<span class="c1"># Create a simple sine wave</span>
-<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_function</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">fx</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">fx</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">440</span> <span class="o">*</span> <span class="n">t</span><span class="p">),</span> <span class="n">duration</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="c1"># 1 second of 440 Hz mono sine at 44.1 kHz</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">440</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># shape (1, 44100)</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
 
-<span class="c1"># Apply a gain effect</span>
-<span class="n">gained</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="mf">6.0</span><span class="p">)</span>
+<span class="c1"># Apply a -6 dB gain</span>
+<span class="n">gained</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
 
-<span class="c1"># Verify the operation succeeded</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original wave: </span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed wave: </span><span class="si">{</span><span class="n">gained</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample rate: </span><span class="si">{</span><span class="n">gained</span><span class="o">.</span><span class="n">fs</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original: shape=</span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, fs=</span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed: shape=</span><span class="si">{</span><span class="n">gained</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>If this runs without errors, your installation is working correctly.</p>
 </section>
+</section>
 <section id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
-<section id="pytorch-cuda-version-mismatch">
-<h3>PyTorch CUDA Version Mismatch<a class="headerlink" href="#pytorch-cuda-version-mismatch" title="Link to this heading">#</a></h3>
-<p>If you have an existing PyTorch installation with a different CUDA version, you may need to uninstall it first:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>uninstall<span class="w"> </span>torch<span class="w"> </span>torchaudio<span class="w"> </span>torchvision
-uv<span class="w"> </span>sync<span class="w"> </span>--reinstall-package<span class="w"> </span>torch
+<span id="id4"></span><h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
+<section id="importerror-cannot-import-name-torchfx-ext-or-is-native-available-returns-false">
+<h3><code class="docutils literal notranslate"><span class="pre">ImportError:</span> <span class="pre">cannot</span> <span class="pre">import</span> <span class="pre">name</span> <span class="pre">'torchfx_ext'</span></code> (or <code class="docutils literal notranslate"><span class="pre">is_native_available()</span></code> returns <code class="docutils literal notranslate"><span class="pre">False</span></code>)<a class="headerlink" href="#importerror-cannot-import-name-torchfx-ext-or-is-native-available-returns-false" title="Link to this heading">#</a></h3>
+<p>The native C++ extension is missing. The extension is required to use TorchFX. Possible causes:</p>
+<ul class="simple">
+<li><p><strong>You installed from sdist on a platform where the build silently skipped a step.</strong> Reinstall with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--force-reinstall</span> <span class="pre">--no-binary</span> <span class="pre">torchfx</span> <span class="pre">torchfx</span></code> and watch the build log for errors.</p></li>
+<li><p><strong>You’re missing system dependencies.</strong> Install a C++17 compiler, CMake ≥ 3.18, and Python development headers (see <a class="reference internal" href="#system-dependencies-source-builds">System dependencies</a>).</p></li>
+<li><p><strong>PyTorch is not installed in the build environment.</strong> The build links the extension against <code class="docutils literal notranslate"><span class="pre">torch</span></code>. If you use build isolation, the build env installs its own <code class="docutils literal notranslate"><span class="pre">torch</span></code> automatically; if you use <code class="docutils literal notranslate"><span class="pre">--no-build-isolation</span></code>, install <code class="docutils literal notranslate"><span class="pre">torch</span></code> first.</p></li>
+</ul>
+</section>
+<section id="source-install-fails-with-cmake-command-not-found">
+<h3>Source install fails with <code class="docutils literal notranslate"><span class="pre">cmake:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code><a class="headerlink" href="#source-install-fails-with-cmake-command-not-found" title="Link to this heading">#</a></h3>
+<p>CMake ≥ 3.18 is required for source builds. Install it with your system package manager:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Debian/Ubuntu</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>cmake
+
+<span class="c1"># macOS (Homebrew)</span>
+brew<span class="w"> </span>install<span class="w"> </span>cmake
+
+<span class="c1"># Windows</span>
+<span class="c1"># Install from https://cmake.org/download/ and add to PATH</span>
 </pre></div>
 </div>
-<p>This ensures that the correct PyTorch version is installed according to the platform-specific configuration.</p>
 </section>
-<section id="platform-detection-issues">
-<h3>Platform Detection Issues<a class="headerlink" href="#platform-detection-issues" title="Link to this heading">#</a></h3>
-<p>If the wrong PyTorch variant is installed, verify your platform:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Platform: </span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The marker <code class="docutils literal notranslate"><span class="pre">sys_platform</span> <span class="pre">==</span> <span class="pre">'linux'</span></code> should be <code class="docutils literal notranslate"><span class="pre">True</span></code> on Linux systems. If you’re on Linux but getting the CPU-only version, check your Python installation and ensure <code class="docutils literal notranslate"><span class="pre">sys.platform</span></code> returns <code class="docutils literal notranslate"><span class="pre">'linux'</span></code>.</p>
+<section id="cuda-kernels-not-compiled-cpu-only-build-gpu-available">
+<h3>CUDA kernels not compiled (CPU-only build, GPU available)<a class="headerlink" href="#cuda-kernels-not-compiled-cpu-only-build-gpu-available" title="Link to this heading">#</a></h3>
+<p>CMake reports <code class="docutils literal notranslate"><span class="pre">TORCHFX_USE_CUDA</span> <span class="pre">=</span> <span class="pre">OFF</span></code> if it cannot find <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> or the CUDA toolkit. Verify:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nvcc</span> <span class="pre">--version</span></code> works in your shell.</p></li>
+<li><p>The CUDA toolkit version matches your <code class="docutils literal notranslate"><span class="pre">torch</span></code> CUDA version.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA</span></code> env var is <strong>not</strong> set (<code class="docutils literal notranslate"><span class="pre">echo</span> <span class="pre">$TORCHFX_NO_CUDA</span></code> should print empty).</p></li>
+</ul>
+<p>Then rebuild from source: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchfx</span> <span class="pre">--no-build-isolation</span> <span class="pre">--force-reinstall</span></code>.</p>
 </section>
-<section id="dependency-conflicts">
-<h3>Dependency Conflicts<a class="headerlink" href="#dependency-conflicts" title="Link to this heading">#</a></h3>
-<p>If you encounter dependency conflicts when using uv, regenerate the lock file:</p>
+<section id="dependency-conflicts-with-uv">
+<h3>Dependency conflicts with uv<a class="headerlink" href="#dependency-conflicts-with-uv" title="Link to this heading">#</a></h3>
+<p>If <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> fails to resolve dependencies, regenerate the lock file:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>rm<span class="w"> </span>uv.lock
 uv<span class="w"> </span>lock
 uv<span class="w"> </span>sync
 </pre></div>
 </div>
-<p>This will resolve dependencies from scratch and create a new lock file with compatible versions.</p>
-</section>
-<section id="import-errors">
-<h3>Import Errors<a class="headerlink" href="#import-errors" title="Link to this heading">#</a></h3>
-<p>If you encounter import errors after installation, ensure that:</p>
-<ol class="arabic simple">
-<li><p>You’re using the correct Python environment where TorchFX was installed</p></li>
-<li><p>All dependencies were installed successfully</p></li>
-<li><p>There are no naming conflicts with other packages</p></li>
-</ol>
-<p>You can verify your Python environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>which<span class="w"> </span>python
-pip<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>torchfx
-</pre></div>
-</div>
 </section>
 <section id="audio-backend-issues">
-<h3>Audio Backend Issues<a class="headerlink" href="#audio-backend-issues" title="Link to this heading">#</a></h3>
-<p>If you encounter issues loading audio files, ensure that <code class="docutils literal notranslate"><span class="pre">soundfile</span></code> is properly installed:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>soundfile<span class="w"> </span>--upgrade
-</pre></div>
-</div>
-<p>On some systems, you may need to install system-level audio libraries:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Ubuntu/Debian</span>
+<h3>Audio backend issues<a class="headerlink" href="#audio-backend-issues" title="Link to this heading">#</a></h3>
+<p>If you hit <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> reading audio files, ensure <code class="docutils literal notranslate"><span class="pre">soundfile</span></code> and its system library are installed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>soundfile
+
+<span class="c1"># Linux: libsndfile system library</span>
 sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>libsndfile1
 
 <span class="c1"># macOS</span>
 brew<span class="w"> </span>install<span class="w"> </span>libsndfile
 
-<span class="c1"># Windows</span>
-<span class="c1"># Usually included with soundfile package</span>
+<span class="c1"># Windows: usually bundled with the soundfile wheel</span>
 </pre></div>
 </div>
 <div class="tip admonition">
 <p class="admonition-title">Still Having Issues?</p>
 <p>If you continue to experience problems, please:</p>
 <ul class="simple">
-<li><p>Check the <a class="reference external" href="https://github.com/matteospanio/torchfx/issues">GitHub Issues</a> for similar problems</p></li>
-<li><p>Create a new issue with details about your system, Python version, and the error message</p></li>
-<li><p>Include the output of <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">list</span></code> to show installed packages and versions</p></li>
+<li><p>Check the <a class="reference external" href="https://github.com/matteospanio/torchfx/issues">GitHub Issues</a> for similar reports.</p></li>
+<li><p>Open a new issue with your OS, Python version, full error traceback, and the output of <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">list</span></code> and <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-c</span> <span class="pre">&quot;import</span> <span class="pre">torchfx;</span> <span class="pre">print(torchfx.is_native_available())&quot;</span></code>.</p></li>
 </ul>
 </div>
 </section>
@@ -1406,9 +1408,9 @@ brew<span class="w"> </span>install<span class="w"> </span>libsndfile
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="getting_started.html"><span class="doc">Getting Started</span></a> - Your first steps with TorchFX</p></li>
-<li><p><a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a> - Contributing to TorchFX development</p></li>
-<li><p><a class="reference internal" href="../advanced/performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a> - Optimizing performance</p></li>
+<li><p><a class="reference internal" href="getting_started.html"><span class="doc">Getting Started</span></a> — Your first steps with TorchFX</p></li>
+<li><p><a class="reference internal" href="../developer/index.html"><span class="doc">Developer Documentation</span></a> — Contributing to TorchFX development</p></li>
+<li><p><a class="reference internal" href="../advanced/performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a> — Optimizing performance</p></li>
 </ul>
 </div>
 </section>
@@ -1466,41 +1468,41 @@ brew<span class="w"> </span>install<span class="w"> </span>libsndfile
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#purpose-and-scope">Purpose and Scope</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#system-requirements">System Requirements</a><ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-dependencies">Core Dependencies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#runtime-requirements">Runtime requirements</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-python-dependencies">Core Python dependencies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#system-dependencies-source-builds">System dependencies (source builds)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-methods">Installation Methods</a><ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installing-from-pypi">Installing from PyPI</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installing-from-source">Installing from Source</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-with-uv">Installation from Source with uv</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-pypi-recommended">From PyPI (recommended)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-source-with-pip">From source with pip</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-cuda-wheels">GPU (CUDA) wheels</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-source-with-uv">From source with uv</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-workflow">Installation Workflow</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#platform-specific-pytorch-configuration">Platform-Specific PyTorch Configuration</a><ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytorch-source-selection-logic">PyTorch Source Selection Logic</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-support">GPU Support</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-system">Build System</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-locally">Building locally</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#installing-a-specific-pytorch-build">Installing a specific PyTorch build</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-management-with-uv">Dependency Management with uv</a><ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-resolution-components">Dependency Resolution Components</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-groups">Dependency Groups</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#developers">Developers</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-system">Build System</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verification">Verification</a><ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-installation-check">Basic Installation Check</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comprehensive-verification">Comprehensive Verification</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-i-o-verification">Audio I/O Verification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-check">Basic check</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comprehensive-check">Comprehensive check</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functional-smoke-test">Functional smoke test</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#checking-installation">Checking Installation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a><ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytorch-cuda-version-mismatch">PyTorch CUDA Version Mismatch</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#platform-detection-issues">Platform Detection Issues</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-conflicts">Dependency Conflicts</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-errors">Import Errors</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-backend-issues">Audio Backend Issues</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#importerror-cannot-import-name-torchfx-ext-or-is-native-available-returns-false"><code class="docutils literal notranslate"><span class="pre">ImportError:</span> <span class="pre">cannot</span> <span class="pre">import</span> <span class="pre">name</span> <span class="pre">'torchfx_ext'</span></code> (or <code class="docutils literal notranslate"><span class="pre">is_native_available()</span></code> returns <code class="docutils literal notranslate"><span class="pre">False</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#source-install-fails-with-cmake-command-not-found">Source install fails with <code class="docutils literal notranslate"><span class="pre">cmake:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-kernels-not-compiled-cpu-only-build-gpu-available">CUDA kernels not compiled (CPU-only build, GPU available)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-conflicts-with-uv">Dependency conflicts with uv</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#audio-backend-issues">Audio backend issues</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next Steps</a></li>

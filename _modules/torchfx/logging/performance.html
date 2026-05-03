@@ -890,15 +890,17 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Basic usage:</span>
 
 <span class="sd">    &gt;&gt;&gt; from torchfx.logging import log_performance</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx.filter import LoButterworth</span>
+<span class="sd">    &gt;&gt;&gt; lpf = LoButterworth(8000, order=2)</span>
 <span class="sd">    &gt;&gt;&gt; with log_performance(&quot;filter_chain&quot;):</span>
-<span class="sd">    ...     result = wave | filter1 | filter2</span>
-<span class="sd">    # Logs: &quot;filter_chain completed in 0.045s&quot;</span>
+<span class="sd">    ...     result = wave | lpf  # logs e.g. &quot;filter_chain completed in 0.045s&quot;</span>
 
 <span class="sd">    Capture timing information:</span>
 
 <span class="sd">    &gt;&gt;&gt; with log_performance(&quot;processing&quot;) as timing:</span>
-<span class="sd">    ...     result = wave | effect</span>
-<span class="sd">    &gt;&gt;&gt; print(f&quot;Took {timing[&#39;elapsed_seconds&#39;]:.3f}s&quot;)</span>
+<span class="sd">    ...     result = wave | lpf</span>
+<span class="sd">    &gt;&gt;&gt; isinstance(timing[&quot;elapsed_seconds&quot;], float)</span>
+<span class="sd">    True</span>
 
 <span class="sd">    With custom logger:</span>
 
@@ -943,16 +945,17 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Basic usage with automatic naming:</span>
 
 <span class="sd">    &gt;&gt;&gt; from torchfx.logging import LogPerformance</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx.filter import LoButterworth</span>
 <span class="sd">    &gt;&gt;&gt; @LogPerformance()</span>
-<span class="sd">    ... def process_audio(wave):</span>
-<span class="sd">    ...     return wave | filter1 | filter2</span>
-<span class="sd">    # Each call logs: &quot;process_audio completed in X.XXXs&quot;</span>
+<span class="sd">    ... def process_audio(w):</span>
+<span class="sd">    ...     return w | LoButterworth(8000, order=2)</span>
+<span class="sd">    &gt;&gt;&gt; _ = process_audio(wave)  # logs e.g. &quot;process_audio completed in 0.001s&quot;</span>
 
 <span class="sd">    Custom operation name:</span>
 
 <span class="sd">    &gt;&gt;&gt; @LogPerformance(&quot;audio_processing_pipeline&quot;)</span>
-<span class="sd">    ... def process(wave):</span>
-<span class="sd">    ...     return wave | filter</span>
+<span class="sd">    ... def process(w):</span>
+<span class="sd">    ...     return w | LoButterworth(8000, order=2)</span>
 
 <span class="sd">    With custom logger:</span>
 

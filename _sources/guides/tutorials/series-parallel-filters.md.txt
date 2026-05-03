@@ -115,11 +115,11 @@ wave = fx.Wave.from_file("vocal.wav")
 # Multi-stage vocal processing chain
 processed = (
     wave
-    | iir.HiButterworth(cutoff=80, order=2)          # Remove rumble
-    | iir.PeakingEQ(freq=3000, gain_db=3, q=1.0)     # Presence boost
-    | iir.PeakingEQ(freq=200, gain_db=-2, q=0.7)     # Reduce muddiness
-    | fx.effect.Compressor(threshold=0.5, ratio=4.0) # Dynamic control
-    | fx.effect.Normalize(peak=0.95)                 # Final normalization
+    | iir.HiButterworth(cutoff=80, order=2)            # Remove rumble
+    | iir.ParametricEQ(frequency=3000, gain=3, q=1.0)  # Presence boost
+    | iir.ParametricEQ(frequency=200, gain=-2, q=0.7)  # Reduce muddiness
+    | fx.effect.Gain(0.7, gain_type="amplitude")       # Trim level
+    | fx.effect.Normalize(peak=0.95)                   # Final normalization
 )
 ```
 
@@ -245,10 +245,13 @@ from torchfx.filter import iir
 
 wave = fx.Wave.from_file("audio.wav")
 
-# Three-way parallel combination
+# Three-way parallel combination. There is no standalone bandpass filter
+# class -- synthesize a band by chaining a high-pass and a low-pass.
+mid_band = iir.HiButterworth(500, order=2) | iir.LoButterworth(2000, order=2)
+
 multiband = (
     iir.LoButterworth(500, order=4) +      # Low band
-    iir.BandPass(500, 2000, order=2) +     # Mid band
+    mid_band +                             # Mid band
     iir.HiButterworth(2000, order=4)       # High band
 )
 
@@ -451,18 +454,17 @@ wave = fx.Wave.from_file("audio.wav")
 processed = wave | effect_chain
 ```
 
-You can also mix TorchFX filters with torchaudio transforms:
+You can also mix TorchFX filters with `torch.nn.Module` instances from any other PyTorch ecosystem library (e.g., torchaudio transforms, if installed separately). TorchFX's pipe operator forwards the underlying tensor through any `nn.Module`:
 
 ```python
-import torchaudio.transforms as T
 from torchfx.filter import iir
 
 processed = (
     wave
     | iir.LoButterworth(100, order=2)
     | iir.HiButterworth(2000, order=2) + iir.HiChebyshev1(2000, order=2)
-    | T.Vol(0.5)  # torchaudio volume transform
-    | fx.effect.Reverb()  # torchfx reverb effect
+    | fx.effect.Gain(0.5, gain_type="amplitude")  # -6 dB
+    | fx.effect.Reverb()
 )
 ```
 
@@ -485,12 +487,12 @@ processed = (
 
     # Parallel EQ boosts for presence and air
     | (
-        iir.PeakingEQ(freq=3000, gain_db=3, q=1.0) +   # Presence
-        iir.PeakingEQ(freq=10000, gain_db=2, q=0.7)    # Air
+        iir.ParametricEQ(frequency=3000, gain=3, q=1.0) +   # Presence
+        iir.ParametricEQ(frequency=10000, gain=2, q=0.7)    # Air
     )
 
-    # Dynamics and final polish
-    | fx.effect.Compressor(threshold=0.5, ratio=4.0)
+    # Trim level and normalize
+    | fx.effect.Gain(0.7, gain_type="amplitude")
     | fx.effect.Normalize(peak=0.95)
 )
 ```
@@ -503,9 +505,15 @@ from torchfx.filter import iir
 
 wave = fx.Wave.from_file("master.wav")
 
-# Three-band processing
+# Three-band processing. There is no standalone bandpass filter --
+# synthesize the mid band from a high-pass + low-pass cascade.
 low = wave | iir.LoButterworth(200, order=4) | fx.effect.Gain(1.2)
-mid = wave | iir.BandPass(200, 2000, order=2) | fx.effect.Compressor(0.6, 3.0)
+mid = (
+    wave
+    | iir.HiButterworth(200, order=2)
+    | iir.LoButterworth(2000, order=2)
+    | fx.effect.Gain(0.8, gain_type="amplitude")
+)
 high = wave | iir.HiButterworth(2000, order=4) | fx.effect.Gain(1.1)
 
 # Recombine bands

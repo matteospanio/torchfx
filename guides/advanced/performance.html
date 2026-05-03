@@ -836,6 +836,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -1559,14 +1560,14 @@ window.runMermaid = runMermaid;</script>
         end
 
         subgraph Setup[&quot;IIR-Specific Setup&quot;]
-            Compute[&quot;compute_coefficients()&lt;br/&gt;Design b, a coefficients&quot;]
-            MoveCoeff[&quot;move_coeff('cuda'/'cpu')&lt;br/&gt;Transfer to device&quot;]
+            Compute[&quot;compute_coefficients()&lt;br/&gt;Design SOS sections&quot;]
+            DeviceMove[&quot;fchain.to('cuda'/'cpu')&lt;br/&gt;Standard nn.Module transfer&quot;]
         end
 
         subgraph Backends[&quot;Execution Backends&quot;]
             GPU[&quot;GPU: fchain(wave.ys)&quot;]
             CPU[&quot;CPU: fchain(wave.ys)&quot;]
-            SciPy[&quot;SciPy: lfilter(b, a, signal)&quot;]
+            SciPy[&quot;SciPy: sosfilt(sos, signal)&quot;]
         end
 
         Input --&gt; F1
@@ -1575,9 +1576,9 @@ window.runMermaid = runMermaid;</script>
         F3 --&gt; F4
 
         F1 --&gt; Compute
-        Compute --&gt; MoveCoeff
-        MoveCoeff --&gt; GPU
-        MoveCoeff --&gt; CPU
+        Compute --&gt; DeviceMove
+        DeviceMove --&gt; GPU
+        DeviceMove --&gt; CPU
 
         F1 --&gt; SciPy
     end
@@ -1589,7 +1590,7 @@ window.runMermaid = runMermaid;</script>
 </section>
 <section id="iir-coefficient-management">
 <h3>IIR Coefficient Management<a class="headerlink" href="#iir-coefficient-management" title="Link to this heading">#</a></h3>
-<p>Unlike FIR filters, IIR filters have both numerator (<code class="docutils literal notranslate"><span class="pre">b</span></code>) and denominator (<code class="docutils literal notranslate"><span class="pre">a</span></code>) coefficients that must be explicitly managed:</p>
+<p>IIR filters store their coefficients as second-order sections (SOS). Standard <code class="docutils literal notranslate"><span class="pre">nn.Module.to(device)</span></code> moves both module parameters and the cached SOS tensor to the target device — no separate coefficient transfer step is required:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">HiButterworth</span><span class="p">,</span> <span class="n">LoButterworth</span>
@@ -1602,27 +1603,17 @@ window.runMermaid = runMermaid;</script>
     <span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">SAMPLE_RATE</span><span class="p">),</span>
 <span class="p">)</span>
 
-<span class="c1"># Move wave and module to GPU</span>
+<span class="c1"># Move wave and chain to GPU -- coefficients move with the chain.</span>
 <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
 <span class="n">fchain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
 
-<span class="c1"># IIR-specific: compute and move coefficients</span>
-<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
-    <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>  <span class="c1"># Design b, a coefficients</span>
-    <span class="n">f</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>       <span class="c1"># Move coefficients to GPU</span>
-
-<span class="c1"># Now ready for GPU processing</span>
+<span class="c1"># Process on GPU</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">fchain</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Two-Step Device Transfer</strong>:</p>
-<ol class="arabic simple">
-<li><p><strong>Module transfer</strong>: <code class="docutils literal notranslate"><span class="pre">fchain.to(&quot;cuda&quot;)</span></code> moves module parameters</p></li>
-<li><p><strong>Coefficient transfer</strong>: <code class="docutils literal notranslate"><span class="pre">f.move_coeff(&quot;cuda&quot;)</span></code> moves filter coefficients</p></li>
-</ol>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>For IIR filters, you must <strong>both</strong> move the module to the device <strong>and</strong> call <code class="xref py py-meth docutils literal notranslate"><span class="pre">move_coeff()</span></code>. Forgetting the second step will cause runtime errors.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.5.1: </span>SOS coefficients replaced the transfer-function <code class="docutils literal notranslate"><span class="pre">(b,</span> <span class="pre">a)</span></code> form. Filter
+device transfer is performed via <code class="docutils literal notranslate"><span class="pre">nn.Module.to(device)</span></code>.</p>
 </div>
 </section>
 <section id="iir-vs-fir-performance-trade-offs">
@@ -1732,39 +1723,32 @@ window.runMermaid = runMermaid;</script>
 </section>
 <section id="native-extension-architecture">
 <h2>Native Extension Architecture<a class="headerlink" href="#native-extension-architecture" title="Link to this heading">#</a></h2>
-<p>TorchFX includes a JIT-compiled C++/CUDA native extension that dramatically accelerates stateful IIR filter processing. The extension is compiled automatically on first use and cached in <code class="docutils literal notranslate"><span class="pre">~/.cache/torch_extensions/</span></code>.</p>
+<p>TorchFX ships a precompiled C++/CUDA native extension (<code class="docutils literal notranslate"><span class="pre">torchfx_ext</span></code>) that powers the IIR cascade and delay-line kernels. The extension is compiled at install time by scikit-build-core + CMake (see <a class="reference internal" href="../getting-started/installation.html#build-system"><span class="std std-ref">Build System</span></a>) and bundled into the wheel.</p>
 <section id="how-it-works">
 <h3>How It Works<a class="headerlink" href="#how-it-works" title="Link to this heading">#</a></h3>
-<p>IIR filters use a two-phase processing strategy:</p>
-<ol class="arabic simple">
-<li><p><strong>First call (stateless)</strong>: Uses <code class="docutils literal notranslate"><span class="pre">torchaudio.functional.lfilter</span></code> — fast, but assumes zero initial state.</p></li>
-<li><p><strong>Subsequent calls (stateful)</strong>: Carries filter state across calls for streaming/chunked processing. This path dispatches to the native C++ extension when available.</p></li>
-</ol>
 <p>The native extension provides:</p>
 <ul class="simple">
-<li><p><strong>CPU</strong>: Tight C++ loops with direct memory accessors (compiled from <code class="docutils literal notranslate"><span class="pre">_csrc/cpu/iir_cpu.cpp</span></code>)</p></li>
-<li><p><strong>CUDA</strong>: Parallel prefix scan algorithm for biquad and SOS cascades (compiled from <code class="docutils literal notranslate"><span class="pre">_csrc/cuda/</span></code>)</p></li>
+<li><p><strong>CPU</strong>: tight C++ loops with direct memory accessors (compiled from <code class="docutils literal notranslate"><span class="pre">_csrc/cpu/iir_cpu.cpp</span></code> and <code class="docutils literal notranslate"><span class="pre">_csrc/cpu/delay_cpu.cpp</span></code>)</p></li>
+<li><p><strong>CUDA</strong>: a Blelloch parallel-scan kernel for biquad and SOS cascades, plus a delay-line kernel (compiled from <code class="docutils literal notranslate"><span class="pre">_csrc/cuda/</span></code>)</p></li>
 </ul>
+<p><code class="docutils literal notranslate"><span class="pre">torchfx._ops</span></code> dispatches every IIR/biquad/delay forward call to one of these kernels based on the input tensor’s device. The threshold <code class="docutils literal notranslate"><span class="pre">PARALLEL_SCAN_THRESHOLD</span></code> (default 2048 samples) decides when the CUDA parallel scan beats the sequential C++ kernel.</p>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p>The native extension compiles on <strong>both CPU-only and CUDA-equipped machines</strong>. A CUDA toolkit is not required — the CPU C++ kernel alone provides ~2400x speedup over the pure-PyTorch fallback for stateful IIR processing.</p>
+<p>The extension is <strong>required</strong>. Wheel installs (Linux x86_64, macOS Intel/Apple Silicon, and Windows x86_64 across Python 3.10–3.14) ship the compiled extension; source installs build it during <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code>. See <a class="reference internal" href="../getting-started/installation.html#system-dependencies-source-builds"><span class="std std-ref">System dependencies (source builds)</span></a> for build dependencies.</p>
 </div>
-</section>
-<section id="fallback-strategy">
-<h3>Fallback Strategy<a class="headerlink" href="#fallback-strategy" title="Link to this heading">#</a></h3>
-<p>If the native extension fails to compile (e.g., missing C++ compiler), TorchFX falls back to a vectorized pure-PyTorch implementation that uses <code class="docutils literal notranslate"><span class="pre">lfilter</span></code> with a zero-state/zero-input decomposition. This fallback is ~100-500x faster than a naive sample-by-sample loop, though slower than the C++ kernel.</p>
 </section>
 <section id="verifying-extension-status">
 <h3>Verifying Extension Status<a class="headerlink" href="#verifying-extension-status" title="Link to this heading">#</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">_load_extension</span>
+<p>Use the public <code class="docutils literal notranslate"><span class="pre">is_native_available()</span></code> helper:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
 
-<span class="n">ext</span> <span class="o">=</span> <span class="n">_load_extension</span><span class="p">()</span>
-<span class="k">if</span> <span class="n">ext</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Native extension loaded successfully&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">torchfx</span><span class="o">.</span><span class="n">is_native_available</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Native extension loaded -- IIR / biquad / delay run on torchfx_ext.&quot;</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using PyTorch fallback (install a C++ compiler for best performance)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Native extension missing -- the install is broken.&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>A <code class="docutils literal notranslate"><span class="pre">False</span></code> return value indicates a broken install (the extension didn’t compile or didn’t get bundled into the wheel). See the <a class="reference internal" href="../getting-started/installation.html#troubleshooting"><span class="std std-ref">Troubleshooting</span></a> section of the installation guide.</p>
 </section>
 </section>
 <section id="performance-optimization-guidelines">
@@ -1864,13 +1848,9 @@ window.runMermaid = runMermaid;</script>
 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
     <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
 
-<span class="c1"># For IIR filters, also move coefficients to device</span>
+<span class="c1"># Move chain to target device -- coefficients move with it.</span>
 <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
 <span class="n">fchain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s1">&#39;move_coeff&#39;</span><span class="p">):</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 
 <span class="c1"># Process multiple files without re-computing coefficients</span>
 <span class="n">audio_files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;song1.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;song2.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;song3.wav&quot;</span><span class="p">]</span>
@@ -2080,11 +2060,6 @@ window.runMermaid = runMermaid;</script>
 <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
     <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
     <span class="n">pipeline</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
-
-    <span class="c1"># Move IIR coefficients if needed</span>
-    <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">pipeline</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s1">&#39;move_coeff&#39;</span><span class="p">):</span>
-            <span class="n">module</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
 
     <span class="n">gpu_time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">pipeline</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="n">REP</span><span class="p">)</span>
 
@@ -2374,10 +2349,9 @@ window.runMermaid = runMermaid;</script>
         <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
         <span class="n">fchain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Compute and move coefficients</span>
+        <span class="c1"># Pre-compute coefficients so the timed loop does not pay design cost.</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
 
         <span class="n">gpu_time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span>
             <span class="k">lambda</span><span class="p">:</span> <span class="n">fchain</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">),</span>
@@ -2387,9 +2361,6 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># CPU benchmark</span>
         <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
         <span class="n">fchain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
 
         <span class="n">cpu_time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span>
             <span class="k">lambda</span><span class="p">:</span> <span class="n">fchain</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="p">),</span>
@@ -2535,7 +2506,6 @@ window.runMermaid = runMermaid;</script>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#native-extension-architecture">Native Extension Architecture</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-works">How It Works</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fallback-strategy">Fallback Strategy</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#verifying-extension-status">Verifying Extension Status</a></li>
 </ul>
 </li>

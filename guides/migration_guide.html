@@ -400,6 +400,7 @@
 <li class="toctree-l2"><a class="reference internal" href="developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -484,42 +485,20 @@
 </section>
 </section>
 <hr class="docutils" />
-<section id="version-0-3-x-1-0-0">
-<h2>Version 0.3.x → 1.0.0<a class="headerlink" href="#version-0-3-x-1-0-0" title="Link to this heading">#</a></h2>
+<section id="version-0-5-x-1-0-0">
+<h2>Version 0.5.x → 1.0.0<a class="headerlink" href="#version-0-5-x-1-0-0" title="Link to this heading">#</a></h2>
 <blockquote>
-<div><p><strong>Status</strong>: In development
-<strong>Expected release</strong>: TBD</p>
+<div><p><strong>Status</strong>: 1.0.0 is not yet planned. This section will be updated as the API surface stabilizes toward a 1.0 release.</p>
 </div></blockquote>
-<section id="summary-of-changes">
-<h3>Summary of Changes<a class="headerlink" href="#summary-of-changes" title="Link to this heading">#</a></h3>
-<p>This section will be updated as we approach the 1.0.0 release.</p>
-</section>
-<section id="new-features">
-<h3>New Features<a class="headerlink" href="#new-features" title="Link to this heading">#</a></h3>
+<p>The 0.5.x series consolidates the public API (Wave, FX, FilterChain, the filter and effect modules) on top of a precompiled native extension. Most code written against 0.5.x is expected to keep working in 1.0; the <a class="reference internal" href="api_stability.html"><span class="std std-doc">API Stability</span></a> page tracks which surfaces are considered stable.</p>
+<section id="naming-conventions-current-as-of-0-5-3">
+<h3>Naming conventions (current as of 0.5.3)<a class="headerlink" href="#naming-conventions-current-as-of-0-5-3" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>✅ Wave.save() method for saving audio files (multiple formats)</p></li>
-<li><p>✅ Complete LoShelving filter implementation</p></li>
-<li><p>✅ Professional filters: ParametricEQ, Elliptic filters</p></li>
-<li><p>✅ Metadata support in Wave class</p></li>
+<li><p><strong>Q factor</strong>: lowercase <code class="docutils literal notranslate"><span class="pre">q</span></code> everywhere (<code class="docutils literal notranslate"><span class="pre">Peaking</span></code>, <code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code>, <code class="docutils literal notranslate"><span class="pre">Shelving</span></code>, biquads). Uppercase <code class="docutils literal notranslate"><span class="pre">Q</span></code> was retired as a breaking change in 0.3.0.</p></li>
+<li><p><strong>Frequency</strong>: <code class="docutils literal notranslate"><span class="pre">cutoff</span></code> for lowpass / highpass / shelving filters, <code class="docutils literal notranslate"><span class="pre">frequency</span></code> for <code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code> (center frequency).</p></li>
+<li><p><strong>Gain</strong>: parameter is always called <code class="docutils literal notranslate"><span class="pre">gain</span></code> (no units in the name). For <code class="docutils literal notranslate"><span class="pre">Gain</span></code> and <code class="docutils literal notranslate"><span class="pre">Peaking</span></code>, a sibling parameter (<code class="docutils literal notranslate"><span class="pre">gain_type</span></code> / <code class="docutils literal notranslate"><span class="pre">gain_scale</span></code>) selects between <code class="docutils literal notranslate"><span class="pre">&quot;amplitude&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;db&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code>, etc.</p></li>
+<li><p><strong>Sample rate</strong>: always <code class="docutils literal notranslate"><span class="pre">fs:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></code> (never <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code>).</p></li>
 </ul>
-</section>
-<section id="api-stabilization">
-<h3>API Stabilization<a class="headerlink" href="#api-stabilization" title="Link to this heading">#</a></h3>
-<section id="parameter-naming-consistency">
-<h4>Parameter Naming Consistency<a class="headerlink" href="#parameter-naming-consistency" title="Link to this heading">#</a></h4>
-<p>The following naming conventions are now standardized:</p>
-<ul class="simple">
-<li><p><strong>Q factor</strong>: Use <code class="docutils literal notranslate"><span class="pre">Q</span></code> (uppercase) for <code class="docutils literal notranslate"><span class="pre">Peaking</span></code>, <code class="docutils literal notranslate"><span class="pre">Notch</span></code>, <code class="docutils literal notranslate"><span class="pre">AllPass</span></code></p></li>
-<li><p><strong>Q factor</strong>: Use <code class="docutils literal notranslate"><span class="pre">q</span></code> (lowercase) for <code class="docutils literal notranslate"><span class="pre">Shelving</span></code>, <code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code></p></li>
-<li><p><strong>Frequency</strong>: Use <code class="docutils literal notranslate"><span class="pre">cutoff</span></code> for lowpass/highpass/shelving filters</p></li>
-<li><p><strong>Frequency</strong>: Use <code class="docutils literal notranslate"><span class="pre">frequency</span></code> for <code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code> (center frequency)</p></li>
-<li><p><strong>Gain</strong>: Always accept <code class="docutils literal notranslate"><span class="pre">gain</span></code> parameter with <code class="docutils literal notranslate"><span class="pre">gain_scale</span></code> to specify units</p></li>
-</ul>
-</section>
-<section id="no-breaking-changes">
-<h4>No Breaking Changes<a class="headerlink" href="#no-breaking-changes" title="Link to this heading">#</a></h4>
-<p>All existing code will continue to work without modifications.</p>
-</section>
 </section>
 </section>
 <hr class="docutils" />
@@ -589,19 +568,154 @@
 </section>
 </section>
 <hr class="docutils" />
-<section id="version-0-3-0-current-development">
-<h3>Version 0.3.0 (Current Development)<a class="headerlink" href="#version-0-3-0-current-development" title="Link to this heading">#</a></h3>
+<section id="version-0-5-3-current">
+<h3>Version 0.5.3 (Current)<a class="headerlink" href="#version-0-5-3-current" title="Link to this heading">#</a></h3>
 <section id="changes">
 <h4>Changes<a class="headerlink" href="#changes" title="Link to this heading">#</a></h4>
 <ul class="simple">
-<li><p><strong>Wave class</strong>: Added <code class="docutils literal notranslate"><span class="pre">metadata</span></code> parameter to <code class="docutils literal notranslate"><span class="pre">__init__</span></code> (backward compatible, optional)</p></li>
-<li><p><strong>Wave class</strong>: Added <code class="docutils literal notranslate"><span class="pre">save()</span></code> method (new feature, no breaking changes)</p></li>
-<li><p><strong>Filter naming</strong>: Standardized parameter names (no breaking changes, recommendations only)</p></li>
+<li><p><strong>Build system</strong>: <code class="docutils literal notranslate"><span class="pre">hatchling</span></code> + runtime JIT compilation replaced with <code class="docutils literal notranslate"><span class="pre">scikit-build-core</span></code> + CMake. The C++/CUDA extension now compiles at install time and is bundled into the wheel.</p></li>
+<li><p><strong>Removed pure-PyTorch fallback</strong>: <code class="docutils literal notranslate"><span class="pre">torchfx_ext</span></code> is required. The slow Python fallback paths for stateful IIR and delay are gone.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">setuptools</span></code> dropped from runtime dependencies</strong> (was only needed for the JIT loader).</p></li>
+<li><p><strong>CPU delay kernel</strong>: <code class="docutils literal notranslate"><span class="pre">delay_line_forward</span></code> now dispatches to a C++ kernel on CPU as well as CUDA.</p></li>
 </ul>
 </section>
 <section id="id1">
 <h4>Migration Instructions<a class="headerlink" href="#id1" title="Link to this heading">#</a></h4>
-<p>No migration required. All changes are backward compatible.</p>
+<p>No source-code changes are required. To verify the install picks up the precompiled extension:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
+<span class="k">assert</span> <span class="n">torchfx</span><span class="o">.</span><span class="n">is_native_available</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">is_native_available()</span></code> returns <code class="docutils literal notranslate"><span class="pre">False</span></code> after upgrading, the install is broken — see the installation <a class="reference internal" href="getting-started/installation.html#troubleshooting"><span class="std std-ref">Troubleshooting</span></a> section. The native extension is required and there is no Python fallback path.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="version-0-5-2">
+<h3>Version 0.5.2<a class="headerlink" href="#version-0-5-2" title="Link to this heading">#</a></h3>
+<section id="id2">
+<h4>Changes<a class="headerlink" href="#id2" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">FilterChain</span></code></strong> auto-flattening container, exported from the top-level <code class="docutils literal notranslate"><span class="pre">torchfx</span></code> package: <code class="docutils literal notranslate"><span class="pre">(f1</span> <span class="pre">|</span> <span class="pre">f2)</span> <span class="pre">|</span> <span class="pre">f3</span></code> now produces a flat <code class="docutils literal notranslate"><span class="pre">FilterChain(f1,</span> <span class="pre">f2,</span> <span class="pre">f3)</span></code>.</p></li>
+<li><p><strong>Pipe operator between filters</strong>: <code class="docutils literal notranslate"><span class="pre">f1</span> <span class="pre">|</span> <span class="pre">f2</span></code> now works (previously only <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">f</span></code> was supported).</p></li>
+<li><p><strong>Deferred pipeline with auto-fusion</strong>: <code class="docutils literal notranslate"><span class="pre">Wave.__or__</span></code> accumulates filters lazily and fuses adjacent IIR/biquad sections into a single SOS cascade on materialization. Transparent — numerical results are identical.</p></li>
+</ul>
+</section>
+<section id="id3">
+<h4>Migration Instructions<a class="headerlink" href="#id3" title="Link to this heading">#</a></h4>
+<p>No code changes required; this is a transparent performance optimization.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="version-0-5-1">
+<h3>Version 0.5.1<a class="headerlink" href="#version-0-5-1" title="Link to this heading">#</a></h3>
+<section id="id4">
+<h4>Breaking Changes<a class="headerlink" href="#id4" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>IIR filters now use SOS coefficients exclusively.</strong> Removed <code class="docutils literal notranslate"><span class="pre">IIR.b</span></code>, <code class="docutils literal notranslate"><span class="pre">IIR.a</span></code>, and the dead <code class="docutils literal notranslate"><span class="pre">move_coeff()</span></code>, <code class="docutils literal notranslate"><span class="pre">_compute_ba_from_sos()</span></code>, <code class="docutils literal notranslate"><span class="pre">_bootstrap_state()</span></code>, and <code class="docutils literal notranslate"><span class="pre">_stateful</span></code> flag.</p></li>
+<li><p><strong>Removed <code class="docutils literal notranslate"><span class="pre">a</span></code> / <code class="docutils literal notranslate"><span class="pre">b</span></code> constructor parameters</strong> from <code class="docutils literal notranslate"><span class="pre">Butterworth</span></code> and <code class="docutils literal notranslate"><span class="pre">Chebyshev1</span></code>.</p></li>
+</ul>
+</section>
+<section id="id5">
+<h4>Migration Instructions<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Before 0.5.1: explicit coefficient transfer</span>
+<span class="n">fchain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>   <span class="c1"># AttributeError in 0.5.1+</span>
+
+<span class="c1"># After 0.5.1: standard nn.Module.to() handles everything</span>
+<span class="n">fchain</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you read coefficients off an IIR filter, switch to its SOS representation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Before</span>
+<span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">my_butter</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">my_butter</span><span class="o">.</span><span class="n">a</span>   <span class="c1"># AttributeError</span>
+
+<span class="c1"># After</span>
+<span class="n">sos</span> <span class="o">=</span> <span class="n">my_butter</span><span class="o">.</span><span class="n">_sos</span>              <span class="c1"># [num_sections, 6] tensor</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Biquad</span></code> retains read-only <code class="docutils literal notranslate"><span class="pre">b</span></code> / <code class="docutils literal notranslate"><span class="pre">a</span></code> properties (since 0.5.2) for compatibility with code that inspected biquad coefficients.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="version-0-5-0">
+<h3>Version 0.5.0<a class="headerlink" href="#version-0-5-0" title="Link to this heading">#</a></h3>
+<section id="id6">
+<h4>Changes<a class="headerlink" href="#id6" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>JIT-compiled C++/CUDA native extension</strong> introduced (<code class="docutils literal notranslate"><span class="pre">torchfx._ops</span></code>). At this point compilation happened on first import; this was replaced by install-time compilation in 0.5.3.</p></li>
+<li><p><strong>CUDA kernels</strong> for biquad, SOS cascade, and delay line.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">LogFilterBank</span></code></strong> for logarithmically-spaced frequency band decomposition.</p></li>
+<li><p><strong>FFT-based 1D convolution</strong> for FIR filters via overlap-save.</p></li>
+</ul>
+</section>
+<section id="id7">
+<h4>Migration Instructions<a class="headerlink" href="#id7" title="Link to this heading">#</a></h4>
+<p>No source-code changes required. (Note: if you pinned <code class="docutils literal notranslate"><span class="pre">setuptools</span></code> for the JIT loader, you can drop it in 0.5.3+.)</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="version-0-4-0">
+<h3>Version 0.4.0<a class="headerlink" href="#version-0-4-0" title="Link to this heading">#</a></h3>
+<section id="id8">
+<h4>Changes<a class="headerlink" href="#id8" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>CLI</strong> introduced: <code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">process</span></code>, <code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">play</span></code>, <code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">record</span></code>, <code class="docutils literal notranslate"><span class="pre">torchfx</span> <span class="pre">info</span></code>. Install with the <code class="docutils literal notranslate"><span class="pre">cli</span></code> dependency group.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">torchfx.validation</span></code></strong> module: validators and exception hierarchy.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">torchfx.logging</span></code></strong> module: structured logging and performance timing utilities.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">torchfx.realtime</span></code></strong> module: streaming processors and audio backends.</p></li>
+<li><p><strong>Biquad filters</strong>: LPF, HPF, BPF, peak, notch, all-pass.</p></li>
+</ul>
+</section>
+<section id="id9">
+<h4>Migration Instructions<a class="headerlink" href="#id9" title="Link to this heading">#</a></h4>
+<p>No source-code changes required.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="version-0-3-0">
+<h3>Version 0.3.0<a class="headerlink" href="#version-0-3-0" title="Link to this heading">#</a></h3>
+<section id="id10">
+<h4>Breaking Changes<a class="headerlink" href="#id10" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">Q</span></code> → <code class="docutils literal notranslate"><span class="pre">q</span></code></strong>: all filter Q parameters renamed to lowercase.</p></li>
+</ul>
+</section>
+<section id="id11">
+<h4>Migration Instructions<a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Before</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">Peaking</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">Q</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">gain_scale</span><span class="o">=</span><span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+
+<span class="c1"># After</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">Peaking</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">gain_scale</span><span class="o">=</span><span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="other-changes">
+<h4>Other changes<a class="headerlink" href="#other-changes" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">Wave.save()</span></code>, <code class="docutils literal notranslate"><span class="pre">LoShelving</span></code>, <code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code>, Elliptic filters.</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="version-0-2-0">
+<h3>Version 0.2.0<a class="headerlink" href="#version-0-2-0" title="Link to this heading">#</a></h3>
+<section id="id12">
+<h4>Breaking Changes<a class="headerlink" href="#id12" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>Module rename</strong>: <code class="docutils literal notranslate"><span class="pre">torchfx.effects</span></code> → <code class="docutils literal notranslate"><span class="pre">torchfx.effect</span></code> (singular, to match <code class="docutils literal notranslate"><span class="pre">torchfx.filter</span></code>).</p></li>
+</ul>
+</section>
+<section id="id13">
+<h4>Migration Instructions<a class="headerlink" href="#id13" title="Link to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Before</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effects</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+
+<span class="c1"># After</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+</pre></div>
+</div>
 </section>
 </section>
 </section>
@@ -648,10 +762,11 @@
 <h2>Version-Specific Guides<a class="headerlink" href="#version-specific-guides" title="Link to this heading">#</a></h2>
 <section id="checking-your-version">
 <h3>Checking Your Version<a class="headerlink" href="#checking-your-version" title="Link to this heading">#</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">torchfx</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">version</span><span class="p">(</span><span class="s2">&quot;torchfx&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">torchfx</span></code> does not expose a <code class="docutils literal notranslate"><span class="pre">__version__</span></code> attribute — query it via <code class="docutils literal notranslate"><span class="pre">importlib.metadata</span></code> (standard library since Python 3.8).</p>
 </section>
 <section id="upgrading-safely">
 <h3>Upgrading Safely<a class="headerlink" href="#upgrading-safely" title="Link to this heading">#</a></h3>
@@ -720,14 +835,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#compatibility-guarantees">Compatibility Guarantees</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-3-x-1-0-0">Version 0.3.x → 1.0.0</a><ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-of-changes">Summary of Changes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#new-features">New Features</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api-stabilization">API Stabilization</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-naming-consistency">Parameter Naming Consistency</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#no-breaking-changes">No Breaking Changes</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-5-x-1-0-0">Version 0.5.x → 1.0.0</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#naming-conventions-current-as-of-0-5-3">Naming conventions (current as of 0.5.3)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deprecation-policy">Deprecation Policy</a><ul class="pst-show_toc_level nav section-nav flex-column">
@@ -746,9 +855,40 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#migration-instructions">Migration Instructions</a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-3-0-current-development">Version 0.3.0 (Current Development)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-5-3-current">Version 0.5.3 (Current)</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#changes">Changes</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Migration Instructions</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-5-2">Version 0.5.2</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Changes</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Migration Instructions</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-5-1">Version 0.5.1</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Breaking Changes</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Migration Instructions</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-5-0">Version 0.5.0</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Changes</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">Migration Instructions</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-4-0">Version 0.4.0</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Changes</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">Migration Instructions</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-3-0">Version 0.3.0</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Breaking Changes</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">Migration Instructions</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#other-changes">Other changes</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#version-0-2-0">Version 0.2.0</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">Breaking Changes</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Migration Instructions</a></li>
 </ul>
 </li>
 </ul>

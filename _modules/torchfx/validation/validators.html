@@ -852,22 +852,29 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">--------</span>
 <span class="sd">Validate a sample rate:</span>
 
-<span class="sd">&gt;&gt;&gt; from torchfx.validation import validate_sample_rate</span>
-<span class="sd">&gt;&gt;&gt; validate_sample_rate(44100)  # OK</span>
-<span class="sd">&gt;&gt;&gt; validate_sample_rate(-1)  # Raises InvalidSampleRateError</span>
+<span class="sd">&gt;&gt;&gt; from torchfx.validation import validate_sample_rate, InvalidSampleRateError</span>
+<span class="sd">&gt;&gt;&gt; validate_sample_rate(44100)  # returns silently on success</span>
+<span class="sd">&gt;&gt;&gt; try:</span>
+<span class="sd">...     validate_sample_rate(-1)</span>
+<span class="sd">... except InvalidSampleRateError as exc:</span>
+<span class="sd">...     print(type(exc).__name__)</span>
+<span class="sd">InvalidSampleRateError</span>
 
 <span class="sd">Validate a parameter range:</span>
 
-<span class="sd">&gt;&gt;&gt; from torchfx.validation import validate_range</span>
-<span class="sd">&gt;&gt;&gt; validate_range(0.5, &quot;decay&quot;, min_value=0, max_value=1)  # OK</span>
-<span class="sd">&gt;&gt;&gt; validate_range(1.5, &quot;decay&quot;, min_value=0, max_value=1)  # Raises InvalidRangeError</span>
+<span class="sd">&gt;&gt;&gt; from torchfx.validation import validate_range, InvalidRangeError</span>
+<span class="sd">&gt;&gt;&gt; validate_range(0.5, &quot;decay&quot;, min_value=0, max_value=1)</span>
+<span class="sd">&gt;&gt;&gt; try:</span>
+<span class="sd">...     validate_range(1.5, &quot;decay&quot;, min_value=0, max_value=1)</span>
+<span class="sd">... except InvalidRangeError as exc:</span>
+<span class="sd">...     print(type(exc).__name__)</span>
+<span class="sd">InvalidRangeError</span>
 
 <span class="sd">Validate an audio tensor:</span>
 
-<span class="sd">&gt;&gt;&gt; import torch</span>
 <span class="sd">&gt;&gt;&gt; from torchfx.validation import validate_audio_tensor</span>
-<span class="sd">&gt;&gt;&gt; waveform = torch.randn(2, 44100)</span>
-<span class="sd">&gt;&gt;&gt; validate_audio_tensor(waveform)  # OK</span>
+<span class="sd">&gt;&gt;&gt; waveform = torch.zeros(2, 44100)</span>
+<span class="sd">&gt;&gt;&gt; validate_audio_tensor(waveform)</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 
@@ -943,9 +950,12 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; validate_sample_rate(44100)  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_sample_rate(None, allow_none=True)  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_sample_rate(-1)  # Raises InvalidSampleRateError</span>
+<span class="sd">    &gt;&gt;&gt; validate_sample_rate(44100)</span>
+<span class="sd">    &gt;&gt;&gt; validate_sample_rate(None, allow_none=True)</span>
+<span class="sd">    &gt;&gt;&gt; validate_sample_rate(-1)</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    InvalidSampleRateError: ...</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1001,9 +1011,12 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; validate_positive(1.0, &quot;cutoff&quot;)  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_positive(0, &quot;cutoff&quot;, allow_zero=True)  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_positive(-1, &quot;cutoff&quot;)  # Raises InvalidRangeError</span>
+<span class="sd">    &gt;&gt;&gt; validate_positive(1.0, &quot;cutoff&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; validate_positive(0, &quot;cutoff&quot;, allow_zero=True)</span>
+<span class="sd">    &gt;&gt;&gt; validate_positive(-1, &quot;cutoff&quot;)</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    InvalidRangeError: ...</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">allow_zero</span><span class="p">:</span>
@@ -1062,8 +1075,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; validate_range(0.5, &quot;decay&quot;, min_value=0, max_value=1)  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_range(0, &quot;decay&quot;, min_value=0, max_value=1, min_inclusive=False)  # Raises</span>
+<span class="sd">    &gt;&gt;&gt; validate_range(0.5, &quot;decay&quot;, min_value=0, max_value=1)</span>
+<span class="sd">    &gt;&gt;&gt; validate_range(0, &quot;decay&quot;, min_value=0, max_value=1, min_inclusive=False)</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    InvalidRangeError: ...</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">min_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1137,8 +1153,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; validate_in_set(&quot;amplitude&quot;, &quot;gain_type&quot;, [&quot;amplitude&quot;, &quot;db&quot;, &quot;power&quot;])  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_in_set(&quot;invalid&quot;, &quot;gain_type&quot;, [&quot;amplitude&quot;, &quot;db&quot;, &quot;power&quot;])  # Raises</span>
+<span class="sd">    &gt;&gt;&gt; validate_in_set(&quot;amplitude&quot;, &quot;gain_type&quot;, [&quot;amplitude&quot;, &quot;db&quot;, &quot;power&quot;])</span>
+<span class="sd">    &gt;&gt;&gt; validate_in_set(&quot;invalid&quot;, &quot;gain_type&quot;, [&quot;amplitude&quot;, &quot;db&quot;, &quot;power&quot;])</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    InvalidParameterError: ...</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_values</span><span class="p">:</span>
@@ -1329,8 +1348,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; validate_type(1.0, &quot;gain&quot;, (int, float))  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_type(&quot;hello&quot;, &quot;gain&quot;, (int, float))  # Raises InvalidTypeError</span>
+<span class="sd">    &gt;&gt;&gt; validate_type(1.0, &quot;gain&quot;, (int, float))</span>
+<span class="sd">    &gt;&gt;&gt; validate_type(&quot;hello&quot;, &quot;gain&quot;, (int, float))</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    InvalidTypeError: ...</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expected_types</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
@@ -1377,8 +1399,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; validate_cutoff_frequency(1000, 44100)  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_cutoff_frequency(30000, 44100)  # Raises (above Nyquist)</span>
+<span class="sd">    &gt;&gt;&gt; validate_cutoff_frequency(1000, 44100)</span>
+<span class="sd">    &gt;&gt;&gt; validate_cutoff_frequency(30000, 44100)  # above Nyquist</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    InvalidRangeError: ...</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">validate_positive</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">parameter_name</span><span class="p">)</span>
@@ -1428,8 +1453,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; validate_filter_order(4)  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_filter_order(0)  # Raises InvalidRangeError</span>
+<span class="sd">    &gt;&gt;&gt; validate_filter_order(4)</span>
+<span class="sd">    &gt;&gt;&gt; validate_filter_order(0)</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    InvalidRangeError: ...</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">validate_type</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">parameter_name</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
@@ -1471,8 +1499,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; validate_q_factor(0.707)  # OK</span>
-<span class="sd">    &gt;&gt;&gt; validate_q_factor(0)  # Raises InvalidRangeError</span>
+<span class="sd">    &gt;&gt;&gt; validate_q_factor(0.707)</span>
+<span class="sd">    &gt;&gt;&gt; validate_q_factor(0)</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    InvalidRangeError: ...</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">validate_positive</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">parameter_name</span><span class="p">)</span>

@@ -790,9 +790,12 @@ Default is False.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_sample_rate</span><span class="p">(</span><span class="mi">44100</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_sample_rate</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_sample_rate</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Raises InvalidSampleRateError</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_sample_rate</span><span class="p">(</span><span class="mi">44100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_sample_rate</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_sample_rate</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">InvalidSampleRateError</span>: <span class="n">...</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -820,9 +823,12 @@ Default is False.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_positive</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_positive</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">,</span> <span class="n">allow_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_positive</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">)</span>  <span class="c1"># Raises InvalidRangeError</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_positive</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_positive</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">,</span> <span class="n">allow_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_positive</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;cutoff&quot;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">InvalidRangeError</span>: <span class="n">...</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -850,8 +856,11 @@ Default is False.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_range</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;decay&quot;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;decay&quot;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_inclusive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Raises</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_range</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;decay&quot;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;decay&quot;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_inclusive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">InvalidRangeError</span>: <span class="n">...</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -876,8 +885,11 @@ Default is False.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_in_set</span><span class="p">(</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;gain_type&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">])</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_in_set</span><span class="p">(</span><span class="s2">&quot;invalid&quot;</span><span class="p">,</span> <span class="s2">&quot;gain_type&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">])</span>  <span class="c1"># Raises</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_in_set</span><span class="p">(</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;gain_type&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_in_set</span><span class="p">(</span><span class="s2">&quot;invalid&quot;</span><span class="p">,</span> <span class="s2">&quot;gain_type&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">])</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">InvalidParameterError</span>: <span class="n">...</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -971,8 +983,11 @@ Default is False.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_type</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;gain&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_type</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="s2">&quot;gain&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>  <span class="c1"># Raises InvalidTypeError</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_type</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;gain&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_type</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="s2">&quot;gain&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">InvalidTypeError</span>: <span class="n">...</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -1001,8 +1016,11 @@ Default is False.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_cutoff_frequency</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_cutoff_frequency</span><span class="p">(</span><span class="mi">30000</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># Raises (above Nyquist)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_cutoff_frequency</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_cutoff_frequency</span><span class="p">(</span><span class="mi">30000</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># above Nyquist</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">InvalidRangeError</span>: <span class="n">...</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -1031,8 +1049,11 @@ Default is False.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_filter_order</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_filter_order</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Raises InvalidRangeError</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_filter_order</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_filter_order</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">InvalidRangeError</span>: <span class="n">...</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -1058,8 +1079,11 @@ Default is False.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_q_factor</span><span class="p">(</span><span class="mf">0.707</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_q_factor</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Raises InvalidRangeError</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">validate_q_factor</span><span class="p">(</span><span class="mf">0.707</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_q_factor</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">InvalidRangeError</span>: <span class="n">...</span>
 </pre></div>
 </div>
 </dd></dl>

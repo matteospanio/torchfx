@@ -404,6 +404,17 @@
                 <article class="bd-article">
                    <section id="performance-baseline-2026-04-11">
 <h1>Performance baseline — 2026-04-11<a class="headerlink" href="#performance-baseline-2026-04-11" title="Link to this heading">#</a></h1>
+<div class="note admonition">
+<p class="admonition-title">Historical document</p>
+<p>This page is the <strong>Phase 0</strong> snapshot from April 2026 (TorchFX 0.5.0 era).
+Numbers and APIs frozen here predate the work that landed in 0.5.1 (SOS-only
+IIR), 0.5.2 (deferred pipeline + auto-fusion), and 0.5.3 (build-system
+migration, removal of the pure-PyTorch fallback). In particular, references
+to JIT compilation on first import, <code class="docutils literal notranslate"><span class="pre">move_coeff()</span></code>, and the pure-PyTorch
+fallback describe the pre-0.5.3 world. They are kept for historical context
+and to support diffing against the current state. For the current
+architecture, see <a class="reference internal" href="../guides/advanced/performance.html"><span class="doc">Performance Optimization and Benchmarking</span></a> and <a class="reference internal" href="../blog/2026-05-03-release-053.html"><span class="doc">TorchFX 0.5.3: Build System Overhaul &amp; Prebuilt Wheels</span></a>.</p>
+</div>
 <p>This document captures the <strong>Phase 0</strong> baseline of the TorchFX performance
 campaign described in the master plan. It records the numbers measured <em>before</em>
 any optimization work so every follow-up PR has a concrete before/after.</p>

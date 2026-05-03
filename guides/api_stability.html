@@ -400,6 +400,7 @@
 <li class="toctree-l2"><a class="reference internal" href="developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -538,14 +539,16 @@
 </section>
 <section id="public-api-surface">
 <h2>Public API Surface<a class="headerlink" href="#public-api-surface" title="Link to this heading">#</a></h2>
-<section id="stable-apis-v0-3-0">
-<h3>Stable APIs (v0.3.0+)<a class="headerlink" href="#stable-apis-v0-3-0" title="Link to this heading">#</a></h3>
+<section id="stable-apis-v0-5-x">
+<h3>Stable APIs (v0.5.x)<a class="headerlink" href="#stable-apis-v0-5-x" title="Link to this heading">#</a></h3>
 <p>These APIs are considered stable and will follow the versioning policy:</p>
-<section id="core-classes">
-<h4>Core Classes<a class="headerlink" href="#core-classes" title="Link to this heading">#</a></h4>
+<section id="top-level-torchfx">
+<h4>Top-level (torchfx)<a class="headerlink" href="#top-level-torchfx" title="Link to this heading">#</a></h4>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">Wave</span></code> - Audio waveform representation</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">FX</span></code> - Base effect class</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FilterChain</span></code> - Auto-flattening sequential container (since 0.5.2)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_native_available()</span></code> - Native extension status check</p></li>
 </ul>
 </section>
 <section id="filters-torchfx-filter">
@@ -558,9 +561,14 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">Chebyshev2</span></code>, <code class="docutils literal notranslate"><span class="pre">HiChebyshev2</span></code>, <code class="docutils literal notranslate"><span class="pre">LoChebyshev2</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Elliptic</span></code>, <code class="docutils literal notranslate"><span class="pre">HiElliptic</span></code>, <code class="docutils literal notranslate"><span class="pre">LoElliptic</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">LinkwitzRiley</span></code>, <code class="docutils literal notranslate"><span class="pre">HiLinkwitzRiley</span></code>, <code class="docutils literal notranslate"><span class="pre">LoLinkwitzRiley</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">HiShelving</span></code>, <code class="docutils literal notranslate"><span class="pre">LoShelving</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Notch</span></code>, <code class="docutils literal notranslate"><span class="pre">AllPass</span></code>, <code class="docutils literal notranslate"><span class="pre">Peaking</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Shelving</span></code>, <code class="docutils literal notranslate"><span class="pre">HiShelving</span></code>, <code class="docutils literal notranslate"><span class="pre">LoShelving</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code>, <code class="docutils literal notranslate"><span class="pre">Peaking</span></code></p></li>
+</ul>
+</li>
+<li><p>Biquad filters:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Biquad</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadLPF</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadHPF</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadBPF</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadNotch</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadAllPass</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Notch</span></code>, <code class="docutils literal notranslate"><span class="pre">AllPass</span></code></p></li>
 </ul>
 </li>
 <li><p>FIR Filters:</p>
@@ -568,13 +576,29 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">FIR</span></code>, <code class="docutils literal notranslate"><span class="pre">DesignableFIR</span></code></p></li>
 </ul>
 </li>
+<li><p>Filterbanks and fused cascades:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">LogFilterBank</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FusedSOSCascade</span></code> (the fused container produced by the deferred pipeline)</p></li>
+</ul>
+</li>
 </ul>
 </section>
 <section id="effects-torchfx-effect">
 <h4>Effects (torchfx.effect)<a class="headerlink" href="#effects-torchfx-effect" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Gain</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Normalize</span></code> (and its strategy classes: <code class="docutils literal notranslate"><span class="pre">PercentileNormalization</span></code>, <code class="docutils literal notranslate"><span class="pre">CustomNormalizationStrategy</span></code>, etc.)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Reverb</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Delay</span></code></p></li>
+</ul>
+</section>
+<section id="validation-logging-realtime">
+<h4>Validation, logging, realtime<a class="headerlink" href="#validation-logging-realtime" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx.validation</span></code> — validators (<code class="docutils literal notranslate"><span class="pre">validate_positive</span></code>, <code class="docutils literal notranslate"><span class="pre">validate_range</span></code>, <code class="docutils literal notranslate"><span class="pre">validate_sample_rate</span></code>, <code class="docutils literal notranslate"><span class="pre">validate_in_set</span></code>) and exception hierarchy (<code class="docutils literal notranslate"><span class="pre">TorchFXError</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidRangeError</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidSampleRateError</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidShapeError</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidTypeError</span></code>, <code class="docutils literal notranslate"><span class="pre">AudioProcessingError</span></code>, <code class="docutils literal notranslate"><span class="pre">CoefficientComputationError</span></code>, <code class="docutils literal notranslate"><span class="pre">FilterInstabilityError</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx.logging</span></code> — <code class="docutils literal notranslate"><span class="pre">enable_logging</span></code>, <code class="docutils literal notranslate"><span class="pre">enable_debug_logging</span></code>, <code class="docutils literal notranslate"><span class="pre">disable_logging</span></code>, <code class="docutils literal notranslate"><span class="pre">get_logger</span></code>, <code class="docutils literal notranslate"><span class="pre">log_performance</span></code>, <code class="docutils literal notranslate"><span class="pre">LogPerformance</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torchfx.realtime</span></code> — streaming processor and audio backends (the <code class="docutils literal notranslate"><span class="pre">sounddevice</span></code> backend requires the <code class="docutils literal notranslate"><span class="pre">realtime</span></code> dependency group).</p></li>
 </ul>
 </section>
 </section>
@@ -585,13 +609,11 @@
 <p>These parameter names will not change:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">fs</span></code> - Sampling frequency (Hz)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">cutoff</span></code> - Cutoff frequency for filters (Hz)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">frequency</span></code> - Center frequency for parametric EQ (Hz)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cutoff</span></code> - Cutoff frequency for lowpass / highpass / shelving filters (Hz)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">frequency</span></code> - Center frequency for parametric / peaking filters (Hz)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">order</span></code> - Filter order</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gain</span></code> - Gain value</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gain_scale</span></code> - Gain units (“linear” or “db”)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Q</span></code> - Quality factor (uppercase for Peaking, Notch, AllPass)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">q</span></code> - Quality factor (lowercase for Shelving, ParametricEQ)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gain</span></code> - Gain value (units selected by a sibling <code class="docutils literal notranslate"><span class="pre">gain_type</span></code> or <code class="docutils literal notranslate"><span class="pre">gain_scale</span></code> parameter)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">q</span></code> - Quality factor (lowercase, applied uniformly across all filters since 0.3.0)</p></li>
 </ul>
 </section>
 </section>
@@ -811,10 +833,11 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#public-api-surface">Public API Surface</a><ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stable-apis-v0-3-0">Stable APIs (v0.3.0+)</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#core-classes">Core Classes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stable-apis-v0-5-x">Stable APIs (v0.5.x)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#top-level-torchfx">Top-level (torchfx)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#filters-torchfx-filter">Filters (torchfx.filter)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#effects-torchfx-effect">Effects (torchfx.effect)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-logging-realtime">Validation, logging, realtime</a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-stability">Parameter Stability</a><ul class="nav section-nav flex-column">

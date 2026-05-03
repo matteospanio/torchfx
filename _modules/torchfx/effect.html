@@ -969,7 +969,7 @@ window.runMermaid = runMermaid;</script>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_gain_db</span><span class="p">(</span><span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">gain_db</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply dB gain to waveform (replaces torchaudio.functional.gain).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a dB gain to ``waveform``: returns ``waveform * 10 ** (gain_db / 20)``.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">gain_db</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">waveform</span>
     <span class="k">return</span> <span class="n">waveform</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">gain_db</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
@@ -1113,34 +1113,30 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    or power scaling. An optional clamping parameter prevents clipping artifacts</span>
 <span class="sd">    by limiting output values to [-1.0, 1.0].</span>
 
-<span class="sd">    This effect extends torchaudio.transforms.Vol by adding the clamp parameter</span>
-<span class="sd">    for better control over output dynamic range.</span>
-
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    gain : float</span>
 <span class="sd">        The gain factor to apply to the waveform. Must be positive for</span>
-<span class="sd">        &quot;amplitude&quot; and &quot;power&quot; gain types. Can be negative for &quot;db&quot; type.</span>
-<span class="sd">    gain_type : str, optional</span>
-<span class="sd">        The type of gain to apply. Default is &quot;amplitude&quot;.</span>
+<span class="sd">        ``&quot;amplitude&quot;`` and ``&quot;power&quot;`` gain types. Can be negative for</span>
+<span class="sd">        ``&quot;db&quot;``.</span>
+<span class="sd">    gain_type : {&quot;amplitude&quot;, &quot;db&quot;, &quot;power&quot;}, default=&quot;amplitude&quot;</span>
+<span class="sd">        How the ``gain`` value is interpreted:</span>
 
-<span class="sd">        - &quot;amplitude&quot;: Direct multiplication by gain factor</span>
-<span class="sd">        - &quot;db&quot;: Decibel-based gain using torchaudio.functional.gain</span>
-<span class="sd">        - &quot;power&quot;: Power-based gain converted to dB internally</span>
-<span class="sd">    clamp : bool, optional</span>
-<span class="sd">        If True, clamps the output waveform to the range [-1.0, 1.0] to</span>
-<span class="sd">        prevent clipping. Default is False.</span>
+<span class="sd">        - ``&quot;amplitude&quot;``: direct multiplication by ``gain``</span>
+<span class="sd">        - ``&quot;db&quot;``: gain in decibels (output multiplied by ``10 ** (gain/20)``)</span>
+<span class="sd">        - ``&quot;power&quot;``: power ratio, converted to dB internally</span>
+<span class="sd">    clamp : bool, default=False</span>
+<span class="sd">        If True, clamp the output waveform to ``[-1.0, 1.0]`` after applying</span>
+<span class="sd">        the gain.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
-<span class="sd">        If gain is negative when gain_type is &quot;amplitude&quot; or &quot;power&quot;.</span>
+<span class="sd">        If gain is negative when gain_type is ``&quot;amplitude&quot;`` or ``&quot;power&quot;``.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    torchaudio.transforms.Vol : Original transform this effect is based on</span>
-<span class="sd">    Normalize : Amplitude normalization with multiple strategies</span>
-<span class="sd">    torchaudio.functional.gain : Function used for dB and power gain</span>
+<span class="sd">    Normalize : Amplitude normalization with multiple strategies.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -1152,14 +1148,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    **Clamping:**</span>
 
-<span class="sd">    When clamp=True, the final output is constrained:</span>
+<span class="sd">    When ``clamp=True`` the output is constrained:</span>
 <span class="sd">    :math:`y[n] = \text{clip}(y[n], -1.0, 1.0)`</span>
 
-<span class="sd">    The @torch.no_grad() decorator disables gradient computation for efficiency</span>
-<span class="sd">    during inference-only operations.</span>
-
-<span class="sd">    This class is based on torchaudio.transforms.Vol, licensed under the</span>
-<span class="sd">    BSD 2-Clause License. See licenses.torchaudio.BSD-2-Clause.txt for details.</span>
+<span class="sd">    Coefficient formulas are adapted from ``torchaudio.transforms.Vol``,</span>
+<span class="sd">    BSD 2-Clause License (see ``licenses.torchaudio.BSD-2-Clause.txt``).</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -1815,21 +1808,9 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">waveform</span>
 
-        <span class="c1"># Try native CUDA kernel for fused delay+mix</span>
-        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">is_cuda</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">delay_line_forward</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">delay_line_forward</span>
 
-            <span class="n">result</span> <span class="o">=</span> <span class="n">delay_line_forward</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">result</span>
-
-        <span class="c1"># PyTorch fallback — fused: algebraically</span>
-        <span class="c1"># (1-mix)*x + mix*(x + decay*delayed) = x + mix*decay*delayed.</span>
-        <span class="c1"># Uses clone + in-place add to avoid pad allocation and intermediate tensors.</span>
-        <span class="n">coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="n">waveform</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-        <span class="n">output</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="p">:]</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span><span class="n">waveform</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="n">coeff</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">output</span></div>
+        <span class="k">return</span> <span class="n">delay_line_forward</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span></div>
 </div>
 
 

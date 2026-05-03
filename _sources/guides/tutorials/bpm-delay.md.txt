@@ -466,10 +466,10 @@ processed = (
     wave
     # EQ
     | iir.HiButterworth(cutoff=80, order=2)
-    | iir.PeakingEQ(freq=3000, gain_db=3, q=1.0)
+    | iir.ParametricEQ(frequency=3000, gain=3, q=1.0)
 
-    # Dynamics
-    | fx.effect.Compressor(threshold=0.5, ratio=4.0)
+    # Trim level
+    | fx.effect.Gain(0.7, gain_type="amplitude")
 
     # Delay (quarter note at 120 BPM)
     | fx.effect.Delay(

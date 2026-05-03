@@ -836,6 +836,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -1445,8 +1446,8 @@ window.runMermaid = runMermaid;</script>
         subgraph Channel2[&quot;ch[1]: Channel 2 Chain&quot;]
             HiButter2[&quot;HiButterworth(2000, fs)&quot;]
             LoButter2[&quot;LoButterworth(4000, fs)&quot;]
-            Vol[&quot;Vol(0.5)&quot;]
-            HiButter2 --&gt; LoButter2 --&gt; Vol
+            Gain[&quot;Gain(0.5, gain_type='amplitude')&quot;]
+            HiButter2 --&gt; LoButter2 --&gt; Gain
         end
 
         Init --&gt; ModuleList
@@ -1464,8 +1465,8 @@ window.runMermaid = runMermaid;</script>
 <h3>Implementation Pattern<a class="headerlink" href="#implementation-pattern" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">HiButterworth</span><span class="p">,</span> <span class="n">LoButterworth</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vol</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MultiChannelEffect</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A multi-channel effect with per-channel processing chains.</span>
@@ -1529,11 +1530,11 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Channel 1: Bandpass 2000-4000 Hz with volume reduction</span>
+            <span class="c1"># Channel 1: Bandpass 2000-4000 Hz with -6 dB attenuation</span>
             <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
                 <span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
                 <span class="n">LoButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
-                <span class="n">Vol</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+                <span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">),</span>
             <span class="p">)</span>
 
     <span class="nd">@override</span>

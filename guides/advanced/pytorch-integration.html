@@ -836,6 +836,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -1346,13 +1347,13 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># Stage 2: Tonal shaping (using Sequential)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eq_chain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
-            <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">),</span>    <span class="c1"># Reduce mud</span>
-            <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">),</span>    <span class="c1"># Presence</span>
-            <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">),</span>   <span class="c1"># Brightness</span>
+            <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">ParametricEQ</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">gain</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">),</span>    <span class="c1"># Reduce mud</span>
+            <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">ParametricEQ</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">),</span>    <span class="c1"># Presence</span>
+            <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">ParametricEQ</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">),</span>   <span class="c1"># Brightness</span>
         <span class="p">)</span>
 
-        <span class="c1"># Stage 3: Dynamics and final polish</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Compressor</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span>
+        <span class="c1"># Stage 3: Trim level and limit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">limiter</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
@@ -1364,7 +1365,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_chain</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
         <span class="c1"># Stage 3</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compressor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">limiter</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">x</span>
@@ -1603,6 +1604,10 @@ window.runMermaid = runMermaid;</script>
 <section id="mixing-with-torchaudio-transforms">
 <h2>Mixing with torchaudio.transforms<a class="headerlink" href="#mixing-with-torchaudio-transforms" title="Link to this heading">#</a></h2>
 <p>TorchFX modules can be mixed with <a class="reference external" href="https://pytorch.org/audio/">torchaudio</a> transforms in the same processing pipeline, leveraging the best of both libraries.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">torchaudio</span></code> is <strong>not</strong> a dependency of TorchFX — install it separately if you want to use the patterns in this section: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchaudio</span></code>. For pure TorchFX gain control, use <a class="reference internal" href="../../api/effects.html#torchfx.effect.Gain" title="torchfx.effect.Gain"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gain</span></code></a> instead of <code class="docutils literal notranslate"><span class="pre">torchaudio.transforms.Vol</span></code>.</p>
+</div>
 <section id="integration-pattern">
 <h3>Integration Pattern<a class="headerlink" href="#integration-pattern" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>

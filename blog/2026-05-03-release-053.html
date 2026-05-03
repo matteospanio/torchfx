@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>TorchFX 0.2.1 Released 🎉 &#8212; TorchFX 1 documentation</title>
+    <title>TorchFX 0.5.3: Build System Overhaul &amp; Prebuilt Wheels &#8212; TorchFX 1 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2025-12-13-release-021';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-05-03-release-053';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -359,7 +359,7 @@
      
     <i class="fa fa-calendar"></i>
     
-    <span>13 December 2025</span>
+    <span>03 May 2026</span>
     
   </h2>
   <ul>
@@ -383,7 +383,7 @@
       
     </span>
      
-    <a href="index/category/announcements.html">announcements</a>
+    <a href="index/category/releases.html">releases</a>
       
   </li>
    
@@ -394,9 +394,15 @@
        
     </span>
      
-    <a href="index/tag/open-source.html">open-source</a>
-        
     <a href="index/tag/release.html">release</a>
+        
+    <a href="index/tag/build-system.html">build-system</a>
+        
+    <a href="index/tag/packaging.html">packaging</a>
+        
+    <a href="index/tag/wheels.html">wheels</a>
+        
+    <a href="index/tag/cmake.html">cmake</a>
       
   </li>
    
@@ -411,12 +417,6 @@
   </h3>
   <ul>
      
-    <li>
-      <a href="2026-05-03-release-053.html">
-        03 May - TorchFX 0.5.3: Build System Overhaul & Prebuilt Wheels
-      </a>
-    </li>
-    
     <li>
       <a href="2026-04-13-release-052.html">
         13 April - TorchFX 0.5.2: Transparent Filter Fusion & Unified Forward Paths
@@ -438,6 +438,12 @@
     <li>
       <a href="2026-02-15-release-040.html">
         15 February - TorchFX 0.4.0: Production-Ready Audio DSP 🚀
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-02-15-repl-live-performance.html">
+        15 February - Interactive Audio Magic: The TorchFX REPL
       </a>
     </li>
     
@@ -644,7 +650,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX 0.2.1 Released 🎉</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX 0.5.3: Build System Overhaul &amp; Prebuilt Wheels</span></li>
   </ul>
 </nav>
 </div>
@@ -660,41 +666,85 @@
                 
 <div id="searchbox"></div>
                 <article class="bd-article">
-                   <section id="torchfx-0-2-1-released">
-<h1>TorchFX 0.2.1 Released 🎉<a class="headerlink" href="#torchfx-0-2-1-released" title="Link to this heading">#</a></h1>
-<p>I’m excited to announce the release of <strong>TorchFX version 0.2.1</strong>! This update brings new functionality, improved documentation, and several important fixes — thanks to contributions from the community.</p>
-<section id="major-highlights">
-<h2>✨ Major Highlights<a class="headerlink" href="#major-highlights" title="Link to this heading">#</a></h2>
-<section id="added">
-<h3>Added<a class="headerlink" href="#added" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">Delay</span></code> effect</strong> with BPM synchronization option by <a class="reference external" href="https://github.com/itsuzef">https://github.com/itsuzef</a>, supporting multiple delay strategies</p></li>
-<li><p>New examples in the <code class="docutils literal notranslate"><span class="pre">examples/</span></code> folder:</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">delay.py</span></code> showcasing the new Delay effect</p></li>
-</ul>
-</li>
-<li><p><strong>Citation file (<code class="docutils literal notranslate"><span class="pre">CITATION.cff</span></code>)</strong> for easy referencing of TorchFX in academic works</p></li>
-</ul>
+                   <section id="torchfx-0-5-3-build-system-overhaul-prebuilt-wheels">
+<h1>TorchFX 0.5.3: Build System Overhaul &amp; Prebuilt Wheels<a class="headerlink" href="#torchfx-0-5-3-build-system-overhaul-prebuilt-wheels" title="Link to this heading">#</a></h1>
+<p><strong>TorchFX 0.5.3</strong> is a packaging-focused release. The headline change is invisible if you only read the API docs but very visible the first time you <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> the library: TorchFX has migrated from runtime JIT compilation to <strong>scikit-build-core + CMake</strong>, and the project now ships <strong>prebuilt CPU wheels</strong> for Linux x86_64, macOS (Intel and Apple Silicon), and Windows x86_64 across Python 3.10–3.14.</p>
+<p>No more 10–30 second freeze on first import. No more “do you have a C++ compiler?” support tickets. Just <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchfx</span></code> and go.</p>
+<section id="from-jit-to-scikit-build-core">
+<h2>From JIT to scikit-build-core<a class="headerlink" href="#from-jit-to-scikit-build-core" title="Link to this heading">#</a></h2>
+<p>In 0.5.0, the native extension was JIT-compiled via <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension.load()</span></code> the first time you imported TorchFX. That was a deliberate choice at the time — it kept the build configuration trivial and let users get CUDA kernels without setting up a separate build pipeline. But it had three sharp edges:</p>
+<ol class="arabic simple">
+<li><p><strong>First-import latency.</strong> Every fresh environment paid a 10–30 second compilation tax on first <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">torchfx</span></code>. Cached afterward, but painful in containers, CI runs, and notebook kernels.</p></li>
+<li><p><strong>Compiler requirement at the user’s machine.</strong> Every end user needed GCC 9+, the CUDA toolkit (for GPU users), and a working build environment. This was a non-trivial barrier for data scientists and audio engineers who just wanted to filter some audio.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">setuptools</span></code> as a runtime dependency.</strong> Required only because <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension</span></code> pulled it in — a 1.5 MB dependency carried purely for JIT compilation.</p></li>
+</ol>
+<p>0.5.3 replaces all of this with <strong>scikit-build-core</strong> as the build backend and <strong>CMake</strong> as the build system. The C++/CUDA extension is now compiled at install time, baked into the wheel, and loaded as a normal precompiled module.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 0.5.2 and earlier:</span>
+pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="w">        </span><span class="c1"># fast install</span>
+import<span class="w"> </span>torchfx<span class="w">             </span><span class="c1"># ~20s compile on first import</span>
+
+<span class="c1"># 0.5.3:</span>
+pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="w">        </span><span class="c1"># downloads prebuilt wheel (no compile needed)</span>
+import<span class="w"> </span>torchfx<span class="w">             </span><span class="c1"># instant</span>
+</pre></div>
+</div>
+<p>Build-time configuration still respects <code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA=1</span></code> for CPU-only builds, and the CMake configuration is the same one introduced in 0.5.0 — just invoked at the right point in the lifecycle.</p>
 </section>
-<section id="changed">
-<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading">#</a></h3>
+<section id="prebuilt-wheels-via-github-actions">
+<h2>Prebuilt Wheels via GitHub Actions<a class="headerlink" href="#prebuilt-wheels-via-github-actions" title="Link to this heading">#</a></h2>
+<p>The new <a class="reference external" href="https://github.com/matteospanio/torchfx"><code class="docutils literal notranslate"><span class="pre">.github/workflows/wheels.yml</span></code></a> pipeline drives <a class="reference external" href="https://cibuildwheel.pypa.io/"><code class="docutils literal notranslate"><span class="pre">cibuildwheel</span></code></a> across four runners — <code class="docutils literal notranslate"><span class="pre">ubuntu-latest</span></code> (manylinux x86_64), <code class="docutils literal notranslate"><span class="pre">macos-13</span></code> (Intel), <code class="docutils literal notranslate"><span class="pre">macos-14</span></code> (Apple Silicon), and <code class="docutils literal notranslate"><span class="pre">windows-latest</span></code> — and produces CPU wheels for Python 3.10–3.14 on every tagged release. PyTorch’s own shared libraries are explicitly excluded from the repaired wheels (via <code class="docutils literal notranslate"><span class="pre">auditwheel</span></code>/<code class="docutils literal notranslate"><span class="pre">delocate</span></code>/<code class="docutils literal notranslate"><span class="pre">delvewheel</span></code>) so the wheel stays small and links against whichever PyTorch build the user has installed.</p>
+<p>A second pipeline, <a class="reference external" href="https://github.com/matteospanio/torchfx"><code class="docutils literal notranslate"><span class="pre">wheels-cuda.yml</span></code></a>, builds CUDA wheels for Linux x86_64 against CUDA 12.4 and 12.8 using NVIDIA’s CUDA toolkit on top of the manylinux container, and publishes them to GitHub Pages as a PEP 503 simple-repository index:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu124
+pip<span class="w"> </span>install<span class="w"> </span>torchfx<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--index-url<span class="w"> </span>https://matteospanio.github.io/torchfx/wheels/cu124/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--extra-index-url<span class="w"> </span>https://pypi.org/simple
+</pre></div>
+</div>
+<p>The CUDA wheels carry a <code class="docutils literal notranslate"><span class="pre">+cu124</span></code> (or <code class="docutils literal notranslate"><span class="pre">+cu128</span></code>) PEP 440 local-version suffix, so they cannot collide with the CPU wheels on PyPI: pip only resolves them when explicitly pointed at the CUDA index. macOS CUDA wheels are not feasible (NVIDIA dropped Mac support in 2019); Windows CUDA users build from source.</p>
+<p>What this means in practice:</p>
 <ul class="simple">
-<li><p>Updated <strong>documentation</strong> to include the new Delay effect and refresh existing examples</p></li>
-<li><p>GitHub workflow updated to <strong>run checks in parallel jobs</strong>, providing faster feedback</p></li>
+<li><p><strong>Fresh <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchfx</span></code></strong> now pulls a prebuilt wheel matching your Python version. No compiler needed.</p></li>
+<li><p><strong>CI environments</strong> (GitHub Actions, GitLab CI, Docker builds) are dramatically faster — no more burning a minute on extension compilation in every job.</p></li>
+<li><p><strong>Reproducibility</strong> improves: the wheel published to PyPI is the exact binary built and tested by the CI pipeline.</p></li>
 </ul>
+<p>Source distributions remain available for users who need a custom build (CUDA, alternative architectures, debug builds).</p>
 </section>
-<section id="fixed">
-<h3>Fixed<a class="headerlink" href="#fixed" title="Link to this heading">#</a></h3>
+<section id="the-pure-pytorch-fallback-is-gone">
+<h2>The Pure-PyTorch Fallback is Gone<a class="headerlink" href="#the-pure-pytorch-fallback-is-gone" title="Link to this heading">#</a></h2>
+<p>In 0.5.0 and 0.5.1, the C++ extension was <em>optional</em> — if compilation failed, TorchFX silently fell back to pure-PyTorch implementations of the IIR DF1 loop and the delay line. That fallback was 100–500x slower than the native path even with vectorization tricks, and it complicated every dispatch site with a “did the extension load?” branch.</p>
+<p>With prebuilt wheels, the failure mode disappears: the extension is always present. So 0.5.3 <strong>removes the pure-PyTorch fallback entirely</strong>.</p>
 <ul class="simple">
-<li><p>Pre-commit configuration now properly runs <code class="docutils literal notranslate"><span class="pre">mypy</span></code>, <code class="docutils literal notranslate"><span class="pre">docformatter</span></code>, and <code class="docutils literal notranslate"><span class="pre">black</span></code></p></li>
-<li><p>Fixed many type hints across the codebase</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_biquad_df1_fallback</span></code> and the SOS DF1 fallback in <code class="docutils literal notranslate"><span class="pre">_ops.py</span></code> are gone.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">_load_extension</span></code> and <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension.load</span></code> machinery in <code class="docutils literal notranslate"><span class="pre">_ops.py</span></code> is gone.</p></li>
+<li><p>Every dispatch site assumes <code class="docutils literal notranslate"><span class="pre">torchfx_ext</span></code> is importable.</p></li>
 </ul>
-<p>For full details, check out the <strong><a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/CHANGELOG">changelog</a></strong>.</p>
-<hr class="docutils" />
-<p>This release continues the mission of TorchFX: providing <strong>fast, differentiable audio filters</strong>, robust examples, and a strong foundation for research and open-source contributions.</p>
-<p>A big thanks to everyone who contributed, tested, or suggested improvements — your support keeps the project moving forward!</p>
+<p>If you build TorchFX from source without the extension (e.g., a hostile build environment), the import will now fail loudly rather than silently degrading to a 500x-slower path. This is the right tradeoff: a clear error message beats a silent performance cliff.</p>
 </section>
+<section id="cpu-delay-kernel">
+<h2>CPU Delay Kernel<a class="headerlink" href="#cpu-delay-kernel" title="Link to this heading">#</a></h2>
+<p>Previously, <code class="docutils literal notranslate"><span class="pre">delay_line_forward</span></code> had a CUDA kernel and a Python fallback for CPU. With the fallback architecture going away, that gap had to be filled — so 0.5.3 adds <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/src/torchfx/_csrc/delay_cpu.cpp"><code class="docutils literal notranslate"><span class="pre">delay_cpu.cpp</span></code></a>, a native C++ implementation of the delay line for CPU.</p>
+<p>The dispatch in <code class="docutils literal notranslate"><span class="pre">_ops.py</span></code> is now symmetric with the IIR path: native C++ on CPU, native CUDA on GPU, no fallback in between. Multi-channel delay processing on CPU sees the expected speedup over the previous Python loop.</p>
+</section>
+<section id="what-hasnt-changed">
+<h2>What Hasn’t Changed<a class="headerlink" href="#what-hasnt-changed" title="Link to this heading">#</a></h2>
+<p>This release is deliberately a packaging release. The user-facing API, the deferred pipeline fusion from 0.5.2, the SOS coefficient caching, the CUDA parallel scan kernels — all of it is unchanged. If your code worked on 0.5.2, it works on 0.5.3 with no modifications.</p>
+<p>The only behavioural difference you might notice is the absence of the first-import compilation pause. Everything else is identical, just faster to get started.</p>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torchfx</span><span class="o">==</span><span class="m">0</span>.5.3
+</pre></div>
+</div>
+<p>For CUDA support, build from source against your target CUDA version:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torchfx</span><span class="o">==</span><span class="m">0</span>.5.3<span class="w"> </span>--no-binary<span class="w"> </span>torchfx
+</pre></div>
+</div>
+<p>Set <code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA=1</span></code> to force a CPU-only build from source.</p>
+</section>
+<section id="whats-next">
+<h2>What’s Next<a class="headerlink" href="#whats-next" title="Link to this heading">#</a></h2>
+<p>With the build system stabilized, upcoming work will return to the optimization roadmap: CUDA wheels in CI, expanded benchmark coverage, and the next round of pipeline-level fusion opportunities surfaced by the Phase 0 baseline.</p>
+<p>As always, file issues and feature requests on <a class="reference external" href="https://github.com/matteospanio/torchfx">GitHub</a>.</p>
 </section>
 </section>
 
@@ -703,23 +753,16 @@
 <div class="section ablog__prev-next">
   <span class="ablog__prev">
      
-    <a href="2025-04-10-early-release.html">
+    <a href="2026-04-13-release-052.html">
       
       <i class="fa fa-arrow-circle-left"></i>
       
-      <span>🚀 TorchFX: Audio Filters Powered by PyTorch</span>
+      <span>TorchFX 0.5.2: Transparent Filter Fusion & Unified Forward Paths</span>
     </a>
     
   </span>
   <span class="ablog__spacer">&nbsp;</span>
   <span class="ablog__next">
-     
-    <a href="2026-01-06-deepwiki.html">
-      <span>TorchFX is now indexed on DeepWiki</span>
-      
-      <i class="fa fa-arrow-circle-right"></i>
-      
-    </a>
     
   </span>
 </div>
@@ -754,12 +797,13 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#major-highlights">✨ Major Highlights</a><ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#added">Added</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changed">Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fixed">Fixed</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#from-jit-to-scikit-build-core">From JIT to scikit-build-core</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prebuilt-wheels-via-github-actions">Prebuilt Wheels via GitHub Actions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-pure-pytorch-fallback-is-gone">The Pure-PyTorch Fallback is Gone</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-delay-kernel">CPU Delay Kernel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-hasnt-changed">What Hasn’t Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whats-next">What’s Next</a></li>
 </ul>
   </nav></div>
 
@@ -767,7 +811,7 @@
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2025-12-13-release-021.md">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-05-03-release-053.md">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -782,7 +826,7 @@
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../_sources/blog/2025-12-13-release-021.md.txt">
+    <a href="../_sources/blog/2026-05-03-release-053.md.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

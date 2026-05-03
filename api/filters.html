@@ -494,7 +494,7 @@ the -3dB point, center frequency, or transition frequency.</p>
 </dd>
 <dt><a class="reference internal" href="#torchfx.filter.FIR" title="torchfx.filter.fir.FIR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">torchfx.filter.fir.FIR</span></code></a></dt><dd><p>Base class for FIR filters</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">torchfx.filter.biquad.Biquad</span></code></dt><dd><p>Biquad filter base class</p>
+<dt><a class="reference internal" href="#torchfx.filter.Biquad" title="torchfx.filter.biquad.Biquad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">torchfx.filter.biquad.Biquad</span></code></a></dt><dd><p>Biquad filter base class</p>
 </dd>
 </dl>
 </div>
@@ -3464,7 +3464,7 @@ same parameters should produce identical coefficients.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.filter.ParametricEQ">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">ParametricEQ</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frequency</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#ParametricEQ"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.ParametricEQ" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.filter.Biquad" title="torchfx.filter.biquad.Biquad"><code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></a></p>
 <p>Parametric equalizer with bell-shaped frequency response.</p>
 <p>A parametric EQ is a bell-shaped filter (also called a peaking filter) that
 boosts or cuts a specific frequency range. It’s the most versatile and commonly
@@ -3647,7 +3647,7 @@ coefficients.” <a class="reference external" href="https://webaudio.github.io/
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <dl class="simple">
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">Peaking</span></code></dt><dd><p>General peaking filter implementation</p>
+<dt><a class="reference internal" href="#torchfx.filter.Peaking" title="torchfx.filter.Peaking"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Peaking</span></code></a></dt><dd><p>General peaking filter implementation</p>
 </dd>
 <dt><a class="reference internal" href="#torchfx.filter.HiShelving" title="torchfx.filter.HiShelving"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HiShelving</span></code></a></dt><dd><p>High-frequency shelving filter</p>
 </dd>
@@ -3670,13 +3670,52 @@ coefficients.” <a class="reference external" href="https://webaudio.github.io/
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.filter.Peaking">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">Peaking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#Peaking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.Peaking" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.filter.ParametricEQ" title="torchfx.filter.iir.ParametricEQ"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParametricEQ</span></code></a></p>
+<p>Peaking filter for narrow-band frequency adjustment.</p>
+<p>A simple wrapper around <code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code> that provides compatibility with
+the <code class="docutils literal notranslate"><span class="pre">gain_scale</span></code> parameter for specifying gain in linear or dB.</p>
+<p>For parametric EQ applications with more control, consider using
+<code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code> directly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cutoff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Center frequency in Hz where the peak or notch occurs.</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Quality factor determining the bandwidth. Higher Q values result in
+narrower peaks. Bandwidth in Hz ≈ cutoff / Q.</p></li>
+<li><p><strong>gain</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Peak gain. Interpretation depends on gain_scale:
+- For “linear”: Linear gain factor
+- For “db”: Gain in dB</p></li>
+<li><p><strong>gain_scale</strong> (<em>{&quot;linear&quot;</em><em>, </em><em>&quot;db&quot;}</em>) – How to interpret the gain parameter.</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>default=None</em>) – Sampling frequency in Hz.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">peak</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">Peaking</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">gain_scale</span><span class="o">=</span><span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">filtered</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">peak</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#torchfx.filter.ParametricEQ" title="torchfx.filter.ParametricEQ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParametricEQ</span></code></a></dt><dd><p>Full parametric EQ implementation</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
 </section>
 <section id="other-filters">
 <h4>Other Filters<a class="headerlink" href="#other-filters" title="Link to this heading">#</a></h4>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.filter.Notch">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">Notch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#Notch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.Notch" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.filter.Biquad" title="torchfx.filter.biquad.Biquad"><code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></a></p>
 <p>Notch filter for narrow-band frequency rejection.</p>
 <p>A notch filter (also called a band-stop or band-reject filter) attenuates a
 narrow band of frequencies centered around a specified frequency. This is ideal
@@ -3792,7 +3831,7 @@ problem (ground loops, shielding, etc.) rather than filtering.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <dl class="simple">
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">Peaking</span></code></dt><dd><p>Peaking filter (inverse of notch)</p>
+<dt><a class="reference internal" href="#torchfx.filter.Peaking" title="torchfx.filter.Peaking"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Peaking</span></code></a></dt><dd><p>Peaking filter (inverse of notch)</p>
 </dd>
 <dt><a class="reference internal" href="#torchfx.filter.ParametricEQ" title="torchfx.filter.ParametricEQ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParametricEQ</span></code></a></dt><dd><p>Parametric EQ for boosting/cutting frequency bands</p>
 </dd>
@@ -3829,7 +3868,7 @@ problem (ground loops, shielding, etc.) rather than filtering.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.filter.AllPass">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">AllPass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/iir.html#AllPass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.AllPass" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.filter.Biquad" title="torchfx.filter.biquad.Biquad"><code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></a></p>
 <p>All-pass filter for phase manipulation without magnitude change.</p>
 <p>An all-pass filter passes all frequencies with unity magnitude (no amplitude
 change) but introduces frequency-dependent phase shift. These filters are
@@ -3922,7 +3961,7 @@ judiciously in critical listening applications.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <dl class="simple">
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">Peaking</span></code></dt><dd><p>Peaking filter with magnitude change</p>
+<dt><a class="reference internal" href="#torchfx.filter.Peaking" title="torchfx.filter.Peaking"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Peaking</span></code></a></dt><dd><p>Peaking filter with magnitude change</p>
 </dd>
 <dt><a class="reference internal" href="#torchfx.filter.LinkwitzRiley" title="torchfx.filter.LinkwitzRiley"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LinkwitzRiley</span></code></a></dt><dd><p>Crossover filters with phase-aligned outputs</p>
 </dd>
@@ -3955,6 +3994,1031 @@ judiciously in critical listening applications.</p>
 </dd></dl>
 
 </section>
+</section>
+<section id="biquad-filters">
+<h3>Biquad Filters<a class="headerlink" href="#biquad-filters" title="Link to this heading">#</a></h3>
+<p>Direct biquad implementations from the Audio EQ Cookbook. The base <code class="docutils literal notranslate"><span class="pre">Biquad</span></code>
+class plus convenience subclasses for common topologies.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.filter.Biquad">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">Biquad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#Biquad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.Biquad" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractFilter</span></code></p>
+<p>Abstract base class for second-order IIR (biquad) filters.</p>
+<p>A biquad filter is defined by five normalized coefficients
+(<code class="docutils literal notranslate"><span class="pre">b0,</span> <span class="pre">b1,</span> <span class="pre">b2,</span> <span class="pre">a1,</span> <span class="pre">a2</span></code>). The denominator coefficient <code class="docutils literal notranslate"><span class="pre">a0</span></code> is always
+normalized to 1. Internally, coefficients are stored as a single SOS
+(second-order section) row <code class="docutils literal notranslate"><span class="pre">[b0,</span> <span class="pre">b1,</span> <span class="pre">b2,</span> <span class="pre">1,</span> <span class="pre">a1,</span> <span class="pre">a2]</span></code> and processed
+via the shared SOS cascade forward path.</p>
+<p>Processing uses Direct Form 1, which is numerically robust for floating-point:</p>
+<blockquote>
+<div><p>y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cutoff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Cutoff or center frequency in Hz.</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Quality factor (Q). Controls bandwidth or resonance.</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Sampling frequency in Hz. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, must be set before use.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.Biquad.cutoff">
+<span class="sig-name descname"><span class="pre">cutoff</span></span><a class="headerlink" href="#torchfx.filter.Biquad.cutoff" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.Biquad.q">
+<span class="sig-name descname"><span class="pre">q</span></span><a class="headerlink" href="#torchfx.filter.Biquad.q" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.Biquad.fs">
+<span class="sig-name descname"><span class="pre">fs</span></span><a class="headerlink" href="#torchfx.filter.Biquad.fs" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.Biquad.b">
+<span class="sig-name descname"><span class="pre">b</span></span><a class="headerlink" href="#torchfx.filter.Biquad.b" title="Link to this definition">#</a></dt>
+<dd><p>Numerator coefficients <code class="docutils literal notranslate"><span class="pre">[b0,</span> <span class="pre">b1,</span> <span class="pre">b2]</span></code> (read-only view into SOS).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.Biquad.a">
+<span class="sig-name descname"><span class="pre">a</span></span><a class="headerlink" href="#torchfx.filter.Biquad.a" title="Link to this definition">#</a></dt>
+<dd><p>Denominator coefficients <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">a1,</span> <span class="pre">a2]</span></code> (read-only view into SOS).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<p>Coefficient formulas are derived from the AudioNoise project’s <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code>
+(MIT License). The forward path delegates to <code class="docutils literal notranslate"><span class="pre">_sos_cascade_forward</span></code> from
+<code class="docutils literal notranslate"><span class="pre">iir.py</span></code>, sharing the precompiled C++/CUDA SOS cascade kernel used by
+higher-order IIR filters.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.Biquad.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#Biquad.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.Biquad.forward" title="Link to this definition">#</a></dt>
+<dd><p>Apply the biquad filter to the input tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input tensor of shape <code class="docutils literal notranslate"><span class="pre">[T]</span></code>, <code class="docutils literal notranslate"><span class="pre">[C,</span> <span class="pre">T]</span></code>, or <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">C,</span> <span class="pre">T]</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered output with the same shape as input.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.Biquad.reset_state">
+<span class="sig-name descname"><span class="pre">reset_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#Biquad.reset_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.Biquad.reset_state" title="Link to this definition">#</a></dt>
+<dd><p>Clear accumulated filter state.</p>
+<p>Call when switching audio sources or seeking to reset DF1 state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id21">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">a</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.11)"><span class="pre">Tensor</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#id21" title="Link to this definition">#</a></dt>
+<dd><p>Denominator coefficients <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">a1,</span> <span class="pre">a2]</span></code> (read-only view into SOS).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id22">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">b</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.11)"><span class="pre">Tensor</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#id22" title="Link to this definition">#</a></dt>
+<dd><p>Numerator coefficients <code class="docutils literal notranslate"><span class="pre">[b0,</span> <span class="pre">b1,</span> <span class="pre">b2]</span></code> (read-only view into SOS).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadLPF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">BiquadLPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadLPF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadLPF" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.filter.Biquad" title="torchfx.filter.biquad.Biquad"><code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></a></p>
+<p>Second-order low-pass filter (biquad).</p>
+<p>Passes frequencies below the cutoff and attenuates frequencies above it
+with a 12 dB/octave rolloff.</p>
+<p>Coefficient formulas ported from AudioNoise <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code> <code class="docutils literal notranslate"><span class="pre">_biquad_lpf</span></code>:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">b1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">b0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span>
+<span class="n">a1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">-2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">a2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cutoff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Cutoff frequency in Hz (-3 dB point).</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Quality factor. 0.707 gives Butterworth (maximally flat) response.</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Sampling frequency in Hz.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id23" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>AudioNoise project, <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code>, <code class="docutils literal notranslate"><span class="pre">_biquad_lpf</span></code>.</p>
+</aside>
+</aside>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadLPF.compute_coefficients">
+<span class="sig-name descname"><span class="pre">compute_coefficients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadLPF.compute_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadLPF.compute_coefficients" title="Link to this definition">#</a></dt>
+<dd><p>Compute the filter’s transfer function coefficients.</p>
+<p>This abstract method must be implemented by all <cite>AbstractFilter</cite> subclasses.
+It is responsible for computing the filter’s transfer function coefficients
+(typically the numerator <cite>b</cite> and denominator <cite>a</cite> coefficients) and storing
+them in instance attributes.</p>
+<p>The method is called automatically during the first <cite>forward()</cite> pass when
+the <cite>_has_computed_coeff</cite> property returns <cite>False</cite>. It should not be called
+directly by users in typical usage scenarios.</p>
+<section id="id24">
+<h4>Implementation Requirements<a class="headerlink" href="#id24" title="Link to this heading">#</a></h4>
+<p>Implementations of this method should:</p>
+<ol class="arabic simple">
+<li><p><strong>Verify sampling frequency</strong>: Check that <cite>self.fs</cite> is not <cite>None</cite> before
+attempting to compute coefficients. Raise a <cite>ValueError</cite> if it is <cite>None</cite>.</p></li>
+<li><p><strong>Design filter coefficients</strong>: Use SciPy signal processing functions
+(e.g., <cite>scipy.signal.butter</cite>, <cite>scipy.signal.cheby1</cite>, <cite>scipy.signal.firwin</cite>)
+or custom algorithms to compute filter coefficients based on the filter’s
+parameters (cutoff frequency, order, Q factor, etc.).</p></li>
+<li><p><strong>Store coefficients</strong>: Save the computed coefficients in instance attributes
+(typically <cite>self.a</cite> for denominator and <cite>self.b</cite> for numerator).</p></li>
+<li><p><strong>Normalize frequencies</strong>: For filters that use normalized frequencies
+(most SciPy functions), normalize cutoff frequencies by the Nyquist
+frequency (fs/2).</p></li>
+</ol>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For IIR filters, both <cite>a</cite> (denominator) and <cite>b</cite> (numerator) coefficients
+are typically stored as sequences or arrays.</p></li>
+<li><p>For FIR filters, only <cite>b</cite> (numerator) coefficients are needed, with <cite>a</cite>
+set to <cite>[1.0]</cite>.</p></li>
+<li><p>Coefficients are initially stored as Python sequences or NumPy arrays and
+are later converted to PyTorch tensors during the <cite>forward()</cite> pass.</p></li>
+<li><p>This method should be deterministic - calling it multiple times with the
+same parameters should produce identical coefficients.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If required parameters (especially <cite>fs</cite>) are not set before coefficient
+    computation is attempted.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Implementing <cite>compute_coefficients</cite> for a Butterworth lowpass filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute Butterworth lowpass coefficients.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Normalize cutoff to Nyquist frequency</span>
+<span class="gp">... </span>    <span class="n">nyquist</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">normalized_cutoff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="n">nyquist</span>
+<span class="gp">... </span>    <span class="c1"># Design filter using SciPy</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">normalized_cutoff</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;low&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for a custom shelving filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute high-shelving filter coefficients using biquad formulas.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Calculate angular frequency</span>
+<span class="gp">... </span>    <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>  <span class="c1"># Linear gain</span>
+<span class="gp">... </span>    <span class="c1"># Compute biquad coefficients</span>
+<span class="gp">... </span>    <span class="n">b0</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">b2</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">a0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="n">a1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="c1"># Normalize by a0 and store</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">b0</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">a2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for an FIR filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">firwin</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute FIR filter coefficients using window method.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Use scipy firwin to design FIR filter</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">firwin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_taps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
+<span class="gp">... </span>                    <span class="n">pass_zero</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pass_zero</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>  <span class="c1"># FIR filters have trivial denominator</span>
+</pre></div>
+</div>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadHPF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">BiquadHPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadHPF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadHPF" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.filter.Biquad" title="torchfx.filter.biquad.Biquad"><code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></a></p>
+<p>Second-order high-pass filter (biquad).</p>
+<p>Passes frequencies above the cutoff and attenuates frequencies below it
+with a 12 dB/octave rolloff.</p>
+<p>Coefficient formulas ported from AudioNoise <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code> <code class="docutils literal notranslate"><span class="pre">_biquad_hpf</span></code>:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">b1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">b0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span>
+<span class="n">b1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">b1</span>
+<span class="n">a1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">-2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">a2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cutoff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Cutoff frequency in Hz (-3 dB point).</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Quality factor. 0.707 gives Butterworth response.</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Sampling frequency in Hz.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id25" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>AudioNoise project, <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code>, <code class="docutils literal notranslate"><span class="pre">_biquad_hpf</span></code>.</p>
+</aside>
+</aside>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadHPF.compute_coefficients">
+<span class="sig-name descname"><span class="pre">compute_coefficients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadHPF.compute_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadHPF.compute_coefficients" title="Link to this definition">#</a></dt>
+<dd><p>Compute the filter’s transfer function coefficients.</p>
+<p>This abstract method must be implemented by all <cite>AbstractFilter</cite> subclasses.
+It is responsible for computing the filter’s transfer function coefficients
+(typically the numerator <cite>b</cite> and denominator <cite>a</cite> coefficients) and storing
+them in instance attributes.</p>
+<p>The method is called automatically during the first <cite>forward()</cite> pass when
+the <cite>_has_computed_coeff</cite> property returns <cite>False</cite>. It should not be called
+directly by users in typical usage scenarios.</p>
+<section id="id26">
+<h4>Implementation Requirements<a class="headerlink" href="#id26" title="Link to this heading">#</a></h4>
+<p>Implementations of this method should:</p>
+<ol class="arabic simple">
+<li><p><strong>Verify sampling frequency</strong>: Check that <cite>self.fs</cite> is not <cite>None</cite> before
+attempting to compute coefficients. Raise a <cite>ValueError</cite> if it is <cite>None</cite>.</p></li>
+<li><p><strong>Design filter coefficients</strong>: Use SciPy signal processing functions
+(e.g., <cite>scipy.signal.butter</cite>, <cite>scipy.signal.cheby1</cite>, <cite>scipy.signal.firwin</cite>)
+or custom algorithms to compute filter coefficients based on the filter’s
+parameters (cutoff frequency, order, Q factor, etc.).</p></li>
+<li><p><strong>Store coefficients</strong>: Save the computed coefficients in instance attributes
+(typically <cite>self.a</cite> for denominator and <cite>self.b</cite> for numerator).</p></li>
+<li><p><strong>Normalize frequencies</strong>: For filters that use normalized frequencies
+(most SciPy functions), normalize cutoff frequencies by the Nyquist
+frequency (fs/2).</p></li>
+</ol>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For IIR filters, both <cite>a</cite> (denominator) and <cite>b</cite> (numerator) coefficients
+are typically stored as sequences or arrays.</p></li>
+<li><p>For FIR filters, only <cite>b</cite> (numerator) coefficients are needed, with <cite>a</cite>
+set to <cite>[1.0]</cite>.</p></li>
+<li><p>Coefficients are initially stored as Python sequences or NumPy arrays and
+are later converted to PyTorch tensors during the <cite>forward()</cite> pass.</p></li>
+<li><p>This method should be deterministic - calling it multiple times with the
+same parameters should produce identical coefficients.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If required parameters (especially <cite>fs</cite>) are not set before coefficient
+    computation is attempted.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Implementing <cite>compute_coefficients</cite> for a Butterworth lowpass filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute Butterworth lowpass coefficients.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Normalize cutoff to Nyquist frequency</span>
+<span class="gp">... </span>    <span class="n">nyquist</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">normalized_cutoff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="n">nyquist</span>
+<span class="gp">... </span>    <span class="c1"># Design filter using SciPy</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">normalized_cutoff</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;low&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for a custom shelving filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute high-shelving filter coefficients using biquad formulas.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Calculate angular frequency</span>
+<span class="gp">... </span>    <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>  <span class="c1"># Linear gain</span>
+<span class="gp">... </span>    <span class="c1"># Compute biquad coefficients</span>
+<span class="gp">... </span>    <span class="n">b0</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">b2</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">a0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="n">a1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="c1"># Normalize by a0 and store</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">b0</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">a2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for an FIR filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">firwin</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute FIR filter coefficients using window method.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Use scipy firwin to design FIR filter</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">firwin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_taps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
+<span class="gp">... </span>                    <span class="n">pass_zero</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pass_zero</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>  <span class="c1"># FIR filters have trivial denominator</span>
+</pre></div>
+</div>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadBPF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">BiquadBPF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadBPF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadBPF" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.filter.Biquad" title="torchfx.filter.biquad.Biquad"><code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></a></p>
+<p>Band-pass filter with constant 0 dB peak gain (biquad).</p>
+<p>Passes a band of frequencies centered at the cutoff with unity peak gain,
+regardless of Q. Bandwidth is approximately <code class="docutils literal notranslate"><span class="pre">cutoff</span> <span class="pre">/</span> <span class="pre">Q</span></code>.</p>
+<p>Coefficient formulas ported from AudioNoise <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code> <code class="docutils literal notranslate"><span class="pre">_biquad_bpf</span></code>:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">b0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">b1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="n">b2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">alpha</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">a1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">-2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">a2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cutoff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Center frequency in Hz.</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Quality factor controlling bandwidth (BW ≈ cutoff / Q).</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Sampling frequency in Hz.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id27" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>AudioNoise project, <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code>, <code class="docutils literal notranslate"><span class="pre">_biquad_bpf</span></code>.</p>
+</aside>
+</aside>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadBPF.compute_coefficients">
+<span class="sig-name descname"><span class="pre">compute_coefficients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadBPF.compute_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadBPF.compute_coefficients" title="Link to this definition">#</a></dt>
+<dd><p>Compute the filter’s transfer function coefficients.</p>
+<p>This abstract method must be implemented by all <cite>AbstractFilter</cite> subclasses.
+It is responsible for computing the filter’s transfer function coefficients
+(typically the numerator <cite>b</cite> and denominator <cite>a</cite> coefficients) and storing
+them in instance attributes.</p>
+<p>The method is called automatically during the first <cite>forward()</cite> pass when
+the <cite>_has_computed_coeff</cite> property returns <cite>False</cite>. It should not be called
+directly by users in typical usage scenarios.</p>
+<section id="id28">
+<h4>Implementation Requirements<a class="headerlink" href="#id28" title="Link to this heading">#</a></h4>
+<p>Implementations of this method should:</p>
+<ol class="arabic simple">
+<li><p><strong>Verify sampling frequency</strong>: Check that <cite>self.fs</cite> is not <cite>None</cite> before
+attempting to compute coefficients. Raise a <cite>ValueError</cite> if it is <cite>None</cite>.</p></li>
+<li><p><strong>Design filter coefficients</strong>: Use SciPy signal processing functions
+(e.g., <cite>scipy.signal.butter</cite>, <cite>scipy.signal.cheby1</cite>, <cite>scipy.signal.firwin</cite>)
+or custom algorithms to compute filter coefficients based on the filter’s
+parameters (cutoff frequency, order, Q factor, etc.).</p></li>
+<li><p><strong>Store coefficients</strong>: Save the computed coefficients in instance attributes
+(typically <cite>self.a</cite> for denominator and <cite>self.b</cite> for numerator).</p></li>
+<li><p><strong>Normalize frequencies</strong>: For filters that use normalized frequencies
+(most SciPy functions), normalize cutoff frequencies by the Nyquist
+frequency (fs/2).</p></li>
+</ol>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For IIR filters, both <cite>a</cite> (denominator) and <cite>b</cite> (numerator) coefficients
+are typically stored as sequences or arrays.</p></li>
+<li><p>For FIR filters, only <cite>b</cite> (numerator) coefficients are needed, with <cite>a</cite>
+set to <cite>[1.0]</cite>.</p></li>
+<li><p>Coefficients are initially stored as Python sequences or NumPy arrays and
+are later converted to PyTorch tensors during the <cite>forward()</cite> pass.</p></li>
+<li><p>This method should be deterministic - calling it multiple times with the
+same parameters should produce identical coefficients.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If required parameters (especially <cite>fs</cite>) are not set before coefficient
+    computation is attempted.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Implementing <cite>compute_coefficients</cite> for a Butterworth lowpass filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute Butterworth lowpass coefficients.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Normalize cutoff to Nyquist frequency</span>
+<span class="gp">... </span>    <span class="n">nyquist</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">normalized_cutoff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="n">nyquist</span>
+<span class="gp">... </span>    <span class="c1"># Design filter using SciPy</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">normalized_cutoff</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;low&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for a custom shelving filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute high-shelving filter coefficients using biquad formulas.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Calculate angular frequency</span>
+<span class="gp">... </span>    <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>  <span class="c1"># Linear gain</span>
+<span class="gp">... </span>    <span class="c1"># Compute biquad coefficients</span>
+<span class="gp">... </span>    <span class="n">b0</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">b2</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">a0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="n">a1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="c1"># Normalize by a0 and store</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">b0</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">a2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for an FIR filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">firwin</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute FIR filter coefficients using window method.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Use scipy firwin to design FIR filter</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">firwin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_taps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
+<span class="gp">... </span>                    <span class="n">pass_zero</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pass_zero</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>  <span class="c1"># FIR filters have trivial denominator</span>
+</pre></div>
+</div>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadNotch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">BiquadNotch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadNotch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadNotch" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.filter.Biquad" title="torchfx.filter.biquad.Biquad"><code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></a></p>
+<p>Notch (band-reject) filter (biquad).</p>
+<p>Creates a sharp dip at the center frequency, rejecting a narrow band while
+passing all other frequencies with unity gain.</p>
+<p>Coefficient formulas ported from AudioNoise <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code>
+<code class="docutils literal notranslate"><span class="pre">_biquad_notch_filter</span></code>:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">b0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">b1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">-2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">a2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cutoff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Notch center frequency in Hz.</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Quality factor. Higher Q gives a narrower notch.</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Sampling frequency in Hz.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id29" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>AudioNoise project, <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code>, <code class="docutils literal notranslate"><span class="pre">_biquad_notch_filter</span></code>.</p>
+</aside>
+</aside>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadNotch.compute_coefficients">
+<span class="sig-name descname"><span class="pre">compute_coefficients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadNotch.compute_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadNotch.compute_coefficients" title="Link to this definition">#</a></dt>
+<dd><p>Compute the filter’s transfer function coefficients.</p>
+<p>This abstract method must be implemented by all <cite>AbstractFilter</cite> subclasses.
+It is responsible for computing the filter’s transfer function coefficients
+(typically the numerator <cite>b</cite> and denominator <cite>a</cite> coefficients) and storing
+them in instance attributes.</p>
+<p>The method is called automatically during the first <cite>forward()</cite> pass when
+the <cite>_has_computed_coeff</cite> property returns <cite>False</cite>. It should not be called
+directly by users in typical usage scenarios.</p>
+<section id="id30">
+<h4>Implementation Requirements<a class="headerlink" href="#id30" title="Link to this heading">#</a></h4>
+<p>Implementations of this method should:</p>
+<ol class="arabic simple">
+<li><p><strong>Verify sampling frequency</strong>: Check that <cite>self.fs</cite> is not <cite>None</cite> before
+attempting to compute coefficients. Raise a <cite>ValueError</cite> if it is <cite>None</cite>.</p></li>
+<li><p><strong>Design filter coefficients</strong>: Use SciPy signal processing functions
+(e.g., <cite>scipy.signal.butter</cite>, <cite>scipy.signal.cheby1</cite>, <cite>scipy.signal.firwin</cite>)
+or custom algorithms to compute filter coefficients based on the filter’s
+parameters (cutoff frequency, order, Q factor, etc.).</p></li>
+<li><p><strong>Store coefficients</strong>: Save the computed coefficients in instance attributes
+(typically <cite>self.a</cite> for denominator and <cite>self.b</cite> for numerator).</p></li>
+<li><p><strong>Normalize frequencies</strong>: For filters that use normalized frequencies
+(most SciPy functions), normalize cutoff frequencies by the Nyquist
+frequency (fs/2).</p></li>
+</ol>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For IIR filters, both <cite>a</cite> (denominator) and <cite>b</cite> (numerator) coefficients
+are typically stored as sequences or arrays.</p></li>
+<li><p>For FIR filters, only <cite>b</cite> (numerator) coefficients are needed, with <cite>a</cite>
+set to <cite>[1.0]</cite>.</p></li>
+<li><p>Coefficients are initially stored as Python sequences or NumPy arrays and
+are later converted to PyTorch tensors during the <cite>forward()</cite> pass.</p></li>
+<li><p>This method should be deterministic - calling it multiple times with the
+same parameters should produce identical coefficients.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If required parameters (especially <cite>fs</cite>) are not set before coefficient
+    computation is attempted.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Implementing <cite>compute_coefficients</cite> for a Butterworth lowpass filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute Butterworth lowpass coefficients.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Normalize cutoff to Nyquist frequency</span>
+<span class="gp">... </span>    <span class="n">nyquist</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">normalized_cutoff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="n">nyquist</span>
+<span class="gp">... </span>    <span class="c1"># Design filter using SciPy</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">normalized_cutoff</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;low&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for a custom shelving filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute high-shelving filter coefficients using biquad formulas.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Calculate angular frequency</span>
+<span class="gp">... </span>    <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>  <span class="c1"># Linear gain</span>
+<span class="gp">... </span>    <span class="c1"># Compute biquad coefficients</span>
+<span class="gp">... </span>    <span class="n">b0</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">b2</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">a0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="n">a1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="c1"># Normalize by a0 and store</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">b0</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">a2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for an FIR filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">firwin</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute FIR filter coefficients using window method.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Use scipy firwin to design FIR filter</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">firwin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_taps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
+<span class="gp">... </span>                    <span class="n">pass_zero</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pass_zero</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>  <span class="c1"># FIR filters have trivial denominator</span>
+</pre></div>
+</div>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadAllPass">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">BiquadAllPass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadAllPass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadAllPass" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchfx.filter.Biquad" title="torchfx.filter.biquad.Biquad"><code class="xref py py-class docutils literal notranslate"><span class="pre">Biquad</span></code></a></p>
+<p>All-pass filter with unity magnitude (biquad).</p>
+<p>Passes all frequencies with unity gain but introduces frequency-dependent
+phase shift. Useful as building blocks for phasers and crossover networks.</p>
+<p>Coefficient formulas ported from AudioNoise <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code>
+<code class="docutils literal notranslate"><span class="pre">_biquad_allpass_filter</span></code>:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">b0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">b1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">-2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">b2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w">  </span><span class="p">(</span><span class="o">=</span><span class="w"> </span><span class="n">a0</span><span class="p">,</span><span class="w"> </span><span class="n">which</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="n">before</span><span class="w"> </span><span class="n">normalization</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cutoff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Center frequency in Hz (maximum phase shift occurs here).</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Quality factor controlling the rate of phase transition.</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Sampling frequency in Hz.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id31" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>AudioNoise project, <code class="docutils literal notranslate"><span class="pre">biquad.h</span></code>, <code class="docutils literal notranslate"><span class="pre">_biquad_allpass_filter</span></code>.</p>
+</aside>
+</aside>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.BiquadAllPass.compute_coefficients">
+<span class="sig-name descname"><span class="pre">compute_coefficients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/biquad.html#BiquadAllPass.compute_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.BiquadAllPass.compute_coefficients" title="Link to this definition">#</a></dt>
+<dd><p>Compute the filter’s transfer function coefficients.</p>
+<p>This abstract method must be implemented by all <cite>AbstractFilter</cite> subclasses.
+It is responsible for computing the filter’s transfer function coefficients
+(typically the numerator <cite>b</cite> and denominator <cite>a</cite> coefficients) and storing
+them in instance attributes.</p>
+<p>The method is called automatically during the first <cite>forward()</cite> pass when
+the <cite>_has_computed_coeff</cite> property returns <cite>False</cite>. It should not be called
+directly by users in typical usage scenarios.</p>
+<section id="id32">
+<h4>Implementation Requirements<a class="headerlink" href="#id32" title="Link to this heading">#</a></h4>
+<p>Implementations of this method should:</p>
+<ol class="arabic simple">
+<li><p><strong>Verify sampling frequency</strong>: Check that <cite>self.fs</cite> is not <cite>None</cite> before
+attempting to compute coefficients. Raise a <cite>ValueError</cite> if it is <cite>None</cite>.</p></li>
+<li><p><strong>Design filter coefficients</strong>: Use SciPy signal processing functions
+(e.g., <cite>scipy.signal.butter</cite>, <cite>scipy.signal.cheby1</cite>, <cite>scipy.signal.firwin</cite>)
+or custom algorithms to compute filter coefficients based on the filter’s
+parameters (cutoff frequency, order, Q factor, etc.).</p></li>
+<li><p><strong>Store coefficients</strong>: Save the computed coefficients in instance attributes
+(typically <cite>self.a</cite> for denominator and <cite>self.b</cite> for numerator).</p></li>
+<li><p><strong>Normalize frequencies</strong>: For filters that use normalized frequencies
+(most SciPy functions), normalize cutoff frequencies by the Nyquist
+frequency (fs/2).</p></li>
+</ol>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For IIR filters, both <cite>a</cite> (denominator) and <cite>b</cite> (numerator) coefficients
+are typically stored as sequences or arrays.</p></li>
+<li><p>For FIR filters, only <cite>b</cite> (numerator) coefficients are needed, with <cite>a</cite>
+set to <cite>[1.0]</cite>.</p></li>
+<li><p>Coefficients are initially stored as Python sequences or NumPy arrays and
+are later converted to PyTorch tensors during the <cite>forward()</cite> pass.</p></li>
+<li><p>This method should be deterministic - calling it multiple times with the
+same parameters should produce identical coefficients.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If required parameters (especially <cite>fs</cite>) are not set before coefficient
+    computation is attempted.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Implementing <cite>compute_coefficients</cite> for a Butterworth lowpass filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute Butterworth lowpass coefficients.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Normalize cutoff to Nyquist frequency</span>
+<span class="gp">... </span>    <span class="n">nyquist</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">normalized_cutoff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="n">nyquist</span>
+<span class="gp">... </span>    <span class="c1"># Design filter using SciPy</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">normalized_cutoff</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;low&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for a custom shelving filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute high-shelving filter coefficients using biquad formulas.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Calculate angular frequency</span>
+<span class="gp">... </span>    <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+<span class="gp">... </span>    <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>  <span class="c1"># Linear gain</span>
+<span class="gp">... </span>    <span class="c1"># Compute biquad coefficients</span>
+<span class="gp">... </span>    <span class="n">b0</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">b2</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">a0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="n">a1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="gp">... </span>    <span class="c1"># Normalize by a0 and store</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">b0</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">b2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">a2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Implementing <cite>compute_coefficients</cite> for an FIR filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">firwin</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span><span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute FIR filter coefficients using window method.&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling frequency must be set&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c1"># Use scipy firwin to design FIR filter</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">firwin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_taps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
+<span class="gp">... </span>                    <span class="n">pass_zero</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pass_zero</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>  <span class="c1"># FIR filters have trivial denominator</span>
+</pre></div>
+</div>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="filterbanks-and-fused-cascades">
+<h3>Filterbanks and Fused Cascades<a class="headerlink" href="#filterbanks-and-fused-cascades" title="Link to this heading">#</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">LogFilterBank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_bands</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.414</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/filterbank.html#LogFilterBank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.LogFilterBank" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractFilter</span></code></p>
+<p>Bank of bandpass filters with logarithmic frequency spacing.</p>
+<p>Generates <code class="docutils literal notranslate"><span class="pre">n_bands</span></code> bandpass filters whose center frequencies are
+logarithmically spaced between <code class="docutils literal notranslate"><span class="pre">f_min</span></code> and <code class="docutils literal notranslate"><span class="pre">f_max</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">f</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_min</span> <span class="o">*</span> <span class="mi">2</span><span class="o">^</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">log2</span><span class="p">(</span><span class="n">f_max</span> <span class="o">/</span> <span class="n">f_min</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n_bands</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Each band uses a <a class="reference internal" href="#torchfx.filter.BiquadBPF" title="torchfx.filter.biquad.BiquadBPF"><code class="xref py py-class docutils literal notranslate"><span class="pre">BiquadBPF</span></code></a> with the
+specified quality factor <code class="docutils literal notranslate"><span class="pre">q</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_bands</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of frequency bands. Must be &gt;= 2.</p></li>
+<li><p><strong>f_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Minimum center frequency in Hz. Default is 20.0.</p></li>
+<li><p><strong>f_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Maximum center frequency in Hz. Default is 20000.0.</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Quality factor for each bandpass filter. Higher Q gives narrower
+bands. Default is 1.414 (approximately sqrt(2), giving -3 dB
+bandwidth of about 1 octave).</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><em>None</em>) – Sampling frequency in Hz. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, must be set before use
+(typically via pipeline operator with a <code class="docutils literal notranslate"><span class="pre">Wave</span></code> object).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank.n_bands">
+<span class="sig-name descname"><span class="pre">n_bands</span></span><a class="headerlink" href="#torchfx.filter.LogFilterBank.n_bands" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank.f_min">
+<span class="sig-name descname"><span class="pre">f_min</span></span><a class="headerlink" href="#torchfx.filter.LogFilterBank.f_min" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank.f_max">
+<span class="sig-name descname"><span class="pre">f_max</span></span><a class="headerlink" href="#torchfx.filter.LogFilterBank.f_max" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank.q">
+<span class="sig-name descname"><span class="pre">q</span></span><a class="headerlink" href="#torchfx.filter.LogFilterBank.q" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank.fs">
+<span class="sig-name descname"><span class="pre">fs</span></span><a class="headerlink" href="#torchfx.filter.LogFilterBank.fs" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank.filters">
+<span class="sig-name descname"><span class="pre">filters</span></span><a class="headerlink" href="#torchfx.filter.LogFilterBank.filters" title="Link to this definition">#</a></dt>
+<dd><p>The individual bandpass filters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="#torchfx.filter.BiquadBPF" title="torchfx.filter.BiquadBPF">BiquadBPF</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Examples</p>
+<p>Basic usage:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fb</span> <span class="o">=</span> <span class="n">LogFilterBank</span><span class="p">(</span><span class="n">n_bands</span><span class="o">=</span><span class="mi">31</span><span class="p">,</span> <span class="n">f_min</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span> <span class="n">f_max</span><span class="o">=</span><span class="mf">20000.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bands</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fb</span>  <span class="c1"># shape: [31, C, T]</span>
+</pre></div>
+</div>
+<p>Use as a spectrum analyzer:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fb</span> <span class="o">=</span> <span class="n">LogFilterBank</span><span class="p">(</span><span class="n">n_bands</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">f_min</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">f_max</span><span class="o">=</span><span class="mf">10000.0</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bands</span> <span class="o">=</span> <span class="n">fb</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>  <span class="c1"># [10, C, T]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">energy</span> <span class="o">=</span> <span class="p">(</span><span class="n">bands</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [10, C] per-band energy</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank.compute_coefficients">
+<span class="sig-name descname"><span class="pre">compute_coefficients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/filterbank.html#LogFilterBank.compute_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.LogFilterBank.compute_coefficients" title="Link to this definition">#</a></dt>
+<dd><p>Compute coefficients for all bandpass filters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/filterbank.html#LogFilterBank.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.LogFilterBank.forward" title="Link to this definition">#</a></dt>
+<dd><p>Apply all bandpass filters to the input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input tensor of shape <code class="docutils literal notranslate"><span class="pre">[T]</span></code>, <code class="docutils literal notranslate"><span class="pre">[C,</span> <span class="pre">T]</span></code>, or <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">C,</span> <span class="pre">T]</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output tensor of shape <code class="docutils literal notranslate"><span class="pre">[n_bands,</span> <span class="pre">...]</span></code> where <code class="docutils literal notranslate"><span class="pre">...</span></code> matches
+the input shape. Each slice <code class="docutils literal notranslate"><span class="pre">output[k]</span></code> contains the input
+filtered through band <code class="docutils literal notranslate"><span class="pre">k</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchfx.filter.LogFilterBank.center_frequencies">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">center_frequencies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchfx.filter.LogFilterBank.center_frequencies" title="Link to this definition">#</a></dt>
+<dd><p>Return the center frequency of each band in Hz.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchfx.filter.FusedSOSCascade">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">FusedSOSCascade</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">filters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/fused.html#FusedSOSCascade"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.FusedSOSCascade" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<p>A fused second-order-sections cascade combining multiple IIR filters.</p>
+<p>Merges the SOS matrices of several IIR filters into a single <code class="docutils literal notranslate"><span class="pre">[K_total,</span> <span class="pre">6]</span></code>
+tensor and processes them in one native <code class="docutils literal notranslate"><span class="pre">sos_forward</span></code> call, eliminating
+per-filter Python dispatch overhead.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filters</strong> (<a class="reference internal" href="#torchfx.filter.IIR" title="torchfx.filter.IIR"><em>IIR</em></a>) – One or more IIR filter instances to fuse.  Coefficients are computed
+eagerly (<code class="docutils literal notranslate"><span class="pre">compute_coefficients</span></code> is called at construction time).</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span> <span class="o">=</span> <span class="n">HiButterworth</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span> <span class="o">|</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">5000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fused</span> <span class="o">=</span> <span class="n">FusedSOSCascade</span><span class="o">.</span><span class="n">from_chain</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">fused</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.FusedSOSCascade.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/fused.html#FusedSOSCascade.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.FusedSOSCascade.forward" title="Link to this definition">#</a></dt>
+<dd><p>Apply the fused SOS cascade.</p>
+<p>On the first call, bootstraps state and enters stateful mode. Subsequent calls
+carry state across chunks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.FusedSOSCascade.from_chain">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chain</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/fused.html#FusedSOSCascade.from_chain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.FusedSOSCascade.from_chain" title="Link to this definition">#</a></dt>
+<dd><p>Create a fused cascade from an <code class="docutils literal notranslate"><span class="pre">nn.Sequential</span></code> or pipe chain.</p>
+<p>Walks the chain and collects all children that have SOS coefficients (IIR
+filters and biquad filters).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>chain</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.11)"><em>Sequential</em></a><em> | </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.11)"><em>Module</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#torchfx.filter.FusedSOSCascade" title="torchfx.filter.fused.FusedSOSCascade"><em>FusedSOSCascade</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.FusedSOSCascade.move_coeff">
+<span class="sig-name descname"><span class="pre">move_coeff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/fused.html#FusedSOSCascade.move_coeff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.FusedSOSCascade.move_coeff" title="Link to this definition">#</a></dt>
+<dd><p>Move the SOS matrix to the specified device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>device</strong> (<em>Device</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.filter.FusedSOSCascade.reset_state">
+<span class="sig-name descname"><span class="pre">reset_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/fused.html#FusedSOSCascade.reset_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.FusedSOSCascade.reset_state" title="Link to this definition">#</a></dt>
+<dd><p>Clear accumulated state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -4137,6 +5201,7 @@ judiciously in critical listening applications.</p>
 <li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.ParametricEQ.compute_coefficients"><code class="docutils literal notranslate"><span class="pre">ParametricEQ.compute_coefficients()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.Peaking"><code class="docutils literal notranslate"><span class="pre">Peaking</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#other-filters">Other Filters</a><ul class="nav section-nav flex-column">
@@ -4152,6 +5217,63 @@ judiciously in critical listening applications.</p>
 <li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.AllPass.compute_coefficients"><code class="docutils literal notranslate"><span class="pre">AllPass.compute_coefficients()</span></code></a></li>
 </ul>
 </li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#biquad-filters">Biquad Filters</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.Biquad"><code class="docutils literal notranslate"><span class="pre">Biquad</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.Biquad.cutoff"><code class="docutils literal notranslate"><span class="pre">Biquad.cutoff</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.Biquad.q"><code class="docutils literal notranslate"><span class="pre">Biquad.q</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.Biquad.fs"><code class="docutils literal notranslate"><span class="pre">Biquad.fs</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.Biquad.b"><code class="docutils literal notranslate"><span class="pre">Biquad.b</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.Biquad.a"><code class="docutils literal notranslate"><span class="pre">Biquad.a</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.Biquad.forward"><code class="docutils literal notranslate"><span class="pre">Biquad.forward()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.Biquad.reset_state"><code class="docutils literal notranslate"><span class="pre">Biquad.reset_state()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#id21"><code class="docutils literal notranslate"><span class="pre">Biquad.a</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#id22"><code class="docutils literal notranslate"><span class="pre">Biquad.b</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadLPF"><code class="docutils literal notranslate"><span class="pre">BiquadLPF</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadLPF.compute_coefficients"><code class="docutils literal notranslate"><span class="pre">BiquadLPF.compute_coefficients()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadHPF"><code class="docutils literal notranslate"><span class="pre">BiquadHPF</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadHPF.compute_coefficients"><code class="docutils literal notranslate"><span class="pre">BiquadHPF.compute_coefficients()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadBPF"><code class="docutils literal notranslate"><span class="pre">BiquadBPF</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadBPF.compute_coefficients"><code class="docutils literal notranslate"><span class="pre">BiquadBPF.compute_coefficients()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadNotch"><code class="docutils literal notranslate"><span class="pre">BiquadNotch</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadNotch.compute_coefficients"><code class="docutils literal notranslate"><span class="pre">BiquadNotch.compute_coefficients()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadAllPass"><code class="docutils literal notranslate"><span class="pre">BiquadAllPass</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.BiquadAllPass.compute_coefficients"><code class="docutils literal notranslate"><span class="pre">BiquadAllPass.compute_coefficients()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filterbanks-and-fused-cascades">Filterbanks and Fused Cascades</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank"><code class="docutils literal notranslate"><span class="pre">LogFilterBank</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank.n_bands"><code class="docutils literal notranslate"><span class="pre">LogFilterBank.n_bands</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank.f_min"><code class="docutils literal notranslate"><span class="pre">LogFilterBank.f_min</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank.f_max"><code class="docutils literal notranslate"><span class="pre">LogFilterBank.f_max</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank.q"><code class="docutils literal notranslate"><span class="pre">LogFilterBank.q</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank.fs"><code class="docutils literal notranslate"><span class="pre">LogFilterBank.fs</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank.filters"><code class="docutils literal notranslate"><span class="pre">LogFilterBank.filters</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank.compute_coefficients"><code class="docutils literal notranslate"><span class="pre">LogFilterBank.compute_coefficients()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank.forward"><code class="docutils literal notranslate"><span class="pre">LogFilterBank.forward()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.LogFilterBank.center_frequencies"><code class="docutils literal notranslate"><span class="pre">LogFilterBank.center_frequencies</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.FusedSOSCascade"><code class="docutils literal notranslate"><span class="pre">FusedSOSCascade</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.FusedSOSCascade.forward"><code class="docutils literal notranslate"><span class="pre">FusedSOSCascade.forward()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.FusedSOSCascade.from_chain"><code class="docutils literal notranslate"><span class="pre">FusedSOSCascade.from_chain()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.FusedSOSCascade.move_coeff"><code class="docutils literal notranslate"><span class="pre">FusedSOSCascade.move_coeff()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.filter.FusedSOSCascade.reset_state"><code class="docutils literal notranslate"><span class="pre">FusedSOSCascade.reset_state()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -443,7 +443,7 @@
 <p>A discrete-time waveform representing multi-channel audio signals.</p>
 <p>The Wave class is the fundamental data structure in torchfx, wrapping a PyTorch
 tensor containing audio samples along with its sampling frequency. It provides
-device management (CPU/CUDA), file I/O integration with torchaudio, functional
+device management (CPU/CUDA), file I/O via <code class="docutils literal notranslate"><span class="pre">soundfile</span></code>, functional
 transformations, and a pipeline operator for chaining effects and filters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -926,18 +926,21 @@ device of the first input wave.</p>
 <dt class="sig sig-object py" id="torchfx.Wave.save">
 <span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits_per_sample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/wave.html#Wave.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.Wave.save" title="Link to this definition">#</a></dt>
 <dd><p>Save the wave to an audio file.</p>
+<p>Audio is written via <code class="docutils literal notranslate"><span class="pre">soundfile.write</span></code> (libsndfile under the hood).
+Parent directories are created automatically and the underlying tensor
+is moved to CPU before encoding.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><em>Path</em>) – The path where to save the audio file.</p></li>
 <li><p><strong>format</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Override the audio format. If not specified, the format is inferred
-from the file extension. Valid values include: “wav”, “flac”.</p></li>
-<li><p><strong>encoding</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Changes the encoding for supported formats (wav, flac).
-Valid values: “PCM_S” (signed int), “PCM_U” (unsigned int),
-“PCM_F” (float), “ULAW”, “ALAW”.</p></li>
-<li><p><strong>bits_per_sample</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Changes the bit depth for supported formats.
-Valid values: 8, 16, 24, 32, 64.</p></li>
-<li><p><strong>**kwargs</strong> – Additional keyword arguments to pass to <cite>torchaudio.save</cite>.</p></li>
+from the file extension. Valid values include <code class="docutils literal notranslate"><span class="pre">&quot;wav&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;flac&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;ogg&quot;</span></code>.</p></li>
+<li><p><strong>encoding</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Encoding for supported formats. One of <code class="docutils literal notranslate"><span class="pre">&quot;PCM_S&quot;</span></code> (signed int),
+<code class="docutils literal notranslate"><span class="pre">&quot;PCM_U&quot;</span></code> (unsigned int), <code class="docutils literal notranslate"><span class="pre">&quot;PCM_F&quot;</span></code> (float), <code class="docutils literal notranslate"><span class="pre">&quot;ULAW&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;ALAW&quot;</span></code>.</p></li>
+<li><p><strong>bits_per_sample</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Bit depth. One of 8, 16, 24, 32, 64. The combination of <code class="docutils literal notranslate"><span class="pre">encoding</span></code>
+and <code class="docutils literal notranslate"><span class="pre">bits_per_sample</span></code> is mapped to a libsndfile subtype.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -945,33 +948,27 @@ Valid values: 8, 16, 24, 32, 64.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p>Save as WAV file:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">)</span>
+<p>Save as WAV (using the synthetic <code class="docutils literal notranslate"><span class="pre">wave</span></code> from the doctest fixture):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">d</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">wave</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s2">&quot;out.wav&quot;</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s2">&quot;out.wav&quot;</span><span class="p">))</span>
+<span class="go">True</span>
 </pre></div>
 </div>
-<p>Save as FLAC with specific encoding:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.flac&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;PCM_S&quot;</span><span class="p">,</span> <span class="n">bits_per_sample</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<p>Save as 24-bit FLAC:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">d</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">wave</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s2">&quot;out.flac&quot;</span><span class="p">),</span>
+<span class="gp">... </span>              <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;PCM_S&quot;</span><span class="p">,</span> <span class="n">bits_per_sample</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Save with high bit depth:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;PCM_F&quot;</span><span class="p">,</span> <span class="n">bits_per_sample</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="rubric">Notes</p>
-<ul class="simple">
-<li><p>The method automatically creates parent directories if they don’t exist.</p></li>
-<li><p>The audio data is moved to CPU before saving.</p></li>
-<li><p>Supported formats depend on the available torchaudio backend.</p></li>
-</ul>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <dl class="simple">
 <dt><a class="reference internal" href="#torchfx.Wave.from_file" title="torchfx.Wave.from_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_file</span></code></a></dt><dd><p>Load a wave from an audio file.</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">torchaudio.save</span></code></dt><dd><p>Underlying function used for saving.</p>
-</dd>
 </dl>
+<p><code class="xref py py-obj docutils literal notranslate"></code></p>
 </div>
 </dd></dl>
 
@@ -1043,7 +1040,9 @@ The original Wave object remains unchanged, following an immutability pattern.</
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>func</strong> (<em>Callable</em><em>[</em><em>...</em><em>, </em><em>Tensor</em><em>]</em>) – Function that takes a tensor as its first argument and returns a tensor.
-Can be any PyTorch or torchaudio function, or a custom callable.</p></li>
+Any callable that operates on a <code class="docutils literal notranslate"><span class="pre">torch.Tensor</span></code> works – a PyTorch
+function, a custom user function, or a transform from another
+ecosystem package such as <code class="docutils literal notranslate"><span class="pre">torchaudio</span></code> (installed separately).</p></li>
 <li><p><strong>*args</strong> – Additional positional arguments passed to func after the tensor.</p></li>
 <li><p><strong>**kwargs</strong> – Additional keyword arguments passed to func.</p></li>
 </ul>
@@ -1068,15 +1067,7 @@ Can be any PyTorch or torchaudio function, or a custom callable.</p></li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">normalized</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">normalize_peak</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Apply torchaudio transforms with parameters:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Resample to 16kHz (requires passing sample rate)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">resampled</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">T</span><span class="o">.</span><span class="n">Resample</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="mi">16000</span><span class="p">)</span><span class="o">.</span><span class="n">forward</span>
-<span class="gp">... </span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Apply custom function with arguments:</p>
+<p>Apply a custom function with arguments:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">add_noise</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="n">noise</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="o">*</span> <span class="n">noise_level</span>
 <span class="gp">... </span>    <span class="k">return</span> <span class="n">tensor</span> <span class="o">+</span> <span class="n">noise</span>

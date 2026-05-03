@@ -447,36 +447,31 @@
 representations: direct amplitude multiplication, decibel (dB) adjustment,
 or power scaling. An optional clamping parameter prevents clipping artifacts
 by limiting output values to [-1.0, 1.0].</p>
-<p>This effect extends torchaudio.transforms.Vol by adding the clamp parameter
-for better control over output dynamic range.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>gain</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The gain factor to apply to the waveform. Must be positive for
-“amplitude” and “power” gain types. Can be negative for “db” type.</p></li>
-<li><p><strong>gain_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – <p>The type of gain to apply. Default is “amplitude”.</p>
+<code class="docutils literal notranslate"><span class="pre">&quot;amplitude&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;power&quot;</span></code> gain types. Can be negative for
+<code class="docutils literal notranslate"><span class="pre">&quot;db&quot;</span></code>.</p></li>
+<li><p><strong>gain_type</strong> (<em>{&quot;amplitude&quot;</em><em>, </em><em>&quot;db&quot;</em><em>, </em><em>&quot;power&quot;}</em><em>, </em><em>default=&quot;amplitude&quot;</em>) – <p>How the <code class="docutils literal notranslate"><span class="pre">gain</span></code> value is interpreted:</p>
 <ul>
-<li><p>”amplitude”: Direct multiplication by gain factor</p></li>
-<li><p>”db”: Decibel-based gain using torchaudio.functional.gain</p></li>
-<li><p>”power”: Power-based gain converted to dB internally</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;amplitude&quot;</span></code>: direct multiplication by <code class="docutils literal notranslate"><span class="pre">gain</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;db&quot;</span></code>: gain in decibels (output multiplied by <code class="docutils literal notranslate"><span class="pre">10</span> <span class="pre">**</span> <span class="pre">(gain/20)</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;power&quot;</span></code>: power ratio, converted to dB internally</p></li>
 </ul>
 </p></li>
-<li><p><strong>clamp</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, clamps the output waveform to the range [-1.0, 1.0] to
-prevent clipping. Default is False.</p></li>
+<li><p><strong>clamp</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default=False</em>) – If True, clamp the output waveform to <code class="docutils literal notranslate"><span class="pre">[-1.0,</span> <span class="pre">1.0]</span></code> after applying
+the gain.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If gain is negative when gain_type is “amplitude” or “power”.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If gain is negative when gain_type is <code class="docutils literal notranslate"><span class="pre">&quot;amplitude&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;power&quot;</span></code>.</p>
 </dd>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <dl class="simple">
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">torchaudio.transforms.Vol</span></code></dt><dd><p>Original transform this effect is based on</p>
-</dd>
-<dt><a class="reference internal" href="#torchfx.effect.Normalize" title="torchfx.effect.Normalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Normalize</span></code></a></dt><dd><p>Amplitude normalization with multiple strategies</p>
-</dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">torchaudio.functional.gain</span></code></dt><dd><p>Function used for dB and power gain</p>
+<dt><a class="reference internal" href="#torchfx.effect.Normalize" title="torchfx.effect.Normalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Normalize</span></code></a></dt><dd><p>Amplitude normalization with multiple strategies.</p>
 </dd>
 </dl>
 </div>
@@ -488,12 +483,10 @@ prevent clipping. Default is False.</p></li>
 <li><p>Power: <span class="math notranslate nohighlight">\(y[n] = x[n] \cdot 10^{(10 \log_{10}(\text{gain}))/20}\)</span></p></li>
 </ul>
 <p><strong>Clamping:</strong></p>
-<p>When clamp=True, the final output is constrained:
+<p>When <code class="docutils literal notranslate"><span class="pre">clamp=True</span></code> the output is constrained:
 <span class="math notranslate nohighlight">\(y[n] = \text{clip}(y[n], -1.0, 1.0)\)</span></p>
-<p>The &#64;torch.no_grad() decorator disables gradient computation for efficiency
-during inference-only operations.</p>
-<p>This class is based on torchaudio.transforms.Vol, licensed under the
-BSD 2-Clause License. See licenses.torchaudio.BSD-2-Clause.txt for details.</p>
+<p>Coefficient formulas are adapted from <code class="docutils literal notranslate"><span class="pre">torchaudio.transforms.Vol</span></code>,
+BSD 2-Clause License (see <code class="docutils literal notranslate"><span class="pre">licenses.torchaudio.BSD-2-Clause.txt</span></code>).</p>
 <p class="rubric">Examples</p>
 <p>Basic amplitude gain to double volume:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>

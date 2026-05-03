@@ -379,15 +379,21 @@ import torchfx as fx
 # ✅ GOOD: Named, reusable chain
 vocal_chain = nn.Sequential(
     iir.HiButterworth(cutoff=100, order=2),
-    iir.PeakingEQ(freq=3000, gain_db=3, q=1.0),  # Presence boost
-    fx.effect.Compressor(threshold=0.5, ratio=4.0),
+    iir.ParametricEQ(frequency=3000, gain=3, q=1.0),  # Presence boost
+    fx.effect.Gain(0.7, gain_type="amplitude"),       # Trim level
     fx.effect.Normalize(peak=0.95),
 )
 
 processed = wave | vocal_chain
 
 # ❌ LESS GOOD: Inline complex chain
-processed = wave | iir.HiButterworth(100, 2) | iir.PeakingEQ(3000, 3, 1.0) | fx.effect.Compressor(0.5, 4.0) | fx.effect.Normalize(0.95)
+processed = (
+    wave
+    | iir.HiButterworth(100, 2)
+    | iir.ParametricEQ(3000, 1.0, 3)
+    | fx.effect.Gain(0.7, gain_type="amplitude")
+    | fx.effect.Normalize(0.95)
+)
 ```
 
 ### Avoid Deep Nesting

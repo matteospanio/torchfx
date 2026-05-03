@@ -2,10 +2,108 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
   <id>https://matteospanio.github.io/torchfx/</id>
   <title>TorchFX Blog</title>
-  <updated>2026-04-13T19:44:54.997762+00:00</updated>
+  <updated>2026-05-03T21:31:32.594616+00:00</updated>
   <link href="https://matteospanio.github.io/torchfx/"/>
   <link href="https://matteospanio.github.io/torchfx/blog/index/atom.xml" rel="self"/>
   <generator uri="https://ablog.readthedocs.io/" version="0.11.12">ABlog</generator>
+  <entry>
+    <id>https://matteospanio.github.io/torchfx/blog/2026-05-03-release-053.html</id>
+    <title>TorchFX 0.5.3: Build System Overhaul &amp; Prebuilt Wheels</title>
+    <updated>2026-05-03T00:00:00+00:00</updated>
+    <author>
+      <name>Matteo Spanio</name>
+    </author>
+    <content type="html">&lt;section id="torchfx-0-5-3-build-system-overhaul-prebuilt-wheels"&gt;
+
+&lt;p&gt;&lt;strong&gt;TorchFX 0.5.3&lt;/strong&gt; is a packaging-focused release. The headline change is invisible if you only read the API docs but very visible the first time you &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;pip&lt;/span&gt; &lt;span class="pre"&gt;install&lt;/span&gt;&lt;/code&gt; the library: TorchFX has migrated from runtime JIT compilation to &lt;strong&gt;scikit-build-core + CMake&lt;/strong&gt;, and the project now ships &lt;strong&gt;prebuilt CPU wheels&lt;/strong&gt; for Linux x86_64, macOS (Intel and Apple Silicon), and Windows x86_64 across Python 3.10–3.14.&lt;/p&gt;
+&lt;p&gt;No more 10–30 second freeze on first import. No more “do you have a C++ compiler?” support tickets. Just &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;pip&lt;/span&gt; &lt;span class="pre"&gt;install&lt;/span&gt; &lt;span class="pre"&gt;torchfx&lt;/span&gt;&lt;/code&gt; and go.&lt;/p&gt;
+&lt;section id="from-jit-to-scikit-build-core"&gt;
+&lt;h2&gt;From JIT to scikit-build-core&lt;/h2&gt;
+&lt;p&gt;In 0.5.0, the native extension was JIT-compiled via &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torch.utils.cpp_extension.load()&lt;/span&gt;&lt;/code&gt; the first time you imported TorchFX. That was a deliberate choice at the time — it kept the build configuration trivial and let users get CUDA kernels without setting up a separate build pipeline. But it had three sharp edges:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;First-import latency.&lt;/strong&gt; Every fresh environment paid a 10–30 second compilation tax on first &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;import&lt;/span&gt; &lt;span class="pre"&gt;torchfx&lt;/span&gt;&lt;/code&gt;. Cached afterward, but painful in containers, CI runs, and notebook kernels.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Compiler requirement at the user’s machine.&lt;/strong&gt; Every end user needed GCC 9+, the CUDA toolkit (for GPU users), and a working build environment. This was a non-trivial barrier for data scientists and audio engineers who just wanted to filter some audio.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;setuptools&lt;/span&gt;&lt;/code&gt; as a runtime dependency.&lt;/strong&gt; Required only because &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torch.utils.cpp_extension&lt;/span&gt;&lt;/code&gt; pulled it in — a 1.5 MB dependency carried purely for JIT compilation.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;0.5.3 replaces all of this with &lt;strong&gt;scikit-build-core&lt;/strong&gt; as the build backend and &lt;strong&gt;CMake&lt;/strong&gt; as the build system. The C++/CUDA extension is now compiled at install time, baked into the wheel, and loaded as a normal precompiled module.&lt;/p&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# 0.5.2 and earlier:&lt;/span&gt;
+pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="c1"&gt;# fast install&lt;/span&gt;
+import&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="w"&gt;             &lt;/span&gt;&lt;span class="c1"&gt;# ~20s compile on first import&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 0.5.3:&lt;/span&gt;
+pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="c1"&gt;# downloads prebuilt wheel (no compile needed)&lt;/span&gt;
+import&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="w"&gt;             &lt;/span&gt;&lt;span class="c1"&gt;# instant&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Build-time configuration still respects &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TORCHFX_NO_CUDA=1&lt;/span&gt;&lt;/code&gt; for CPU-only builds, and the CMake configuration is the same one introduced in 0.5.0 — just invoked at the right point in the lifecycle.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="prebuilt-wheels-via-github-actions"&gt;
+&lt;h2&gt;Prebuilt Wheels via GitHub Actions&lt;/h2&gt;
+&lt;p&gt;The new &lt;a class="reference external" href="https://github.com/matteospanio/torchfx"&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;.github/workflows/wheels.yml&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; pipeline drives &lt;a class="reference external" href="https://cibuildwheel.pypa.io/"&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;cibuildwheel&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; across four runners — &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;ubuntu-latest&lt;/span&gt;&lt;/code&gt; (manylinux x86_64), &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;macos-13&lt;/span&gt;&lt;/code&gt; (Intel), &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;macos-14&lt;/span&gt;&lt;/code&gt; (Apple Silicon), and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;windows-latest&lt;/span&gt;&lt;/code&gt; — and produces CPU wheels for Python 3.10–3.14 on every tagged release. PyTorch’s own shared libraries are explicitly excluded from the repaired wheels (via &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;auditwheel&lt;/span&gt;&lt;/code&gt;/&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;delocate&lt;/span&gt;&lt;/code&gt;/&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;delvewheel&lt;/span&gt;&lt;/code&gt;) so the wheel stays small and links against whichever PyTorch build the user has installed.&lt;/p&gt;
+&lt;p&gt;A second pipeline, &lt;a class="reference external" href="https://github.com/matteospanio/torchfx"&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;wheels-cuda.yml&lt;/span&gt;&lt;/code&gt;&lt;/a&gt;, builds CUDA wheels for Linux x86_64 against CUDA 12.4 and 12.8 using NVIDIA’s CUDA toolkit on top of the manylinux container, and publishes them to GitHub Pages as a PEP 503 simple-repository index:&lt;/p&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torch&lt;span class="w"&gt; &lt;/span&gt;--index-url&lt;span class="w"&gt; &lt;/span&gt;https://download.pytorch.org/whl/cu124
+pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;--index-url&lt;span class="w"&gt; &lt;/span&gt;https://matteospanio.github.io/torchfx/wheels/cu124/&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;--extra-index-url&lt;span class="w"&gt; &lt;/span&gt;https://pypi.org/simple
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;The CUDA wheels carry a &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;+cu124&lt;/span&gt;&lt;/code&gt; (or &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;+cu128&lt;/span&gt;&lt;/code&gt;) PEP 440 local-version suffix, so they cannot collide with the CPU wheels on PyPI: pip only resolves them when explicitly pointed at the CUDA index. macOS CUDA wheels are not feasible (NVIDIA dropped Mac support in 2019); Windows CUDA users build from source.&lt;/p&gt;
+&lt;p&gt;What this means in practice:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Fresh &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;pip&lt;/span&gt; &lt;span class="pre"&gt;install&lt;/span&gt; &lt;span class="pre"&gt;torchfx&lt;/span&gt;&lt;/code&gt;&lt;/strong&gt; now pulls a prebuilt wheel matching your Python version. No compiler needed.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;CI environments&lt;/strong&gt; (GitHub Actions, GitLab CI, Docker builds) are dramatically faster — no more burning a minute on extension compilation in every job.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Reproducibility&lt;/strong&gt; improves: the wheel published to PyPI is the exact binary built and tested by the CI pipeline.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Source distributions remain available for users who need a custom build (CUDA, alternative architectures, debug builds).&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="the-pure-pytorch-fallback-is-gone"&gt;
+&lt;h2&gt;The Pure-PyTorch Fallback is Gone&lt;/h2&gt;
+&lt;p&gt;In 0.5.0 and 0.5.1, the C++ extension was &lt;em&gt;optional&lt;/em&gt; — if compilation failed, TorchFX silently fell back to pure-PyTorch implementations of the IIR DF1 loop and the delay line. That fallback was 100–500x slower than the native path even with vectorization tricks, and it complicated every dispatch site with a “did the extension load?” branch.&lt;/p&gt;
+&lt;p&gt;With prebuilt wheels, the failure mode disappears: the extension is always present. So 0.5.3 &lt;strong&gt;removes the pure-PyTorch fallback entirely&lt;/strong&gt;.&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;_biquad_df1_fallback&lt;/span&gt;&lt;/code&gt; and the SOS DF1 fallback in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;_ops.py&lt;/span&gt;&lt;/code&gt; are gone.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;The &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;_load_extension&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torch.utils.cpp_extension.load&lt;/span&gt;&lt;/code&gt; machinery in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;_ops.py&lt;/span&gt;&lt;/code&gt; is gone.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Every dispatch site assumes &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx_ext&lt;/span&gt;&lt;/code&gt; is importable.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;If you build TorchFX from source without the extension (e.g., a hostile build environment), the import will now fail loudly rather than silently degrading to a 500x-slower path. This is the right tradeoff: a clear error message beats a silent performance cliff.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="cpu-delay-kernel"&gt;
+&lt;h2&gt;CPU Delay Kernel&lt;/h2&gt;
+&lt;p&gt;Previously, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;delay_line_forward&lt;/span&gt;&lt;/code&gt; had a CUDA kernel and a Python fallback for CPU. With the fallback architecture going away, that gap had to be filled — so 0.5.3 adds &lt;a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/src/torchfx/_csrc/delay_cpu.cpp"&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;delay_cpu.cpp&lt;/span&gt;&lt;/code&gt;&lt;/a&gt;, a native C++ implementation of the delay line for CPU.&lt;/p&gt;
+&lt;p&gt;The dispatch in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;_ops.py&lt;/span&gt;&lt;/code&gt; is now symmetric with the IIR path: native C++ on CPU, native CUDA on GPU, no fallback in between. Multi-channel delay processing on CPU sees the expected speedup over the previous Python loop.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="what-hasnt-changed"&gt;
+&lt;h2&gt;What Hasn’t Changed&lt;/h2&gt;
+&lt;p&gt;This release is deliberately a packaging release. The user-facing API, the deferred pipeline fusion from 0.5.2, the SOS coefficient caching, the CUDA parallel scan kernels — all of it is unchanged. If your code worked on 0.5.2, it works on 0.5.3 with no modifications.&lt;/p&gt;
+&lt;p&gt;The only behavioural difference you might notice is the absence of the first-import compilation pause. Everything else is identical, just faster to get started.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="installation"&gt;
+&lt;h2&gt;Installation&lt;/h2&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;==&lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.5.3
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;For CUDA support, build from source against your target CUDA version:&lt;/p&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;==&lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.5.3&lt;span class="w"&gt; &lt;/span&gt;--no-binary&lt;span class="w"&gt; &lt;/span&gt;torchfx
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Set &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TORCHFX_NO_CUDA=1&lt;/span&gt;&lt;/code&gt; to force a CPU-only build from source.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="whats-next"&gt;
+&lt;h2&gt;What’s Next&lt;/h2&gt;
+&lt;p&gt;With the build system stabilized, upcoming work will return to the optimization roadmap: CUDA wheels in CI, expanded benchmark coverage, and the next round of pipeline-level fusion opportunities surfaced by the Phase 0 baseline.&lt;/p&gt;
+&lt;p&gt;As always, file issues and feature requests on &lt;a class="reference external" href="https://github.com/matteospanio/torchfx"&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+</content>
+    <link href="https://matteospanio.github.io/torchfx/blog/2026-05-03-release-053.html"/>
+    <summary>TorchFX 0.5.3 is a packaging-focused release. The headline change is invisible if you only read the API docs but very visible the first time you pip install the library: TorchFX has migrated from runtime JIT compilation to scikit-build-core + CMake, and the project now ships prebuilt CPU wheels for Linux x86_64, macOS (Intel and Apple Silicon), and Windows x86_64 across Python 3.10–3.14.</summary>
+    <category term="build-system" label="build-system"/>
+    <category term="cmake" label="cmake"/>
+    <category term="packaging" label="packaging"/>
+    <category term="release" label="release"/>
+    <category term="wheels" label="wheels"/>
+    <published>2026-05-03T00:00:00+00:00</published>
+  </entry>
   <entry>
     <id>https://matteospanio.github.io/torchfx/blog/2026-04-13-release-052.html</id>
     <title>TorchFX 0.5.2: Transparent Filter Fusion &amp; Unified Forward Paths</title>

@@ -837,6 +837,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -939,9 +940,8 @@ window.runMermaid = runMermaid;</script>
     class IIR {
         &lt;&lt;abstract&gt;&gt;
         +fs int|None
-        +a Tensor|None
-        +b Tensor|None
-        +move_coeff(device, dtype)
+        +_sos Tensor|None
+        +compute_coefficients()
         +forward(x) Tensor
     }
 
@@ -1434,25 +1434,18 @@ H(z) = \frac{b_0' + b_1' z^{-1} + b_2' z^{-2}}{1 + a_1' z^{-1} + a_2' z^{-2}}
 </pre></div>
 </div>
 </section>
-<section id="helper-method-for-coefficient-transfer">
-<h3>Helper Method for Coefficient Transfer<a class="headerlink" href="#helper-method-for-coefficient-transfer" title="Link to this heading">#</a></h3>
-<p>Include a helper method for moving coefficients:</p>
+<section id="device-transfer">
+<h3>Device Transfer<a class="headerlink" href="#device-transfer" title="Link to this heading">#</a></h3>
+<p>Standard <code class="docutils literal notranslate"><span class="pre">nn.Module.to(device)</span></code> moves tensors registered as buffers (or attributes assigned through <code class="docutils literal notranslate"><span class="pre">register_buffer</span></code>) automatically. Match the cached coefficient tensor to the input’s device and dtype on each forward pass:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CustomFilter</span><span class="p">(</span><span class="n">AbstractFilter</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">move_coeff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Move filter coefficients to specified device and dtype.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_computed_coeff</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
 
-        <span class="c1"># Use helper method for device transfer</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">lfilter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+        <span class="c1"># Match coefficients to the input&#39;s device/dtype on each call.</span>
+        <span class="n">sos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_sos_cascade_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sos</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -1821,7 +1814,7 @@ H(z) = \frac{b_0' + b_1' z^{-1} + b_2' z^{-2}}{1 + a_1' z^{-1} + a_2' z^{-2}}
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#device-and-dtype-management">Device and Dtype Management</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#automatic-device-handling">Automatic Device Handling</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#helper-method-for-coefficient-transfer">Helper Method for Coefficient Transfer</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#device-transfer">Device Transfer</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-and-validation">Testing and Validation</a><ul class="pst-show_toc_level nav section-nav flex-column">

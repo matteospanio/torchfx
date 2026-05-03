@@ -629,15 +629,17 @@ completes. Keys: “elapsed_seconds”, “operation_name”.</p>
 <p class="rubric">Examples</p>
 <p>Basic usage:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_performance</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lpf</span> <span class="o">=</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">8000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">log_performance</span><span class="p">(</span><span class="s2">&quot;filter_chain&quot;</span><span class="p">):</span>
-<span class="gp">... </span>    <span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter1</span> <span class="o">|</span> <span class="n">filter2</span>
-<span class="go"># Logs: &quot;filter_chain completed in 0.045s&quot;</span>
+<span class="gp">... </span>    <span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">lpf</span>  <span class="c1"># logs e.g. &quot;filter_chain completed in 0.045s&quot;</span>
 </pre></div>
 </div>
 <p>Capture timing information:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">log_performance</span><span class="p">(</span><span class="s2">&quot;processing&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">timing</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">effect</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Took </span><span class="si">{</span><span class="n">timing</span><span class="p">[</span><span class="s1">&#39;elapsed_seconds&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">result</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">lpf</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">isinstance</span><span class="p">(</span><span class="n">timing</span><span class="p">[</span><span class="s2">&quot;elapsed_seconds&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+<span class="go">True</span>
 </pre></div>
 </div>
 <p>With custom logger:</p>
@@ -670,16 +672,17 @@ each time it is called.</p>
 <p class="rubric">Examples</p>
 <p>Basic usage with automatic naming:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogPerformance</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoButterworth</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nd">@LogPerformance</span><span class="p">()</span>
-<span class="gp">... </span><span class="k">def</span><span class="w"> </span><span class="nf">process_audio</span><span class="p">(</span><span class="n">wave</span><span class="p">):</span>
-<span class="gp">... </span>    <span class="k">return</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">filter1</span> <span class="o">|</span> <span class="n">filter2</span>
-<span class="go"># Each call logs: &quot;process_audio completed in X.XXXs&quot;</span>
+<span class="gp">... </span><span class="k">def</span><span class="w"> </span><span class="nf">process_audio</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">w</span> <span class="o">|</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">8000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">process_audio</span><span class="p">(</span><span class="n">wave</span><span class="p">)</span>  <span class="c1"># logs e.g. &quot;process_audio completed in 0.001s&quot;</span>
 </pre></div>
 </div>
 <p>Custom operation name:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@LogPerformance</span><span class="p">(</span><span class="s2">&quot;audio_processing_pipeline&quot;</span><span class="p">)</span>
-<span class="gp">... </span><span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">wave</span><span class="p">):</span>
-<span class="gp">... </span>    <span class="k">return</span> <span class="n">wave</span> <span class="o">|</span> <span class="nb">filter</span>
+<span class="gp">... </span><span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">w</span> <span class="o">|</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">8000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>With custom logger:</p>

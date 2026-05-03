@@ -836,6 +836,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -1026,11 +1027,11 @@ window.runMermaid = runMermaid;</script>
 <span class="c1"># Multi-stage vocal processing chain</span>
 <span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">wave</span>
-    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>          <span class="c1"># Remove rumble</span>
-    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>     <span class="c1"># Presence boost</span>
-    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>     <span class="c1"># Reduce muddiness</span>
-    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Compressor</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span> <span class="c1"># Dynamic control</span>
-    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>                 <span class="c1"># Final normalization</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>            <span class="c1"># Remove rumble</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">ParametricEQ</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Presence boost</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">ParametricEQ</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">gain</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>  <span class="c1"># Reduce muddiness</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>       <span class="c1"># Trim level</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>                   <span class="c1"># Final normalization</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -1150,10 +1151,13 @@ window.runMermaid = runMermaid;</script>
 
 <span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
 
-<span class="c1"># Three-way parallel combination</span>
+<span class="c1"># Three-way parallel combination. There is no standalone bandpass filter</span>
+<span class="c1"># class -- synthesize a band by chaining a high-pass and a low-pass.</span>
+<span class="n">mid_band</span> <span class="o">=</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
 <span class="n">multiband</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span>      <span class="c1"># Low band</span>
-    <span class="n">iir</span><span class="o">.</span><span class="n">BandPass</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span>     <span class="c1"># Mid band</span>
+    <span class="n">mid_band</span> <span class="o">+</span>                             <span class="c1"># Mid band</span>
     <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>       <span class="c1"># High band</span>
 <span class="p">)</span>
 
@@ -1350,16 +1354,15 @@ window.runMermaid = runMermaid;</script>
 <span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">effect_chain</span>
 </pre></div>
 </div>
-<p>You can also mix TorchFX filters with torchaudio transforms:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
+<p>You can also mix TorchFX filters with <code class="docutils literal notranslate"><span class="pre">torch.nn.Module</span></code> instances from any other PyTorch ecosystem library (e.g., torchaudio transforms, if installed separately). TorchFX’s pipe operator forwards the underlying tensor through any <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">iir</span>
 
 <span class="n">processed</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">wave</span>
     <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiChebyshev1</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="o">|</span> <span class="n">T</span><span class="o">.</span><span class="n">Vol</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># torchaudio volume transform</span>
-    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Reverb</span><span class="p">()</span>  <span class="c1"># torchfx reverb effect</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>  <span class="c1"># -6 dB</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Reverb</span><span class="p">()</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -1382,12 +1385,12 @@ window.runMermaid = runMermaid;</script>
 
     <span class="c1"># Parallel EQ boosts for presence and air</span>
     <span class="o">|</span> <span class="p">(</span>
-        <span class="n">iir</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span>   <span class="c1"># Presence</span>
-        <span class="n">iir</span><span class="o">.</span><span class="n">PeakingEQ</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>    <span class="c1"># Air</span>
+        <span class="n">iir</span><span class="o">.</span><span class="n">ParametricEQ</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span>   <span class="c1"># Presence</span>
+        <span class="n">iir</span><span class="o">.</span><span class="n">ParametricEQ</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>    <span class="c1"># Air</span>
     <span class="p">)</span>
 
-    <span class="c1"># Dynamics and final polish</span>
-    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Compressor</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span>
+    <span class="c1"># Trim level and normalize</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
     <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">peak</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
@@ -1400,9 +1403,15 @@ window.runMermaid = runMermaid;</script>
 
 <span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;master.wav&quot;</span><span class="p">)</span>
 
-<span class="c1"># Three-band processing</span>
+<span class="c1"># Three-band processing. There is no standalone bandpass filter --</span>
+<span class="c1"># synthesize the mid band from a high-pass + low-pass cascade.</span>
 <span class="n">low</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">1.2</span><span class="p">)</span>
-<span class="n">mid</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">BandPass</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Compressor</span><span class="p">(</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+<span class="n">mid</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">gain_type</span><span class="o">=</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
+<span class="p">)</span>
 <span class="n">high</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">iir</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">1.1</span><span class="p">)</span>
 
 <span class="c1"># Recombine bands</span>

@@ -155,6 +155,11 @@ Parametric EQ
    :show-inheritance:
    :exclude-members: __init__, __str__, __repr__
 
+.. autoclass:: Peaking
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__
+
 Other Filters
 ^^^^^^^^^^^^^
 
@@ -164,6 +169,55 @@ Other Filters
    :exclude-members: __init__, __str__, __repr__
 
 .. autoclass:: AllPass
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__
+
+Biquad Filters
+~~~~~~~~~~~~~~
+
+Direct biquad implementations from the Audio EQ Cookbook. The base ``Biquad``
+class plus convenience subclasses for common topologies.
+
+.. autoclass:: Biquad
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__
+
+.. autoclass:: BiquadLPF
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__
+
+.. autoclass:: BiquadHPF
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__
+
+.. autoclass:: BiquadBPF
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__
+
+.. autoclass:: BiquadNotch
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__
+
+.. autoclass:: BiquadAllPass
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__
+
+Filterbanks and Fused Cascades
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: LogFilterBank
+   :members:
+   :show-inheritance:
+   :exclude-members: __init__, __str__, __repr__
+
+.. autoclass:: FusedSOSCascade
    :members:
    :show-inheritance:
    :exclude-members: __init__, __str__, __repr__

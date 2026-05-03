@@ -836,6 +836,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -1503,28 +1504,24 @@ window.runMermaid = runMermaid;</script>
     subgraph &quot;GPU Execution Path&quot;
         GPU_Wave[&quot;Wave.to('cuda')&quot;]
         GPU_Chain[&quot;fchain.to('cuda')&quot;]
-        GPU_Coeff[&quot;f.compute_coefficients()&lt;br/&gt;f.move_coeff('cuda')&lt;br/&gt;for each filter&quot;]
         GPU_Execute[&quot;fchain(wave.ys)&quot;]
 
         GPU_Wave --&gt; GPU_Chain
-        GPU_Chain --&gt; GPU_Coeff
-        GPU_Coeff --&gt; GPU_Execute
+        GPU_Chain --&gt; GPU_Execute
     end
 
     subgraph &quot;CPU Execution Path&quot;
         CPU_Wave[&quot;Wave.to('cpu')&quot;]
         CPU_Chain[&quot;fchain.to('cpu')&quot;]
-        CPU_Coeff[&quot;f.move_coeff('cpu')&lt;br/&gt;for each filter&quot;]
         CPU_Execute[&quot;fchain(wave.ys)&quot;]
 
         CPU_Wave --&gt; CPU_Chain
-        CPU_Chain --&gt; CPU_Coeff
-        CPU_Coeff --&gt; CPU_Execute
+        CPU_Chain --&gt; CPU_Execute
     end
 
     subgraph &quot;SciPy Execution Path&quot;
-        SciPy_Design[&quot;butter() / cheby1()&lt;br/&gt;Design filter coefficients&quot;]
-        SciPy_Filter[&quot;lfilter()&lt;br/&gt;Apply filters&quot;]
+        SciPy_Design[&quot;butter() / cheby1()&lt;br/&gt;Design SOS coefficients&quot;]
+        SciPy_Filter[&quot;sosfilt()&lt;br/&gt;Apply filters&quot;]
 
         SciPy_Design --&gt; SciPy_Filter
     end
@@ -1532,22 +1529,15 @@ window.runMermaid = runMermaid;</script>
 <h4>GPU Filter Function<a class="headerlink" href="#gpu-filter-function" title="Link to this heading">#</a></h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">gpu_iir</span><span class="p">(</span><span class="n">wave</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply IIR filter chain on GPU.&quot;&quot;&quot;</span>
-    <span class="c1"># CRITICAL: Move both module and coefficients to GPU</span>
-    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">wave</span> <span class="o">|</span> <span class="n">fchain</span><span class="p">)</span><span class="o">.</span><span class="n">ys</span>
 </pre></div>
 </div>
-<p><strong>Important</strong>: IIR filters require explicit coefficient movement to GPU.</p>
+<p><code class="docutils literal notranslate"><span class="pre">fchain.to(&quot;cuda&quot;)</span></code> moves the module and its cached SOS coefficients in one step — no separate coefficient transfer is needed.</p>
 </section>
 <section id="cpu-filter-function">
 <h4>CPU Filter Function<a class="headerlink" href="#cpu-filter-function" title="Link to this heading">#</a></h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">cpu_iir</span><span class="p">(</span><span class="n">wave</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply IIR filter chain on CPU.&quot;&quot;&quot;</span>
-    <span class="c1"># Move coefficients back to CPU</span>
-    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fchain</span><span class="p">:</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">move_coeff</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">wave</span> <span class="o">|</span> <span class="n">fchain</span><span class="p">)</span><span class="o">.</span><span class="n">ys</span>
 </pre></div>
 </div>
@@ -1556,12 +1546,12 @@ window.runMermaid = runMermaid;</script>
 <h4>SciPy Filter Function<a class="headerlink" href="#scipy-filter-function" title="Link to this heading">#</a></h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">scipy_iir</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply IIR filters using SciPy.&quot;&quot;&quot;</span>
-    <span class="c1"># Design Butterworth coefficients</span>
-    <span class="n">b1</span><span class="p">,</span> <span class="n">a1</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">Wn</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;high&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+    <span class="c1"># Design Butterworth SOS coefficients</span>
+    <span class="n">sos1</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">Wn</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;high&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;sos&#39;</span><span class="p">)</span>
     <span class="c1"># ... design other filters ...</span>
 
-    <span class="c1"># Apply filters sequentially</span>
-    <span class="n">audio</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">audio</span><span class="p">)</span>
+    <span class="c1"># Apply filters sequentially using the same SOS form TorchFX uses internally</span>
+    <span class="n">audio</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">sosfilt</span><span class="p">(</span><span class="n">sos1</span><span class="p">,</span> <span class="n">audio</span><span class="p">)</span>
     <span class="c1"># ... apply other filters ...</span>
     <span class="k">return</span> <span class="n">audio</span>
 </pre></div>

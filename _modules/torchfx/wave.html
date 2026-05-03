@@ -851,7 +851,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">- Stereo audio: (2, N)</span>
 <span class="sd">- Multi-channel: (C, N) where C is the channel count</span>
 
-<span class="sd">This convention is consistent with torchaudio and PyTorch audio processing standards.</span>
+<span class="sd">This is the standard channel-first convention used by PyTorch audio tooling.</span>
 
 <span class="sd">Typical Usage Pattern</span>
 <span class="sd">---------------------</span>
@@ -903,7 +903,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    The Wave class is the fundamental data structure in torchfx, wrapping a PyTorch</span>
 <span class="sd">    tensor containing audio samples along with its sampling frequency. It provides</span>
-<span class="sd">    device management (CPU/CUDA), file I/O integration with torchaudio, functional</span>
+<span class="sd">    device management (CPU/CUDA), file I/O via ``soundfile``, functional</span>
 <span class="sd">    transformations, and a pipeline operator for chaining effects and filters.</span>
 
 <span class="sd">    Attributes</span>
@@ -1188,7 +1188,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ----------</span>
 <span class="sd">        func : Callable[..., Tensor]</span>
 <span class="sd">            Function that takes a tensor as its first argument and returns a tensor.</span>
-<span class="sd">            Can be any PyTorch or torchaudio function, or a custom callable.</span>
+<span class="sd">            Any callable that operates on a ``torch.Tensor`` works -- a PyTorch</span>
+<span class="sd">            function, a custom user function, or a transform from another</span>
+<span class="sd">            ecosystem package such as ``torchaudio`` (installed separately).</span>
 <span class="sd">        *args</span>
 <span class="sd">            Additional positional arguments passed to func after the tensor.</span>
 <span class="sd">        **kwargs</span>
@@ -1213,15 +1215,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ...     return tensor / tensor.abs().max()</span>
 <span class="sd">        &gt;&gt;&gt; normalized = wave.transform(normalize_peak)</span>
 
-<span class="sd">        Apply torchaudio transforms with parameters:</span>
-
-<span class="sd">        &gt;&gt;&gt; import torchaudio.transforms as T</span>
-<span class="sd">        &gt;&gt;&gt; # Resample to 16kHz (requires passing sample rate)</span>
-<span class="sd">        &gt;&gt;&gt; resampled = wave.transform(</span>
-<span class="sd">        ...     T.Resample(wave.fs, 16000).forward</span>
-<span class="sd">        ... )</span>
-
-<span class="sd">        Apply custom function with arguments:</span>
+<span class="sd">        Apply a custom function with arguments:</span>
 
 <span class="sd">        &gt;&gt;&gt; def add_noise(tensor, noise_level=0.01):</span>
 <span class="sd">        ...     noise = torch.randn_like(tensor) * noise_level</span>
@@ -1345,22 +1339,25 @@ window.runMermaid = runMermaid;</script>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Save the wave to an audio file.</span>
 
+<span class="sd">        Audio is written via ``soundfile.write`` (libsndfile under the hood).</span>
+<span class="sd">        Parent directories are created automatically and the underlying tensor</span>
+<span class="sd">        is moved to CPU before encoding.</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        path : str or Path</span>
 <span class="sd">            The path where to save the audio file.</span>
 <span class="sd">        format : str, optional</span>
 <span class="sd">            Override the audio format. If not specified, the format is inferred</span>
-<span class="sd">            from the file extension. Valid values include: &quot;wav&quot;, &quot;flac&quot;.</span>
+<span class="sd">            from the file extension. Valid values include ``&quot;wav&quot;``, ``&quot;flac&quot;``,</span>
+<span class="sd">            ``&quot;ogg&quot;``.</span>
 <span class="sd">        encoding : str, optional</span>
-<span class="sd">            Changes the encoding for supported formats (wav, flac).</span>
-<span class="sd">            Valid values: &quot;PCM_S&quot; (signed int), &quot;PCM_U&quot; (unsigned int),</span>
-<span class="sd">            &quot;PCM_F&quot; (float), &quot;ULAW&quot;, &quot;ALAW&quot;.</span>
+<span class="sd">            Encoding for supported formats. One of ``&quot;PCM_S&quot;`` (signed int),</span>
+<span class="sd">            ``&quot;PCM_U&quot;`` (unsigned int), ``&quot;PCM_F&quot;`` (float), ``&quot;ULAW&quot;``,</span>
+<span class="sd">            ``&quot;ALAW&quot;``.</span>
 <span class="sd">        bits_per_sample : int, optional</span>
-<span class="sd">            Changes the bit depth for supported formats.</span>
-<span class="sd">            Valid values: 8, 16, 24, 32, 64.</span>
-<span class="sd">        **kwargs</span>
-<span class="sd">            Additional keyword arguments to pass to `torchaudio.save`.</span>
+<span class="sd">            Bit depth. One of 8, 16, 24, 32, 64. The combination of ``encoding``</span>
+<span class="sd">            and ``bits_per_sample`` is mapped to a libsndfile subtype.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -1368,29 +1365,25 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        Save as WAV file:</span>
+<span class="sd">        Save as WAV (using the synthetic ``wave`` from the doctest fixture):</span>
 
-<span class="sd">        &gt;&gt;&gt; wave = Wave.from_file(&quot;input.wav&quot;)</span>
-<span class="sd">        &gt;&gt;&gt; wave.save(&quot;output.wav&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; import tempfile, os</span>
+<span class="sd">        &gt;&gt;&gt; with tempfile.TemporaryDirectory() as d:</span>
+<span class="sd">        ...     wave.save(os.path.join(d, &quot;out.wav&quot;))</span>
+<span class="sd">        ...     os.path.exists(os.path.join(d, &quot;out.wav&quot;))</span>
+<span class="sd">        True</span>
 
-<span class="sd">        Save as FLAC with specific encoding:</span>
+<span class="sd">        Save as 24-bit FLAC:</span>
 
-<span class="sd">        &gt;&gt;&gt; wave.save(&quot;output.flac&quot;, encoding=&quot;PCM_S&quot;, bits_per_sample=24)</span>
-
-<span class="sd">        Save with high bit depth:</span>
-
-<span class="sd">        &gt;&gt;&gt; wave.save(&quot;output.wav&quot;, encoding=&quot;PCM_F&quot;, bits_per_sample=32)</span>
-
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-<span class="sd">        - The method automatically creates parent directories if they don&#39;t exist.</span>
-<span class="sd">        - The audio data is moved to CPU before saving.</span>
-<span class="sd">        - Supported formats depend on the available torchaudio backend.</span>
+<span class="sd">        &gt;&gt;&gt; with tempfile.TemporaryDirectory() as d:</span>
+<span class="sd">        ...     wave.save(os.path.join(d, &quot;out.flac&quot;),</span>
+<span class="sd">        ...               encoding=&quot;PCM_S&quot;, bits_per_sample=24)</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
 <span class="sd">        from_file : Load a wave from an audio file.</span>
-<span class="sd">        torchaudio.save : Underlying function used for saving.</span>
+
+<span class="sd">        .. versionadded:: 0.3.0</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">soundfile</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_sf</span>

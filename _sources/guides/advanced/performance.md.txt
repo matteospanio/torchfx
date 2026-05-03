@@ -592,14 +592,14 @@ graph TB
         end
 
         subgraph Setup["IIR-Specific Setup"]
-            Compute["compute_coefficients()<br/>Design b, a coefficients"]
-            MoveCoeff["move_coeff('cuda'/'cpu')<br/>Transfer to device"]
+            Compute["compute_coefficients()<br/>Design SOS sections"]
+            DeviceMove["fchain.to('cuda'/'cpu')<br/>Standard nn.Module transfer"]
         end
 
         subgraph Backends["Execution Backends"]
             GPU["GPU: fchain(wave.ys)"]
             CPU["CPU: fchain(wave.ys)"]
-            SciPy["SciPy: lfilter(b, a, signal)"]
+            SciPy["SciPy: sosfilt(sos, signal)"]
         end
 
         Input --> F1
@@ -608,9 +608,9 @@ graph TB
         F3 --> F4
 
         F1 --> Compute
-        Compute --> MoveCoeff
-        MoveCoeff --> GPU
-        MoveCoeff --> CPU
+        Compute --> DeviceMove
+        DeviceMove --> GPU
+        DeviceMove --> CPU
 
         F1 --> SciPy
     end
@@ -624,7 +624,7 @@ graph TB
 
 ### IIR Coefficient Management
 
-Unlike FIR filters, IIR filters have both numerator (`b`) and denominator (`a`) coefficients that must be explicitly managed:
+IIR filters store their coefficients as second-order sections (SOS). Standard `nn.Module.to(device)` moves both module parameters and the cached SOS tensor to the target device --- no separate coefficient transfer step is required:
 
 ```python
 import torch.nn as nn
@@ -639,25 +639,17 @@ fchain = nn.Sequential(
     LoButterworth(cutoff=5000, order=2, fs=SAMPLE_RATE),
 )
 
-# Move wave and module to GPU
+# Move wave and chain to GPU -- coefficients move with the chain.
 wave.to("cuda")
 fchain.to("cuda")
 
-# IIR-specific: compute and move coefficients
-for f in fchain:
-    f.compute_coefficients()  # Design b, a coefficients
-    f.move_coeff("cuda")       # Move coefficients to GPU
-
-# Now ready for GPU processing
+# Process on GPU
 result = fchain(wave.ys)
 ```
 
-**Two-Step Device Transfer**:
-1. **Module transfer**: `fchain.to("cuda")` moves module parameters
-2. **Coefficient transfer**: `f.move_coeff("cuda")` moves filter coefficients
-
-```{warning}
-For IIR filters, you must **both** move the module to the device **and** call {meth}`move_coeff()`. Forgetting the second step will cause runtime errors.
+```{versionchanged} 0.5.1
+SOS coefficients replaced the transfer-function ``(b, a)`` form. Filter
+device transfer is performed via ``nn.Module.to(device)``.
 ```
 
 ### IIR vs FIR Performance Trade-offs
@@ -746,38 +738,35 @@ filtered = lfilter(b4, a4, filtered)
 
 ## Native Extension Architecture
 
-TorchFX includes a JIT-compiled C++/CUDA native extension that dramatically accelerates stateful IIR filter processing. The extension is compiled automatically on first use and cached in `~/.cache/torch_extensions/`.
+TorchFX ships a precompiled C++/CUDA native extension (`torchfx_ext`) that powers the IIR cascade and delay-line kernels. The extension is compiled at install time by scikit-build-core + CMake (see {ref}`build-system`) and bundled into the wheel.
 
 ### How It Works
 
-IIR filters use a two-phase processing strategy:
-
-1. **First call (stateless)**: Uses `torchaudio.functional.lfilter` — fast, but assumes zero initial state.
-2. **Subsequent calls (stateful)**: Carries filter state across calls for streaming/chunked processing. This path dispatches to the native C++ extension when available.
-
 The native extension provides:
-- **CPU**: Tight C++ loops with direct memory accessors (compiled from `_csrc/cpu/iir_cpu.cpp`)
-- **CUDA**: Parallel prefix scan algorithm for biquad and SOS cascades (compiled from `_csrc/cuda/`)
+
+- **CPU**: tight C++ loops with direct memory accessors (compiled from `_csrc/cpu/iir_cpu.cpp` and `_csrc/cpu/delay_cpu.cpp`)
+- **CUDA**: a Blelloch parallel-scan kernel for biquad and SOS cascades, plus a delay-line kernel (compiled from `_csrc/cuda/`)
+
+`torchfx._ops` dispatches every IIR/biquad/delay forward call to one of these kernels based on the input tensor's device. The threshold `PARALLEL_SCAN_THRESHOLD` (default 2048 samples) decides when the CUDA parallel scan beats the sequential C++ kernel.
 
 ```{important}
-The native extension compiles on **both CPU-only and CUDA-equipped machines**. A CUDA toolkit is not required — the CPU C++ kernel alone provides ~2400x speedup over the pure-PyTorch fallback for stateful IIR processing.
+The extension is **required**. Wheel installs (Linux x86_64, macOS Intel/Apple Silicon, and Windows x86_64 across Python 3.10–3.14) ship the compiled extension; source installs build it during `pip install`. See {ref}`system-dependencies-source-builds` for build dependencies.
 ```
-
-### Fallback Strategy
-
-If the native extension fails to compile (e.g., missing C++ compiler), TorchFX falls back to a vectorized pure-PyTorch implementation that uses `lfilter` with a zero-state/zero-input decomposition. This fallback is ~100-500x faster than a naive sample-by-sample loop, though slower than the C++ kernel.
 
 ### Verifying Extension Status
 
-```python
-from torchfx._ops import _load_extension
+Use the public `is_native_available()` helper:
 
-ext = _load_extension()
-if ext is not None:
-    print("Native extension loaded successfully")
+```python
+import torchfx
+
+if torchfx.is_native_available():
+    print("Native extension loaded -- IIR / biquad / delay run on torchfx_ext.")
 else:
-    print("Using PyTorch fallback (install a C++ compiler for best performance)")
+    print("Native extension missing -- the install is broken.")
 ```
+
+A `False` return value indicates a broken install (the extension didn't compile or didn't get bundled into the wheel). See the {ref}`troubleshooting` section of the installation guide.
 
 ## Performance Optimization Guidelines
 
@@ -859,13 +848,9 @@ fchain = nn.Sequential(
 for f in fchain:
     f.compute_coefficients()
 
-# For IIR filters, also move coefficients to device
+# Move chain to target device -- coefficients move with it.
 device = "cuda" if torch.cuda.is_available() else "cpu"
 fchain.to(device)
-
-for f in fchain:
-    if hasattr(f, 'move_coeff'):
-        f.move_coeff(device)
 
 # Process multiple files without re-computing coefficients
 audio_files = ["song1.wav", "song2.wav", "song3.wav"]
@@ -1054,11 +1039,6 @@ cpu_time = timeit.timeit(lambda: wave | pipeline, number=REP)
 if torch.cuda.is_available():
     wave.to("cuda")
     pipeline.to("cuda")
-
-    # Move IIR coefficients if needed
-    for module in pipeline:
-        if hasattr(module, 'move_coeff'):
-            module.move_coeff("cuda")
 
     gpu_time = timeit.timeit(lambda: wave | pipeline, number=REP)
 
@@ -1353,10 +1333,9 @@ for duration in durations:
         wave.to("cuda")
         fchain.to("cuda")
 
-        # Compute and move coefficients
+        # Pre-compute coefficients so the timed loop does not pay design cost.
         for f in fchain:
             f.compute_coefficients()
-            f.move_coeff("cuda")
 
         gpu_time = timeit.timeit(
             lambda: fchain(wave.ys),
@@ -1366,9 +1345,6 @@ for duration in durations:
         # CPU benchmark
         wave.to("cpu")
         fchain.to("cpu")
-
-        for f in fchain:
-            f.move_coeff("cpu")
 
         cpu_time = timeit.timeit(
             lambda: fchain(wave.ys),

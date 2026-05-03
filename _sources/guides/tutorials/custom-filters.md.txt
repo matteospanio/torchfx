@@ -36,9 +36,8 @@ classDiagram
     class IIR {
         <<abstract>>
         +fs int|None
-        +a Tensor|None
-        +b Tensor|None
-        +move_coeff(device, dtype)
+        +_sos Tensor|None
+        +compute_coefficients()
         +forward(x) Tensor
     }
 
@@ -542,27 +541,20 @@ if torch.cuda.is_available():
     filtered.to("cpu").save("output.wav")
 ```
 
-### Helper Method for Coefficient Transfer
+### Device Transfer
 
-Include a helper method for moving coefficients:
+Standard `nn.Module.to(device)` moves tensors registered as buffers (or attributes assigned through `register_buffer`) automatically. Match the cached coefficient tensor to the input's device and dtype on each forward pass:
 
 ```python
 class CustomFilter(AbstractFilter):
-    def move_coeff(self, device: torch.device, dtype: torch.dtype) -> None:
-        """Move filter coefficients to specified device and dtype."""
-        self.a = torch.as_tensor(self.a, device=device, dtype=dtype)
-        self.b = torch.as_tensor(self.b, device=device, dtype=dtype)
-
     @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
-        if self.a is None or self.b is None:
+        if not self._has_computed_coeff:
             self.compute_coefficients()
 
-        # Use helper method for device transfer
-        if not isinstance(self.a, Tensor):
-            self.move_coeff(x.device, x.dtype)
-
-        return lfilter(x, self.a, self.b)
+        # Match coefficients to the input's device/dtype on each call.
+        sos = self._sos.to(device=x.device, dtype=x.dtype)
+        return _sos_cascade_forward(x, sos)
 ```
 
 ## Testing and Validation

@@ -837,6 +837,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="../developer/benchmarking.html">Benchmarking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/style_guide.html">Style Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/releasing.html">Releasing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../developer/roadmap.html">Roadmap to v1.0.0</a></li>
 </ul>
 </details></li>
@@ -959,7 +960,7 @@ window.runMermaid = runMermaid;</script>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Metadata: </span><span class="si">{</span><span class="n">wave</span><span class="o">.</span><span class="n">metadata</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Supported formats</strong>: WAV, FLAC, MP3, OGG (depends on torchaudio backend)</p>
+<p><strong>Supported formats</strong>: WAV, FLAC, OGG, and other formats supported by <code class="docutils literal notranslate"><span class="pre">libsndfile</span></code> — file I/O is handled by <code class="docutils literal notranslate"><span class="pre">soundfile</span></code>.</p>
 </section>
 <section id="from-numpy-pytorch-arrays">
 <h3>From NumPy/PyTorch Arrays<a class="headerlink" href="#from-numpy-pytorch-arrays" title="Link to this heading">#</a></h3>
@@ -1328,14 +1329,18 @@ t = \frac{n}{f_s}
 <span class="c1"># ❌ WRONG: Cannot merge waves with different sample rates</span>
 <span class="n">mixed</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">merge</span><span class="p">([</span><span class="n">wave1</span><span class="p">,</span> <span class="n">wave2</span><span class="p">])</span>  <span class="c1"># ValueError!</span>
 
-<span class="c1"># ✅ CORRECT: Resample first (using external library)</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torchaudio.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
+<span class="c1"># ✅ CORRECT: Resample first using an external library. TorchFX does not</span>
+<span class="c1"># ship a built-in resampler -- pick whichever library fits your stack. With</span>
+<span class="c1"># scipy (already a TorchFX dependency):</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">resample_poly</span>
 
-<span class="n">resampler</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">Resample</span><span class="p">(</span><span class="n">orig_freq</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span> <span class="n">new_freq</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
-<span class="n">wave2_resampled</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">resampler</span><span class="p">(</span><span class="n">wave2</span><span class="o">.</span><span class="n">ys</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">resample_poly</span><span class="p">(</span><span class="n">wave2</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">up</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span> <span class="n">down</span><span class="o">=</span><span class="mi">48000</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">wave2_resampled</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">ys</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="mi">44100</span><span class="p">)</span>
 <span class="n">mixed</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">merge</span><span class="p">([</span><span class="n">wave1</span><span class="p">,</span> <span class="n">wave2_resampled</span><span class="p">])</span>
 </pre></div>
 </div>
+<p>If you have <code class="docutils literal notranslate"><span class="pre">torchaudio</span></code> installed separately, <code class="docutils literal notranslate"><span class="pre">torchaudio.transforms.Resample</span></code> is also a good fit (<code class="docutils literal notranslate"><span class="pre">torchaudio</span></code> is <strong>not</strong> a TorchFX dependency, so install it explicitly if you want it).</p>
 </section>
 </section>
 <section id="related-concepts">

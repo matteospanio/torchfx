@@ -12,6 +12,7 @@ testing
 benchmarking
 documentation
 style_guide
+releasing
 roadmap
 ```
 
@@ -22,4 +23,5 @@ roadmap
 - [Benchmarking](benchmarking.md) - Performance measurement and comparison
 - [Documentation](documentation.md) - Documentation build system and writing guide
 - [Style Guide](style_guide.md) - Coding standards and best practices
+- [Releasing](releasing.md) - How a version bump becomes a published release
 - [Roadmap](roadmap.md) - Project roadmap and development plans
