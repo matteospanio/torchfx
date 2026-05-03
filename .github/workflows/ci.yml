@@ -38,16 +38,16 @@ jobs:
         id: cache-restore
         uses: actions/cache/restore@v4
         with:
-          path: |
-            .venv
-            ~/.cache/uv
+          path: ~/.cache/uv
           key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
-      - name: Ensure project venv exists
+      - name: Create project venv
         # uv 0.11+ requires .venv before `uv pip install` in project
-        # context; cache miss leaves no .venv. Create one only if the
-        # cache restore did not bring it in.
-        run: '[ -d .venv ] || uv venv'
+        # context. We don't cache .venv (its python symlinks become
+        # stale across runs as setup-python's toolcache rotates) so
+        # always create a fresh one; the package cache at
+        # ~/.cache/uv is what keeps reinstalls fast.
+        run: uv venv
 
       - name: Install CPU-only PyTorch
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
@@ -59,9 +59,7 @@ jobs:
         if: steps.cache-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: |
-            .venv
-            ~/.cache/uv
+          path: ~/.cache/uv
           key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
   lint:
@@ -88,9 +86,7 @@ jobs:
       - name: Restore dependency cache
         uses: actions/cache/restore@v4
         with:
-          path: |
-            .venv
-            ~/.cache/uv
+          path: ~/.cache/uv
           key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
       - name: Install dependencies
@@ -123,9 +119,7 @@ jobs:
       - name: Restore dependency cache
         uses: actions/cache/restore@v4
         with:
-          path: |
-            .venv
-            ~/.cache/uv
+          path: ~/.cache/uv
           key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
       - name: Install dependencies
@@ -165,16 +159,16 @@ jobs:
       - name: Restore dependency cache
         uses: actions/cache/restore@v4
         with:
-          path: |
-            .venv
-            ~/.cache/uv
+          path: ~/.cache/uv
           key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
-      - name: Ensure project venv exists
+      - name: Create project venv
         # uv 0.11+ requires .venv before `uv pip install` in project
-        # context; cache miss leaves no .venv. Create one only if the
-        # cache restore did not bring it in.
-        run: '[ -d .venv ] || uv venv'
+        # context. We don't cache .venv (its python symlinks become
+        # stale across runs as setup-python's toolcache rotates) so
+        # always create a fresh one; the package cache at
+        # ~/.cache/uv is what keeps reinstalls fast.
+        run: uv venv
 
       - name: Install CPU-only PyTorch
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
@@ -210,16 +204,16 @@ jobs:
       - name: Restore dependency cache
         uses: actions/cache/restore@v4
         with:
-          path: |
-            .venv
-            ~/.cache/uv
+          path: ~/.cache/uv
           key: uv-cpu-3.12-${{ hashFiles('pyproject.toml', 'uv.lock') }}
 
-      - name: Ensure project venv exists
+      - name: Create project venv
         # uv 0.11+ requires .venv before `uv pip install` in project
-        # context; cache miss leaves no .venv. Create one only if the
-        # cache restore did not bring it in.
-        run: '[ -d .venv ] || uv venv'
+        # context. We don't cache .venv (its python symlinks become
+        # stale across runs as setup-python's toolcache rotates) so
+        # always create a fresh one; the package cache at
+        # ~/.cache/uv is what keeps reinstalls fast.
+        run: uv venv
 
       - name: Install CPU-only PyTorch
         run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
