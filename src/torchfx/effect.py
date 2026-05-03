@@ -130,7 +130,7 @@ from typing_extensions import override
 
 
 def _gain_db(waveform: Tensor, gain_db: float) -> Tensor:
-    """Apply dB gain to waveform (replaces torchaudio.functional.gain)."""
+    """Apply a dB gain to ``waveform``: returns ``waveform * 10 ** (gain_db / 20)``."""
     if gain_db == 0:
         return waveform
     return waveform * 10 ** (gain_db / 20)
@@ -266,34 +266,30 @@ class Gain(FX):
     or power scaling. An optional clamping parameter prevents clipping artifacts
     by limiting output values to [-1.0, 1.0].
 
-    This effect extends torchaudio.transforms.Vol by adding the clamp parameter
-    for better control over output dynamic range.
-
     Parameters
     ----------
     gain : float
         The gain factor to apply to the waveform. Must be positive for
-        "amplitude" and "power" gain types. Can be negative for "db" type.
-    gain_type : str, optional
-        The type of gain to apply. Default is "amplitude".
+        ``"amplitude"`` and ``"power"`` gain types. Can be negative for
+        ``"db"``.
+    gain_type : {"amplitude", "db", "power"}, default="amplitude"
+        How the ``gain`` value is interpreted:
 
-        - "amplitude": Direct multiplication by gain factor
-        - "db": Decibel-based gain using torchaudio.functional.gain
-        - "power": Power-based gain converted to dB internally
-    clamp : bool, optional
-        If True, clamps the output waveform to the range [-1.0, 1.0] to
-        prevent clipping. Default is False.
+        - ``"amplitude"``: direct multiplication by ``gain``
+        - ``"db"``: gain in decibels (output multiplied by ``10 ** (gain/20)``)
+        - ``"power"``: power ratio, converted to dB internally
+    clamp : bool, default=False
+        If True, clamp the output waveform to ``[-1.0, 1.0]`` after applying
+        the gain.
 
     Raises
     ------
     ValueError
-        If gain is negative when gain_type is "amplitude" or "power".
+        If gain is negative when gain_type is ``"amplitude"`` or ``"power"``.
 
     See Also
     --------
-    torchaudio.transforms.Vol : Original transform this effect is based on
-    Normalize : Amplitude normalization with multiple strategies
-    torchaudio.functional.gain : Function used for dB and power gain
+    Normalize : Amplitude normalization with multiple strategies.
 
     Notes
     -----
@@ -305,14 +301,11 @@ class Gain(FX):
 
     **Clamping:**
 
-    When clamp=True, the final output is constrained:
+    When ``clamp=True`` the output is constrained:
     :math:`y[n] = \text{clip}(y[n], -1.0, 1.0)`
 
-    The @torch.no_grad() decorator disables gradient computation for efficiency
-    during inference-only operations.
-
-    This class is based on torchaudio.transforms.Vol, licensed under the
-    BSD 2-Clause License. See licenses.torchaudio.BSD-2-Clause.txt for details.
+    Coefficient formulas are adapted from ``torchaudio.transforms.Vol``,
+    BSD 2-Clause License (see ``licenses.torchaudio.BSD-2-Clause.txt``).
 
     Examples
     --------

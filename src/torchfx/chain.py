@@ -22,6 +22,8 @@ class FilterChain(nn.Sequential):
     >>> chain = LoButterworth(1000, order=4) | HiButterworth(100, order=2)
     >>> result = wave | chain  # consecutive IIR filters are auto-fused
 
+    .. versionadded:: 0.5.2
+
     """
 
     def __init__(self, *modules: nn.Module) -> None:

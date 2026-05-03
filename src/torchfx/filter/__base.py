@@ -74,8 +74,10 @@ The coefficient computation follows a lazy evaluation pattern:
    (e.g., `butter`, `cheby1`, `firwin`) or custom algorithms
 5. **Device management**: Coefficients are converted to PyTorch tensors and moved to
    match the input tensor's device and dtype
-6. **Filter application**: Coefficients are applied using `torchaudio.functional.lfilter`
-   for IIR filters or `torch.nn.functional.conv1d` for FIR filters
+6. **Filter application**: IIR filters dispatch to the precompiled C++/CUDA SOS
+   cascade kernel in ``torchfx._ops``; FIR filters use ``torch.nn.functional.conv1d``
+   (direct mode) or an FFT-based overlap-save convolution (default for kernels
+   with 64+ taps)
 
 Inheritance Pattern for Custom Filters
 ---------------------------------------
@@ -293,53 +295,40 @@ class AbstractFilter(FX, abc.ABC):
 
     Examples
     --------
-    Creating a custom IIR bandpass filter by subclassing `AbstractFilter`:
+    Creating a custom IIR bandpass filter by subclassing ``AbstractFilter``.
+    The recommended pattern is to design coefficients as second-order sections
+    (SOS) and dispatch through TorchFX's native SOS cascade kernel:
 
-    >>> import torch
     >>> from torch import Tensor
     >>> from torchfx.filter.__base import AbstractFilter
     >>> from scipy.signal import butter
-    >>> from torchaudio.functional import lfilter
+    >>> from torchfx._ops import parallel_iir_forward
     >>>
     >>> class CustomBandpass(AbstractFilter):
-    ...     '''Custom bandpass filter using Butterworth design.'''
+    ...     '''Bandpass via Butterworth SOS sections.'''
     ...
-    ...     def __init__(self, low_cutoff: float, high_cutoff: float,
-    ...                  order: int = 4, fs: int | None = None):
+    ...     def __init__(self, low_cutoff, high_cutoff, order=4, fs=None):
     ...         super().__init__()
-    ...         # Store filter parameters
     ...         self.low_cutoff = low_cutoff
     ...         self.high_cutoff = high_cutoff
     ...         self.order = order
     ...         self.fs = fs
-    ...         # Initialize coefficient storage
-    ...         self.a = None
-    ...         self.b = None
+    ...         self._sos = None
     ...
     ...     def compute_coefficients(self):
-    ...         '''Compute Butterworth bandpass coefficients.'''
-    ...         if self.fs is None:
-    ...             raise ValueError("Sampling frequency must be set")
-    ...         # Normalize frequencies to Nyquist
-    ...         nyquist = 0.5 * self.fs
-    ...         low_norm = self.low_cutoff / nyquist
-    ...         high_norm = self.high_cutoff / nyquist
-    ...         # Use scipy to design filter
-    ...         self.b, self.a = butter(self.order, [low_norm, high_norm],
-    ...                                 btype='bandpass')
+    ...         assert self.fs is not None, "fs must be set"
+    ...         nyq = 0.5 * self.fs
+    ...         sos = butter(self.order,
+    ...                      [self.low_cutoff / nyq, self.high_cutoff / nyq],
+    ...                      btype='bandpass', output='sos')
+    ...         self._sos = torch.as_tensor(sos, dtype=torch.float64)
     ...
     ...     @torch.no_grad()
     ...     def forward(self, x: Tensor) -> Tensor:
-    ...         '''Apply bandpass filter to input tensor.'''
-    ...         # Compute coefficients if not already computed
-    ...         if self.a is None or self.b is None:
+    ...         if self._sos is None:
     ...             self.compute_coefficients()
-    ...         # Move coefficients to input device/dtype if needed
-    ...         if not isinstance(self.a, Tensor):
-    ...             self.a = torch.as_tensor(self.a, device=x.device, dtype=x.dtype)
-    ...             self.b = torch.as_tensor(self.b, device=x.device, dtype=x.dtype)
-    ...         # Apply IIR filter
-    ...         return lfilter(x, self.a, self.b)
+    ...         sos = self._sos.to(device=x.device, dtype=x.dtype)
+    ...         return parallel_iir_forward(x, sos)
 
     Using the custom filter in a pipeline with automatic fs configuration:
 

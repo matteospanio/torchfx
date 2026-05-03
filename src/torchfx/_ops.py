@@ -1,11 +1,17 @@
 """Native C++/CUDA extension dispatch for torchfx.
 
-The extension is compiled at build time via scikit-build-core / CMake.
-Import ``torchfx_ext`` provides the pre-built C++ module with:
+The precompiled ``torchfx_ext`` module exposes the kernels backing every
+stateful filter in TorchFX:
 
-- ``biquad_forward``  — single biquad section (DF1, CUDA or CPU)
-- ``sos_forward``     — K-section SOS cascade (CUDA or CPU)
-- ``delay_line_forward`` — fused delay with feedback & mix (CUDA or CPU)
+- ``biquad_forward``     — single biquad section (DF1, CUDA or CPU)
+- ``sos_forward``        — K-section SOS cascade (CUDA or CPU)
+- ``delay_line_forward`` — fused delay with feedback and wet/dry mix
+  (CUDA or CPU)
+
+The kernels are dispatched based on the input tensor's device. The threshold
+``PARALLEL_SCAN_THRESHOLD`` (default 2048 samples) selects between the
+sequential C++ kernel and the CUDA Blelloch parallel-scan kernel for SOS
+cascades.
 
 """
 
@@ -31,7 +37,18 @@ PARALLEL_SCAN_THRESHOLD = 2048
 def is_native_available() -> bool:
     """Check whether the native C++/CUDA extension is available.
 
-    Always returns ``True`` since the extension is compiled at install time.
+    Always returns ``True`` in supported installs: the extension is compiled
+    at install time and bundled into the wheel. A ``False`` value would
+    indicate the import of ``torchfx_ext`` failed, which means the install
+    is broken.
+
+    Examples
+    --------
+    >>> from torchfx import is_native_available
+    >>> is_native_available()
+    True
+
+    .. versionadded:: 0.5.0
 
     """
     return True
