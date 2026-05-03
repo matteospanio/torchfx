@@ -6,10 +6,18 @@
 //           = x[n] + mix * decay * x[n - delay]   for n >= delay
 //           = x[n]                                  for n < delay
 
+// MSVC spells the restrict qualifier `__restrict` (no trailing underscores);
+// GCC, Clang, and AppleClang accept `__restrict__`. Map to the right form.
+#if defined(_MSC_VER)
+#define TORCHFX_RESTRICT __restrict
+#else
+#define TORCHFX_RESTRICT __restrict__
+#endif
+
 template <typename scalar_t>
 static void delay_loop(
-    const scalar_t* __restrict__ in_ptr,
-    scalar_t* __restrict__ out_ptr,
+    const scalar_t* TORCHFX_RESTRICT in_ptr,
+    scalar_t* TORCHFX_RESTRICT out_ptr,
     int64_t C,
     int64_t T,
     int delay_samples,
