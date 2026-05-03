@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.18)
 project(torchfx LANGUAGES CXX)
 
+# PyTorch's public C++ headers require C++17. Linux GCC 11+ defaults to it,
+# but Apple clang on the macOS runners does not, so the build of
+# `torch/extension.h` fails with cryptic template errors. Force the standard
+# explicitly here for every target the project defines below.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # ---------- Find Python & PyTorch ------------------------------------------
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
@@ -83,6 +91,8 @@ target_compile_definitions(torchfx_ext PRIVATE
 
 target_link_directories(torchfx_ext PRIVATE ${TORCH_LIBRARY_DIRS})
 target_link_libraries(torchfx_ext PRIVATE torch torch_python torch_cpu c10)
+
+target_compile_features(torchfx_ext PRIVATE cxx_std_17)
 
 # CXX flags -- no -march=native so wheels are portable.
 target_compile_options(torchfx_ext PRIVATE
