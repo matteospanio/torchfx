@@ -511,8 +511,8 @@ graph TB
         subgraph Channel2["ch[1]: Channel 2 Chain"]
             HiButter2["HiButterworth(2000, fs)"]
             LoButter2["LoButterworth(4000, fs)"]
-            Vol["Vol(0.5)"]
-            HiButter2 --> LoButter2 --> Vol
+            Gain["Gain(0.5, gain_type='amplitude')"]
+            HiButter2 --> LoButter2 --> Gain
         end
 
         Init --> ModuleList
@@ -533,8 +533,8 @@ graph TB
 ```python
 from torch import nn
 from torchfx import FX
+from torchfx.effect import Gain
 from torchfx.filter import HiButterworth, LoButterworth
-from torchfx import Vol
 
 class MultiChannelEffect(FX):
     """A multi-channel effect with per-channel processing chains.
@@ -598,11 +598,11 @@ class MultiChannelEffect(FX):
                 LoButterworth(cutoff=2000, order=4, fs=self.fs)
             )
         else:
-            # Channel 1: Bandpass 2000-4000 Hz with volume reduction
+            # Channel 1: Bandpass 2000-4000 Hz with -6 dB attenuation
             return nn.Sequential(
                 HiButterworth(cutoff=2000, order=4, fs=self.fs),
                 LoButterworth(cutoff=4000, order=4, fs=self.fs),
-                Vol(volume=0.5)
+                Gain(0.5, gain_type="amplitude"),
             )
 
     @override

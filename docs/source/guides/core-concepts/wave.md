@@ -59,7 +59,7 @@ print(f"Samples: {len(wave)}")
 print(f"Metadata: {wave.metadata}")
 ```
 
-**Supported formats**: WAV, FLAC, MP3, OGG (depends on torchaudio backend)
+**Supported formats**: WAV, FLAC, OGG, and other formats supported by `libsndfile` --- file I/O is handled by `soundfile`.
 
 ### From NumPy/PyTorch Arrays
 
@@ -438,13 +438,18 @@ wave2 = fx.Wave.from_file("audio_48k.wav")  # fs = 48000
 # ❌ WRONG: Cannot merge waves with different sample rates
 mixed = fx.Wave.merge([wave1, wave2])  # ValueError!
 
-# ✅ CORRECT: Resample first (using external library)
-import torchaudio.transforms as T
+# ✅ CORRECT: Resample first using an external library. TorchFX does not
+# ship a built-in resampler -- pick whichever library fits your stack. With
+# scipy (already a TorchFX dependency):
+import torch
+from scipy.signal import resample_poly
 
-resampler = T.Resample(orig_freq=48000, new_freq=44100)
-wave2_resampled = fx.Wave(resampler(wave2.ys), fs=44100)
+ys = resample_poly(wave2.ys.numpy(), up=44100, down=48000, axis=-1)
+wave2_resampled = fx.Wave(torch.from_numpy(ys), fs=44100)
 mixed = fx.Wave.merge([wave1, wave2_resampled])
 ```
+
+If you have `torchaudio` installed separately, `torchaudio.transforms.Resample` is also a good fit (`torchaudio` is **not** a TorchFX dependency, so install it explicitly if you want it).
 
 ## Related Concepts
 
