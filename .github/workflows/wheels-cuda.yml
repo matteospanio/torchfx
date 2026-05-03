@@ -1,0 +1,137 @@
+name: Build CUDA wheels
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths:
+      - ".github/workflows/wheels-cuda.yml"
+      - "tools/build-wheel-index.py"
+      - "pyproject.toml"
+      - "CMakeLists.txt"
+      - "src/torchfx/_csrc/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.cuda.tag }} wheels
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cuda:
+          - tag: cu124
+            dnf-pkg: 12-4
+            torch-index: https://download.pytorch.org/whl/cu124
+          - tag: cu128
+            dnf-pkg: 12-8
+            torch-index: https://download.pytorch.org/whl/cu128
+
+    env:
+      # Override the CPU-focused defaults from pyproject.toml's
+      # [tool.cibuildwheel] block. Linux x86_64 only; CUDA toolkit installed
+      # into the manylinux container; torch from the matching CUDA index;
+      # wheels tagged with a PEP 440 local version (`+cu124`) so they sort
+      # ahead of the plain CPU wheels only when pip points at the CUDA
+      # index URL.
+      CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
+      CIBW_SKIP: "*-musllinux_* *-manylinux_i686"
+      CIBW_ARCHS_LINUX: x86_64
+      CIBW_BUILD_FRONTEND: build
+      # CUDA wheels can't be loaded on CPU-only runners (libtorch_cuda is
+      # excluded from the bundle) so the smoke test runs out-of-band on a
+      # GPU host.
+      CIBW_TEST_COMMAND: ""
+      CIBW_TEST_REQUIRES: ""
+
+      CIBW_BEFORE_ALL_LINUX: >
+        dnf config-manager --add-repo
+        https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
+        && dnf install -y cuda-toolkit-${{ matrix.cuda.dnf-pkg }}
+
+      CIBW_BEFORE_BUILD_LINUX: |
+        git config --global --add safe.directory '*' &&
+        git checkout HEAD -- pyproject.toml &&
+        sed -i 's|^version = "\(.*\)"$|version = "\1+${{ matrix.cuda.tag }}"|' pyproject.toml &&
+        pip install torch --index-url ${{ matrix.cuda.torch-index }}
+
+      # Empty TORCHFX_NO_CUDA disables the CPU-only override baked into
+      # pyproject.toml's [tool.cibuildwheel] block, so CMake's CUDA
+      # detection runs and links the CUDA kernels into torchfx_ext.
+      CIBW_ENVIRONMENT_LINUX: >
+        TORCHFX_NO_CUDA=
+        PATH=/usr/local/cuda/bin:$PATH
+        CUDACXX=/usr/local/cuda/bin/nvcc
+        LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+      # Strip torch + CUDA shared libraries so the wheel doesn't bundle
+      # gigabytes of code already provided by the user's torch install.
+      CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
+        auditwheel repair -w {dest_dir} {wheel}
+        --exclude libtorch.so
+        --exclude libtorch_cpu.so
+        --exclude libtorch_cuda.so
+        --exclude libtorch_python.so
+        --exclude libc10.so
+        --exclude libc10_cuda.so
+        --exclude 'libcudart.so*'
+        --exclude 'libcublas.so*'
+        --exclude 'libcublasLt.so*'
+        --exclude 'libcusparse.so*'
+        --exclude 'libcusolver.so*'
+        --exclude 'libcudnn.so*'
+        --exclude 'libnccl.so*'
+        --exclude 'libcufft.so*'
+        --exclude 'libcurand.so*'
+        --exclude 'libnvToolsExt.so*'
+        --exclude 'libnvrtc.so*'
+        --exclude 'libnvJitLink.so*'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.cuda.tag }}
+          path: ./wheelhouse/*.whl
+
+  publish:
+    name: Publish CUDA wheel index to GitHub Pages
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate PEP 503 wheel index
+        run: python tools/build-wheel-index.py dist out/wheels
+
+      # `keep_files: true` preserves whatever the docs workflow has already
+      # deployed at the root of gh-pages (the rendered HTML docs); we only
+      # touch the `wheels/` subtree.
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: out
+          keep_files: true
+          commit_message: "wheels(cuda): publish ${{ github.ref_name }}"
