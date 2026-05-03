@@ -23,12 +23,18 @@ jobs:
       fail-fast: false
       matrix:
         cuda:
+          # PyTorch's cu124 wheels do not yet ship a cp314 build, so the
+          # `before-build` step (`pip install torch --index-url .../cu124`)
+          # 404s on Python 3.14. Skip that combination here -- cu128 still
+          # covers cp314.
           - tag: cu124
             dnf-pkg: 12-4
             torch-index: https://download.pytorch.org/whl/cu124
+            extra-skip: "cp314-*"
           - tag: cu128
             dnf-pkg: 12-8
             torch-index: https://download.pytorch.org/whl/cu128
+            extra-skip: ""
 
     env:
       # Override the CPU-focused defaults from pyproject.toml's
@@ -38,7 +44,7 @@ jobs:
       # ahead of the plain CPU wheels only when pip points at the CUDA
       # index URL.
       CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
-      CIBW_SKIP: "*-musllinux_* *-manylinux_i686"
+      CIBW_SKIP: "*-musllinux_* *-manylinux_i686 ${{ matrix.cuda.extra-skip }}"
       CIBW_ARCHS_LINUX: x86_64
       CIBW_BUILD_FRONTEND: build
       # CUDA wheels can't be loaded on CPU-only runners (libtorch_cuda is
