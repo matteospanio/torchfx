@@ -90,14 +90,14 @@ We welcome contributions from everyone! Please read our [Contributing Guide](CON
 If you use TorchFX in your research, please cite our paper:
 
 ```bibtex
-@misc{spanio2025torchfxmodernapproachaudio,
-  title={TorchFX: A modern approach to Audio DSP with PyTorch and GPU acceleration},
-  author={Matteo Spanio and Antonio Rodà},
-  year={2025},
-  eprint={2504.08624},
-  archivePrefix={arXiv},
-  primaryClass={eess.AS},
-  url={https://arxiv.org/abs/2504.08624},
+@conference{Spanio2025torchfx,
+	author = {Spanio, Matteo and Rodà, Antonio},
+	title = {TORCHFX: A MODERN APPROACH TO AUDIO DSP WITH PYTORCH AND GPU ACCELERATION},
+	year = {2025},
+	journal = {Proceedings of the International Conference on Digital Audio Effects, DAFx},
+	pages = {390 – 395},
+	url = {https://www.scopus.com/inward/record.uri?eid=2-s2.0-105028935688&partnerID=40&md5=552e54afc1a074cbd1b7e8ed4ad1c010},
+	type = {Conference paper},
 }
 ```
 
@@ -111,7 +111,6 @@ This project uses the following third-party libraries:
 
 - [PyTorch](https://pytorch.org/) – BSD-style license
 - [NumPy](https://numpy.org/) – BSD 3-Clause License
-- [SciPy](https://scipy.org/) – BSD 3-Clause License
-- [SoundFile](https://pysoundfile.readthedocs.io/) – BSD 3-Clause License
+- [SoundFile](https://python-soundfile.readthedocs.io/) – BSD 3-Clause License
 
 Their respective license texts are included in the `licenses/` directory.
