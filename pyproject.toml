@@ -172,6 +172,12 @@ test-command = 'python -c "import torchfx; assert torchfx.is_native_available()"
 repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel} --exclude libtorch.so --exclude libtorch_cpu.so --exclude libtorch_python.so --exclude libc10.so"
 
 [tool.cibuildwheel.macos]
+# PyTorch 2.6's macOS headers use C++17 features (std::optional::value(),
+# std::shared_mutex) marked unavailable below macOS 10.13. cibuildwheel's
+# default x86_64 deployment target is 10.9, which then fails to compile
+# torch/extension.h. PyTorch's own x86_64 macOS wheels are built for 11.0,
+# so target the same here for both archs.
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0", TORCHFX_NO_CUDA = "1" }
 repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel} --ignore-missing-dependencies --exclude libtorch --exclude libc10"
 
 [tool.cibuildwheel.windows]
