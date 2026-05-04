@@ -129,13 +129,6 @@ from torch import Tensor, nn
 from typing_extensions import override
 
 
-def _gain_db(waveform: Tensor, gain_db: float) -> Tensor:
-    """Apply a dB gain to ``waveform``: returns ``waveform * 10 ** (gain_db / 20)``."""
-    if gain_db == 0:
-        return waveform
-    return waveform * 10 ** (gain_db / 20)
-
-
 class FX(nn.Module, abc.ABC):
     """Abstract base class for all audio effects and filters.
 
@@ -371,11 +364,11 @@ class Gain(FX):
         if self.gain_type == "amplitude":
             waveform = waveform * self.gain
 
-        if self.gain_type == "db":
-            waveform = _gain_db(waveform, self.gain)
+        if self.gain_type == "db" and self.gain != 0:
+            waveform = waveform * 10 ** (self.gain / 20)
 
-        if self.gain_type == "power":
-            waveform = _gain_db(waveform, 10 * math.log10(self.gain))
+        if self.gain_type == "power" and self.gain != 1:
+            waveform = waveform * 10 ** (math.log10(self.gain) / 2)
 
         if self.clamp:
             waveform = torch.clamp(waveform, -1.0, 1.0)
@@ -1484,27 +1477,6 @@ class Delay(FX):
         delay_sec = musical_time.duration_seconds(bpm)
         return int(delay_sec * fs)
 
-    def _extend_waveform(self, waveform: Tensor, target_length: int) -> Tensor:
-        """Extend waveform with zeros to target length along the last dimension."""
-        if waveform.size(-1) >= target_length:
-            return waveform
-
-        if waveform.ndim == 1:
-            extended = torch.zeros(target_length, dtype=waveform.dtype, device=waveform.device)
-            extended[: waveform.size(0)] = waveform
-        elif waveform.ndim == 2:
-            extended = torch.zeros(
-                waveform.size(0), target_length, dtype=waveform.dtype, device=waveform.device
-            )
-            extended[:, : waveform.size(1)] = waveform
-        else:
-            extended_shape = list(waveform.shape)
-            extended_shape[-1] = target_length
-            extended = torch.zeros(extended_shape, dtype=waveform.dtype, device=waveform.device)
-            extended[..., : waveform.size(-1)] = waveform
-
-        return extended
-
     @override
     @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
@@ -1531,8 +1503,14 @@ class Delay(FX):
         # Apply delay using strategy pattern
         delayed = self.strategy.apply_delay(waveform, self.delay_samples, self.taps, self.feedback)
 
-        # Extend original waveform to match delayed length for mixing
-        waveform = self._extend_waveform(waveform, delayed.size(-1))
+        # Extend original waveform to match delayed length for wet/dry mixing.
+        target_length = delayed.size(-1)
+        if waveform.size(-1) < target_length:
+            extended_shape = list(waveform.shape)
+            extended_shape[-1] = target_length
+            extended = torch.zeros(extended_shape, dtype=waveform.dtype, device=waveform.device)
+            extended[..., : waveform.size(-1)] = waveform
+            waveform = extended
 
         # Wet/dry mix — fused via lerp (single kernel, avoids intermediates).
         return torch.lerp(waveform, delayed, self.mix)

@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [Unreleased]
+
+### Removed
+
+- **`scipy` runtime dependency.** The `scipy.signal.{butter, cheby1, cheby2,
+  ellip, firwin}` calls used by Butterworth, Chebyshev I/II, Elliptic,
+  Linkwitz-Riley, and `DesignableFIR` are gone — coefficient design is now
+  performed natively in pure PyTorch (see Added). `scipy` remains a *dev/test*
+  dependency (in `[dependency-groups.dev]`) for numerical-equivalence
+  verification only; downstream installs no longer pull it in.
+- `_set_coefficients` helper on `Biquad`: replaced by `_finalize_coeffs`, which
+  takes raw RBJ-cookbook ``(b0, b1, b2, a0, a1, a2)`` and normalizes by `a0`
+  centrally instead of having every subclass repeat the divide.
+- `_gain_db` and `Delay._extend_waveform` private helpers: each was called from
+  a single site, now inlined.
+
+### Added
+
+- **`torchfx.filter._design`**: pure-PyTorch filter-design module containing
+  native equivalents of every scipy.signal design function the package used:
+  `design_butterworth_sos`, `design_cheby1_sos`, `design_cheby2_sos`,
+  `design_ellip_sos`, and `design_firwin` (multi-band capable). All return
+  canonical CPU `float64` SOS / FIR tensors compatible with the existing
+  C++/CUDA kernels. Implementation follows the standard analog-prototype +
+  bilinear-transform pipeline; the elliptic design is a faithful port of
+  scipy's algorithm (Orfanidis, "Lecture Notes on Elliptic Filter Design").
+- **`tests/test_native_design.py`**: 509 numerical-equivalence tests covering
+  the full parameter sweep (orders 1-16, lowpass/highpass, the major windows,
+  Rp/Rs combinations). Tolerances are `1e-12` (Butterworth, FIR), `1e-9`
+  (Chebyshev), `1e-7` (Elliptic up to N=8), `1e-5` (Elliptic N=12-16).
+- **`benchmarks/test_design_benchmarks.py`**: paired side-by-side benchmarks
+  comparing native design time to scipy across all five filter types and
+  orders 2-16. Run with
+  `uv run pytest benchmarks/test_design_benchmarks.py --benchmark-enable`.
+  Native design is **14-50× faster than scipy** for Butterworth, Chebyshev I/II
+  (e.g. N=16: 26-37 µs native vs 470-490 µs scipy) and **7-20× faster** for
+  Elliptic (N=16: 92 µs native vs 670 µs scipy). The IIR design pipeline runs
+  on Python `complex` instead of `torch` tensors because per-op tensor dispatch
+  dominates over arithmetic for small (N≤16) problems; `firwin` stays in torch
+  because windows are length-N (~31..1024) where vectorization wins. Numerical
+  equivalence to scipy is preserved (rtol 1e-10/1e-9/1e-7 across IIR types).
+
+### Changed
+
+- Six biquad subclasses (`BiquadLPF`, `BiquadHPF`, `BiquadNotch`, `BiquadBPF`,
+  `BiquadBPFPeak`, `BiquadAllPass`) now express coefficients in raw RBJ form
+  and call the shared `_finalize_coeffs` for normalization, removing ~50 lines
+  of duplicated `a0_inv` plumbing. Same applies to `Shelving`, `ParametricEQ`,
+  `Notch`, and `AllPass` in `iir.py`.
+- `LinkwitzRiley.compute_coefficients`: `np.vstack` replaced with `torch.cat`,
+  removing the only `numpy.*` math call from `src/torchfx/`. After this work,
+  numpy is used only at the I/O boundary (`soundfile`, `sounddevice`), never
+  for signal-processing math in core.
+- `FIR.__init__`: switched coefficient construction to
+  `torch.as_tensor(...).clone().flip(0)` to silence the
+  `torch.tensor(sourceTensor)` warning when the new native designs hand a
+  tensor straight in.
+
 ## [0.5.3] - 2026-05-03
 
 ### Changed

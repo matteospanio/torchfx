@@ -145,25 +145,31 @@ class Biquad(AbstractFilter):
             dtype=torch.float64,
         )
 
-    def _set_coefficients(
+    def _finalize_coeffs(
         self,
         b0: float,
         b1: float,
         b2: float,
+        a0: float,
         a1: float,
         a2: float,
     ) -> None:
-        """Store pre-normalized biquad coefficients as a single SOS row.
+        """Normalize raw RBJ-cookbook coefficients by ``a0`` and store as an SOS row.
 
         Parameters
         ----------
         b0, b1, b2 : float
-            Numerator (feedforward) coefficients.
-        a1, a2 : float
-            Denominator (feedback) coefficients. ``a0`` is implicitly 1.
+            Raw numerator (feedforward) coefficients.
+        a0, a1, a2 : float
+            Raw denominator (feedback) coefficients. The stored SOS row uses
+            ``a0 = 1`` after normalization.
 
         """
-        self._sos = torch.tensor([[b0, b1, b2, 1.0, a1, a2]], dtype=torch.float64)
+        inv = 1.0 / a0
+        self._sos = torch.tensor(
+            [[b0 * inv, b1 * inv, b2 * inv, 1.0, a1 * inv, a2 * inv]],
+            dtype=torch.float64,
+        )
         self._sos_device_cache = None
 
     @override
@@ -270,14 +276,14 @@ class BiquadLPF(Biquad):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
         _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
-        a0_inv = 1.0 / (1.0 + alpha)
-        b1 = (1.0 - cos_w0) * a0_inv
-        self._set_coefficients(
+        b1 = 1.0 - cos_w0
+        self._finalize_coeffs(
             b0=b1 / 2.0,
             b1=b1,
             b2=b1 / 2.0,
-            a1=-2.0 * cos_w0 * a0_inv,
-            a2=(1.0 - alpha) * a0_inv,
+            a0=1.0 + alpha,
+            a1=-2.0 * cos_w0,
+            a2=1.0 - alpha,
         )
 
 
@@ -316,14 +322,14 @@ class BiquadHPF(Biquad):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
         _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
-        a0_inv = 1.0 / (1.0 + alpha)
-        b1_raw = (1.0 + cos_w0) * a0_inv
-        self._set_coefficients(
+        b1_raw = 1.0 + cos_w0
+        self._finalize_coeffs(
             b0=b1_raw / 2.0,
             b1=-b1_raw,
             b2=b1_raw / 2.0,
-            a1=-2.0 * cos_w0 * a0_inv,
-            a2=(1.0 - alpha) * a0_inv,
+            a0=1.0 + alpha,
+            a1=-2.0 * cos_w0,
+            a2=1.0 - alpha,
         )
 
 
@@ -361,14 +367,14 @@ class BiquadNotch(Biquad):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
         _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
-        a0_inv = 1.0 / (1.0 + alpha)
-        common = -2.0 * cos_w0 * a0_inv
-        self._set_coefficients(
-            b0=a0_inv,
+        common = -2.0 * cos_w0
+        self._finalize_coeffs(
+            b0=1.0,
             b1=common,
-            b2=a0_inv,
+            b2=1.0,
+            a0=1.0 + alpha,
             a1=common,
-            a2=(1.0 - alpha) * a0_inv,
+            a2=1.0 - alpha,
         )
 
 
@@ -407,13 +413,13 @@ class BiquadBPF(Biquad):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
         _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
-        a0_inv = 1.0 / (1.0 + alpha)
-        self._set_coefficients(
-            b0=alpha * a0_inv,
+        self._finalize_coeffs(
+            b0=alpha,
             b1=0.0,
-            b2=-alpha * a0_inv,
-            a1=-2.0 * cos_w0 * a0_inv,
-            a2=(1.0 - alpha) * a0_inv,
+            b2=-alpha,
+            a0=1.0 + alpha,
+            a1=-2.0 * cos_w0,
+            a2=1.0 - alpha,
         )
 
 
@@ -453,13 +459,14 @@ class BiquadBPFPeak(Biquad):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
         _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
-        a0_inv = 1.0 / (1.0 + alpha)
-        self._set_coefficients(
-            b0=self.q * alpha * a0_inv,
+        q_alpha = self.q * alpha
+        self._finalize_coeffs(
+            b0=q_alpha,
             b1=0.0,
-            b2=-self.q * alpha * a0_inv,
-            a1=-2.0 * cos_w0 * a0_inv,
-            a2=(1.0 - alpha) * a0_inv,
+            b2=-q_alpha,
+            a0=1.0 + alpha,
+            a1=-2.0 * cos_w0,
+            a2=1.0 - alpha,
         )
 
 
@@ -497,13 +504,11 @@ class BiquadAllPass(Biquad):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
         _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
-        a0_inv = 1.0 / (1.0 + alpha)
-        b0 = (1.0 - alpha) * a0_inv
-        b1 = -2.0 * cos_w0 * a0_inv
-        self._set_coefficients(
-            b0=b0,
-            b1=b1,
-            b2=1.0,  # == a0 before normalization
-            a1=b1,
-            a2=b0,
+        self._finalize_coeffs(
+            b0=1.0 - alpha,
+            b1=-2.0 * cos_w0,
+            b2=1.0 + alpha,
+            a0=1.0 + alpha,
+            a1=-2.0 * cos_w0,
+            a2=1.0 - alpha,
         )

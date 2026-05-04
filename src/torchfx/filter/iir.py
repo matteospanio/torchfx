@@ -68,9 +68,7 @@ torchfx.filter.AbstractFilter : Base class for all filters
 import abc
 import math
 
-import numpy as np
 import torch
-from scipy.signal import butter, cheby1, cheby2, ellip
 from torch import Tensor
 from typing_extensions import override
 
@@ -380,9 +378,9 @@ class Butterworth(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        self._sos = torch.from_numpy(
-            butter(self.order, self.cutoff / (0.5 * self.fs), btype=self.btype, output="sos")  # type: ignore
-        )
+        from torchfx.filter._design import design_butterworth_sos
+
+        self._sos = design_butterworth_sos(self.order, self.cutoff / (0.5 * self.fs), self.btype)
 
 
 class Chebyshev1(IIR):
@@ -508,14 +506,10 @@ class Chebyshev1(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        self._sos = torch.from_numpy(
-            cheby1(
-                self.order,
-                self.ripple,
-                self.cutoff / (0.5 * self.fs),
-                btype=self.btype,  # type: ignore
-                output="sos",
-            )
+        from torchfx.filter._design import design_cheby1_sos
+
+        self._sos = design_cheby1_sos(
+            self.order, self.ripple, self.cutoff / (0.5 * self.fs), self.btype
         )
 
 
@@ -639,14 +633,10 @@ class Chebyshev2(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        self._sos = torch.from_numpy(
-            cheby2(
-                self.order,
-                self.ripple,
-                self.cutoff / (0.5 * self.fs),
-                btype=self.btype,  # type: ignore
-                output="sos",
-            )
+        from torchfx.filter._design import design_cheby2_sos
+
+        self._sos = design_cheby2_sos(
+            self.order, self.ripple, self.cutoff / (0.5 * self.fs), self.btype
         )
 
 
@@ -1110,13 +1100,7 @@ class HiShelving(Shelving):
         a1 = 2 * ((A - 1) - (A + 1) * cos_w)
         a2 = (A + 1) - (A - 1) * cos_w - 2 * sqrt_A * alpha
 
-        self._set_coefficients(
-            b0=b0 / a0,
-            b1=b1 / a0,
-            b2=b2 / a0,
-            a1=a1 / a0,
-            a2=a2 / a0,
-        )
+        self._finalize_coeffs(b0=b0, b1=b1, b2=b2, a0=a0, a1=a1, a2=a2)
 
 
 class LoShelving(Shelving):
@@ -1261,13 +1245,7 @@ class LoShelving(Shelving):
         a1 = -2 * ((A - 1) + (A + 1) * cos_w)
         a2 = (A + 1) + (A - 1) * cos_w - 2 * sqrt_A * alpha
 
-        self._set_coefficients(
-            b0=b0 / a0,
-            b1=b1 / a0,
-            b2=b2 / a0,
-            a1=a1 / a0,
-            a2=a2 / a0,
-        )
+        self._finalize_coeffs(b0=b0, b1=b1, b2=b2, a0=a0, a1=a1, a2=a2)
 
 
 class ParametricEQ(Biquad):
@@ -1453,13 +1431,7 @@ class ParametricEQ(Biquad):
         a1 = -2 * cos_w0
         a2 = 1 - alpha / A
 
-        self._set_coefficients(
-            b0=b0 / a0,
-            b1=b1 / a0,
-            b2=b2 / a0,
-            a1=a1 / a0,
-            a2=a2 / a0,
-        )
+        self._finalize_coeffs(b0=b0, b1=b1, b2=b2, a0=a0, a1=a1, a2=a2)
 
 
 class Peaking(ParametricEQ):
@@ -1651,15 +1623,14 @@ class Notch(Biquad):
         assert self.fs is not None
 
         _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
-        a0_inv = 1.0 / (1.0 + alpha)
-        common = -2.0 * cos_w0 * a0_inv
-
-        self._set_coefficients(
-            b0=a0_inv,
+        common = -2.0 * cos_w0
+        self._finalize_coeffs(
+            b0=1.0,
             b1=common,
-            b2=a0_inv,
+            b2=1.0,
+            a0=1.0 + alpha,
             a1=common,
-            a2=(1.0 - alpha) * a0_inv,
+            a2=1.0 - alpha,
         )
 
 
@@ -1776,17 +1747,13 @@ class AllPass(Biquad):
         assert self.fs is not None
 
         _, cos_w0, alpha = self._compute_omega_alpha(self.cutoff, self.q, self.fs)
-        a0_inv = 1.0 / (1.0 + alpha)
-
-        b0 = (1.0 - alpha) * a0_inv
-        b1 = -2.0 * cos_w0 * a0_inv
-
-        self._set_coefficients(
-            b0=b0,
-            b1=b1,
-            b2=1.0,
-            a1=b1,
-            a2=b0,
+        self._finalize_coeffs(
+            b0=1.0 - alpha,
+            b1=-2.0 * cos_w0,
+            b2=1.0 + alpha,
+            a0=1.0 + alpha,
+            a1=-2.0 * cos_w0,
+            a2=1.0 - alpha,
         )
 
 
@@ -1956,16 +1923,15 @@ class LinkwitzRiley(IIR):
         """
         assert self.fs is not None
 
-        # An Nth-order Linkwitz-Riley filter is made from two (N/2)th-order Butterworth filters.
-        butter_order = self.order // 2
+        from torchfx.filter._design import design_butterworth_sos
 
-        # Get SOS for the base Butterworth filter
-        sos_butter = butter(
-            butter_order, self.cutoff / (0.5 * self.fs), btype=self.btype, output="sos"
-        )  # type: ignore
+        # An Nth-order Linkwitz-Riley filter is made from two (N/2)th-order Butterworth filters.
+        sos_butter = design_butterworth_sos(
+            self.order // 2, self.cutoff / (0.5 * self.fs), self.btype
+        )
 
         # Cascade two identical filters by stacking their SOS sections
-        self._sos = torch.from_numpy(np.vstack([sos_butter, sos_butter]))
+        self._sos = torch.cat([sos_butter, sos_butter], dim=0)
 
 
 class HiLinkwitzRiley(LinkwitzRiley):
@@ -2230,15 +2196,14 @@ class Elliptic(IIR):
     def compute_coefficients(self) -> None:
         assert self.fs is not None
 
-        self._sos = torch.from_numpy(
-            ellip(
-                self.order,
-                self.passband_ripple,
-                self.stopband_attenuation,
-                self.cutoff / (0.5 * self.fs),
-                btype=self.btype,  # type: ignore
-                output="sos",
-            )
+        from torchfx.filter._design import design_ellip_sos
+
+        self._sos = design_ellip_sos(
+            self.order,
+            self.passband_ripple,
+            self.stopband_attenuation,
+            self.cutoff / (0.5 * self.fs),
+            self.btype,
         )
 
 
