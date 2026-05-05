@@ -1,16 +1,22 @@
 #!/bin/bash
 #SBATCH --job-name=tfx-bench
-#SBATCH --output=benchmarks/results/slurm-%j.out
-#SBATCH --error=benchmarks/results/slurm-%j.err
-#SBATCH --gres=gpu:rtx
-#SBATCH --cpus-per-task=12
-#SBATCH --mem=48G
-#SBATCH --time=08:00:00
+#SBATCH --partition=short
+#SBATCH --output=benchmarks/results/slurm-bench-%j.out
+#SBATCH --error=benchmarks/results/slurm-bench-%j.err
+#SBATCH --gres=gpu:tesla:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH --time=02:00:00
 
 set -euo pipefail
 
-module load GCC
-module load CUDA
+cd "${SLURM_SUBMIT_DIR:-$PWD}"
+
+module load GCC >/dev/null 2>&1 || true
+module load CUDA >/dev/null 2>&1 || true
+
+echo ">>> Syncing dependencies (clean resolver/cache)"
+uv sync --all-groups --no-cache
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 RESULTS_DIR="benchmarks/results/$(date +%Y%m%d_%H%M%S)_${SLURM_JOB_ID}"
@@ -47,38 +53,30 @@ cat "$RESULTS_DIR/environment.txt"
 echo ""
 
 BENCH_OPTS="--benchmark-enable --benchmark-name=short -v --tb=short"
+K_EXPR="${K_EXPR:-not numba_cuda}"
+
+run_bench_file () {
+    local bench_file="$1"
+    local stem="$2"
+
+    echo ">>> Running ${bench_file}..."
+    uv run pytest "benchmarks/${bench_file}" \
+        ${BENCH_OPTS} \
+        -k "${K_EXPR}" \
+        --benchmark-json="${RESULTS_DIR}/${stem}.json" \
+        2>&1 | tee "${RESULTS_DIR}/${stem}.log"
+}
 
 # ── Run benchmarks ───────────────────────────────────────────────────────────
 
-echo ">>> Running IIR benchmarks..."
-uv run pytest benchmarks/test_iir_bench.py \
-    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/iir_bench.json" \
-    2>&1 | tee "$RESULTS_DIR/iir_bench.log"
-
-echo ">>> Running FIR benchmarks..."
-uv run pytest benchmarks/test_fir_bench.py \
-    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/fir_bench.json" \
-    2>&1 | tee "$RESULTS_DIR/fir_bench.log"
-
-echo ">>> Running FFT conv benchmarks..."
-uv run pytest benchmarks/test_fftconv_bench.py \
-    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/fftconv_bench.json" \
-    2>&1 | tee "$RESULTS_DIR/fftconv_bench.log"
-
-echo ">>> Running biquad benchmarks..."
-uv run pytest benchmarks/test_biquad_bench.py \
-    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/biquad_bench.json" \
-    2>&1 | tee "$RESULTS_DIR/biquad_bench.log"
-
-echo ">>> Running pipeline benchmarks..."
-uv run pytest benchmarks/test_pipeline_bench.py \
-    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/pipeline_bench.json" \
-    2>&1 | tee "$RESULTS_DIR/pipeline_bench.log"
-
-echo ">>> Running API benchmarks..."
-uv run pytest benchmarks/test_api_bench.py \
-    $BENCH_OPTS --benchmark-json="$RESULTS_DIR/api_bench.json" \
-    2>&1 | tee "$RESULTS_DIR/api_bench.log"
+run_bench_file "test_hotpath_bench.py" "hotpath_bench"
+run_bench_file "test_pipeline_bench.py" "pipeline_bench"
+run_bench_file "test_api_bench.py" "api_bench"
+run_bench_file "test_biquad_bench.py" "biquad_bench"
+run_bench_file "test_iir_bench.py" "iir_bench"
+run_bench_file "test_fir_bench.py" "fir_bench"
+run_bench_file "test_fftconv_bench.py" "fftconv_bench"
+run_bench_file "test_design_benchmarks.py" "design_bench"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""

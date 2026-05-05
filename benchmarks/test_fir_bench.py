@@ -142,7 +142,7 @@ def test_fir_gpu(cuda_sync_benchmark, duration, channels):
     fchain.to("cuda")
 
     cuda_sync_benchmark.pedantic(
-        lambda: wave | fchain,
+        lambda: (wave | fchain).ys,
         rounds=REP,
         warmup_rounds=WARMUP,
     )
@@ -160,7 +160,7 @@ def test_fir_cpu(benchmark, duration, channels):
         f.compute_coefficients()
 
     benchmark.pedantic(
-        lambda: wave | fchain,
+        lambda: (wave | fchain).ys,
         rounds=REP,
         warmup_rounds=WARMUP,
     )
