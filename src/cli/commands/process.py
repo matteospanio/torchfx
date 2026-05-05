@@ -41,11 +41,19 @@ def _resolve_effects(
 
     # 1. Effects from config file
     if config_path:
-        effects.extend(load_effects_from_config(config_path))
+        try:
+            effects.extend(load_effects_from_config(config_path))
+        except (FileNotFoundError, ImportError, ValueError) as exc:
+            typer.echo(f"Error loading config '{config_path}': {exc}", err=True)
+            raise typer.Exit(code=1) from exc
 
     # 2. Effects from CLI flags (appended *after* config effects)
     if effect_specs:
-        effects.extend(parse_effect_list(effect_specs))
+        try:
+            effects.extend(parse_effect_list(effect_specs))
+        except ValueError as exc:
+            typer.echo(f"Error parsing --effect: {exc}", err=True)
+            raise typer.Exit(code=1) from exc
 
     if not effects:
         typer.echo("Error: no effects specified. Use --effect or --config.", err=True)
@@ -201,7 +209,11 @@ def process_cmd(
     cfg_path = config or (global_config if isinstance(global_config, str) else None)
     cfg_defaults: dict[str, object] = {}
     if cfg_path:
-        cfg_defaults = load_config_defaults(cfg_path)
+        try:
+            cfg_defaults = load_config_defaults(cfg_path)
+        except (FileNotFoundError, ImportError, ValueError) as exc:
+            typer.echo(f"Error loading config defaults from '{cfg_path}': {exc}", err=True)
+            raise typer.Exit(code=1) from exc
         device = str(cfg_defaults.get("device", device))
         _cs = cfg_defaults.get("chunk_size", chunk_size)
         chunk_size = int(_cs) if isinstance(_cs, int | float | str) else chunk_size

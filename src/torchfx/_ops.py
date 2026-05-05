@@ -187,5 +187,30 @@ def delay_line_forward(
     Returns the processed tensor.
 
     """
-    result: Tensor = _ext.delay_line_forward(x, delay_samples, decay, mix)
-    return result
+    if x.ndim < 1:
+        raise ValueError("Input tensor must have at least 1 dimension.")
+    if delay_samples < 0:
+        raise ValueError(f"delay_samples must be non-negative, got {delay_samples}.")
+    if not x.is_floating_point():
+        raise TypeError("Input tensor must use a floating-point dtype.")
+
+    original_shape = x.shape
+    if x.ndim == 1:
+        x_2d = x.unsqueeze(0)
+    elif x.ndim == 2:
+        x_2d = x
+    else:
+        x_2d = x.reshape(-1, x.size(-1))
+
+    # Keep native kernels on their supported dtypes.
+    native_dtype = torch.float64 if x_2d.dtype == torch.float64 else torch.float32
+    x_native = x_2d if x_2d.dtype == native_dtype else x_2d.to(dtype=native_dtype)
+
+    result_native: Tensor = _ext.delay_line_forward(x_native, delay_samples, decay, mix)
+    result_2d = result_native if result_native.dtype == x.dtype else result_native.to(dtype=x.dtype)
+
+    if len(original_shape) == 1:
+        return result_2d.squeeze(0)
+    if len(original_shape) == 2:
+        return result_2d
+    return result_2d.reshape(original_shape)

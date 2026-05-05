@@ -61,6 +61,24 @@ def test_designable_fir_forward(sample_signal):
     assert filtered_signal.shape == sample_signal.shape
 
 
+def test_designable_fir_deferred_init_is_valid_module():
+    fir = DesignableFIR(cutoff=5000, num_taps=101, fs=None)
+
+    state = fir.state_dict()
+    assert "kernel" in state
+    assert fir.b is None
+
+
+def test_designable_fir_deferred_init_compute_after_fs_set():
+    fir = DesignableFIR(cutoff=5000, num_taps=101, fs=None)
+    fir.fs = 44100
+    fir.compute_coefficients()
+
+    signal = torch.randn(44100)
+    result = fir(signal)
+    assert result.shape == signal.shape
+
+
 # ---------------------------------------------------------------------------
 # FFT convolution tests
 # ---------------------------------------------------------------------------

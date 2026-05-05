@@ -998,11 +998,12 @@ class DesignableFIR(FIR):
         self.window = window
         self._conv_mode = conv_mode
 
+        # Initialize FIR/nn.Module state even when fs is deferred.
+        super().__init__(b=[1.0], conv_mode=conv_mode)
+
         self.b: ArrayLike | None = None
         if fs is not None:
             self.compute_coefficients()
-            assert self.b is not None, "Filter coefficients (b) must be computed."
-            super().__init__(self.b, conv_mode=conv_mode)
 
     @override
     def compute_coefficients(self) -> None:
@@ -1018,5 +1019,4 @@ class DesignableFIR(FIR):
             window=self.window,
         )
         assert self.b is not None, "Filter coefficients (b) must be computed."
-
-        super().__init__(self.b, conv_mode=self._conv_mode)
+        self.kernel = torch.as_tensor(self.b, dtype=torch.float32).clone().flip(0)[None, None, :]

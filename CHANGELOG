@@ -48,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dominates over arithmetic for small (N≤16) problems; `firwin` stays in torch
   because windows are length-N (~31..1024) where vectorization wins. Numerical
   equivalence to scipy is preserved (rtol 1e-10/1e-9/1e-7 across IIR types).
+- Regression coverage for runtime edge cases across
+  `tests/test_wave.py`, `tests/test_effects.py`, `tests/test_fir.py`,
+  `tests/test_realtime.py`, and `tests/test_cli.py` (Wave shape/channel
+  invariants, Delay sample-rate recomputation, Reverb batched/dtype handling,
+  deferred `DesignableFIR` initialization, stream chunk-length constraints,
+  and CLI invalid-parameter error paths).
 
 ### Changed
 
@@ -64,6 +70,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `torch.as_tensor(...).clone().flip(0)` to silence the
   `torch.tensor(sourceTensor)` warning when the new native designs hand a
   tensor straight in.
+- `Wave` now enforces internal `(channels, samples)` shape invariants,
+  normalizes 1D mono inputs to `(1, T)`, preserves metadata/device in
+  transforms and channel extraction, and keeps merge behavior explicit:
+  split-channel merges zero-pad to longest length while mix mode requires
+  matching channel counts.
+- `_ops.delay_line_forward` now validates rank/dtype, supports tensors with
+  arbitrary leading batch dimensions by flattening/restoring `(..., T)`, and
+  safely round-trips non-native float dtypes via the extension's supported
+  float32/float64 execution path.
+- `DesignableFIR` now initializes `nn.Module` state even when `fs=None`, then
+  updates kernel coefficients in `compute_coefficients()` once sample rate is
+  available.
+- `Delay` and `Gain` input validation now consistently raises `ValueError` for
+  invalid user parameters. BPM-synced `Delay` also recomputes
+  `delay_samples` when `fs` changes after initialization.
+- Realtime processing now resets stateful effects at file/chunk boundaries and
+  rejects effects that change chunk length in `StreamProcessor`.
+- CLI processing now surfaces config/effect parse failures as user-facing
+  messages (including invalid constructor parameters) instead of raw tracebacks.
+
+### Fixed
+
+- `Wave.get_channel()` no longer returns flattened 1D tensors that break
+  downstream assumptions about channel count and `len()` semantics.
+- Delayed/BPM-synced effects now stay sample-accurate when reused across
+  different sample rates.
+- Stream processing no longer leaks state from one file into the next, and
+  now fails fast when an effect violates fixed-size chunk assumptions.
 
 ## [0.5.3] - 2026-05-03
 

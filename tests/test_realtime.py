@@ -17,7 +17,7 @@ import soundfile as sf
 import torch
 from torch import Tensor
 
-from torchfx.effect import FX, Gain
+from torchfx.effect import Delay, FX, Gain
 from torchfx.filter.iir import HiButterworth, LoButterworth
 from torchfx.realtime.backend import (
     AudioBackend,
@@ -715,6 +715,36 @@ class TestStreamProcessor:
         with StreamProcessor(effects=[Gain(0.5)], chunk_size=8192) as processor:
             processor.process_file(wav_file, output_path)
         assert output_path.exists()
+
+    def test_state_is_reset_between_files(self, tmp_path: Path) -> None:
+        fs = 1000
+        in1 = tmp_path / "state_in1.wav"
+        in2 = tmp_path / "state_in2.wav"
+        out1 = tmp_path / "state_out1.wav"
+        out2 = tmp_path / "state_out2.wav"
+
+        x1 = torch.zeros(20)
+        x1[0] = 1.0
+        x2 = torch.zeros(20)
+        sf.write(str(in1), x1.numpy(), fs)
+        sf.write(str(in2), x2.numpy(), fs)
+
+        processor = StreamProcessor(effects=[LoButterworth(cutoff=300, fs=fs)], chunk_size=20)
+        processor.process_file(in1, out1)
+        processor.process_file(in2, out2)
+
+        y2_np, _ = sf.read(str(out2), dtype="float32", always_2d=True)
+        assert float(abs(y2_np).max()) < 1e-6
+
+    def test_variable_length_effects_are_rejected(self, wav_file: Path, tmp_path: Path) -> None:
+        output_path = tmp_path / "output_delay.wav"
+        processor = StreamProcessor(
+            effects=[Delay(delay_samples=64, taps=1, feedback=0.3, mix=0.2)],
+            chunk_size=256,
+        )
+
+        with pytest.raises(ValueError, match="preserve chunk length"):
+            processor.process_file(wav_file, output_path)
 
 
 # ---------------------------------------------------------------------------

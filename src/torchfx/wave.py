@@ -139,7 +139,7 @@ class Wave:
         ys: ArrayLike,
         fs: int,
         device: Device = "cpu",
-        metadata: dict[str, tp.Any] = {},  # noqa: B006
+        metadata: dict[str, tp.Any] | None = None,
     ) -> None:
         """Initialize a Wave object from array-like audio data.
 
@@ -189,8 +189,8 @@ class Wave:
         """
         self.fs = fs
         self._pipeline: list[nn.Module] = []
-        self.ys = Tensor(ys)
-        self.metadata = metadata or {}
+        self.ys = torch.as_tensor(ys)
+        self.metadata = {} if metadata is None else dict(metadata)
         self.to(device)
 
     @property
@@ -201,6 +201,12 @@ class Wave:
 
     @ys.setter
     def ys(self, value: Tensor) -> None:
+        if value.ndim == 1:
+            value = value.unsqueeze(0)
+        elif value.ndim != 2:
+            raise ValueError(
+                f"Wave tensor must have shape (channels, samples), got {tuple(value.shape)}"
+            )
         self._ys = value
         self._pipeline = []
 
@@ -249,10 +255,16 @@ class Wave:
     ) -> "Wave":
         """Create a Wave with a deferred pipeline (internal use)."""
         wave = object.__new__(cls)
+        if ys.ndim == 1:
+            ys = ys.unsqueeze(0)
+        elif ys.ndim != 2:
+            raise ValueError(
+                f"Wave tensor must have shape (channels, samples), got {tuple(ys.shape)}"
+            )
         wave._ys = ys
         wave.fs = fs
         wave._Wave__device = device  # type: ignore[attr-defined]
-        wave.metadata = metadata
+        wave.metadata = dict(metadata)
         wave._pipeline = pipeline
         return wave
 
@@ -401,7 +413,13 @@ class Wave:
 
         """
         self._materialize()
-        return Wave(func(self._ys, *args, **kwargs), self.fs)
+        transformed = func(self._ys, *args, **kwargs)
+        return Wave(
+            transformed,
+            self.fs,
+            device=transformed.device,
+            metadata=self.metadata,
+        )
 
     @classmethod
     def from_file(
@@ -696,10 +714,18 @@ class Wave:
 
     def __update_config(self, f: FX) -> None:
         """Update the configuration of the filter with the wave's sampling frequency."""
-        if hasattr(f, "fs") and f.fs is None:
-            f.fs = self.fs
+        fs_changed = False
+        current_fs = getattr(f, "fs", None)
+        if current_fs != self.fs:
+            tp.cast(tp.Any, f).fs = self.fs
+            fs_changed = True
 
-        if isinstance(f, AbstractFilter) and not f._has_computed_coeff:
+        if fs_changed:
+            reset_state = getattr(f, "reset_state", None)
+            if callable(reset_state):
+                reset_state()
+
+        if isinstance(f, AbstractFilter) and (fs_changed or not f._has_computed_coeff):
             f.compute_coefficients()
 
     def __len__(self) -> int:
@@ -814,7 +840,8 @@ class Wave:
         merge : Combine multiple Wave objects back into multi-channel audio
 
         """
-        return Wave(self.ys[index], self.fs)
+        channel = self.ys[index].unsqueeze(0)
+        return Wave(channel, self.fs, device=self.device, metadata=self.metadata)
 
     def duration(self, unit: tp.Literal["sec", "ms"]) -> Second | Millisecond:
         """Calculate the duration of the audio signal.
@@ -1015,11 +1042,29 @@ class Wave:
                 )
 
         if split_channels:
-            ys = torch.cat([w.ys for w in waves], dim=0)
+            max_length = max(len(w) for w in waves)
+            channels: list[Tensor] = []
+            for w in waves:
+                w_ys = w.ys
+                if w_ys.shape[1] < max_length:
+                    pad = torch.zeros(
+                        (w_ys.shape[0], max_length - w_ys.shape[1]),
+                        dtype=w_ys.dtype,
+                        device=w_ys.device,
+                    )
+                    w_ys = torch.cat((w_ys, pad), dim=1)
+                channels.append(w_ys)
+            ys = torch.cat(channels, dim=0)
         else:
             # Get the maximum length and number of channels
             max_length = max(len(w) for w in waves)
             num_channels = waves[0].ys.shape[0]
+
+            for w in waves:
+                if w.ys.shape[0] != num_channels:
+                    raise ValueError(
+                        "All waves must have the same number of channels when split_channels=False."
+                    )
 
             ys = torch.zeros(
                 (num_channels, max_length),
@@ -1030,4 +1075,4 @@ class Wave:
                 # Add each wave, handling different lengths
                 ys[:, : len(w)] += w.ys
 
-        return Wave(ys, fs)
+        return Wave(ys, fs, device=waves[0].device, metadata=waves[0].metadata)

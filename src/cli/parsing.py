@@ -167,7 +167,10 @@ def parse_effect_string(spec: str) -> FX:
     cls, positional_names = EFFECT_REGISTRY[name]
 
     if not params_str.strip():
-        return cls()  # default parameters
+        try:
+            return cls()  # default parameters
+        except TypeError as exc:
+            raise ValueError(f"Invalid parameters for effect '{name}': {exc}") from exc
 
     kwargs: dict[str, Any] = {}
     positional_idx = 0
@@ -189,7 +192,10 @@ def parse_effect_string(spec: str) -> FX:
             kwargs[positional_names[positional_idx]] = _coerce_value(token)
             positional_idx += 1
 
-    return cls(**kwargs)
+    try:
+        return cls(**kwargs)
+    except TypeError as exc:
+        raise ValueError(f"Invalid parameters for effect '{name}': {exc}") from exc
 
 
 def parse_effect_list(specs: list[str]) -> list[FX]:

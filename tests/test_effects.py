@@ -68,6 +68,8 @@ def test_gain_invalid_gain_type():
         Gain(gain=-1.0, gain_type="amplitude")
     with pytest.raises(ValueError):
         Gain(gain=-1.0, gain_type="power")
+    with pytest.raises(ValueError):
+        Gain(gain=1.0, gain_type="invalid")
 
 
 def test_normalize_peak_strategy():
@@ -249,6 +251,24 @@ def test_reverb_multichannel():
     expected[1, 3] = 3.5 + 0.5 * 1.5
     out = reverb(waveform)
     torch.testing.assert_close(out, expected)
+
+
+def test_reverb_batched_3d_input():
+    waveform = torch.randn(2, 3, 128)
+    reverb = Reverb(delay=4, decay=0.4, mix=0.5)
+    out = reverb(waveform)
+
+    assert out.shape == waveform.shape
+    assert torch.isfinite(out).all()
+
+
+def test_reverb_float16_input_supported():
+    waveform = torch.randn(1, 64, dtype=torch.float16)
+    reverb = Reverb(delay=3, decay=0.2, mix=0.5)
+    out = reverb(waveform)
+
+    assert out.dtype == torch.float16
+    assert out.shape == waveform.shape
 
 
 @pytest.mark.parametrize("delay", [0, -1])
@@ -459,49 +479,49 @@ def test_delay_samples():
 @pytest.mark.parametrize("delay_samples", [0, -1])
 def test_delay_invalid_delay_samples(delay_samples):
     """Test delay with invalid delay_samples."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         Delay(delay_samples=delay_samples, feedback=0.3, mix=0.2)
 
 
 def test_delay_missing_bpm():
     """Test delay without BPM or delay_samples."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         Delay(feedback=0.3, mix=0.2)
 
 
 def test_delay_invalid_bpm():
     """Test delay with invalid BPM."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         Delay(bpm=0, delay_time="1/8", fs=44100)
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         Delay(bpm=-1, delay_time="1/8", fs=44100)
 
 
 def test_delay_invalid_sample_rate():
     """Test delay with invalid sample rate."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         Delay(bpm=120, delay_time="1/8", fs=0)
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         Delay(bpm=120, delay_time="1/8", fs=-1)
 
 
 @pytest.mark.parametrize("feedback", [-0.1, 1.0, 1.1])
 def test_delay_invalid_feedback(feedback):
     """Test delay with invalid feedback values."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         Delay(delay_samples=1000, feedback=feedback, mix=0.2)
 
 
 @pytest.mark.parametrize("mix", [-0.1, 1.1])
 def test_delay_invalid_mix(mix):
     """Test delay with invalid mix values."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         Delay(delay_samples=1000, feedback=0.3, mix=mix)
 
 
 def test_delay_invalid_taps():
     """Test delay with invalid taps."""
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         Delay(delay_samples=1000, feedback=0.3, mix=0.2, taps=0)
 
 
@@ -527,8 +547,19 @@ def test_delay_lazy_fs_inference_error():
     delay = Delay(bpm=120, delay_time="1/8", feedback=0.3, mix=0.2)
     waveform = torch.randn(2, 44100)
 
-    with pytest.raises(AssertionError, match="Sample rate \\(fs\\) is required"):
+    with pytest.raises(ValueError, match="Sample rate \\(fs\\) is required"):
         delay(waveform)
+
+
+def test_delay_recomputes_samples_when_fs_changes():
+    delay = Delay(bpm=120, delay_time="1/8", fs=44100, taps=1, feedback=0.3, mix=0.2)
+    assert delay.delay_samples == 11025
+
+    delay.fs = 48000
+    waveform = torch.randn(1, 128)
+    _ = delay(waveform)
+
+    assert delay.delay_samples == 12000
 
 
 @pytest.mark.parametrize(
