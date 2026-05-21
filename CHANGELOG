@@ -79,6 +79,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   arbitrary leading batch dimensions by flattening/restoring `(..., T)`, and
   safely round-trips non-native float dtypes via the extension's supported
   float32/float64 execution path.
+- Native IIR/biquad dispatch now uses dtype-aware execution in `_ops` and the
+  SOS forward path: CPU routes non-float64 inputs through float32, while CUDA
+  remains on float64 for the current kernel generation. CPU native kernels in
+  `_csrc/cpu/iir_cpu.cpp` now run in float32 or float64 based on input dtype
+  instead of unconditionally upcasting to float64.
 - `DesignableFIR` now initializes `nn.Module` state even when `fs=None`, then
   updates kernel coefficients in `compute_coefficients()` once sample rate is
   available.

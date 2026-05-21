@@ -112,6 +112,7 @@ def _sos_cascade_forward(
 
     orig_shape = x.shape
     out_dtype = x.dtype
+    native_dtype = torch.float64 if x.is_cuda or x.dtype == torch.float64 else torch.float32
     device = x.device
 
     # Normalize to [C, T]
@@ -126,18 +127,22 @@ def _sos_cascade_forward(
 
     # Use cached device-matched SOS to avoid per-forward .to() calls.
     cache = sos_device_cache
-    if cache is None or cache.device != device:
-        cache = sos_canonical.to(device=device, dtype=torch.float64)
+    if cache is None or cache.device != device or cache.dtype != native_dtype:
+        cache = sos_canonical.to(device=device, dtype=native_dtype)
     sos = cache
 
     # Initialize or resize state.
-    if state_x is None or state_x.shape[1] != C:
-        state_x = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
-        state_y = torch.zeros(num_sections, C, 2, device=device, dtype=torch.float64)
-    elif state_x.device != device:
-        state_x = state_x.to(device=device)
-        assert state_y is not None
-        state_y = state_y.to(device=device)
+    if state_x is None or state_y is None or state_x.shape[1] != C or state_y.shape[1] != C:
+        state_x = torch.zeros(num_sections, C, 2, device=device, dtype=native_dtype)
+        state_y = torch.zeros(num_sections, C, 2, device=device, dtype=native_dtype)
+    elif (
+        state_x.device != device
+        or state_y.device != device
+        or state_x.dtype != native_dtype
+        or state_y.dtype != native_dtype
+    ):
+        state_x = state_x.to(device=device, dtype=native_dtype)
+        state_y = state_y.to(device=device, dtype=native_dtype)
 
     assert state_y is not None
 

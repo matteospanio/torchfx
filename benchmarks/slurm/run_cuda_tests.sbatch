@@ -15,6 +15,12 @@ cd "${SLURM_SUBMIT_DIR:-$PWD}"
 module load GCC >/dev/null 2>&1 || true
 module load CUDA >/dev/null 2>&1 || true
 
+if ! command -v nvcc >/dev/null 2>&1; then
+    echo "ERROR: nvcc not found. CUDA module/toolkit is not active in this job environment."
+    exit 2
+fi
+echo "nvcc: $(nvcc --version | tail -n 1)"
+
 RESULTS_DIR="benchmarks/results/cuda-tests_$(date +%Y%m%d_%H%M%S)_${SLURM_JOB_ID}"
 mkdir -p "$RESULTS_DIR"
 
@@ -27,6 +33,30 @@ echo ""
 
 echo ">>> Syncing dependencies (clean resolver/cache)"
 uv sync --all-groups --no-cache
+
+echo ">>> Rebuilding local torchfx package in job environment"
+uv pip install --python .venv/bin/python --no-deps --force-reinstall --no-cache .
+
+echo ">>> CUDA native dispatch preflight"
+uv run python - <<'PY'
+import torch
+from torchfx._ops import parallel_iir_forward
+
+if not torch.cuda.is_available():
+    raise SystemExit("CUDA not available in this job.")
+
+x = torch.randn(1, 16, device="cuda", dtype=torch.float64)
+sos = torch.tensor([[1.0, 0.0, 0.0, 1.0, 0.0, 0.0]], device="cuda", dtype=torch.float64)
+sx = torch.zeros(1, 1, 2, device="cuda", dtype=torch.float64)
+sy = torch.zeros(1, 1, 2, device="cuda", dtype=torch.float64)
+
+try:
+    parallel_iir_forward(x, sos, sx, sy, sos_cpu=sos.cpu())
+except RuntimeError as exc:
+    raise SystemExit(f"CUDA native dispatch check failed: {exc}")
+
+print("cuda_native_dispatch_ok=True")
+PY
 
 echo ">>> Environment"
 uv run python - <<'PY' | tee "$RESULTS_DIR/environment.txt"
