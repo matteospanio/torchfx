@@ -64,7 +64,6 @@ jobs:
 
   lint:
     name: Lint (Python ${{ matrix.python-version }})
-    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -83,21 +82,11 @@ jobs:
       - name: Install uv
         run: pip install uv
 
-      - name: Restore dependency cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.cache/uv
-          key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-
-      - name: Install dependencies
-        run: uv sync --all-groups
-
       - name: Check formatting with Black
-        run: uv run black --check src tests
+        run: uvx black --check src tests
 
   ruff:
     name: Ruff (Python ${{ matrix.python-version }})
-    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -116,19 +105,10 @@ jobs:
       - name: Install uv
         run: pip install uv
 
-      - name: Restore dependency cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.cache/uv
-          key: uv-cpu-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-
-      - name: Install dependencies
-        run: uv sync --all-groups
-
       - name: Lint with Ruff
         run: |
-          uv run ruff check src
-          uv run ruff format --check src tests
+          uvx ruff check src
+          uvx ruff format --check src tests
 
   tests:
     name: Tests (Python ${{ matrix.python-version }})
