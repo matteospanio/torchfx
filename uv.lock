@@ -2699,14 +2699,12 @@ wheels = [
 
 [[package]]
 name = "torchfx"
-version = "0.5.3"
+version = "0.5.4"
 source = { editable = "." }
 dependencies = [
     { name = "annotated-types" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "soundfile" },
     { name = "torch" },
 ]
@@ -2731,6 +2729,8 @@ dev = [
     { name = "pytest-benchmark" },
     { name = "ruff" },
     { name = "scalene" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "scipy-stubs", version = "1.15.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy-stubs", version = "1.17.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
@@ -2756,7 +2756,6 @@ realtime = [
 requires-dist = [
     { name = "annotated-types", specifier = ">=0.7.0" },
     { name = "numpy", specifier = ">=2.2.4" },
-    { name = "scipy", specifier = ">=1.15.2" },
     { name = "soundfile", specifier = ">=0.13.1" },
     { name = "torch", specifier = ">=2.6.0" },
 ]
@@ -2779,6 +2778,7 @@ dev = [
     { name = "pytest-benchmark", specifier = ">=5.1.0" },
     { name = "ruff", specifier = ">=0.12.1" },
     { name = "scalene", specifier = ">=1.5.51" },
+    { name = "scipy", specifier = ">=1.15.2" },
     { name = "scipy-stubs", specifier = ">=1.15.3.0" },
 ]
 docs = [

@@ -1,10 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=tfx-profile
+#SBATCH --partition=short
 #SBATCH --output=benchmarks/results/profile-%j.out
 #SBATCH --error=benchmarks/results/profile-%j.err
-#SBATCH --gres=gpu:rtx
-#SBATCH --cpus-per-task=12
-#SBATCH --mem=48G
+#SBATCH --gres=gpu:tesla:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
 #SBATCH --time=01:00:00
 
 # TorchFX CUDA profile run.
@@ -20,8 +21,43 @@
 
 set -euo pipefail
 
-module load GCC
-module load CUDA
+cd "${SLURM_SUBMIT_DIR:-$PWD}"
+
+module load GCC >/dev/null 2>&1 || true
+module load CUDA >/dev/null 2>&1 || true
+
+if ! command -v nvcc >/dev/null 2>&1; then
+    echo "ERROR: nvcc not found. CUDA module/toolkit is not active in this job environment."
+    exit 2
+fi
+echo "nvcc: $(nvcc --version | tail -n 1)"
+
+echo ">>> Syncing dependencies (clean resolver/cache)"
+uv sync --all-groups --no-cache
+
+echo ">>> Rebuilding local torchfx package in job environment"
+uv pip install --python .venv/bin/python --no-deps --force-reinstall --no-cache .
+
+echo ">>> CUDA native dispatch preflight"
+uv run python - <<'PY'
+import torch
+from torchfx._ops import parallel_iir_forward
+
+if not torch.cuda.is_available():
+    raise SystemExit("CUDA not available in this job.")
+
+x = torch.randn(1, 16, device="cuda", dtype=torch.float64)
+sos = torch.tensor([[1.0, 0.0, 0.0, 1.0, 0.0, 0.0]], device="cuda", dtype=torch.float64)
+sx = torch.zeros(1, 1, 2, device="cuda", dtype=torch.float64)
+sy = torch.zeros(1, 1, 2, device="cuda", dtype=torch.float64)
+
+try:
+    parallel_iir_forward(x, sos, sx, sy, sos_cpu=sos.cpu())
+except RuntimeError as exc:
+    raise SystemExit(f"CUDA native dispatch check failed: {exc}")
+
+print("cuda_native_dispatch_ok=True")
+PY
 
 RESULTS_DIR="benchmarks/results/profile_$(date +%Y%m%d_%H%M%S)_${SLURM_JOB_ID}"
 mkdir -p "$RESULTS_DIR"
@@ -52,8 +88,8 @@ if torch.cuda.is_available():
 cat "$RESULTS_DIR/environment.txt"
 echo ""
 
-# --- Cold-import / JIT-compile timing (AOT-migration baseline, deferred phase) ---
-echo ">>> Cold-import + native extension compile timing"
+# --- Import/native-extension timing ---
+echo ">>> Import + native-extension availability timing"
 uv run python -c "
 import time
 
@@ -62,12 +98,12 @@ import torchfx
 t1 = time.perf_counter()
 from torchfx._ops import is_native_available
 t2 = time.perf_counter()
-available = is_native_available()  # triggers JIT compile on first call
+available = is_native_available()
 t3 = time.perf_counter()
 
 print(f'import_torchfx_s: {t1 - t0:.3f}')
 print(f'import_ops_s: {t2 - t1:.3f}')
-print(f'native_ext_load_s: {t3 - t2:.3f}')
+print(f'native_available_check_s: {t3 - t2:.3f}')
 print(f'native_available: {available}')
 " > "$RESULTS_DIR/cold_import.txt"
 cat "$RESULTS_DIR/cold_import.txt"

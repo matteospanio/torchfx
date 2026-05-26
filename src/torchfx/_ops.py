@@ -34,6 +34,23 @@ logger = logging.getLogger(__name__)
 PARALLEL_SCAN_THRESHOLD = 2048
 
 
+def _select_native_dtype(x: Tensor) -> torch.dtype:
+    """Select native kernel dtype for an input tensor.
+
+    CPU native IIR/biquad kernels support float32 and float64. CUDA native IIR/biquad
+    kernels currently execute on float64.
+
+    Keep float64 inputs on float64, and route other CPU floating-point inputs through
+    float32.
+
+    """
+    if not x.is_floating_point():
+        raise TypeError("Input tensor must use a floating-point dtype.")
+    if x.is_cuda:
+        return torch.float64
+    return torch.float64 if x.dtype == torch.float64 else torch.float32
+
+
 def is_native_available() -> bool:
     """Check whether the native C++/CUDA extension is available.
 
@@ -79,7 +96,7 @@ def biquad_forward(
     # Ensure state tensors exist
     C = x.shape[0] if x.ndim >= 2 else 1
     device = x.device
-    dtype = torch.float64
+    dtype = _select_native_dtype(x)
 
     if state_x is None:
         state_x = torch.zeros(C, 2, device=device, dtype=dtype)
@@ -88,12 +105,12 @@ def biquad_forward(
 
     # Use pre-extracted floats when available to avoid GPU→CPU sync.
     if a1_f64 is None or a2_f64 is None:
-        a_f64 = a if a.dtype == dtype else a.to(dtype=dtype)
-        a1_f64 = float(a_f64[1])
-        a2_f64 = float(a_f64[2])
+        a_native = a if a.dtype == dtype else a.to(dtype=dtype)
+        a1_f64 = float(a_native[1])
+        a2_f64 = float(a_native[2])
 
-    x_f64 = x if x.dtype == dtype else x.to(dtype=dtype)
-    b_f64 = b if b.dtype == dtype else b.to(dtype=dtype)
+    x_native = x if x.dtype == dtype else x.to(dtype=dtype)
+    b_native = b if b.dtype == dtype else b.to(dtype=dtype)
     sx = (
         state_x
         if (state_x.device == device and state_x.dtype == dtype)
@@ -106,8 +123,8 @@ def biquad_forward(
     )
 
     result: tuple[Tensor, Tensor, Tensor] = _ext.biquad_forward(
-        x_f64,
-        b_f64,
+        x_native,
+        b_native,
         a1_f64,
         a2_f64,
         sx,
@@ -131,7 +148,8 @@ def parallel_iir_forward(
     Parameters
     ----------
     sos_cpu : Tensor, optional
-        Pre-computed CPU copy of the SOS matrix (float64).  When supplied,
+        Pre-computed CPU copy of the SOS matrix on the native execution dtype
+        (float32 or float64). When supplied,
         avoids a per-call CUDA→CPU transfer that otherwise triggers a device
         synchronisation.
 
@@ -139,14 +157,14 @@ def parallel_iir_forward(
     C = x.shape[0] if x.ndim >= 2 else 1
     K = sos.shape[0]
     device = x.device
-    dtype = torch.float64
+    dtype = _select_native_dtype(x)
 
     if state_x is None:
         state_x = torch.zeros(K, C, 2, device=device, dtype=dtype)
     if state_y is None:
         state_y = torch.zeros(K, C, 2, device=device, dtype=dtype)
 
-    x_f64 = x if x.dtype == dtype else x.to(dtype=dtype)
+    x_native = x if x.dtype == dtype else x.to(dtype=dtype)
     sos_device = (
         sos if (sos.device == device and sos.dtype == dtype) else sos.to(device=device, dtype=dtype)
     )
@@ -165,9 +183,11 @@ def parallel_iir_forward(
     # CUDA→CPU transfer.  Fall back to computing it here.
     if sos_cpu is None:
         sos_cpu = sos.detach().to(dtype=dtype, device="cpu") if sos.is_cuda else sos_device
+    elif sos_cpu.device.type != "cpu" or sos_cpu.dtype != dtype:
+        sos_cpu = sos_cpu.to(dtype=dtype, device="cpu")
 
     result: tuple[Tensor, Tensor, Tensor] = _ext.sos_forward(
-        x_f64,
+        x_native,
         sos_device,
         sos_cpu,
         sx,
@@ -187,5 +207,30 @@ def delay_line_forward(
     Returns the processed tensor.
 
     """
-    result: Tensor = _ext.delay_line_forward(x, delay_samples, decay, mix)
-    return result
+    if x.ndim < 1:
+        raise ValueError("Input tensor must have at least 1 dimension.")
+    if delay_samples < 0:
+        raise ValueError(f"delay_samples must be non-negative, got {delay_samples}.")
+    if not x.is_floating_point():
+        raise TypeError("Input tensor must use a floating-point dtype.")
+
+    original_shape = x.shape
+    if x.ndim == 1:
+        x_2d = x.unsqueeze(0)
+    elif x.ndim == 2:
+        x_2d = x
+    else:
+        x_2d = x.reshape(-1, x.size(-1))
+
+    # Keep native kernels on their supported dtypes.
+    native_dtype = torch.float64 if x_2d.dtype == torch.float64 else torch.float32
+    x_native = x_2d if x_2d.dtype == native_dtype else x_2d.to(dtype=native_dtype)
+
+    result_native: Tensor = _ext.delay_line_forward(x_native, delay_samples, decay, mix)
+    result_2d = result_native if result_native.dtype == x.dtype else result_native.to(dtype=x.dtype)
+
+    if len(original_shape) == 1:
+        return result_2d.squeeze(0)
+    if len(original_shape) == 2:
+        return result_2d
+    return result_2d.reshape(original_shape)

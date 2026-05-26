@@ -273,7 +273,6 @@ from collections.abc import Sequence
 
 import torch
 from numpy.typing import ArrayLike
-from scipy.signal import firwin
 from torch import Tensor, nn
 from typing_extensions import override
 
@@ -512,8 +511,9 @@ class FIR(AbstractFilter):
         if conv_mode not in ("fft", "direct", "auto"):
             raise ValueError(f"conv_mode must be 'fft', 'direct', or 'auto', got {conv_mode!r}")
         self._conv_mode = conv_mode
-        # Flip the kernel for causal convolution (like lfilter)
-        b_tensor = torch.tensor(b, dtype=torch.float32).flip(0)
+        # Flip the kernel for causal convolution (like lfilter).
+        # Use as_tensor + clone to handle both array-likes and tensor inputs without warning.
+        b_tensor = torch.as_tensor(b, dtype=torch.float32).clone().flip(0)
         self.a = [1.0]  # FIR filter denominator is always 1
         self.register_buffer("kernel", b_tensor[None, None, :])  # [1, 1, K]
 
@@ -998,24 +998,25 @@ class DesignableFIR(FIR):
         self.window = window
         self._conv_mode = conv_mode
 
+        # Initialize FIR/nn.Module state even when fs is deferred.
+        super().__init__(b=[1.0], conv_mode=conv_mode)
+
         self.b: ArrayLike | None = None
         if fs is not None:
             self.compute_coefficients()
-            assert self.b is not None, "Filter coefficients (b) must be computed."
-            super().__init__(self.b, conv_mode=conv_mode)
 
     @override
     def compute_coefficients(self) -> None:
         assert self.fs is not None, "Sampling frequency (fs) must be set."
 
-        self.b = firwin(
+        from torchfx.filter._design import design_firwin
+
+        self.b = design_firwin(
             self.num_taps,
             self.cutoff,
             fs=self.fs,
             pass_zero=self.pass_zero,
-            window=self.window,  # type: ignore
-            scale=True,
+            window=self.window,
         )
         assert self.b is not None, "Filter coefficients (b) must be computed."
-
-        super().__init__(self.b, conv_mode=self._conv_mode)
+        self.kernel = torch.as_tensor(self.b, dtype=torch.float32).clone().flip(0)[None, None, :]

@@ -142,12 +142,10 @@ class StreamProcessor:
                 current_fs = effect.fs
                 if current_fs != fs:
                     effect.fs = fs  # type: ignore
-                    # Force coefficient recomputation with new sample rate
-                    if isinstance(effect, AbstractFilter):
-                        effect.compute_coefficients()
-                        reset_state = getattr(effect, "reset_state", None)
-                        if callable(reset_state):
-                            reset_state()
+                    # Changing sample rate invalidates any buffered filter/effect state.
+                    reset_state = getattr(effect, "reset_state", None)
+                    if callable(reset_state):
+                        reset_state()
             # Validate cutoff before computing coefficients
             if isinstance(effect, AbstractFilter) and hasattr(effect, "cutoff"):
                 cutoff = effect.cutoff
@@ -211,6 +209,8 @@ class StreamProcessor:
             fs,
         )
 
+        # Each file should start from a clean effect state.
+        self.reset_state()
         self._configure_effects(fs)
 
         # Determine output format
@@ -251,11 +251,18 @@ class StreamProcessor:
                     waveform = waveform.to(self._device)
 
                 # Apply effect chain
+                input_time = waveform.shape[-1]
                 for effect in self._effects:
                     if not isinstance(effect, nn.Module):
                         raise TypeError("Effects must inherit from torch.nn.Module")
                     call_effect = cast(Callable[[Tensor], Tensor], effect)
                     waveform = call_effect(waveform)
+                    if waveform.shape[-1] != input_time:
+                        raise ValueError(
+                            "StreamProcessor only supports effects that preserve chunk length. "
+                            f"Effect {type(effect).__name__} changed length from "
+                            f"{input_time} to {waveform.shape[-1]}."
+                        )
 
                 # Move back to CPU for writing
                 if self._device != "cpu":
@@ -310,6 +317,7 @@ class StreamProcessor:
         fs = info.samplerate
         num_frames = info.frames
 
+        self.reset_state()
         self._configure_effects(fs)
 
         hop_size = self._chunk_size - self._overlap
@@ -329,11 +337,18 @@ class StreamProcessor:
             if self._device != "cpu":
                 waveform = waveform.to(self._device)
 
+            input_time = waveform.shape[-1]
             for effect in self._effects:
                 if not isinstance(effect, nn.Module):
                     raise TypeError("Effects must inherit from torch.nn.Module")
                 call_effect = cast(Callable[[Tensor], Tensor], effect)
                 waveform = call_effect(waveform)
+                if waveform.shape[-1] != input_time:
+                    raise ValueError(
+                        "StreamProcessor only supports effects that preserve chunk length. "
+                        f"Effect {type(effect).__name__} changed length from "
+                        f"{input_time} to {waveform.shape[-1]}."
+                    )
 
             if self._device != "cpu":
                 waveform = waveform.cpu()
@@ -345,6 +360,18 @@ class StreamProcessor:
                 yield waveform
 
             offset += hop_size
+
+    def reset_state(self) -> None:
+        """Reset stateful effects in the chain.
+
+        This clears filter/effect history so a new file starts without residual state
+        from previous processing.
+
+        """
+        for effect in self._effects:
+            reset_state = getattr(effect, "reset_state", None)
+            if callable(reset_state):
+                reset_state()
 
     @property
     def chunk_size(self) -> int:

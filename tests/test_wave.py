@@ -42,6 +42,47 @@ def test_wave_initialization():
     assert torch.equal(wave.ys, signal)
 
 
+def test_wave_initialization_from_1d_tensor_normalizes_to_channel_first():
+    signal = torch.linspace(0.0, 1.0, 16)
+    wave = Wave(signal, fs=16000)
+
+    assert wave.ys.shape == (1, 16)
+    assert wave.channels() == 1
+    assert len(wave) == 16
+
+
+def test_get_channel_returns_single_channel_wave():
+    signal = torch.stack([torch.ones(8), torch.zeros(8)])
+    wave = Wave(signal, fs=8000)
+
+    left = wave.get_channel(0)
+    right = wave.get_channel(1)
+
+    assert left.ys.shape == (1, 8)
+    assert right.ys.shape == (1, 8)
+    assert left.channels() == 1
+    assert right.channels() == 1
+
+
+def test_merge_split_channels_pads_shorter_waves():
+    wave_a = Wave(torch.ones(1, 10), fs=44100)
+    wave_b = Wave(torch.ones(1, 6) * 2.0, fs=44100)
+
+    merged = Wave.merge([wave_a, wave_b], split_channels=True)
+
+    assert merged.ys.shape == (2, 10)
+    torch.testing.assert_close(merged.ys[1, :6], torch.ones(6) * 2.0)
+    torch.testing.assert_close(merged.ys[1, 6:], torch.zeros(4))
+
+
+def test_merge_mix_mode_requires_same_channel_count():
+    mono = Wave(torch.ones(1, 10), fs=44100)
+    stereo = Wave(torch.ones(2, 10), fs=44100)
+
+    with pytest.raises(ValueError, match="same number of channels"):
+        Wave.merge([mono, stereo], split_channels=False)
+
+
 def test_wave_pipe_operator(sample_wave, lowpass_filter, highpass_filter):
     # Test applying filters using the pipe operator
     filtered_wave = sample_wave | lowpass_filter | highpass_filter

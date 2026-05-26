@@ -129,13 +129,6 @@ from torch import Tensor, nn
 from typing_extensions import override
 
 
-def _gain_db(waveform: Tensor, gain_db: float) -> Tensor:
-    """Apply a dB gain to ``waveform``: returns ``waveform * 10 ** (gain_db / 20)``."""
-    if gain_db == 0:
-        return waveform
-    return waveform * 10 ** (gain_db / 20)
-
-
 class FX(nn.Module, abc.ABC):
     """Abstract base class for all audio effects and filters.
 
@@ -351,11 +344,16 @@ class Gain(FX):
 
     def __init__(self, gain: float, gain_type: str = "amplitude", clamp: bool = False) -> None:
         super().__init__()
+        valid_gain_types = {"amplitude", "db", "power"}
+        if gain_type not in valid_gain_types:
+            raise ValueError(
+                f"gain_type must be one of {sorted(valid_gain_types)}, got {gain_type!r}."
+            )
         self.gain = gain
         self.gain_type = gain_type
         self.clamp = clamp
 
-        if gain_type in ["amplitude", "power"] and gain < 0:
+        if gain_type in ("amplitude", "power") and gain < 0:
             raise ValueError("If gain_type = amplitude or power, gain must be positive.")
 
     @override
@@ -371,11 +369,11 @@ class Gain(FX):
         if self.gain_type == "amplitude":
             waveform = waveform * self.gain
 
-        if self.gain_type == "db":
-            waveform = _gain_db(waveform, self.gain)
+        elif self.gain_type == "db" and self.gain != 0:
+            waveform = waveform * 10 ** (self.gain / 20)
 
-        if self.gain_type == "power":
-            waveform = _gain_db(waveform, 10 * math.log10(self.gain))
+        elif self.gain_type == "power" and self.gain != 1:
+            waveform = waveform * 10 ** (math.log10(self.gain) / 2)
 
         if self.clamp:
             waveform = torch.clamp(waveform, -1.0, 1.0)
@@ -1428,31 +1426,40 @@ class Delay(FX):
         self.fs = fs  # Store for Wave.__update_config to set automatically
         self.bpm = bpm
         self.delay_time = delay_time
+        self._last_delay_fs: int | None = None
 
         # If delay_samples is provided directly, use it
         if delay_samples is not None:
-            assert delay_samples > 0, "Delay samples must be positive."
+            if delay_samples <= 0:
+                raise ValueError("Delay samples must be positive.")
             self.delay_samples = delay_samples
             self._needs_calculation = False
         else:
             # BPM-synced delay requires bpm parameter
-            assert bpm is not None, "BPM must be provided if delay_samples is not set."
-            assert bpm > 0, "BPM must be positive."
+            if bpm is None:
+                raise ValueError("BPM must be provided if delay_samples is not set.")
+            if bpm <= 0:
+                raise ValueError("BPM must be positive.")
 
             # If fs is available now, calculate immediately
             if fs is not None:
-                assert fs > 0, "Sample rate (fs) must be positive."
+                if fs <= 0:
+                    raise ValueError("Sample rate (fs) must be positive.")
                 self.delay_samples = self._calculate_delay_samples(bpm, delay_time, fs)
                 self._needs_calculation = False
+                self._last_delay_fs = fs
             else:
                 # Defer calculation until fs is set (by Wave.__update_config)
                 self.delay_samples = None  # type: ignore
                 self._needs_calculation = True
 
         # Validate other parameters
-        assert 0 <= feedback <= 0.95, "Feedback must be between 0 and 0.95."
-        assert 0 <= mix <= 1, "Mix must be between 0 and 1."
-        assert taps >= 1, "Taps must be at least 1."
+        if not (0 <= feedback <= 0.95):
+            raise ValueError("Feedback must be between 0 and 0.95.")
+        if not (0 <= mix <= 1):
+            raise ValueError("Mix must be between 0 and 1.")
+        if taps < 1:
+            raise ValueError("Taps must be at least 1.")
 
         self.feedback = feedback
         self.mix = mix
@@ -1484,27 +1491,6 @@ class Delay(FX):
         delay_sec = musical_time.duration_seconds(bpm)
         return int(delay_sec * fs)
 
-    def _extend_waveform(self, waveform: Tensor, target_length: int) -> Tensor:
-        """Extend waveform with zeros to target length along the last dimension."""
-        if waveform.size(-1) >= target_length:
-            return waveform
-
-        if waveform.ndim == 1:
-            extended = torch.zeros(target_length, dtype=waveform.dtype, device=waveform.device)
-            extended[: waveform.size(0)] = waveform
-        elif waveform.ndim == 2:
-            extended = torch.zeros(
-                waveform.size(0), target_length, dtype=waveform.dtype, device=waveform.device
-            )
-            extended[:, : waveform.size(1)] = waveform
-        else:
-            extended_shape = list(waveform.shape)
-            extended_shape[-1] = target_length
-            extended = torch.zeros(extended_shape, dtype=waveform.dtype, device=waveform.device)
-            extended[..., : waveform.size(-1)] = waveform
-
-        return extended
-
     @override
     @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
@@ -1516,23 +1502,34 @@ class Delay(FX):
             Tensor: Tensor of delayed audio. Output length is extended to accommodate delayed echoes.
             The output will be longer than the input by up to `delay_samples * taps` samples.
         """
-        # Lazy calculation of delay_samples if needed
-        if self._needs_calculation:
-            assert self.fs is not None, (
-                "Sample rate (fs) is required for BPM-synced delay."
-                "Either provide fs parameter or use with Wave pipeline (wave | delay)."
-            )
-            assert self.fs > 0, "Sample rate (fs) must be positive."
-            assert self.bpm is not None, "BPM must be set for BPM-synced delay."
+        # Lazy calculation of delay_samples if needed, and recomputation when fs changes.
+        if self.bpm is not None and (self._needs_calculation or self._last_delay_fs != self.fs):
+            if self.fs is None:
+                raise ValueError(
+                    "Sample rate (fs) is required for BPM-synced delay. "
+                    "Either provide fs parameter or use with Wave pipeline (wave | delay)."
+                )
+            if self.fs <= 0:
+                raise ValueError("Sample rate (fs) must be positive.")
 
             self.delay_samples = self._calculate_delay_samples(self.bpm, self.delay_time, self.fs)
+            self._last_delay_fs = self.fs
             self._needs_calculation = False
+
+        if self.delay_samples is None:
+            raise ValueError("Delay samples are not initialized.")
 
         # Apply delay using strategy pattern
         delayed = self.strategy.apply_delay(waveform, self.delay_samples, self.taps, self.feedback)
 
-        # Extend original waveform to match delayed length for mixing
-        waveform = self._extend_waveform(waveform, delayed.size(-1))
+        # Extend original waveform to match delayed length for wet/dry mixing.
+        target_length = delayed.size(-1)
+        if waveform.size(-1) < target_length:
+            extended_shape = list(waveform.shape)
+            extended_shape[-1] = target_length
+            extended = torch.zeros(extended_shape, dtype=waveform.dtype, device=waveform.device)
+            extended[..., : waveform.size(-1)] = waveform
+            waveform = extended
 
         # Wet/dry mix — fused via lerp (single kernel, avoids intermediates).
         return torch.lerp(waveform, delayed, self.mix)

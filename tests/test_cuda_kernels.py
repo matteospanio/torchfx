@@ -40,7 +40,7 @@ class TestBiquadCUDA:
 
         filt = BiquadLPF(cutoff=0.1 * SAMPLE_RATE / 2, q=0.707, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x_cuda = torch.from_numpy(x_np).float().cuda()
         y_cuda = filt(x_cuda)
@@ -54,7 +54,7 @@ class TestBiquadCUDA:
 
         filt = BiquadHPF(cutoff=0.3 * SAMPLE_RATE / 2, q=0.707, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x_cuda = torch.from_numpy(x_np).float().cuda()
         y_cuda = filt(x_cuda)
@@ -69,7 +69,7 @@ class TestBiquadCUDA:
         """Test accuracy across different signal lengths."""
         filt = BiquadLPF(cutoff=2000, q=1.0, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x = random_signal(1, T)
         y = filt(x)
@@ -82,7 +82,7 @@ class TestBiquadCUDA:
         """Test multi-channel processing."""
         filt = BiquadLPF(cutoff=2000, q=1.0, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x = random_signal(C, SAMPLE_RATE)
         y = filt(x)
@@ -101,7 +101,7 @@ class TestSOSCascadeCUDA:
 
         filt = LoButterworth(cutoff=0.2 * SAMPLE_RATE / 2, order=4, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x_cuda = torch.from_numpy(x_np).float().cuda()
         y_cuda = filt(x_cuda)
@@ -112,7 +112,7 @@ class TestSOSCascadeCUDA:
         """8th-order Butterworth for high-order stability."""
         filt = LoButterworth(cutoff=3000, order=8, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x = random_signal(2, SAMPLE_RATE)
         y = filt(x)
@@ -124,7 +124,7 @@ class TestSOSCascadeCUDA:
         """Chebyshev Type 1 filter accuracy."""
         filt = LoChebyshev1(cutoff=2000, order=4, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x = random_signal(1, SAMPLE_RATE)
         y = filt(x)
@@ -140,11 +140,11 @@ class TestStatefulContinuity:
         """Process in two chunks; verify output matches single-pass."""
         filt_full = BiquadLPF(cutoff=2000, q=1.0, fs=SAMPLE_RATE)
         filt_full.compute_coefficients()
-        filt_full.move_coeff("cuda")
+        filt_full.to("cuda")
 
         filt_chunk = BiquadLPF(cutoff=2000, q=1.0, fs=SAMPLE_RATE)
         filt_chunk.compute_coefficients()
-        filt_chunk.move_coeff("cuda")
+        filt_chunk.to("cuda")
 
         T = 8000
         x = random_signal(2, T)
@@ -166,11 +166,11 @@ class TestStatefulContinuity:
         """SOS cascade chunked processing consistency."""
         filt_full = LoButterworth(cutoff=2000, order=4, fs=SAMPLE_RATE)
         filt_full.compute_coefficients()
-        filt_full.move_coeff("cuda")
+        filt_full.to("cuda")
 
         filt_chunk = LoButterworth(cutoff=2000, order=4, fs=SAMPLE_RATE)
         filt_chunk.compute_coefficients()
-        filt_chunk.move_coeff("cuda")
+        filt_chunk.to("cuda")
 
         T = 8000
         x = random_signal(2, T)
@@ -191,7 +191,7 @@ class TestShapeSupport:
         """Single-channel 1D input [T]."""
         filt = BiquadLPF(cutoff=2000, q=1.0, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x = torch.randn(SAMPLE_RATE, device="cuda")
         y = filt(x)
@@ -201,7 +201,7 @@ class TestShapeSupport:
         """Multi-channel 2D input [C, T]."""
         filt = BiquadLPF(cutoff=2000, q=1.0, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x = torch.randn(4, SAMPLE_RATE, device="cuda")
         y = filt(x)
@@ -211,7 +211,7 @@ class TestShapeSupport:
         """Batched 3D input [B, C, T]."""
         filt = BiquadLPF(cutoff=2000, q=1.0, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.move_coeff("cuda")
+        filt.to("cuda")
 
         x = torch.randn(3, 2, SAMPLE_RATE, device="cuda")
         y = filt(x)

@@ -240,13 +240,10 @@ class RealtimeProcessor:
                 setattr(effect, attr_name, value)
                 # Recompute coefficients if it's a filter parameter
                 if isinstance(effect, AbstractFilter):
-                    effect.compute_coefficients()
-                    move_coeff = getattr(effect, "move_coeff", None)
-                    if callable(move_coeff):
-                        move_coeff(torch.device("cpu"))
                     reset_state = getattr(effect, "reset_state", None)
                     if callable(reset_state):
                         reset_state()
+                    effect.compute_coefficients()
             else:
                 _logger.warning("No attribute specified for effect %d", effect_idx)
 

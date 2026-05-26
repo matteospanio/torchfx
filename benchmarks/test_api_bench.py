@@ -86,7 +86,7 @@ def test_pipe(benchmark, api_bench_data):
             | LoButterworth(5000)
             | LoButterworth(4900)
             | LoButterworth(4850)
-        )
+        ).ys
 
     benchmark.pedantic(run, rounds=REP, warmup_rounds=WARMUP)
 

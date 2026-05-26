@@ -133,6 +133,10 @@ class TestParseEffectString:
 
         assert isinstance(fx, Normalize)
 
+    def test_invalid_constructor_parameters_raises_clean_error(self) -> None:
+        with pytest.raises(ValueError, match="Invalid parameters for effect 'lowpass'"):
+            parse_effect_string("lowpass")
+
 
 class TestParseEffectList:
     """Test parsing a list of effect specs."""
@@ -293,6 +297,18 @@ class TestProcessCommand:
         )
         assert result.exit_code == 0
         assert out.exists()
+
+    def test_invalid_effect_parameters_user_error(self, wav_file: Path, tmp_path: Path) -> None:
+        out = tmp_path / "out_bad.wav"
+        result = runner.invoke(
+            app,
+            ["process", str(wav_file), str(out), "-e", "lowpass"],
+        )
+
+        assert result.exit_code == 1
+        assert "Error parsing --effect" in result.output
+        assert "Invalid parameters for effect 'lowpass'" in result.output
+        assert "Traceback" not in result.output
 
 
 class TestPlayCommand:
