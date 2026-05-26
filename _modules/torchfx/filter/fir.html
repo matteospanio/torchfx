@@ -1112,7 +1112,6 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">firwin</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
@@ -1353,8 +1352,9 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">conv_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span> <span class="s2">&quot;direct&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;conv_mode must be &#39;fft&#39;, &#39;direct&#39;, or &#39;auto&#39;, got </span><span class="si">{</span><span class="n">conv_mode</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_conv_mode</span> <span class="o">=</span> <span class="n">conv_mode</span>
-        <span class="c1"># Flip the kernel for causal convolution (like lfilter)</span>
-        <span class="n">b_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># Flip the kernel for causal convolution (like lfilter).</span>
+        <span class="c1"># Use as_tensor + clone to handle both array-likes and tensor inputs without warning.</span>
+        <span class="n">b_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>  <span class="c1"># FIR filter denominator is always 1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">&quot;kernel&quot;</span><span class="p">,</span> <span class="n">b_tensor</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:])</span>  <span class="c1"># [1, 1, K]</span>
 
@@ -1848,11 +1848,12 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">window</span> <span class="o">=</span> <span class="n">window</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_conv_mode</span> <span class="o">=</span> <span class="n">conv_mode</span>
 
+        <span class="c1"># Initialize FIR/nn.Module state even when fs is deferred.</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">conv_mode</span><span class="o">=</span><span class="n">conv_mode</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Filter coefficients (b) must be computed.&quot;</span>
-            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">conv_mode</span><span class="o">=</span><span class="n">conv_mode</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DesignableFIR.compute_coefficients">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.DesignableFIR.compute_coefficients">[docs]</a>
@@ -1860,17 +1861,17 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Sampling frequency (fs) must be set.&quot;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">firwin</span><span class="p">(</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter._design</span><span class="w"> </span><span class="kn">import</span> <span class="n">design_firwin</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">design_firwin</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_taps</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span>
             <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
             <span class="n">pass_zero</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pass_zero</span><span class="p">,</span>
-            <span class="n">window</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
-            <span class="n">scale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">window</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Filter coefficients (b) must be computed.&quot;</span>
-
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">conv_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_conv_mode</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span></div>
 </div>
 
 </pre></div>

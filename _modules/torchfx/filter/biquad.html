@@ -986,25 +986,31 @@ window.runMermaid = runMermaid;</script>
             <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_set_coefficients</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_finalize_coeffs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">b0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">b1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">b2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">a0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">a1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">a2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Store pre-normalized biquad coefficients as a single SOS row.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize raw RBJ-cookbook coefficients by ``a0`` and store as an SOS row.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        b0, b1, b2 : float</span>
-<span class="sd">            Numerator (feedforward) coefficients.</span>
-<span class="sd">        a1, a2 : float</span>
-<span class="sd">            Denominator (feedback) coefficients. ``a0`` is implicitly 1.</span>
+<span class="sd">            Raw numerator (feedforward) coefficients.</span>
+<span class="sd">        a0, a1, a2 : float</span>
+<span class="sd">            Raw denominator (feedback) coefficients. The stored SOS row uses</span>
+<span class="sd">            ``a0 = 1`` after normalization.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="n">b0</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">a0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="p">[[</span><span class="n">b0</span> <span class="o">*</span> <span class="n">inv</span><span class="p">,</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">inv</span><span class="p">,</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">inv</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">inv</span><span class="p">,</span> <span class="n">a2</span> <span class="o">*</span> <span class="n">inv</span><span class="p">]],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sos_device_cache</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Biquad.forward">
@@ -1122,14 +1128,14 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">cos_w0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_alpha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
-        <span class="n">a0_inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="n">b1</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">cos_w0</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
+        <span class="n">b1</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">cos_w0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_coeffs</span><span class="p">(</span>
             <span class="n">b0</span><span class="o">=</span><span class="n">b1</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
             <span class="n">b1</span><span class="o">=</span><span class="n">b1</span><span class="p">,</span>
             <span class="n">b2</span><span class="o">=</span><span class="n">b1</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
-            <span class="n">a1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
-            <span class="n">a2</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
+            <span class="n">a0</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 
@@ -1174,14 +1180,14 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">cos_w0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_alpha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
-        <span class="n">a0_inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="n">b1_raw</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">cos_w0</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
+        <span class="n">b1_raw</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">cos_w0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_coeffs</span><span class="p">(</span>
             <span class="n">b0</span><span class="o">=</span><span class="n">b1_raw</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
             <span class="n">b1</span><span class="o">=-</span><span class="n">b1_raw</span><span class="p">,</span>
             <span class="n">b2</span><span class="o">=</span><span class="n">b1_raw</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
-            <span class="n">a1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
-            <span class="n">a2</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
+            <span class="n">a0</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 
@@ -1225,14 +1231,14 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">cos_w0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_alpha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
-        <span class="n">a0_inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="n">common</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span> <span class="o">*</span> <span class="n">a0_inv</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
-            <span class="n">b0</span><span class="o">=</span><span class="n">a0_inv</span><span class="p">,</span>
+        <span class="n">common</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_coeffs</span><span class="p">(</span>
+            <span class="n">b0</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
             <span class="n">b1</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-            <span class="n">b2</span><span class="o">=</span><span class="n">a0_inv</span><span class="p">,</span>
+            <span class="n">b2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">a0</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">,</span>
             <span class="n">a1</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-            <span class="n">a2</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 
@@ -1277,13 +1283,13 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">cos_w0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_alpha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
-        <span class="n">a0_inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
-            <span class="n">b0</span><span class="o">=</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_coeffs</span><span class="p">(</span>
+            <span class="n">b0</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
             <span class="n">b1</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">b2</span><span class="o">=-</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
-            <span class="n">a1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
-            <span class="n">a2</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
+            <span class="n">b2</span><span class="o">=-</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">a0</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 
@@ -1325,13 +1331,14 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">cos_w0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_alpha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
-        <span class="n">a0_inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
-            <span class="n">b0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
+        <span class="n">q_alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">*</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_coeffs</span><span class="p">(</span>
+            <span class="n">b0</span><span class="o">=</span><span class="n">q_alpha</span><span class="p">,</span>
             <span class="n">b1</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">b2</span><span class="o">=-</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
-            <span class="n">a1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
-            <span class="n">a2</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span><span class="p">,</span>
+            <span class="n">b2</span><span class="o">=-</span><span class="n">q_alpha</span><span class="p">,</span>
+            <span class="n">a0</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">,</span>
         <span class="p">)</span>
 
 
@@ -1373,15 +1380,13 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">cos_w0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_alpha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
-        <span class="n">a0_inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="n">b0</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">a0_inv</span>
-        <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span> <span class="o">*</span> <span class="n">a0_inv</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_coefficients</span><span class="p">(</span>
-            <span class="n">b0</span><span class="o">=</span><span class="n">b0</span><span class="p">,</span>
-            <span class="n">b1</span><span class="o">=</span><span class="n">b1</span><span class="p">,</span>
-            <span class="n">b2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># == a0 before normalization</span>
-            <span class="n">a1</span><span class="o">=</span><span class="n">b1</span><span class="p">,</span>
-            <span class="n">a2</span><span class="o">=</span><span class="n">b0</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_coeffs</span><span class="p">(</span>
+            <span class="n">b0</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="n">b1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span><span class="p">,</span>
+            <span class="n">b2</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="n">a0</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="n">a1</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">cos_w0</span><span class="p">,</span>
+            <span class="n">a2</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 

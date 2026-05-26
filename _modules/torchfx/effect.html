@@ -968,13 +968,6 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_gain_db</span><span class="p">(</span><span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">gain_db</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a dB gain to ``waveform``: returns ``waveform * 10 ** (gain_db / 20)``.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">gain_db</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">waveform</span>
-    <span class="k">return</span> <span class="n">waveform</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">gain_db</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
-
-
 <div class="viewcode-block" id="FX">
 <a class="viewcode-back" href="../../api/core.html#torchfx.FX">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FX</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
@@ -1198,11 +1191,16 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gain_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="n">clamp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="n">valid_gain_types</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">gain_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_gain_types</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;gain_type must be one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">valid_gain_types</span><span class="p">)</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">gain_type</span><span class="si">!r}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">=</span> <span class="n">gain_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">=</span> <span class="n">clamp</span>
 
-        <span class="k">if</span> <span class="n">gain_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">gain</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">gain_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;amplitude&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gain</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;If gain_type = amplitude or power, gain must be positive.&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Gain.forward">
@@ -1220,11 +1218,11 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">==</span> <span class="s2">&quot;amplitude&quot;</span><span class="p">:</span>
             <span class="n">waveform</span> <span class="o">=</span> <span class="n">waveform</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">==</span> <span class="s2">&quot;db&quot;</span><span class="p">:</span>
-            <span class="n">waveform</span> <span class="o">=</span> <span class="n">_gain_db</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">==</span> <span class="s2">&quot;db&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">waveform</span> <span class="o">=</span> <span class="n">waveform</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">==</span> <span class="s2">&quot;power&quot;</span><span class="p">:</span>
-            <span class="n">waveform</span> <span class="o">=</span> <span class="n">_gain_db</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">==</span> <span class="s2">&quot;power&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">waveform</span> <span class="o">=</span> <span class="n">waveform</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span><span class="p">:</span>
             <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
@@ -2332,31 +2330,40 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>  <span class="c1"># Store for Wave.__update_config to set automatically</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bpm</span> <span class="o">=</span> <span class="n">bpm</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">delay_time</span> <span class="o">=</span> <span class="n">delay_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_delay_fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1"># If delay_samples is provided directly, use it</span>
         <span class="k">if</span> <span class="n">delay_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">delay_samples</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Delay samples must be positive.&quot;</span>
+            <span class="k">if</span> <span class="n">delay_samples</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Delay samples must be positive.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">=</span> <span class="n">delay_samples</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># BPM-synced delay requires bpm parameter</span>
-            <span class="k">assert</span> <span class="n">bpm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;BPM must be provided if delay_samples is not set.&quot;</span>
-            <span class="k">assert</span> <span class="n">bpm</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;BPM must be positive.&quot;</span>
+            <span class="k">if</span> <span class="n">bpm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;BPM must be provided if delay_samples is not set.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">bpm</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;BPM must be positive.&quot;</span><span class="p">)</span>
 
             <span class="c1"># If fs is available now, calculate immediately</span>
             <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="n">fs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span>
+                <span class="k">if</span> <span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_delay_samples</span><span class="p">(</span><span class="n">bpm</span><span class="p">,</span> <span class="n">delay_time</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_last_delay_fs</span> <span class="o">=</span> <span class="n">fs</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Defer calculation until fs is set (by Wave.__update_config)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="c1"># Validate other parameters</span>
-        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">feedback</span> <span class="o">&lt;=</span> <span class="mf">0.95</span><span class="p">,</span> <span class="s2">&quot;Feedback must be between 0 and 0.95.&quot;</span>
-        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">mix</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Mix must be between 0 and 1.&quot;</span>
-        <span class="k">assert</span> <span class="n">taps</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Taps must be at least 1.&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">feedback</span> <span class="o">&lt;=</span> <span class="mf">0.95</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Feedback must be between 0 and 0.95.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">mix</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Mix must be between 0 and 1.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">taps</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Taps must be at least 1.&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">feedback</span> <span class="o">=</span> <span class="n">feedback</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="n">mix</span>
@@ -2388,27 +2395,6 @@ window.runMermaid = runMermaid;</script>
         <span class="n">delay_sec</span> <span class="o">=</span> <span class="n">musical_time</span><span class="o">.</span><span class="n">duration_seconds</span><span class="p">(</span><span class="n">bpm</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">delay_sec</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extend_waveform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extend waveform with zeros to target length along the last dimension.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">target_length</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">waveform</span>
-
-        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">extended</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">target_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-            <span class="n">extended</span><span class="p">[:</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="n">waveform</span>
-        <span class="k">elif</span> <span class="n">waveform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">extended</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
-                <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">target_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span>
-            <span class="p">)</span>
-            <span class="n">extended</span><span class="p">[:,</span> <span class="p">:</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">waveform</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">extended_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">waveform</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-            <span class="n">extended_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_length</span>
-            <span class="n">extended</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">extended_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-            <span class="n">extended</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">waveform</span>
-
-        <span class="k">return</span> <span class="n">extended</span>
-
 <div class="viewcode-block" id="Delay.forward">
 <a class="viewcode-back" href="../../api/effects.html#torchfx.Delay.forward">[docs]</a>
     <span class="nd">@override</span>
@@ -2422,23 +2408,34 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            Tensor: Tensor of delayed audio. Output length is extended to accommodate delayed echoes.</span>
 <span class="sd">            The output will be longer than the input by up to `delay_samples * taps` samples.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Lazy calculation of delay_samples if needed</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
-                <span class="s2">&quot;Sample rate (fs) is required for BPM-synced delay.&quot;</span>
-                <span class="s2">&quot;Either provide fs parameter or use with Wave pipeline (wave | delay).&quot;</span>
-            <span class="p">)</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">bpm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;BPM must be set for BPM-synced delay.&quot;</span>
+        <span class="c1"># Lazy calculation of delay_samples if needed, and recomputation when fs changes.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bpm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_delay_fs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Sample rate (fs) is required for BPM-synced delay. &quot;</span>
+                    <span class="s2">&quot;Either provide fs parameter or use with Wave pipeline (wave | delay).&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span><span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_delay_samples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bpm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_delay_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Delay samples are not initialized.&quot;</span><span class="p">)</span>
 
         <span class="c1"># Apply delay using strategy pattern</span>
         <span class="n">delayed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">apply_delay</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">taps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback</span><span class="p">)</span>
 
-        <span class="c1"># Extend original waveform to match delayed length for mixing</span>
-        <span class="n">waveform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extend_waveform</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">delayed</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="c1"># Extend original waveform to match delayed length for wet/dry mixing.</span>
+        <span class="n">target_length</span> <span class="o">=</span> <span class="n">delayed</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">target_length</span><span class="p">:</span>
+            <span class="n">extended_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">waveform</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">extended_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_length</span>
+            <span class="n">extended</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">extended_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">waveform</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">extended</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">waveform</span>
+            <span class="n">waveform</span> <span class="o">=</span> <span class="n">extended</span>
 
         <span class="c1"># Wet/dry mix — fused via lerp (single kernel, avoids intermediates).</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">lerp</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">delayed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span></div>

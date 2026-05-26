@@ -1090,13 +1090,10 @@ window.runMermaid = runMermaid;</script>
                 <span class="nb">setattr</span><span class="p">(</span><span class="n">effect</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
                 <span class="c1"># Recompute coefficients if it&#39;s a filter parameter</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">effect</span><span class="p">,</span> <span class="n">AbstractFilter</span><span class="p">):</span>
-                    <span class="n">effect</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
-                    <span class="n">move_coeff</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">effect</span><span class="p">,</span> <span class="s2">&quot;move_coeff&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">move_coeff</span><span class="p">):</span>
-                        <span class="n">move_coeff</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">))</span>
                     <span class="n">reset_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">effect</span><span class="p">,</span> <span class="s2">&quot;reset_state&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                     <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">reset_state</span><span class="p">):</span>
                         <span class="n">reset_state</span><span class="p">()</span>
+                    <span class="n">effect</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No attribute specified for effect </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">effect_idx</span><span class="p">)</span>
 
