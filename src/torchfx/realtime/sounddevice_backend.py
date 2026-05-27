@@ -39,6 +39,7 @@ from torchfx.realtime._compat import get_sounddevice
 from torchfx.realtime.backend import (
     AudioBackend,
     AudioCallback,
+    BackendStatus,
     StreamConfig,
     StreamDirection,
     StreamState,
@@ -228,8 +229,24 @@ class SoundDeviceBackend(AudioBackend):
             A sounddevice-compatible callback function.
 
         """
+        import inspect
+
         config = self._config
         assert config is not None
+
+        # Detect whether the user's callback accepts the optional
+        # ``status`` argument. We inspect once to avoid swallowing
+        # TypeErrors raised from inside the callback during processing.
+        accepts_status = True
+        try:
+            sig = inspect.signature(callback)
+            params = list(sig.parameters.values())
+            accepts_status = len(params) >= 4 or any(
+                p.kind == inspect.Parameter.VAR_POSITIONAL or p.name == "status" for p in params
+            )
+        except (TypeError, ValueError):
+            # Built-in / C-level callable — assume new signature.
+            accepts_status = True
 
         # Pre-allocate tensors once — dimensions are fixed for the stream's lifetime.
         buf = config.buffer_size
@@ -256,11 +273,18 @@ class SoundDeviceBackend(AudioBackend):
             time: Any,  # noqa: ARG001
             status: Any,
         ) -> None:
+            # Translate sounddevice's CallbackFlags (set of strings) into
+            # a structured BackendStatus so the processor can record
+            # xruns without parsing strings.
+            backend_status: BackendStatus | None = None
             if status:
-                from torchfx.logging import get_logger
-
-                logger = get_logger("realtime.sounddevice")
-                logger.warning("sounddevice status: %s", status)
+                backend_status = BackendStatus(
+                    input_overflow=bool(getattr(status, "input_overflow", False)),
+                    output_underflow=bool(getattr(status, "output_underflow", False)),
+                    input_underflow=bool(getattr(status, "input_underflow", False)),
+                    output_overflow=bool(getattr(status, "output_overflow", False)),
+                    priming_output=bool(getattr(status, "priming_output", False)),
+                )
 
             # Convert input: numpy (frames, channels) -> pre-allocated tensor (channels, frames)
             if indata is not None:
@@ -274,11 +298,12 @@ class SoundDeviceBackend(AudioBackend):
             if outdata is not None:
                 _output_tensor.zero_()
 
-            callback(
-                _input_tensor if indata is not None else torch.empty(0),
-                _output_tensor if outdata is not None else torch.empty(0),
-                frames,
-            )
+            in_t = _input_tensor if indata is not None else torch.empty(0)
+            out_t = _output_tensor if outdata is not None else torch.empty(0)
+            if accepts_status:
+                callback(in_t, out_t, frames, backend_status)
+            else:
+                callback(in_t, out_t, frames)
 
             # Copy output back: tensor (channels, frames) -> numpy (frames, channels)
             if outdata is not None and _out_np is not None:

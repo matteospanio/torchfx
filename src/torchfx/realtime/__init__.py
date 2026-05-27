@@ -50,6 +50,7 @@ File stream processing (no optional dependencies):
 from torchfx.realtime.backend import (
     AudioBackend,
     AudioCallback,
+    BackendStatus,
     StreamConfig,
     StreamDirection,
     StreamState,
@@ -84,6 +85,7 @@ __all__ = [
     # Core
     "AudioBackend",
     "AudioCallback",
+    "BackendStatus",
     "StreamConfig",
     "StreamDirection",
     "StreamState",

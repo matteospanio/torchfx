@@ -100,6 +100,48 @@ def test_wave_pipe_operator(sample_wave, lowpass_filter, highpass_filter):
     # For example, verifying that certain frequencies are attenuated
 
 
+def test_filter_coefficients_recompute_on_fs_change():
+    """Piping a filter through Waves of different fs must recompute coefficients.
+
+    Regression coverage for the stale-coefficient hazard documented in the
+    IS² 2026 plan (§2.1 / §11.1 C-1): if the same filter object is reused
+    across two Waves with different sample rates, the lazy
+    ``_has_computed_coeff`` guard must NOT skip recomputation; otherwise
+    the second Wave is filtered with coefficients designed for the first
+    Wave's Nyquist.
+
+    """
+    fs1, fs2 = 44_100, 48_000
+    signal = torch.zeros(1, 100)
+    wave1 = Wave(signal, fs1)
+    wave2 = Wave(signal, fs2)
+
+    # Construct without fs so the first pipe triggers a clean compute.
+    lpf = LoButterworth(cutoff=2000)
+    assert lpf.fs is None
+    assert not lpf._has_computed_coeff
+
+    # First pipe: fs gets set to 44_100 and coefficients are computed.
+    _ = wave1 | lpf
+    assert lpf.fs == fs1
+    assert lpf._has_computed_coeff
+    sos_at_fs1 = lpf._sos.clone()
+
+    # Second pipe with a different fs: must update fs AND recompute.
+    _ = wave2 | lpf
+    assert lpf.fs == fs2
+    assert lpf._has_computed_coeff
+    sos_at_fs2 = lpf._sos.clone()
+
+    # The SOS coefficients must differ, because the bilinear transform
+    # depends on fs. If they don't, the filter is silently misfiltering.
+    assert not torch.allclose(sos_at_fs1, sos_at_fs2), (
+        "SOS coefficients must change when fs changes; got identical "
+        f"tensors at fs1={fs1} and fs2={fs2}, which means coefficients "
+        "were not recomputed."
+    )
+
+
 def test_wave_transform(sample_wave):
     # Test the transform method
     transformed_wave = sample_wave.transform(torch.fft.fft)
