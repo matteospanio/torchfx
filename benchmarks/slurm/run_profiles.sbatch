@@ -1,12 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=tfx-profile
-#SBATCH --partition=short
+#SBATCH --partition=allgroups
 #SBATCH --output=benchmarks/results/profile-%j.out
 #SBATCH --error=benchmarks/results/profile-%j.err
-#SBATCH --gres=gpu:tesla:1
+#SBATCH --gres=gpu:l40s:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=01:00:00
+#
+# Override the GPU type with sbatch:
+#     sbatch --gres=gpu:a40:1 benchmarks/slurm/run_profiles.sbatch
+#     sbatch --gres=gpu:rtx:1 benchmarks/slurm/run_profiles.sbatch
 
 # TorchFX CUDA profile run.
 #

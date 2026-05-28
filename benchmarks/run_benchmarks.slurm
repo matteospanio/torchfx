@@ -1,12 +1,29 @@
 #!/bin/bash
 #SBATCH --job-name=tfx-bench
-#SBATCH --partition=short
+#SBATCH --partition=allgroups
 #SBATCH --output=benchmarks/results/slurm-bench-%j.out
 #SBATCH --error=benchmarks/results/slurm-bench-%j.err
-#SBATCH --gres=gpu:tesla:1
+#SBATCH --gres=gpu:l40s:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
+#
+# Legacy benchmark sweep. Submits pytest-benchmark directly across the
+# original suite of bench files (no Makefile orchestration, no
+# torchaudio comparator, no realtime suite, no fusion/threshold tools).
+# Kept for continuity with pre-IS²-2026 results.
+#
+# For the new full sweep (CPU + CUDA + comparators + realtime + fusion
+# + threshold + aggregate), use one of:
+#     sbatch benchmarks/slurm/bench_l40s.sbatch
+#     sbatch benchmarks/slurm/bench_a40.sbatch
+#     sbatch benchmarks/slurm/bench_rtx.sbatch
+# or run ``make -C benchmarks all-cuda`` directly inside an
+# allgroups-partition allocation.
+#
+# Override the GPU type with sbatch:
+#     sbatch --gres=gpu:a40:1 benchmarks/run_benchmarks.slurm
+#     sbatch --gres=gpu:rtx:1 benchmarks/run_benchmarks.slurm
 
 set -euo pipefail
 

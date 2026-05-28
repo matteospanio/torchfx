@@ -1,12 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=tfx-cuda-tests
-#SBATCH --partition=short
+#SBATCH --partition=allgroups
 #SBATCH --output=benchmarks/results/cuda-tests-%j.out
 #SBATCH --error=benchmarks/results/cuda-tests-%j.err
-#SBATCH --gres=gpu:tesla:1
+#SBATCH --gres=gpu:l40s:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=24G
 #SBATCH --time=01:30:00
+#
+# Override the GPU type with sbatch when other queues are less busy:
+#     sbatch --gres=gpu:a40:1 benchmarks/slurm/run_cuda_tests.sbatch
+#     sbatch --gres=gpu:rtx:1 benchmarks/slurm/run_cuda_tests.sbatch
 
 set -euo pipefail
 
