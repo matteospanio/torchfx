@@ -20,6 +20,15 @@ set -euo pipefail
 
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
 
+# DEI cluster: nvcc lives at /usr/local/cuda/bin (CUDA 13.2) and is not on
+# PATH by default. CUDA_HOME drives CMake's find_package(CUDAToolkit) when
+# scikit-build-core builds the .cu kernels. UV_LINK_MODE=copy silences the
+# hardlink-cross-filesystem warning between /nfsd and the build cache.
+export PATH="/usr/local/cuda/bin:$PATH"
+export CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
+export CUDACXX="${CUDACXX:-/usr/local/cuda/bin/nvcc}"
+export UV_LINK_MODE=copy
+
 module load GCC >/dev/null 2>&1 || true
 module load CUDA >/dev/null 2>&1 || true
 
