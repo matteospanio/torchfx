@@ -46,7 +46,23 @@
 # Example: cluster run with results in /ext/scratch
 #     make -C benchmarks all-cuda RESULTS=/ext/scratch/torchfx-results
 
-HOST           ?= $(shell hostname -s)
+# Host tag for output filenames. Combines hostname with GPU model when
+# nvidia-smi is available so multi-machine / multi-GPU runs are
+# distinguishable in benchmarks/results/. Examples:
+#   gpu7-L40S, gpu5-A40, gpu2-RTX-3090, Alienware-RTX-3070, my-laptop
+# Falls back to plain hostname on CPU-only nodes.
+#
+# Some HPC nodes return platform tags (e.g. x86_64-conda-linux-gnu)
+# instead of real hostnames from `hostname -s` when run inside a
+# conda activation script; appending the GPU model keeps the tag
+# meaningful even when the hostname is uninformative.
+HOST           ?= $(shell \
+                    h=$$(hostname -s 2>/dev/null || echo host); \
+                    g=$$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null \
+                          | head -1 \
+                          | sed -E 's/^NVIDIA //; s/^GeForce //; s/[[:space:]]+/-/g'); \
+                    if [ -n "$$g" ]; then echo "$${h}-$${g}"; else echo "$$h"; fi \
+                  )
 ROOT           := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PROJECT        := $(abspath $(ROOT)/..)
 RESULTS        ?= $(ROOT)/results
