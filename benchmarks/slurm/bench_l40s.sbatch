@@ -52,8 +52,6 @@ echo ">>> SLURM_JOB_ID=$SLURM_JOB_ID hostname=$(hostname)"
 echo ">>> Syncing dependencies (clean cache)"
 uv sync --all-groups --no-cache
 
-echo ">>> Rebuilding torchfx with CUDA extension"
-uv pip install --python .venv/bin/python --no-deps --force-reinstall --no-cache .
 
 # ---- CUDA preflight ----------------------------------------------------------
 echo ">>> CUDA native dispatch preflight"

@@ -40,7 +40,6 @@ echo ">>> nvcc: $(nvcc --version | tail -n 1)"
 echo ">>> SLURM_JOB_ID=$SLURM_JOB_ID hostname=$(hostname)"
 
 uv sync --all-groups --no-cache
-uv pip install --python .venv/bin/python --no-deps --force-reinstall --no-cache .
 
 uv run --no-sync python - <<'PY'
 import torch

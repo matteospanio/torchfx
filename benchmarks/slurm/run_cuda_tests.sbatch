@@ -47,8 +47,6 @@ echo ""
 echo ">>> Syncing dependencies (clean resolver/cache)"
 uv sync --all-groups --no-cache
 
-echo ">>> Rebuilding local torchfx package in job environment"
-uv pip install --python .venv/bin/python --no-deps --force-reinstall --no-cache .
 
 echo ">>> CUDA native dispatch preflight"
 uv run python - <<'PY'
