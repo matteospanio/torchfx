@@ -77,13 +77,21 @@ class CudaGraphRunner:
         side = torch.cuda.Stream()  # type: ignore[no-untyped-call]
         side.wait_stream(torch.cuda.current_stream())
         with torch.cuda.stream(side):
-            for _ in range(warmup):
-                self.module(self._static_in)
+            warm_out = self.module(self._static_in)
+            for _ in range(warmup - 1):
+                warm_out = self.module(self._static_in)
         torch.cuda.current_stream().wait_stream(side)
 
+        # The module's returned tensor lives in the graph's private memory pool and
+        # is not reliably observable after a replay. Copy it into a persistent buffer
+        # *inside* the captured region, so each replay's result lands in a stable
+        # tensor we own. (The input is read live and state updates in place — only
+        # the output needs this.)
+        self._static_out = torch.empty_like(warm_out)
         self._graph = torch.cuda.CUDAGraph()
         with torch.cuda.graph(self._graph):
-            self._static_out: torch.Tensor = self.module(self._static_in)
+            out = self.module(self._static_in)
+            self._static_out.copy_(out)
 
     def reset_state(self) -> None:
         """Zero the captured streaming state in place to restart a new stream.
