@@ -70,13 +70,28 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
   auto new_sy = state_y;
 
   const int64_t K = sos_f64.size(0);
+  auto x_c = x.contiguous();
+  const int64_t C = x_c.size(0);
+  const int64_t T = x_c.size(1);
 
   // Use the pre-supplied CPU copy — no GPU→CPU sync needed.
   auto sos_cpu = sos_cpu_in.contiguous();
 
-  auto section_input = x;
+  // Persistent scratch reused across all sections (C3): one forcing buffer, two
+  // ping-pong output buffers, and one block-aggregate scratch — allocated once, not
+  // per section. This is what keeps the per-forward kernel sequence and its buffer
+  // addresses stable so a captured CUDA graph replays correctly (per-section
+  // allocations otherwise alias in the capture pool and corrupt the replay).
+  auto opts = x_c.options();
+  auto f = torch::empty({C, T}, opts);
+  auto y_a = torch::empty({C, T}, opts);
+  auto y_b = torch::empty({C, T}, opts);
+  const int num_blocks = (static_cast<int>(T) + 512 - 1) / 512;  // BLOCK_SIZE = 512
+  auto block_agg = torch::empty({C * num_blocks * 6}, opts);
 
-  // Process each SOS section sequentially, using parallel scan within each.
+  torch::Tensor section_input = x_c;
+
+  // Process each SOS section sequentially, reusing the scratch buffers.
   for (int64_t s = 0; s < K; ++s) {
     // Extract all coefficients from CPU copy — no GPU sync needed.
     const double b0 = sos_cpu[s][0].item<double>();
@@ -85,15 +100,26 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
     const double a1 = sos_cpu[s][4].item<double>();
     const double a2 = sos_cpu[s][5].item<double>();
 
-    auto sx_s = new_sx[s];  // [C, 2]
-    auto sy_s = new_sy[s];  // [C, 2]
+    torch::Tensor& y_out = (s % 2 == 0) ? y_a : y_b;
 
-    auto [y_s, nsx_s, nsy_s] = biquad_forward_cuda(
-        section_input, b0, b1, b2, a1, a2, sx_s, sy_s, threshold);
+    // Forcing + scan into the shared scratch (reads the current x/y state of this
+    // section; both are updated in place below, after they are read).
+    compute_forcing_into(section_input, b0, b1, b2, new_sx[s], f);
+    auto nsy_s = parallel_biquad_scan_into(f, a1, a2, new_sy[s], threshold, y_out, block_agg);
 
-    new_sx[s] = nsx_s;
+    // New x-state = last two input samples reversed -> {x[-1], x[-2]}.
+    torch::Tensor nsx_s;
+    if (T >= 2) {
+      nsx_s = section_input.narrow(1, T - 2, 2).flip(1).contiguous();
+    } else if (T == 1) {
+      nsx_s = torch::cat({section_input.narrow(1, 0, 1), new_sx[s].narrow(1, 0, 1)}, 1);
+    } else {
+      nsx_s = new_sx[s].clone();
+    }
+
+    new_sx[s] = nsx_s;  // in-place state update
     new_sy[s] = nsy_s;
-    section_input = y_s;
+    section_input = y_out;
   }
 
   return std::make_tuple(section_input, new_sx, new_sy);

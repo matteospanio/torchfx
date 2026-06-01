@@ -298,10 +298,11 @@ __global__ void forcing_kernel(
 // Public API (host)
 // ============================================================
 
-torch::Tensor compute_forcing(
+void compute_forcing_into(
     const torch::Tensor& x,
     double b0, double b1, double b2,
-    const torch::Tensor& state_x) {
+    const torch::Tensor& state_x,
+    torch::Tensor& f_out) {
   // f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] with state prepend for n=0,1.
   auto x_cont = x.contiguous();
   auto sx_cont = state_x.contiguous();
@@ -309,8 +310,6 @@ torch::Tensor compute_forcing(
   const int64_t C = x_cont.size(0);
   const int64_t T = x_cont.size(1);
   const int total = static_cast<int>(C * T);
-
-  auto f = torch::empty({C, T}, x_cont.options());
 
   constexpr int THREADS = 256;
   const int blocks = (total + THREADS - 1) / THREADS;
@@ -320,19 +319,28 @@ torch::Tensor compute_forcing(
         x_cont.data_ptr<scalar_t>(),
         sx_cont.data_ptr<scalar_t>(),
         static_cast<scalar_t>(b0), static_cast<scalar_t>(b1), static_cast<scalar_t>(b2),
-        f.data_ptr<scalar_t>(),
+        f_out.data_ptr<scalar_t>(),
         static_cast<int>(T), total);
   });
+}
 
+torch::Tensor compute_forcing(
+    const torch::Tensor& x,
+    double b0, double b1, double b2,
+    const torch::Tensor& state_x) {
+  auto f = torch::empty({x.size(0), x.size(1)}, x.options());
+  compute_forcing_into(x, b0, b1, b2, state_x, f);
   return f;
 }
 
-std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
+torch::Tensor parallel_biquad_scan_into(
     const torch::Tensor& f,
     double a1,
     double a2,
     const torch::Tensor& state,
-    int threshold) {
+    int threshold,
+    torch::Tensor& y_out,
+    torch::Tensor& block_agg) {
 
   // Caller provides matching-dtype tensors; just ensure contiguity.
   auto f_cont = f.contiguous();
@@ -341,11 +349,9 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
   const int64_t C = f_cont.size(0);
   const int64_t T = f_cont.size(1);
 
-  auto y = torch::empty({C, T}, f_cont.options());
-
   AT_DISPATCH_FLOATING_TYPES(f_cont.scalar_type(), "parallel_biquad_scan", [&] {
     const scalar_t* f_ptr = f_cont.data_ptr<scalar_t>();
-    scalar_t* y_ptr = y.data_ptr<scalar_t>();
+    scalar_t* y_ptr = y_out.data_ptr<scalar_t>();
     const scalar_t* state_ptr = state_cont.data_ptr<scalar_t>();
     const scalar_t a1s = static_cast<scalar_t>(a1);
     const scalar_t a2s = static_cast<scalar_t>(a2);
@@ -358,9 +364,8 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
     } else {
       const int num_blocks = (T + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-      // Block aggregates: C * num_blocks reduced 3x3 matrices (6 scalars each),
-      // allocated in the input dtype so the FP32 path stays FP32 end to end.
-      auto block_agg = torch::empty({C * num_blocks * 6}, f_cont.options());
+      // Caller-provided block aggregates: C * num_blocks reduced 3x3 matrices
+      // (6 scalars each), in the input dtype so the FP32 path stays FP32.
       Mat3x3<scalar_t>* agg_ptr = reinterpret_cast<Mat3x3<scalar_t>*>(block_agg.data_ptr<scalar_t>());
 
       // Phase 1: intra-block scan + store aggregates
@@ -381,12 +386,25 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
   });
 
   // Extract updated state: [y[T-1], y[T-2]] (dtype-agnostic tensor ops).
-  auto y_last = y.index({torch::indexing::Slice(), -1}).unsqueeze(1);  // [C, 1]
+  auto y_last = y_out.index({torch::indexing::Slice(), -1}).unsqueeze(1);  // [C, 1]
   auto y_prev = (T >= 2) ?
-      y.index({torch::indexing::Slice(), -2}).unsqueeze(1) :
-      torch::zeros({C, 1}, y.options());
-  auto new_st = torch::cat({y_last, y_prev}, 1);  // [C, 2]
+      y_out.index({torch::indexing::Slice(), -2}).unsqueeze(1) :
+      torch::zeros({C, 1}, y_out.options());
+  return torch::cat({y_last, y_prev}, 1);  // [C, 2]
+}
 
+std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
+    const torch::Tensor& f,
+    double a1,
+    double a2,
+    const torch::Tensor& state,
+    int threshold) {
+  const int64_t C = f.size(0);
+  const int64_t T = f.size(1);
+  auto y = torch::empty({C, T}, f.options());
+  const int num_blocks = (static_cast<int>(T) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+  auto block_agg = torch::empty({C * num_blocks * 6}, f.options());
+  auto new_st = parallel_biquad_scan_into(f, a1, a2, state, threshold, y, block_agg);
   return std::make_tuple(y, new_st);
 }
 

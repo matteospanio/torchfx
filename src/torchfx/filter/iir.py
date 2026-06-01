@@ -159,8 +159,8 @@ def _sos_cascade_forward(
 
         out, state_x_0, state_y_0 = biquad_forward(
             x,
-            sos[0, :3],  # b on device
-            sos[0, 3:],  # a on device (only used if a1/a2 floats missing)
+            sos_canonical[0, :3],  # b on CPU — avoids a device->host sync in the
+            sos_canonical[0, 3:],  # binding (which would break CUDA-graph capture)
             state_x[0],
             state_y[0],
             a1_f64=a1_f64,
