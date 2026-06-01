@@ -55,7 +55,6 @@ from torchfx.realtime.backend import (
     StreamDirection,
     StreamState,
 )
-from torchfx.realtime.cuda_graph import CudaGraphRunner
 from torchfx.realtime.exceptions import (
     BackendNotAvailableError,
     BufferOverrunError,
@@ -93,7 +92,6 @@ __all__ = [
     "TensorRingBuffer",
     "RealtimeProcessor",
     "StreamProcessor",
-    "CudaGraphRunner",
     # Optional backends
     "SoundDeviceBackend",
     # Exceptions
