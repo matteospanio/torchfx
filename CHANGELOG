@@ -25,6 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reference within a documented float32 bound (`max_abs` + RMS-relative), across
   Butterworth / Chebyshev1 at orders 2/4/8/16 on CPU and CUDA, recording
   per-design errors so the FP32-safe vs needs-FP64 boundary is tracked.
+- **Explicit CUDA architectures.** The build now compiles native SASS for
+  `sm_75;80;86;89` (Turing…Ada) by default — override with the
+  `TORCHFX_CUDA_ARCHITECTURES` env var. Eliminates the first-CUDA-call PTX→SASS
+  JIT stall and pins occupancy instead of leaving it to the toolkit default.
+- **Tunable, dtype-aware dispatch threshold.** `PARALLEL_SCAN_THRESHOLD` (the
+  sequential-vs-parallel-scan boundary) is now threaded into the kernels — it was
+  previously dead in Python while the kernel hard-coded 2048. The default is
+  dtype-aware (`float32` → 2048, `float64` → 1024): a crossover sweep
+  (`benchmarks/bench_threshold_sweep.py`) showed the FP64 sequential kernel hits
+  the parallel scan's overhead sooner, so a single 2048 left FP64 ~57% slower at
+  T≈2048. `parallel_iir_forward` / `biquad_forward` accept a `threshold=` override
+  (`0` forces parallel scan, a large value forces sequential).
 
 - **Realtime architecture: producer/consumer split.** `RealtimeProcessor`
   now runs DSP in a dedicated worker thread (`torchfx-realtime-dsp`),

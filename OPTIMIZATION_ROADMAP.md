@@ -613,7 +613,17 @@ many-channel realtime. Re-measure the CPU-vs-GPU crossover after Epic B, since F
 
 ---
 
-## Epic G — Build, packaging & dispatch tuning
+## Epic G — Build, packaging & dispatch tuning — ✅ DONE
+
+*Status: landed and GPU-verified. **G1** ships native SASS for `sm_75;80;86;89`
+(verified via `cuobjdump --list-elf`), no first-call PTX JIT. **G2** made the
+threshold the single source of truth, threaded into the kernels, with a `threshold=`
+override (force-routing). The crossover sweep (`benchmarks/bench_threshold_sweep.py`,
+RTX 3070) showed the crossover is **dtype-dependent** — the parallel scan is flat
+~135 µs while the sequential kernel grows ~2× faster in FP64 — so the default is now
+dtype-aware: **FP32 → 2048, FP64 → 1024** (a single 2048 left FP64 ~57% slower at
+T≈2048). The crossover is essentially channel-independent (1–8 ch), so no
+channel-axis tuning is needed.*
 
 *Theme: cheap, high-certainty wins in how the extension is built and how it routes work.*
 
