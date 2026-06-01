@@ -333,7 +333,7 @@ torch::Tensor compute_forcing(
   return f;
 }
 
-torch::Tensor parallel_biquad_scan_into(
+void parallel_biquad_scan_into(
     const torch::Tensor& f,
     double a1,
     double a2,
@@ -384,13 +384,7 @@ torch::Tensor parallel_biquad_scan_into(
           f_ptr, y_ptr, agg_ptr, state_ptr, a1s, a2s, static_cast<int>(T), num_blocks);
     }
   });
-
-  // Extract updated state: [y[T-1], y[T-2]] (dtype-agnostic tensor ops).
-  auto y_last = y_out.index({torch::indexing::Slice(), -1}).unsqueeze(1);  // [C, 1]
-  auto y_prev = (T >= 2) ?
-      y_out.index({torch::indexing::Slice(), -2}).unsqueeze(1) :
-      torch::zeros({C, 1}, y_out.options());
-  return torch::cat({y_last, y_prev}, 1);  // [C, 2]
+  // No state extraction here — the caller reads the new state from ``y_out``.
 }
 
 std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
@@ -404,7 +398,14 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
   auto y = torch::empty({C, T}, f.options());
   const int num_blocks = (static_cast<int>(T) + BLOCK_SIZE - 1) / BLOCK_SIZE;
   auto block_agg = torch::empty({C * num_blocks * 6}, f.options());
-  auto new_st = parallel_biquad_scan_into(f, a1, a2, state, threshold, y, block_agg);
+  parallel_biquad_scan_into(f, a1, a2, state, threshold, y, block_agg);
+
+  // Extract updated state: [y[T-1], y[T-2]].
+  auto y_last = y.index({torch::indexing::Slice(), -1}).unsqueeze(1);  // [C, 1]
+  auto y_prev = (T >= 2) ?
+      y.index({torch::indexing::Slice(), -2}).unsqueeze(1) :
+      torch::zeros({C, 1}, y.options());
+  auto new_st = torch::cat({y_last, y_prev}, 1);  // [C, 2]
   return std::make_tuple(y, new_st);
 }
 

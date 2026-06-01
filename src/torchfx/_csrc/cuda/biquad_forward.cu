@@ -101,24 +101,36 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
     const double a2 = sos_cpu[s][5].item<double>();
 
     torch::Tensor& y_out = (s % 2 == 0) ? y_a : y_b;
+    auto sx_s = new_sx[s];  // [C, 2] view into the persistent x-state buffer
+    auto sy_s = new_sy[s];  // [C, 2] view into the persistent y-state buffer
 
-    // Forcing + scan into the shared scratch (reads the current x/y state of this
-    // section; both are updated in place below, after they are read).
-    compute_forcing_into(section_input, b0, b1, b2, new_sx[s], f);
-    auto nsy_s = parallel_biquad_scan_into(f, a1, a2, new_sy[s], threshold, y_out, block_agg);
+    // Forcing + scan into the shared scratch. Both kernels READ the current state
+    // (sx_s / sy_s) first; the new state is written into the same buffers below,
+    // after the reads, with no temporary allocation — so a captured CUDA graph sees
+    // stable buffer addresses for the whole forward (no per-section allocs at all).
+    compute_forcing_into(section_input, b0, b1, b2, sx_s, f);
+    parallel_biquad_scan_into(f, a1, a2, sy_s, threshold, y_out, block_agg);
 
-    // New x-state = last two input samples reversed -> {x[-1], x[-2]}.
-    torch::Tensor nsx_s;
-    if (T >= 2) {
-      nsx_s = section_input.narrow(1, T - 2, 2).flip(1).contiguous();
-    } else if (T == 1) {
-      nsx_s = torch::cat({section_input.narrow(1, 0, 1), new_sx[s].narrow(1, 0, 1)}, 1);
-    } else {
-      nsx_s = new_sx[s].clone();
+    // New y-state = {y[-1], y[-2]} written in place into sy_s (after the scan read it).
+    if (T >= 1) {
+      sy_s.select(1, 0).copy_(y_out.select(1, T - 1));
+      if (T >= 2) {
+        sy_s.select(1, 1).copy_(y_out.select(1, T - 2));
+      } else {
+        sy_s.select(1, 1).zero_();  // y[-2] = 0 for a single-sample chunk
+      }
     }
 
-    new_sx[s] = nsx_s;  // in-place state update
-    new_sy[s] = nsy_s;
+    // New x-state = {x[-1], x[-2]} of this section's input, written in place into sx_s
+    // (after compute_forcing read it). T == 0 leaves the state unchanged.
+    if (T >= 2) {
+      sx_s.select(1, 0).copy_(section_input.select(1, T - 1));
+      sx_s.select(1, 1).copy_(section_input.select(1, T - 2));
+    } else if (T == 1) {
+      sx_s.select(1, 1).copy_(sx_s.select(1, 0));  // x[-2] <- old x[-1]
+      sx_s.select(1, 0).copy_(section_input.select(1, 0));  // x[-1] <- x[0]
+    }
+
     section_input = y_out;
   }
 

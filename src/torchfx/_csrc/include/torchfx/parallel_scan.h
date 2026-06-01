@@ -51,9 +51,10 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
 
 // In-place variant: write the scan output into caller-provided ``y_out`` [C, T] and
 // use caller-provided ``block_agg`` scratch (sized >= C*ceil(T/512)*6, ignored on the
-// sequential branch). Returns the updated [C, 2] state. Lets the cascade reuse one set
-// of scratch buffers across sections so capture sees stable buffer addresses.
-torch::Tensor parallel_biquad_scan_into(
+// sequential branch). Does NOT extract the new state — the caller reads it from
+// ``y_out`` (in place for the cascade). Lets the cascade reuse one set of scratch
+// buffers across sections so capture sees stable buffer addresses.
+void parallel_biquad_scan_into(
     const torch::Tensor& f,
     double a1,
     double a2,
