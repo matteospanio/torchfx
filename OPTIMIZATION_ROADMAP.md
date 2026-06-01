@@ -583,7 +583,22 @@ the real value is **composition ergonomics** (a `Gain` mid-chain no longer split
 
 ---
 
-## Epic F — CPU & edge performance
+## Epic F — CPU & edge performance — 🔴 F1 attempted, reverted (measured regression)
+
+*Status: **F1 (cross-channel SIMD) was implemented, measured, and reverted** (preserved in commit
+e233a3c). The full-transpose approach is a **4–8× regression** on the 10-core desktop, e.g. 8 ch
+3.5 ms → 28 ms, 64 ch 33 ms → 172 ms. Two fundamental reasons: (1) transposing the signal to
+channel-contiguous `[T,C]` and back moves ~as much memory as the streaming-light recurrence
+computes, so the transpose traffic dominates; (2) the scalar OpenMP-over-channels kernel already
+saturates the cores when `C ≤ cores`, so SIMD-across-channels has no headroom (they compete for the
+same parallelism). The kernel was numerically correct (full suite passed with SIMD forced on every
+channel count) — just slow.*
+
+***To actually win, F1 needs a cache-blocked transpose*** *— transpose `[tile_C, block_T]` tiles
+that stay in L1/L2, carrying DF1 state across time blocks — and the payoff is concentrated on
+**few-core edge devices (Pi 5)** where channels exceed cores. That can't be validated on the
+10-core box; defer until Pi 5 hardware is available. **Recommendation: skip F1 on multi-core
+desktops; the scalar OpenMP path is already near-optimal** (8 ch ≈ 3.5 ms / 10 s @ 48 kHz).*
 
 *Theme: the CPU path already beats SciPy and (on consumer GPUs at high channel counts) beats the
 GPU. This epic strengthens the CPU/edge story — most valuable on the Raspberry Pi 5 and for
