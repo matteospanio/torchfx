@@ -333,19 +333,35 @@ partly bandwidth/overhead-bound.*
 
 ## Epic C — Realtime & streaming execution efficiency — 🟡 PARTIAL
 
-*Status: **C4 done** (in-place DF1 state in `sos_forward_cuda` — removes the per-call
-`[K,C,2]` clone and is the foundation for graph capture; full suite green). **C1
-(CUDA-graph capture) attempted and reverted** — GPU testing confirmed the roadmap's
-"C3 enables C1" dependency is hard: (1) the K=1 biquad path's `b.cpu()` coefficient
-read is a device→host sync that invalidates stream capture, and (2) the K≥2 cascade
-captures but replays ~39× wrong because the per-section `torch::empty` scratch
-allocations alias in the capture memory pool. So **C1/C2 are deferred behind C3
-(static scratch buffers) + a sync-free coefficient path** — these are the real
-prerequisites, and the measured prize is large (the parallel scan is ~135 µs of pure
-launch overhead, so graph replay would slash short-chunk/realtime latency).*
+*Status: **C3 + C4 done** (committed, GPU-verified, full suite green). **C1 (CUDA-graph
+capture) is close but reverted** pending one more fix.*
 
-*Recommended sequencing for the GPU-streaming graph win: **C3 (static scratch) →
-sync-free K=1 coeffs → C1 (capture) → C2 (pinned/async)**. C3 is the unlock.*
+**Done:**
+- **C4** — in-place DF1 state in `sos_forward_cuda` (no per-call `[K,C,2]` clone).
+- **C3** — per-section scratch (forcing, ping-pong `y`, `block_agg`) allocated **once
+  per forward and reused across sections** (`compute_forcing_into` /
+  `parallel_biquad_scan_into`); per-forward allocations go **O(K) → O(1)**.
+- **K=1 sync fix** — the single-biquad CUDA fast path passes the **CPU** canonical
+  coefficients to the binding, so `b.cpu()` no longer issues a device→host sync that
+  invalidated stream capture.
+
+**C1 diagnosis (the deep part), preserved in git history (f70a375, 97ff5c1):**
+- C3 fixed the capture-pool aliasing for shallow cascades: a **2-section cascade
+  replays streaming continuation EXACTLY (0.0 diff)**.
+- The input **is read live** and **state updates in place correctly** (verified:
+  post-replay state matches the new chunk's tail). The model's returned tensor lives
+  in the graph's private pool, so the output must be **copied into a persistent buffer
+  inside the captured region** (fix applied).
+- **Residual blocker:** a cascade-depth-dependent corruption remains — the 4-section
+  chain still replays ~39× wrong. Almost certainly the **small per-section
+  state-extraction allocations** (`narrow/flip/contiguous` for x-state, `cat` for
+  y-state) aliasing in the capture pool. **Next step: write those into persistent
+  state buffers too** (extend C3 to the state path), then C1 should pass.
+- The prize is measured and large: **~8× per-chunk replay speedup** (276 µs → 34 µs on
+  an RTX 3070), since the parallel scan is ~135 µs of pure launch overhead.
+
+*Remaining sequencing: **extend C3 to the per-section state allocations → C1 (capture)
+→ C2 (pinned/async)**.*
 
 *Theme: the realtime path already has a worker-thread producer/consumer split and latency/xrun
 instrumentation (shipped in 0.6.0). This epic attacks the per-chunk overheads that eat the audio
