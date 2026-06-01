@@ -86,11 +86,17 @@ class CudaGraphRunner:
             self._static_out: torch.Tensor = self.module(self._static_in)
 
     def reset_state(self) -> None:
-        """Zero the captured streaming state in place so replay restarts fresh.
+        """Zero the captured streaming state in place to restart a new stream.
 
         Does not call ``module.reset_state()`` — that may drop coefficients or
         rebind the state buffers the graph was captured against; instead the
         existing state buffers are zeroed in place.
+
+        Caveat: graph *continuation* is exact, but the very first chunk after a
+        reset can show a small initial transient versus a never-run eager filter,
+        because the capture warmup is baked into the recorded kernels. For exact
+        fresh-stream behaviour, warm up the runner with input representative of the
+        stream's start (e.g. silence). The transient decays within a few samples.
 
         """
         for name in ("_state_x", "_state_y"):

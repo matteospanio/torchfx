@@ -2,7 +2,12 @@
 
 Verifies that replaying a captured graph over a sequence of fixed-shape chunks
 reproduces eager chunked streaming bit-for-bit-close, including DF1 state carried
-across replays (which relies on the native SOS kernel's in-place state update).
+across replays (which relies on the native SOS kernel's in-place state update and
+the once-per-forward scratch buffers, C3/C4).
+
+Both filters are warmed identically before streaming the test chunks, so this
+checks the property that matters in practice — graph replay continues streaming
+state exactly like eager — rather than the reset-to-zero edge case.
 """
 
 from __future__ import annotations
@@ -15,6 +20,8 @@ from torchfx.filter.biquad import BiquadLPF
 from torchfx.filter.fused import FusedSOSCascade
 
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
+
+WARMUP = 3  # CudaGraphRunner default: WARMUP warmup forwards + 1 capture forward
 
 
 def _make_chain(fs: int) -> list:
@@ -31,17 +38,21 @@ def test_cuda_graph_matches_eager_streaming(dtype):
 
     fs, chunk = 48000, 1024
     g = torch.Generator().manual_seed(0)
-    chunks = [torch.randn(2, chunk, generator=g, dtype=dtype).cuda() for _ in range(8)]
+    warm = torch.randn(2, chunk, generator=g, dtype=dtype).cuda()
+    test_chunks = [torch.randn(2, chunk, generator=g, dtype=dtype).cuda() for _ in range(6)]
 
+    # Eager reference: warm up identically (WARMUP + 1 capture-equivalent), then stream.
     eager = FusedSOSCascade(*_make_chain(fs))
-    eager_out = [eager(c.clone()) for c in chunks]
+    for _ in range(WARMUP + 1):
+        eager(warm.clone())
+    eager_out = [eager(c.clone()) for c in test_chunks]
 
+    # Graphed: runner does WARMUP warmups + 1 capture forward on `warm`, then replays.
     graphed = FusedSOSCascade(*_make_chain(fs))
-    runner = CudaGraphRunner(graphed, chunks[0].clone())
-    runner.reset_state()  # start from a zero state, matching eager's fresh start
-    graphed_out = [runner.run(c).clone() for c in chunks]
+    runner = CudaGraphRunner(graphed, warm.clone(), warmup=WARMUP)
+    graphed_out = [runner.run(c).clone() for c in test_chunks]
 
-    tol = {"rtol": 1e-4, "atol": 1e-5} if dtype == torch.float32 else {"rtol": 1e-9, "atol": 1e-11}
+    tol = {"rtol": 1e-5, "atol": 1e-6} if dtype == torch.float32 else {"rtol": 1e-10, "atol": 1e-12}
     for i, (e, go) in enumerate(zip(eager_out, graphed_out, strict=True)):
         torch.testing.assert_close(go, e, msg=f"chunk {i} mismatch", **tol)
 
