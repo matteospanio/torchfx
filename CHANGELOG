@@ -139,6 +139,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   SPSC" claim in the docstring now reflects how the buffers are used —
   one writer (callback) and one reader (worker), coordinated by an
   `Event`.
+- **Stale-coefficient bug on sample-rate change.** `IIR` and `Biquad`
+  filters now track the `fs` their coefficients were designed for
+  (`_coeff_fs`) and recompute on the *direct* `forward()` path when
+  `fs` changes — previously a filter reused across sample rates would
+  silently keep applying coefficients designed for the old rate. The
+  fs change also clears accumulated DF1 state, and `Wave.__or__`'s
+  eager-compute path records `_coeff_fs` so it does not redundantly
+  recompute on the first forward.
+- **State leak across `Wave` reuse.** `Wave._materialize()` now resets
+  the state of stateful modules before running the offline pipeline, so
+  piping one filter instance into two different `Wave`s no longer bleeds
+  DF1 state from the first into the second. Streaming
+  (`StreamProcessor` / `RealtimeProcessor`) is unaffected — it drives
+  effects directly and manages its own chunk-to-chunk state.
+- **Half-precision inputs are now rejected** by the native filter
+  dispatch (`_select_native_dtype`) with a `TypeError` instead of being
+  silently upcast to `float64`. The IIR feedback recurrence is not
+  numerically safe in `float16` / `bfloat16`; callers should cast to
+  `float32` or `float64` explicitly.
 
 ## [0.5.4] - 2026-05-26
 

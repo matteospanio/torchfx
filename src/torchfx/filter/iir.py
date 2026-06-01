@@ -238,6 +238,8 @@ class IIR(AbstractFilter):
         # Per-section, per-channel DF1 state: [num_sections, C, 2] for x and y
         self._state_x: Tensor | None = None
         self._state_y: Tensor | None = None
+        # Sampling rate the cached coefficients were designed for (see forward).
+        self._coeff_fs: int | None = None
 
     @override
     @torch.no_grad()
@@ -245,9 +247,16 @@ class IIR(AbstractFilter):
         if self.fs is None:
             raise ValueError(NONE_FS_ERR)
 
-        if self._sos is None:
+        # Recompute when coefficients are missing or were designed for a
+        # different sampling rate. Without the fs check, a filter reused across
+        # sample rates would silently apply stale coefficients.
+        if self._sos is None or self.fs != self._coeff_fs:
             self.compute_coefficients()
+            self._coeff_fs = self.fs
             self._sos_device_cache = None  # invalidate after recomputation
+            # Coefficients changed: accumulated DF1 state no longer matches.
+            self._state_x = None
+            self._state_y = None
 
         assert self._sos is not None
         result, self._sos_device_cache, self._state_x, self._state_y = _sos_cascade_forward(

@@ -211,7 +211,16 @@ class Wave:
         self._pipeline = []
 
     def _materialize(self) -> None:
-        """Execute the deferred pipeline, fusing consecutive IIR/biquad filters."""
+        """Execute the deferred pipeline, fusing consecutive IIR/biquad filters.
+
+        Materialization is an *independent* offline operation: any stateful module
+        in the plan is reset before execution, so reusing the same filter instance
+        across two different ``Wave`` objects can never leak DF1 state from one into
+        the other. Streaming (``StreamProcessor`` / ``RealtimeProcessor``) does not
+        go through this path — it drives effects directly and manages its own
+        chunk-to-chunk state — so this reset does not affect streaming continuity.
+
+        """
         if not self._pipeline:
             return
 
@@ -237,6 +246,15 @@ class Wave:
                 flush()
                 plan.append(module)
         flush()
+
+        # Offline materialization is independent of any previous run: clear DF1
+        # state a stateful module may still hold from an earlier Wave that reused
+        # the same instance. Freshly-built FusedSOSCascades are already clean;
+        # stateless effects (Gain, Normalize) have no reset_state and are skipped.
+        for module in plan:
+            reset = getattr(module, "reset_state", None)
+            if callable(reset):
+                reset()
 
         data = self._ys
         for module in plan:
@@ -727,6 +745,10 @@ class Wave:
 
         if isinstance(f, AbstractFilter) and (fs_changed or not f._has_computed_coeff):
             f.compute_coefficients()
+            # Record the fs the coefficients were designed for so a subsequent
+            # direct forward() does not needlessly recompute (and so a genuine
+            # fs change is still detected on the direct-call path).
+            f._coeff_fs = getattr(f, "fs", None)
 
     def __len__(self) -> int:
         """Return the length, in samples, of the wave."""

@@ -41,11 +41,23 @@ def _select_native_dtype(x: Tensor) -> torch.dtype:
     kernels currently execute on float64.
 
     Keep float64 inputs on float64, and route other CPU floating-point inputs through
-    float32.
+    float32. Half-precision inputs are rejected rather than silently upcast: the IIR
+    feedback recurrence is not numerically safe in float16/bfloat16.
+
+    Raises
+    ------
+    TypeError
+        If ``x`` is not floating point, or uses ``float16``/``bfloat16``.
 
     """
     if not x.is_floating_point():
         raise TypeError("Input tensor must use a floating-point dtype.")
+    if x.dtype in (torch.float16, torch.bfloat16):
+        raise TypeError(
+            f"Half-precision input ({x.dtype}) is not supported by the native filter "
+            "kernels: the IIR feedback recurrence is not numerically safe in "
+            "float16/bfloat16. Cast to float32 or float64 first (e.g. x.float())."
+        )
     if x.is_cuda:
         return torch.float64
     return torch.float64 if x.dtype == torch.float64 else torch.float32

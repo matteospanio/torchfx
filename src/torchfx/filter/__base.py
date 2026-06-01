@@ -411,6 +411,11 @@ class AbstractFilter(FX, abc.ABC):
 
     """
 
+    # Sampling rate the current coefficients were designed for. It is compared
+    # against ``fs`` on every forward so a filter reused across sample rates
+    # recomputes its coefficients instead of silently applying stale ones.
+    _coeff_fs: int | None = None
+
     @property
     def _has_computed_coeff(self) -> bool:
         if hasattr(self, "_sos") and self._sos is not None:
