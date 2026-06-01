@@ -529,7 +529,14 @@ kernel-level fusion.*
 
 ---
 
-## Epic E — Fusion-planner algebraic optimizations
+## Epic E — Fusion-planner algebraic optimizations — ✅ DONE
+
+*Status: **E1 shipped** (static-`Gain` folding; commit fb6d7b6, GPU-verified, full suite 1174).
+**E2 measured and skipped** — section reordering is empirically unnecessary: on a deliberately
+ill-conditioned 12-section cascade (poles to 0.9955), the existing chain order has the **lowest**
+float32 error (6.4e-5) and pole-radius reordering makes it marginally **worse**. scipy already
+orders each filter's sections well and the chain order respects the user's sequence, so there is no
+benefit to extract. Don't build E2.*
 
 *Theme: widen what the planner can fuse and improve numerical conditioning. Perf impact is small;
 the real value is **composition ergonomics** (a `Gain` mid-chain no longer splits a fused run) and
