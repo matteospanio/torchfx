@@ -112,7 +112,10 @@ def _sos_cascade_forward(
 
     orig_shape = x.shape
     out_dtype = x.dtype
-    native_dtype = torch.float64 if x.is_cuda or x.dtype == torch.float64 else torch.float32
+    # Native execution dtype follows the input on both CPU and CUDA: float32 in
+    # runs the FP32 kernels, float64 in runs FP64. (Keep in sync with
+    # torchfx._ops._select_native_dtype.)
+    native_dtype = torch.float64 if x.dtype == torch.float64 else torch.float32
     device = x.device
 
     # Normalize to [C, T]

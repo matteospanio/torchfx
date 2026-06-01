@@ -37,11 +37,12 @@ PARALLEL_SCAN_THRESHOLD = 2048
 def _select_native_dtype(x: Tensor) -> torch.dtype:
     """Select native kernel dtype for an input tensor.
 
-    CPU native IIR/biquad kernels support float32 and float64. CUDA native IIR/biquad
-    kernels currently execute on float64.
+    Both the CPU and CUDA native IIR/biquad kernels are templated on float32 and
+    float64. The native execution dtype follows the input: float64 in → float64,
+    float32 in → float32. This lets float32 inputs run the FP32 GPU path (a large
+    win on consumer cards with a 1:32 FP32:FP64 ratio) instead of being upcast.
 
-    Keep float64 inputs on float64, and route other CPU floating-point inputs through
-    float32. Half-precision inputs are rejected rather than silently upcast: the IIR
+    Half-precision inputs are rejected rather than silently upcast: the IIR
     feedback recurrence is not numerically safe in float16/bfloat16.
 
     Raises
@@ -58,8 +59,6 @@ def _select_native_dtype(x: Tensor) -> torch.dtype:
             "kernels: the IIR feedback recurrence is not numerically safe in "
             "float16/bfloat16. Cast to float32 or float64 first (e.g. x.float())."
         )
-    if x.is_cuda:
-        return torch.float64
     return torch.float64 if x.dtype == torch.float64 else torch.float32
 
 

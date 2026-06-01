@@ -15,15 +15,17 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
   TORCH_CHECK(x.is_cuda(), "biquad_forward_cuda: input must be on CUDA");
   TORCH_CHECK(x.dim() == 2, "biquad_forward_cuda: input must be [C, T]");
 
-  auto x_f64 = x.contiguous();
+  // Preserve the input dtype (float32 or float64); the templated kernels run
+  // natively in that precision.
+  auto x_c = x.contiguous();
   auto sx = state_x.contiguous();
   auto sy = state_y.contiguous();
 
-  auto C = x_f64.size(0);
-  auto T = x_f64.size(1);
+  auto C = x_c.size(0);
+  auto T = x_c.size(1);
 
   // Step 1: Compute forcing function with fused state prepend — single kernel.
-  auto f = compute_forcing(x_f64, b0, b1, b2, sx);  // [C, T]
+  auto f = compute_forcing(x_c, b0, b1, b2, sx);  // [C, T]
 
   // Step 2: Parallel scan to solve y[n] = f[n] - a1*y[n-1] - a2*y[n-2]
   auto [y, new_state_y] = parallel_biquad_scan(f, a1, a2, sy);
@@ -33,10 +35,10 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
   torch::Tensor new_state_x;
   if (T >= 2) {
     // x[:, -2:] reversed to get [x[-1], x[-2]]
-    new_state_x = x_f64.narrow(1, T - 2, 2).flip(1).contiguous();
+    new_state_x = x_c.narrow(1, T - 2, 2).flip(1).contiguous();
   } else if (T == 1) {
     new_state_x = torch::cat({
-        x_f64.narrow(1, 0, 1),
+        x_c.narrow(1, 0, 1),
         sx.narrow(1, 0, 1)
     }, 1);
   } else {
