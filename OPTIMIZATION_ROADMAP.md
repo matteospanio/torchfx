@@ -199,7 +199,12 @@ performance work and all benchmarking — a perf number measured on a buggy path
 
 ---
 
-## Epic B — FP32 CUDA execution path *(the spine)*
+## Epic B — FP32 CUDA execution path *(the spine)* — ✅ DONE
+
+*Status: landed and GPU-verified on an RTX 3070 (commit history on `dev`). Measured **3.0–3.6×**
+(B1 templated kernels, B2 dtype dispatch, B3 precision harness; B4 evaluated as a no-op since the
+cached device-dtype conversion already makes execution follow the input). B5 numbers in
+[Appendix A](#appendix-a--baseline-snapshot-regression-targets).*
 
 *Theme: lift the consumer-GPU FP64 penalty. Honest expected impact: **2–4× on RTX 3070 / A40**,
 **~1.5–2× on L40S**. The headline outcome is that the GPU stops losing to its own CPU at higher
@@ -666,15 +671,20 @@ Captured from `benchmarks/results/` on **Alienware Aurora R11** (Intel i9-10900K
 medians, signal length in seconds @ ~44.1–48 kHz. Use these as the *before* numbers; any perf task
 must not regress them by more than ±3% on the same machine.
 
-**CUDA IIR (current FP64 path) — Epic B target is to beat the 8-ch CPU number:**
+**CUDA IIR — Epic B FP32 path: MEASURED (RTX 3070, 8th-order Butterworth @ 48 kHz,
+`benchmarks/bench_fp32_speedup.py`). ✅ Epic B complete.**
 
-| Workload | GPU FP64 (now) | Epic B FP32 target |
-|---|---|---|
-| 1 s / 1 ch | 0.74 ms | — |
-| 30 s / 1 ch | 9.53 ms | ~3–5 ms |
-| 60 s / 1 ch | 18.6 ms | ~5–9 ms |
-| 60 s / 8 ch | 87.3 ms | **< 67.8 ms (CPU)** → ~22–44 ms |
-| biquad 30 s / 1 ch | 2.40 ms | ~0.8–1.5 ms |
+| Workload | GPU FP64 | GPU FP32 (Epic B) | Speedup |
+|---|---|---|---|
+| 30 s / 1 ch | 9.49 ms | 2.80 ms | 3.39× |
+| 60 s / 1 ch | 18.31 ms | 6.00 ms | 3.05× |
+| 60 s / 2 ch | 29.03 ms | 9.32 ms | 3.11× |
+| 60 s / 4 ch | 49.22 ms | 14.41 ms | 3.42× |
+| 60 s / 8 ch | 89.18 ms | **24.49 ms** | 3.64× |
+
+Inversion resolved: at 60 s / 8 ch, GPU FP64 (89 ms) *lost* to CPU (FP32 28 ms / FP64 34 ms);
+GPU FP32 (24 ms) now **beats** the CPU. The 3.0–3.6× win matches the predicted honest 2–4×
+range (the scan is partly bandwidth/overhead-bound, not the theoretical 32× FLOP ratio).
 
 **CPU (TorchFX fused vs. references) — keep these wins, don't regress:**
 

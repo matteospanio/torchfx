@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **FP32 CUDA execution path.** The CUDA biquad / SOS parallel-scan kernels are
+  now templated on `scalar_t` and dispatch on the input dtype: a float32 input
+  runs the native FP32 path instead of being silently upcast to float64. On a
+  consumer GPU (RTX 3070, 1:32 FP32:FP64) this is a **3.0–3.6× throughput win**
+  for IIR cascades and resolves the multichannel inversion — a 60 s / 8-channel
+  8th-order Butterworth runs in ~24 ms (FP32) vs ~89 ms (FP64), now *beating* the
+  ~28 ms CPU path it previously lost to. float64 inputs still run FP64 for
+  maximum precision; pass the dtype you want. See
+  `benchmarks/bench_fp32_speedup.py`.
+- **`tests/test_fp32_precision.py`** — validates the FP64 path against
+  `scipy.signal.sosfilt` to double precision and the FP32 path against the same
+  reference within a documented float32 bound (`max_abs` + RMS-relative), across
+  Butterworth / Chebyshev1 at orders 2/4/8/16 on CPU and CUDA, recording
+  per-design errors so the FP32-safe vs needs-FP64 boundary is tracked.
+
 - **Realtime architecture: producer/consumer split.** `RealtimeProcessor`
   now runs DSP in a dedicated worker thread (`torchfx-realtime-dsp`),
   not inside the PortAudio callback. The audio callback only moves
