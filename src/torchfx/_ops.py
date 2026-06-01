@@ -29,9 +29,21 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Minimum signal length for parallel scan to be worthwhile.
-# Below this, the sequential C++ kernel is faster.
-PARALLEL_SCAN_THRESHOLD = 2048
+# Dispatch boundary: signals with T <= threshold use the sequential CUDA kernel;
+# longer signals use the work-efficient parallel scan. The crossover is dtype-
+# dependent (measured on an RTX 3070 via benchmarks/bench_threshold_sweep.py): the
+# parallel scan is ~flat at its launch overhead (~135 us) regardless of dtype,
+# while the sequential kernel grows ~2x faster in FP64 than FP32 — so FP64 hits the
+# crossover sooner. float32 sequential wins up to ~2560 samples; float64 to ~1024.
+# A single 2048 default would leave FP64 ~57% slower at T~2048, so the default is
+# dtype-aware (use _default_threshold).
+PARALLEL_SCAN_THRESHOLD = 2048  # float32 default
+PARALLEL_SCAN_THRESHOLD_FP64 = 1024  # float64 default (FP64 scan overhead is hit sooner)
+
+
+def _default_threshold(dtype: torch.dtype) -> int:
+    """Dtype-aware sequential-vs-parallel-scan default boundary (see above)."""
+    return PARALLEL_SCAN_THRESHOLD_FP64 if dtype == torch.float64 else PARALLEL_SCAN_THRESHOLD
 
 
 def _select_native_dtype(x: Tensor) -> torch.dtype:
@@ -111,12 +123,12 @@ def biquad_forward(
         crossover ablation. Ignored on CPU.
 
     """
-    if threshold is None:
-        threshold = PARALLEL_SCAN_THRESHOLD
     # Ensure state tensors exist
     C = x.shape[0] if x.ndim >= 2 else 1
     device = x.device
     dtype = _select_native_dtype(x)
+    if threshold is None:
+        threshold = _default_threshold(dtype)
 
     if state_x is None:
         state_x = torch.zeros(C, 2, device=device, dtype=dtype)
@@ -181,12 +193,12 @@ def parallel_iir_forward(
         the dispatch crossover ablation. Ignored on CPU.
 
     """
-    if threshold is None:
-        threshold = PARALLEL_SCAN_THRESHOLD
     C = x.shape[0] if x.ndim >= 2 else 1
     K = sos.shape[0]
     device = x.device
     dtype = _select_native_dtype(x)
+    if threshold is None:
+        threshold = _default_threshold(dtype)
 
     if state_x is None:
         state_x = torch.zeros(K, C, 2, device=device, dtype=dtype)
