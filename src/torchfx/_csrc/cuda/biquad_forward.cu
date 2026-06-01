@@ -62,8 +62,12 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
   TORCH_CHECK(sos.dim() == 2 && sos.size(1) == 6, "sos_forward_cuda: sos must be [K, 6]");
 
   auto sos_f64 = sos.contiguous();
-  auto new_sx = state_x.clone();
-  auto new_sy = state_y.clone();
+  // Update state in place (no clone). The caller owns these buffers and rebinds
+  // them to the return value, so mutating them is safe — and in-place update is
+  // what lets a captured CUDA graph carry streaming state across replays (the
+  // state buffers keep a stable address). new_sx/new_sy alias the inputs.
+  auto new_sx = state_x;
+  auto new_sy = state_y;
 
   const int64_t K = sos_f64.size(0);
 
