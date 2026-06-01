@@ -1,5 +1,7 @@
 #include <torch/torch.h>
 #include <omp.h>
+#include <algorithm>
+#include <cstdlib>
 #include <tuple>
 #include <vector>
 
@@ -162,6 +164,124 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cpu_impl(
   return std::make_tuple(y, sx, sy);
 }
 
+// Cross-channel SIMD SOS cascade.
+//
+// The DF1 recurrence is serial in time and across sections but INDEPENDENT across
+// channels. The scalar kernel above parallelises channels across OpenMP threads but
+// each thread is scalar. Here we instead make the channel axis the inner, contiguous,
+// auto-vectorisable loop: one AVX2/NEON vector op advances a whole tile of channels'
+// recurrence per instruction. This needs channels contiguous, so the signal is
+// transposed to [T, C]; OpenMP then runs over channel TILES so cores and SIMD lanes
+// are both used. The win grows with channels-per-core, so it pays off most at high
+// channel counts and on few-core edge devices (e.g. the Raspberry Pi 5).
+template <typename scalar_t>
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cpu_simd_impl(
+    const torch::Tensor& x,       // [C, T]
+    const torch::Tensor& sos,     // [K, 6]
+    const torch::Tensor& state_x, // [K, C, 2]
+    const torch::Tensor& state_y) {
+
+  const int64_t K = sos.size(0);
+  const int64_t C = x.size(0);
+  const int64_t T = x.size(1);
+
+  auto sos_acc = sos.accessor<scalar_t, 2>();
+  std::vector<scalar_t> cb0(K), cb1(K), cb2(K), ca1(K), ca2(K);
+  for (int64_t s = 0; s < K; ++s) {
+    cb0[s] = sos_acc[s][0];
+    cb1[s] = sos_acc[s][1];
+    cb2[s] = sos_acc[s][2];
+    ca1[s] = sos_acc[s][4];
+    ca2[s] = sos_acc[s][5];
+  }
+
+  // Channel-contiguous layout so the per-time-step channel loop vectorises.
+  auto xt = x.t().contiguous();                 // [T, C]
+  auto yt = torch::empty({T, C}, x.options());  // [T, C]
+  auto new_sx = state_x.clone();                // [K, C, 2]
+  auto new_sy = state_y.clone();
+
+  const scalar_t* xt_p = xt.data_ptr<scalar_t>();
+  scalar_t* yt_p = yt.data_ptr<scalar_t>();
+  scalar_t* sx_p = new_sx.data_ptr<scalar_t>();
+  scalar_t* sy_p = new_sy.data_ptr<scalar_t>();
+
+  constexpr int64_t TILE = 8;  // channels per OpenMP task (SIMD-friendly)
+
+  #pragma omp parallel for schedule(static) if (C > TILE)
+  for (int64_t c0 = 0; c0 < C; c0 += TILE) {
+    const int64_t cw = std::min<int64_t>(TILE, C - c0);
+
+    // Per-tile, channel-contiguous section state: [K][cw].
+    std::vector<scalar_t> sx0(K * cw), sx1(K * cw), sy0(K * cw), sy1(K * cw), in(cw);
+    for (int64_t s = 0; s < K; ++s) {
+      for (int64_t c = 0; c < cw; ++c) {
+        const int64_t base = (s * C + (c0 + c)) * 2;
+        sx0[s * cw + c] = sx_p[base + 0];
+        sx1[s * cw + c] = sx_p[base + 1];
+        sy0[s * cw + c] = sy_p[base + 0];
+        sy1[s * cw + c] = sy_p[base + 1];
+      }
+    }
+
+    for (int64_t n = 0; n < T; ++n) {
+      const scalar_t* xrow = xt_p + n * C + c0;  // [cw] contiguous
+      for (int64_t c = 0; c < cw; ++c) in[c] = xrow[c];
+
+      for (int64_t s = 0; s < K; ++s) {
+        const scalar_t B0 = cb0[s], B1 = cb1[s], B2 = cb2[s], A1 = ca1[s], A2 = ca2[s];
+        scalar_t* __restrict px0 = &sx0[s * cw];
+        scalar_t* __restrict px1 = &sx1[s * cw];
+        scalar_t* __restrict py0 = &sy0[s * cw];
+        scalar_t* __restrict py1 = &sy1[s * cw];
+        scalar_t* __restrict pin = in.data();
+        #pragma omp simd
+        for (int64_t c = 0; c < cw; ++c) {  // channels are independent -> vectorises
+          const scalar_t v = pin[c];
+          const scalar_t yn = B0 * v + B1 * px0[c] + B2 * px1[c] - A1 * py0[c] - A2 * py1[c];
+          px1[c] = px0[c];
+          px0[c] = v;
+          py1[c] = py0[c];
+          py0[c] = yn;
+          pin[c] = yn;
+        }
+      }
+
+      scalar_t* yrow = yt_p + n * C + c0;
+      for (int64_t c = 0; c < cw; ++c) yrow[c] = in[c];
+    }
+
+    for (int64_t s = 0; s < K; ++s) {
+      for (int64_t c = 0; c < cw; ++c) {
+        const int64_t base = (s * C + (c0 + c)) * 2;
+        sx_p[base + 0] = sx0[s * cw + c];
+        sx_p[base + 1] = sx1[s * cw + c];
+        sy_p[base + 0] = sy0[s * cw + c];
+        sy_p[base + 1] = sy1[s * cw + c];
+      }
+    }
+  }
+
+  auto y = yt.t().contiguous();  // [C, T]
+  return std::make_tuple(y, new_sx, new_sy);
+}
+
+// Minimum channel count for the cross-channel SIMD path. Below this the scalar
+// OpenMP-over-channels kernel is used (when channels <= cores it already saturates
+// the cores, and the SIMD path's transpose does not pay off). Tunable via the
+// TORCHFX_SIMD_MIN_CHANNELS env var (read once) for benchmarking / per-device tuning.
+static int64_t simd_min_channels() {
+  static const int64_t v = []() -> int64_t {
+    const char* e = std::getenv("TORCHFX_SIMD_MIN_CHANNELS");
+    if (e != nullptr && e[0] != '\0') {
+      const long long parsed = std::atoll(e);
+      if (parsed > 0) return static_cast<int64_t>(parsed);
+    }
+    return 16;
+  }();
+  return v;
+}
+
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cpu(
     const torch::Tensor& x,         // [C, T]
     const torch::Tensor& b,         // [3]
@@ -211,9 +331,15 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cpu(
   const auto sx_exec = state_x.to(exec_dtype).contiguous();
   const auto sy_exec = state_y.to(exec_dtype).contiguous();
 
+  // Use the cross-channel SIMD path at high channel counts; otherwise the scalar
+  // OpenMP-over-channels kernel (which already saturates the cores when C is small).
+  const bool use_simd = x_exec.size(0) >= simd_min_channels();
+
   if (exec_dtype == torch::kFloat32) {
-    return sos_forward_cpu_impl<float>(x_exec, sos_exec, sx_exec, sy_exec);
+    return use_simd ? sos_forward_cpu_simd_impl<float>(x_exec, sos_exec, sx_exec, sy_exec)
+                    : sos_forward_cpu_impl<float>(x_exec, sos_exec, sx_exec, sy_exec);
   }
 
-  return sos_forward_cpu_impl<double>(x_exec, sos_exec, sx_exec, sy_exec);
+  return use_simd ? sos_forward_cpu_simd_impl<double>(x_exec, sos_exec, sx_exec, sy_exec)
+                  : sos_forward_cpu_impl<double>(x_exec, sos_exec, sx_exec, sy_exec);
 }
