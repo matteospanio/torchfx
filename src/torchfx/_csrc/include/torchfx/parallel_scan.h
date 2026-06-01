@@ -28,12 +28,15 @@ torch::Tensor compute_forcing(
 
 // Parallel biquad via prefix scan.
 // Input:  f [C, T] (precomputed forcing), a1, a2 (feedback coefficients),
-//         state [C, 2] = {y[-1], y[-2]} per channel
+//         state [C, 2] = {y[-1], y[-2]} per channel,
+//         threshold: signals with T <= threshold use the sequential kernel;
+//         longer signals use the work-efficient parallel scan.
 // Output: y [C, T], updated state [C, 2]
 std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
     const torch::Tensor& f,
     double a1,
     double a2,
-    const torch::Tensor& state);
+    const torch::Tensor& state,
+    int threshold);
 
 }  // namespace torchfx

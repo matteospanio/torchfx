@@ -5,7 +5,8 @@
 namespace torchfx {
 
 // Apply a single biquad filter section using CUDA parallel scan.
-// Input:  x [C, T], b0/b1/b2 numerator, a1/a2 denominator, state_x [C, 2], state_y [C, 2]
+// Input:  x [C, T], b0/b1/b2 numerator, a1/a2 denominator, state_x [C, 2], state_y [C, 2],
+//         threshold: T <= threshold uses the sequential kernel (see parallel_biquad_scan).
 // Output: (y [C, T], new_state_x [C, 2], new_state_y [C, 2])
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
     const torch::Tensor& x,
@@ -13,16 +14,19 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
     double a1,
     double a2,
     const torch::Tensor& state_x,
-    const torch::Tensor& state_y);
+    const torch::Tensor& state_y,
+    int threshold);
 
 // Apply a cascade of biquad sections (SOS format) using CUDA parallel scan.
-// Input:  x [C, T], sos [K, 6] (device), sos_cpu [K, 6] (CPU), state_x/y [K, C, 2]
+// Input:  x [C, T], sos [K, 6] (device), sos_cpu [K, 6] (CPU), state_x/y [K, C, 2],
+//         threshold: per-section dispatch boundary (see parallel_biquad_scan).
 // Output: (y [C, T], new_state_x [K, C, 2], new_state_y [K, C, 2])
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
     const torch::Tensor& x,
     const torch::Tensor& sos,
     const torch::Tensor& sos_cpu,
     const torch::Tensor& state_x,
-    const torch::Tensor& state_y);
+    const torch::Tensor& state_y,
+    int threshold);
 
 }  // namespace torchfx

@@ -52,6 +52,17 @@ if(TORCHFX_USE_CUDA)
   check_language(CUDA)
   if(CMAKE_CUDA_COMPILER)
     enable_language(CUDA)
+    # Target CUDA architectures (override with the TORCHFX_CUDA_ARCHITECTURES env
+    # var, e.g. "86" for a single card). Default spans Turing..Ada: sm_75 (T4/2080),
+    # sm_80 (A100), sm_86 (RTX 30xx / A40), sm_89 (L40S / Ada). Without an explicit
+    # list the first CUDA call can pay a PTX->SASS JIT stall and occupancy is left
+    # to the toolkit default.
+    if(DEFINED ENV{TORCHFX_CUDA_ARCHITECTURES} AND NOT "$ENV{TORCHFX_CUDA_ARCHITECTURES}" STREQUAL "")
+      set(TORCHFX_CUDA_ARCHS "$ENV{TORCHFX_CUDA_ARCHITECTURES}")
+    else()
+      set(TORCHFX_CUDA_ARCHS "75;80;86;89")
+    endif()
+    message(STATUS "CUDA architectures: ${TORCHFX_CUDA_ARCHS}")
     find_package(CUDAToolkit QUIET)
     if(NOT CUDAToolkit_FOUND)
       message(STATUS "CUDA toolkit not found -- building CPU-only extension")
@@ -79,6 +90,7 @@ if(TORCHFX_USE_CUDA)
     "${CSRC_DIR}/cuda/biquad_forward.cu"
     "${CSRC_DIR}/cuda/delay_forward.cu")
   target_compile_definitions(torchfx_ext PRIVATE WITH_CUDA)
+  set_target_properties(torchfx_ext PROPERTIES CUDA_ARCHITECTURES "${TORCHFX_CUDA_ARCHS}")
 endif()
 
 target_include_directories(torchfx_ext PRIVATE

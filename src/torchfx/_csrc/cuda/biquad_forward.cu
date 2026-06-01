@@ -10,7 +10,8 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
     double a1,                        // denominator coefficient a1
     double a2,                        // denominator coefficient a2
     const torch::Tensor& state_x,    // [C, 2]
-    const torch::Tensor& state_y) {  // [C, 2]
+    const torch::Tensor& state_y,    // [C, 2]
+    int threshold) {                 // sequential-vs-parallel-scan boundary
 
   TORCH_CHECK(x.is_cuda(), "biquad_forward_cuda: input must be on CUDA");
   TORCH_CHECK(x.dim() == 2, "biquad_forward_cuda: input must be [C, T]");
@@ -28,7 +29,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward_cuda(
   auto f = compute_forcing(x_c, b0, b1, b2, sx);  // [C, T]
 
   // Step 2: Parallel scan to solve y[n] = f[n] - a1*y[n-1] - a2*y[n-2]
-  auto [y, new_state_y] = parallel_biquad_scan(f, a1, a2, sy);
+  auto [y, new_state_y] = parallel_biquad_scan(f, a1, a2, sy, threshold);
 
   // Step 3: Update state_x from the last 2 input samples.
   // Use narrow + flip for minimal kernel launches.
@@ -53,7 +54,8 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
     const torch::Tensor& sos,        // [K, 6] (device)
     const torch::Tensor& sos_cpu_in, // [K, 6] (CPU) — pre-supplied to avoid GPU sync
     const torch::Tensor& state_x,    // [K, C, 2]
-    const torch::Tensor& state_y) {  // [K, C, 2]
+    const torch::Tensor& state_y,    // [K, C, 2]
+    int threshold) {                 // per-section dispatch boundary
 
   TORCH_CHECK(x.is_cuda(), "sos_forward_cuda: input must be on CUDA");
   TORCH_CHECK(x.dim() == 2, "sos_forward_cuda: input must be [C, T]");
@@ -83,7 +85,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
     auto sy_s = new_sy[s];  // [C, 2]
 
     auto [y_s, nsx_s, nsy_s] = biquad_forward_cuda(
-        section_input, b0, b1, b2, a1, a2, sx_s, sy_s);
+        section_input, b0, b1, b2, a1, a2, sx_s, sy_s, threshold);
 
     new_sx[s] = nsx_s;
     new_sy[s] = nsy_s;

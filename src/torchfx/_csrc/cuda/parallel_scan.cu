@@ -331,7 +331,8 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
     const torch::Tensor& f,
     double a1,
     double a2,
-    const torch::Tensor& state) {
+    const torch::Tensor& state,
+    int threshold) {
 
   // Caller provides matching-dtype tensors; just ensure contiguity.
   auto f_cont = f.contiguous();
@@ -349,7 +350,7 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
     const scalar_t a1s = static_cast<scalar_t>(a1);
     const scalar_t a2s = static_cast<scalar_t>(a2);
 
-    if (T <= 2048) {
+    if (T <= threshold) {
       // Sequential kernel for short signals — multiple channels per block
       const int seq_blocks = (C + SEQ_THREADS_PER_BLOCK - 1) / SEQ_THREADS_PER_BLOCK;
       sequential_biquad_kernel<scalar_t><<<seq_blocks, SEQ_THREADS_PER_BLOCK>>>(

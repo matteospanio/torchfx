@@ -91,6 +91,7 @@ def biquad_forward(
     *,
     a1_f64: float | None = None,
     a2_f64: float | None = None,
+    threshold: int | None = None,
 ) -> tuple[Tensor, Tensor, Tensor]:
     """Dispatch biquad filter to native kernel.
 
@@ -102,8 +103,16 @@ def biquad_forward(
         Pre-extracted feedback coefficients as Python floats.  When supplied,
         avoids a ``float()`` call per forward — which on CUDA triggers a
         GPU→CPU synchronisation.
+    threshold : int, optional
+        Sequential-vs-parallel-scan boundary for the CUDA path (signals with
+        ``T <= threshold`` use the sequential kernel). Defaults to
+        :data:`PARALLEL_SCAN_THRESHOLD`. Pass ``0`` to force the parallel scan or
+        a large value to force the sequential kernel — used by the dispatch
+        crossover ablation. Ignored on CPU.
 
     """
+    if threshold is None:
+        threshold = PARALLEL_SCAN_THRESHOLD
     # Ensure state tensors exist
     C = x.shape[0] if x.ndim >= 2 else 1
     device = x.device
@@ -140,6 +149,7 @@ def biquad_forward(
         a2_f64,
         sx,
         sy,
+        threshold,
     )
     return result
 
@@ -151,6 +161,7 @@ def parallel_iir_forward(
     state_y: Tensor | None,
     *,
     sos_cpu: Tensor | None = None,
+    threshold: int | None = None,
 ) -> tuple[Tensor, Tensor, Tensor]:
     """Dispatch SOS cascade to native kernel.
 
@@ -163,8 +174,15 @@ def parallel_iir_forward(
         (float32 or float64). When supplied,
         avoids a per-call CUDA→CPU transfer that otherwise triggers a device
         synchronisation.
+    threshold : int, optional
+        Sequential-vs-parallel-scan boundary for the CUDA path (per section).
+        Defaults to :data:`PARALLEL_SCAN_THRESHOLD`. Pass ``0`` to force the
+        parallel scan or a large value to force the sequential kernel — used by
+        the dispatch crossover ablation. Ignored on CPU.
 
     """
+    if threshold is None:
+        threshold = PARALLEL_SCAN_THRESHOLD
     C = x.shape[0] if x.ndim >= 2 else 1
     K = sos.shape[0]
     device = x.device
@@ -203,6 +221,7 @@ def parallel_iir_forward(
         sos_cpu,
         sx,
         sy,
+        threshold,
     )
     return result
 
