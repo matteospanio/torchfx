@@ -37,7 +37,7 @@ class FusedSOSCascade(nn.Module):
 
     """
 
-    def __init__(self, *filters: IIR | Biquad) -> None:
+    def __init__(self, *filters: IIR | Biquad, gain: float = 1.0) -> None:
         super().__init__()
 
         if not filters:
@@ -71,8 +71,15 @@ class FusedSOSCascade(nn.Module):
                         f"Cannot fuse filters with different sample rates: {fs_val} vs {f.fs}"
                     )
 
-        # Concatenate all SOS sections: [K_total, 6]
+        # Concatenate all SOS sections: [K_total, 6]. torch.cat copies, so the
+        # source filters' coefficients are never mutated by the gain fold below.
         self._sos: Tensor = torch.cat(sos_parts, dim=0).to(dtype=torch.float64)
+        # Fold a static scalar gain (e.g. a `Gain` between fused filters) into the
+        # LAST section's numerator. A scalar commutes through the linear cascade, so
+        # this is exact; folding into the last section scales only the final output,
+        # avoiding any intermediate over/underflow the gain might otherwise cause.
+        if gain != 1.0:
+            self._sos[-1, :3] *= gain
         self._num_sections: int = self._sos.shape[0]
         self.fs: int | None = fs_val
 

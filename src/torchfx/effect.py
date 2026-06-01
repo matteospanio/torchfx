@@ -380,6 +380,33 @@ class Gain(FX):
 
         return waveform
 
+    def _linear_gain(self) -> float | None:
+        """Return the constant linear factor this gain multiplies by, else ``None``.
+
+        Used by the fusion planner to fold a static gain into an adjacent SOS
+        cascade (a scalar commutes through a linear filter). Returns ``None`` when
+        the gain is *not* a pure linear scale — i.e. when ``clamp=True``, which adds
+        a non-linear clip — so such gains are left as standalone stages.
+
+        Examples
+        --------
+        >>> import torchfx as fx
+        >>> fx.Gain(2.0)._linear_gain()
+        2.0
+        >>> fx.Gain(6.0, gain_type="db", clamp=True)._linear_gain() is None
+        True
+
+        """
+        if self.clamp:
+            return None
+        if self.gain_type == "amplitude":
+            return float(self.gain)
+        if self.gain_type == "db":
+            return float(10 ** (self.gain / 20)) if self.gain != 0 else 1.0
+        if self.gain_type == "power":
+            return float(10 ** (math.log10(self.gain) / 2)) if self.gain != 1 else 1.0
+        return None
+
 
 class Normalize(FX):
     r"""Normalize waveform amplitude to a target peak value using pluggable strategies.
