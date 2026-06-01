@@ -345,23 +345,29 @@ capture) is close but reverted** pending one more fix.*
   coefficients to the binding, so `b.cpu()` no longer issues a device→host sync that
   invalidated stream capture.
 
-**C1 diagnosis (the deep part), preserved in git history (f70a375, 97ff5c1):**
-- C3 fixed the capture-pool aliasing for shallow cascades: a **2-section cascade
-  replays streaming continuation EXACTLY (0.0 diff)**.
-- The input **is read live** and **state updates in place correctly** (verified:
-  post-replay state matches the new chunk's tail). The model's returned tensor lives
-  in the graph's private pool, so the output must be **copied into a persistent buffer
-  inside the captured region** (fix applied).
-- **Residual blocker:** a cascade-depth-dependent corruption remains — the 4-section
-  chain still replays ~39× wrong. Almost certainly the **small per-section
-  state-extraction allocations** (`narrow/flip/contiguous` for x-state, `cat` for
-  y-state) aliasing in the capture pool. **Next step: write those into persistent
-  state buffers too** (extend C3 to the state path), then C1 should pass.
-- The prize is measured and large: **~8× per-chunk replay speedup** (276 µs → 34 µs on
-  an RTX 3070), since the parallel scan is ~135 µs of pure launch overhead.
+**Bonus win from the C1 work:** making `sos_forward_cuda` fully allocation-free per
+forward (scratch reuse + writing per-section DF1 state directly into the persistent
+state buffers) cut the **eager** GPU streaming path **~27%** (276 → 202 µs/chunk for a
+4-section cascade). That is kept and verified independently of graphs.
 
-*Remaining sequencing: **extend C3 to the per-section state allocations → C1 (capture)
-→ C2 (pinned/async)**.*
+**C1 diagnosis (deep dive), preserved in git history (f70a375, 97ff5c1, bb78939):**
+- The graph **computes correctly on replay**: the input is read live and state advances
+  in place (verified: post-replay state == new chunk tail). Removing the per-section
+  scratch (C3) and the per-section state-extraction temps killed the ~39× corruption.
+- **Remaining blocker — output plumbing:** the model's *returned* tensor lives in the
+  graph's private pool, and even copying it into a persistent buffer inside the capture
+  does **not** surface the replayed output — the returned output is frozen across
+  replays while state correctly differs. A stubborn `torch.cuda.graph` + custom-op-return
+  interaction.
+- **Likely real fix:** give the SOS native op an explicit **output-buffer parameter** so
+  the graph writes into a stable, user-owned tensor (rather than returning a graph-pool
+  buffer). Larger change; that is the next step.
+- The prize is measured and large: **~6–8× per-chunk replay speedup** (≈34 µs vs
+  200–280 µs eager on an RTX 3070), since the parallel scan is ~135 µs of pure launch
+  overhead.
+
+*Remaining sequencing: **add an output-buffer param to sos_forward → C1 (capture) →
+C2 (pinned/async)**.*
 
 *Theme: the realtime path already has a worker-thread producer/consumer split and latency/xrun
 instrumentation (shipped in 0.6.0). This epic attacks the per-chunk overheads that eat the audio
