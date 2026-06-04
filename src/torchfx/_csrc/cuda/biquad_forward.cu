@@ -1,4 +1,5 @@
 #include <torch/torch.h>
+#include <cstdlib>
 #include "torchfx/parallel_scan.h"
 #include "torchfx/biquad_kernel.h"
 
@@ -91,6 +92,11 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
 
   torch::Tensor section_input = x_c;
 
+  // Opt-in fused per-section path (forcing folded into the scan). Read per call so
+  // tests can A/B against the 3-phase oracle within one process. Default: oracle.
+  const char* fused_env = std::getenv("TORCHFX_FUSED_SCAN");
+  const bool use_fused = (fused_env != nullptr && fused_env[0] == '1');
+
   // Process each SOS section sequentially, reusing the scratch buffers.
   for (int64_t s = 0; s < K; ++s) {
     // Extract all coefficients from CPU copy — no GPU sync needed.
@@ -108,8 +114,13 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
     // (sx_s / sy_s) first; the new state is written into the same buffers below,
     // after the reads, with no temporary allocation — so a captured CUDA graph sees
     // stable buffer addresses for the whole forward (no per-section allocs at all).
-    compute_forcing_into(section_input, b0, b1, b2, sx_s, f);
-    parallel_biquad_scan_into(f, a1, a2, sy_s, threshold, y_out, block_agg);
+    if (use_fused) {
+      fused_sos_scan_into(section_input, b0, b1, b2, a1, a2, sx_s, sy_s,
+                          threshold, y_out, f, block_agg);
+    } else {
+      compute_forcing_into(section_input, b0, b1, b2, sx_s, f);
+      parallel_biquad_scan_into(f, a1, a2, sy_s, threshold, y_out, block_agg);
+    }
 
     // New y-state = {y[-1], y[-2]} written in place into sy_s (after the scan read it).
     if (T >= 1) {

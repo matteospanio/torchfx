@@ -63,4 +63,20 @@ void parallel_biquad_scan_into(
     torch::Tensor& y_out,
     torch::Tensor& block_agg);
 
+// Fused per-section SOS path: the FIR forcing is folded into the scan so each
+// section is a single kernel launch (sequential branch done; parallel branch is
+// the single-pass decoupled-look-back scan). Reads ``state_x`` (forcing history)
+// and ``state_y`` (recurrence init); writes ``y_out``. ``f_scratch`` / ``block_agg``
+// are caller-owned reused buffers (the long-signal fallback still uses them).
+void fused_sos_scan_into(
+    const torch::Tensor& x,
+    double b0, double b1, double b2,
+    double a1, double a2,
+    const torch::Tensor& state_x,
+    const torch::Tensor& state_y,
+    int threshold,
+    torch::Tensor& y_out,
+    torch::Tensor& f_scratch,
+    torch::Tensor& block_agg);
+
 }  // namespace torchfx
