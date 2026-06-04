@@ -135,24 +135,28 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
       parallel_biquad_scan_into(f, a1, a2, sy_s, threshold, y_out, block_agg);
     }
 
-    // New y-state = {y[-1], y[-2]} written in place into sy_s (after the scan read it).
-    if (T >= 1) {
-      sy_s.select(1, 0).copy_(y_out.select(1, T - 1));
-      if (T >= 2) {
-        sy_s.select(1, 1).copy_(y_out.select(1, T - 2));
-      } else {
-        sy_s.select(1, 1).zero_();  // y[-2] = 0 for a single-sample chunk
+    // State update. The fused path updates sx_s/sy_s inside fused_sos_scan_into
+    // (one state_update_kernel launch); the oracle path does it here via copy_.
+    if (!use_fused) {
+      // New y-state = {y[-1], y[-2]} written in place into sy_s (after the scan read it).
+      if (T >= 1) {
+        sy_s.select(1, 0).copy_(y_out.select(1, T - 1));
+        if (T >= 2) {
+          sy_s.select(1, 1).copy_(y_out.select(1, T - 2));
+        } else {
+          sy_s.select(1, 1).zero_();  // y[-2] = 0 for a single-sample chunk
+        }
       }
-    }
 
-    // New x-state = {x[-1], x[-2]} of this section's input, written in place into sx_s
-    // (after compute_forcing read it). T == 0 leaves the state unchanged.
-    if (T >= 2) {
-      sx_s.select(1, 0).copy_(section_input.select(1, T - 1));
-      sx_s.select(1, 1).copy_(section_input.select(1, T - 2));
-    } else if (T == 1) {
-      sx_s.select(1, 1).copy_(sx_s.select(1, 0));  // x[-2] <- old x[-1]
-      sx_s.select(1, 0).copy_(section_input.select(1, 0));  // x[-1] <- x[0]
+      // New x-state = {x[-1], x[-2]} of this section's input, written in place into sx_s
+      // (after compute_forcing read it). T == 0 leaves the state unchanged.
+      if (T >= 2) {
+        sx_s.select(1, 0).copy_(section_input.select(1, T - 1));
+        sx_s.select(1, 1).copy_(section_input.select(1, T - 2));
+      } else if (T == 1) {
+        sx_s.select(1, 1).copy_(sx_s.select(1, 0));  // x[-2] <- old x[-1]
+        sx_s.select(1, 0).copy_(section_input.select(1, 0));  // x[-1] <- x[0]
+      }
     }
 
     section_input = y_out;

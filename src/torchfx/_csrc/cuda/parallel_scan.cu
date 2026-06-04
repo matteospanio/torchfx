@@ -402,6 +402,35 @@ __global__ void fused_scan_kernel(
 }
 
 // ============================================================
+// Fused state update: write the new DF1 state tails in one launch (one thread per
+// channel), replacing the per-section narrow/select/copy_ ops. Runs AFTER the scan
+// kernel (separate launch) so y_out / xin are complete — no race with the in-place
+// state buffers. Matches the 3-phase path's semantics exactly, including the T==1
+// edge (y[-2] := 0; x history shifts).
+// ============================================================
+template <typename scalar_t>
+__global__ void state_update_kernel(
+    const scalar_t* __restrict__ y,    // [C, T] this section's output
+    const scalar_t* __restrict__ xin,  // [C, T] this section's input
+    scalar_t* __restrict__ sx,         // [C, 2] in/out: {x[-1], x[-2]}
+    scalar_t* __restrict__ sy,         // [C, 2] in/out: {y[-1], y[-2]}
+    int T, int C) {
+  const int c = blockIdx.x * blockDim.x + threadIdx.x;
+  if (c >= C) return;
+  if (T >= 1) {
+    sy[c * 2 + 0] = y[c * T + (T - 1)];
+    sy[c * 2 + 1] = (T >= 2) ? y[c * T + (T - 2)] : scalar_t(0);
+  }
+  if (T >= 2) {
+    sx[c * 2 + 0] = xin[c * T + (T - 1)];
+    sx[c * 2 + 1] = xin[c * T + (T - 2)];
+  } else if (T == 1) {
+    sx[c * 2 + 1] = sx[c * 2 + 0];   // x[-2] <- old x[-1]
+    sx[c * 2 + 0] = xin[c * T + 0];  // x[-1] <- x[0]
+  }
+}
+
+// ============================================================
 // Custom CUDA kernel for 3-tap FIR with state prepend.
 // Fuses the cat + conv1d into a single kernel launch, eliminating
 // ~5 intermediate tensor operations and cuDNN dispatch overhead.
@@ -618,6 +647,17 @@ void fused_sos_scan_into(
           epoch, static_cast<int>(T), num_blocks);
     });
   }
+
+  // Fused state update (one launch, both branches): the caller skips its copy_ block.
+  // sx/sy share storage with the caller's persistent [K,C,2] state views, so this
+  // updates them in place after the scan has read the old state.
+  const int su_blocks = (static_cast<int>(C) + SEQ_THREADS_PER_BLOCK - 1) / SEQ_THREADS_PER_BLOCK;
+  AT_DISPATCH_FLOATING_TYPES(x_c.scalar_type(), "fused_state_update", [&] {
+    state_update_kernel<scalar_t><<<su_blocks, SEQ_THREADS_PER_BLOCK, 0, stream>>>(
+        y_out.data_ptr<scalar_t>(), x_c.data_ptr<scalar_t>(),
+        sx.data_ptr<scalar_t>(), sy.data_ptr<scalar_t>(),
+        static_cast<int>(T), static_cast<int>(C));
+  });
 }
 
 }  // namespace torchfx

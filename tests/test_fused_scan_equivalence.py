@@ -69,3 +69,18 @@ def test_fused_matches_oracle_and_scipy(dtype, k, c, threshold):
     ref = torch.tensor(sosfilt(sos_np, x.double().numpy(), axis=-1), dtype=dtype)
     stol = {"rtol": 2e-3, "atol": 2e-4} if dtype == torch.float32 else {"rtol": 1e-9, "atol": 1e-10}
     torch.testing.assert_close(fused.cpu(), ref, **stol)
+
+
+@pytest.mark.parametrize("t", [50_000, 131_072])
+def test_fused_scan_forward_progress_large_t(t):
+    """Many tiles (~98 and 256) stress the decoupled-look-back forward progress."""
+    k, c, dtype = 4, 2, torch.float64
+    g = torch.Generator().manual_seed(t)
+    x = torch.randn(c, t, generator=g, dtype=dtype)
+    sos_np = _cascade_sos(k)
+    sos = torch.tensor(sos_np, dtype=dtype, device="cuda")
+    xc = x.cuda()
+
+    oracle = _run(xc, sos, FORCE_PAR, fused=False)
+    fused = _run(xc, sos, FORCE_PAR, fused=True)
+    torch.testing.assert_close(fused, oracle, rtol=1e-12, atol=1e-13)
