@@ -1,7 +1,9 @@
 """Tests for CUDA kernel numerical accuracy.
 
 These tests compare the CUDA parallel prefix scan implementation against
-scipy.signal.lfilter to ensure numerical correctness.
+scipy.signal.sosfilt to ensure numerical correctness. Scipy-reference tests use float64
+input to isolate kernel correctness from float32 precision; the FP32 GPU path is
+validated separately in test_fp32_precision.
 
 """
 
@@ -10,10 +12,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import torch
-from scipy.signal import butter, cheby1, lfilter, sosfilt, tf2sos
+from scipy.signal import butter, sosfilt
 
-from torchfx.filter import LoButterworth, HiButterworth, LoChebyshev1
-from torchfx.filter.biquad import BiquadLPF, BiquadHPF
+from torchfx.filter import LoButterworth, LoChebyshev1
+from torchfx.filter.biquad import BiquadHPF, BiquadLPF
 from torchfx.filter.filterbank import LogFilterBank
 
 # Skip all tests if CUDA is not available
@@ -33,36 +35,37 @@ class TestBiquadCUDA:
     """Test single biquad filter accuracy on CUDA."""
 
     def test_biquad_lpf_matches_scipy(self):
-        """CUDA biquad LPF output matches scipy.signal.lfilter."""
-        b_scipy, a_scipy = butter(2, 0.1)
+        """CUDA biquad LPF kernel (FP64) matches scipy.sosfilt on the same SOS.
+
+        Uses float64 input so this isolates kernel correctness from float32 precision
+        (the FP32 path is validated separately in test_fp32_precision). The reference
+        applies the filter's *own* SOS, not a separately designed Butterworth, so a
+        design mismatch cannot masquerade as a kernel error.
+
+        """
         x_np = np.random.randn(1, SAMPLE_RATE).astype(np.float64)
-        y_ref = lfilter(b_scipy, a_scipy, x_np)
 
         filt = BiquadLPF(cutoff=0.1 * SAMPLE_RATE / 2, q=0.707, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.to("cuda")
+        y_ref = sosfilt(filt._sos.cpu().numpy(), x_np, axis=-1)
 
-        x_cuda = torch.from_numpy(x_np).float().cuda()
+        x_cuda = torch.from_numpy(x_np).double().cuda()
         y_cuda = filt(x_cuda)
 
         np.testing.assert_allclose(y_cuda.cpu().numpy(), y_ref, atol=ATOL, rtol=RTOL)
 
     def test_biquad_hpf_matches_scipy(self):
-        """CUDA biquad HPF output matches scipy.signal.lfilter."""
-        b_scipy, a_scipy = butter(2, 0.3, btype="high")
+        """CUDA biquad HPF kernel (FP64) matches scipy.sosfilt on the same SOS."""
         x_np = np.random.randn(2, SAMPLE_RATE).astype(np.float64)
 
         filt = BiquadHPF(cutoff=0.3 * SAMPLE_RATE / 2, q=0.707, fs=SAMPLE_RATE)
         filt.compute_coefficients()
-        filt.to("cuda")
+        y_ref = sosfilt(filt._sos.cpu().numpy(), x_np, axis=-1)
 
-        x_cuda = torch.from_numpy(x_np).float().cuda()
+        x_cuda = torch.from_numpy(x_np).double().cuda()
         y_cuda = filt(x_cuda)
 
-        # Compare per-channel against scipy
-        for c in range(2):
-            y_ref = lfilter(b_scipy, a_scipy, x_np[c])
-            np.testing.assert_allclose(y_cuda[c].cpu().numpy(), y_ref, atol=ATOL, rtol=RTOL)
+        np.testing.assert_allclose(y_cuda.cpu().numpy(), y_ref, atol=ATOL, rtol=RTOL)
 
     @pytest.mark.parametrize("T", [100, 1024, 4096, 44100])
     def test_various_lengths(self, T):
@@ -94,7 +97,13 @@ class TestSOSCascadeCUDA:
     """Test SOS cascade (higher-order IIR) accuracy on CUDA."""
 
     def test_butterworth_4th_order(self):
-        """4th-order Butterworth matches scipy.signal.sosfilt."""
+        """4th-order Butterworth kernel (FP64) matches scipy.signal.sosfilt.
+
+        Float64 input isolates kernel correctness from float32 precision (the FP32 path
+        is validated in test_fp32_precision); the previous float32 input made the 1e-4
+        comparison latently flaky across random draws.
+
+        """
         sos_scipy = butter(4, 0.2, output="sos")
         x_np = np.random.randn(1, SAMPLE_RATE).astype(np.float64)
         y_ref = sosfilt(sos_scipy, x_np)
@@ -103,7 +112,7 @@ class TestSOSCascadeCUDA:
         filt.compute_coefficients()
         filt.to("cuda")
 
-        x_cuda = torch.from_numpy(x_np).float().cuda()
+        x_cuda = torch.from_numpy(x_np).double().cuda()
         y_cuda = filt(x_cuda)
 
         np.testing.assert_allclose(y_cuda.cpu().numpy(), y_ref, atol=ATOL, rtol=RTOL)

@@ -112,7 +112,10 @@ def _sos_cascade_forward(
 
     orig_shape = x.shape
     out_dtype = x.dtype
-    native_dtype = torch.float64 if x.is_cuda or x.dtype == torch.float64 else torch.float32
+    # Native execution dtype follows the input on both CPU and CUDA: float32 in
+    # runs the FP32 kernels, float64 in runs FP64. (Keep in sync with
+    # torchfx._ops._select_native_dtype.)
+    native_dtype = torch.float64 if x.dtype == torch.float64 else torch.float32
     device = x.device
 
     # Normalize to [C, T]
@@ -156,8 +159,8 @@ def _sos_cascade_forward(
 
         out, state_x_0, state_y_0 = biquad_forward(
             x,
-            sos[0, :3],  # b on device
-            sos[0, 3:],  # a on device (only used if a1/a2 floats missing)
+            sos_canonical[0, :3],  # b on CPU — avoids a device->host sync in the
+            sos_canonical[0, 3:],  # binding (which would break CUDA-graph capture)
             state_x[0],
             state_y[0],
             a1_f64=a1_f64,
@@ -238,6 +241,8 @@ class IIR(AbstractFilter):
         # Per-section, per-channel DF1 state: [num_sections, C, 2] for x and y
         self._state_x: Tensor | None = None
         self._state_y: Tensor | None = None
+        # Sampling rate the cached coefficients were designed for (see forward).
+        self._coeff_fs: int | None = None
 
     @override
     @torch.no_grad()
@@ -245,9 +250,16 @@ class IIR(AbstractFilter):
         if self.fs is None:
             raise ValueError(NONE_FS_ERR)
 
-        if self._sos is None:
+        # Recompute when coefficients are missing or were designed for a
+        # different sampling rate. Without the fs check, a filter reused across
+        # sample rates would silently apply stale coefficients.
+        if self._sos is None or self.fs != self._coeff_fs:
             self.compute_coefficients()
+            self._coeff_fs = self.fs
             self._sos_device_cache = None  # invalidate after recomputation
+            # Coefficients changed: accumulated DF1 state no longer matches.
+            self._state_x = None
+            self._state_y = None
 
         assert self._sos is not None
         result, self._sos_device_cache, self._state_x, self._state_y = _sos_cascade_forward(

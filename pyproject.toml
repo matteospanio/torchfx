@@ -1,6 +1,6 @@
 [project]
 name = "torchfx"
-version = "0.5.4"
+version = "0.6.0"
 description = "A GPU accelerated library for audio DSP based on PyTorch"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -205,6 +205,14 @@ dev = [
     # benchmarks in benchmarks/test_design_benchmarks.py.
     "scipy>=1.15.2",
     "scipy-stubs>=1.15.3.0",
+    # torchaudio is an optional comparator for the IS2 2026 benchmark suite
+    # (benchmarks/test_torchaudio_bench.py). It is not used by the library
+    # itself; if missing, the comparator benchmarks skip gracefully.
+    # Upper-bound matches the major.minor of the project's pinned torch so
+    # that torchaudio's bundled CUDA artefacts (libcudart.so.X) match the
+    # torch ABI; torchaudio 2.11+ requires CUDA 13 runtime which is not
+    # the project default.
+    "torchaudio>=2.6.0,<2.11",
 ]
 realtime = [
     "sounddevice>=0.4.6",

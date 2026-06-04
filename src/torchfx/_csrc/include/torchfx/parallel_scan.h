@@ -26,14 +26,41 @@ torch::Tensor compute_forcing(
     double b0, double b1, double b2,
     const torch::Tensor& state_x);
 
+// In-place variant: write the forcing into a caller-provided [C, T] buffer instead
+// of allocating. Used by the cascade to reuse one scratch buffer across all
+// sections (no per-section allocation), which keeps the kernel sequence and its
+// buffer addresses stable for CUDA graph capture.
+void compute_forcing_into(
+    const torch::Tensor& x,
+    double b0, double b1, double b2,
+    const torch::Tensor& state_x,
+    torch::Tensor& f_out);
+
 // Parallel biquad via prefix scan.
 // Input:  f [C, T] (precomputed forcing), a1, a2 (feedback coefficients),
-//         state [C, 2] = {y[-1], y[-2]} per channel
+//         state [C, 2] = {y[-1], y[-2]} per channel,
+//         threshold: signals with T <= threshold use the sequential kernel;
+//         longer signals use the work-efficient parallel scan.
 // Output: y [C, T], updated state [C, 2]
 std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
     const torch::Tensor& f,
     double a1,
     double a2,
-    const torch::Tensor& state);
+    const torch::Tensor& state,
+    int threshold);
+
+// In-place variant: write the scan output into caller-provided ``y_out`` [C, T] and
+// use caller-provided ``block_agg`` scratch (sized >= C*ceil(T/512)*6, ignored on the
+// sequential branch). Does NOT extract the new state — the caller reads it from
+// ``y_out`` (in place for the cascade). Lets the cascade reuse one set of scratch
+// buffers across sections so capture sees stable buffer addresses.
+void parallel_biquad_scan_into(
+    const torch::Tensor& f,
+    double a1,
+    double a2,
+    const torch::Tensor& state,
+    int threshold,
+    torch::Tensor& y_out,
+    torch::Tensor& block_agg);
 
 }  // namespace torchfx

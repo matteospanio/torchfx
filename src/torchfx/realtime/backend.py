@@ -30,7 +30,7 @@ from __future__ import annotations
 import abc
 import enum
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from torch import Tensor
@@ -54,14 +54,71 @@ class StreamState(enum.Enum):
     ERROR = "error"
 
 
+@dataclass(frozen=True)
+class BackendStatus:
+    """Per-callback status flags reported by the audio backend.
+
+    Backends populate this dataclass when invoking the audio callback to
+    surface conditions that ``RealtimeProcessor`` needs in order to track
+    xruns and reason about realtime correctness.
+
+    Attributes
+    ----------
+    input_overflow : bool
+        Backend dropped input frames before the callback ran. Set when
+        PortAudio reports ``paInputOverflow``.
+    output_underflow : bool
+        Backend ran out of output frames after the previous callback. Set
+        when PortAudio reports ``paOutputUnderflow``.
+    input_underflow : bool
+        Input stream produced fewer frames than requested (rare).
+    output_overflow : bool
+        Output stream had unconsumed frames (rare).
+    priming_output : bool
+        Backend is priming the output stream and supplied no real input
+        (PortAudio's ``paPrimingOutput``).
+    extra : dict
+        Backend-specific extra flags.
+
+    Examples
+    --------
+    >>> from torchfx.realtime.backend import BackendStatus
+    >>> s = BackendStatus(input_overflow=True)
+    >>> s.has_xrun
+    True
+
+    """
+
+    input_overflow: bool = False
+    output_underflow: bool = False
+    input_underflow: bool = False
+    output_overflow: bool = False
+    priming_output: bool = False
+    extra: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def has_xrun(self) -> bool:
+        """Whether any xrun-type condition is set."""
+        return (
+            self.input_overflow
+            or self.output_underflow
+            or self.input_underflow
+            or self.output_overflow
+        )
+
+
 # Type alias for the audio callback function.
 #
-# Signature: ``callback(input_data, output_data, frame_count) -> None``
+# Signature: ``callback(input_data, output_data, frame_count, status=None) -> None``
 #
 # - ``input_data``: shape ``(channels_in, buffer_size)`` or empty tensor
 # - ``output_data``: shape ``(channels_out, buffer_size)`` -- write processed audio here
 # - ``frame_count``: number of frames in this callback
-AudioCallback = Callable[[Tensor, Tensor, int], None]
+# - ``status``: optional ``BackendStatus`` populated by the backend
+#
+# The ``status`` argument is optional so existing single-callback callers and
+# backends continue to work; new backends should always pass it.
+AudioCallback = Callable[..., None]
 
 
 @dataclass(frozen=True)

@@ -50,10 +50,12 @@ File stream processing (no optional dependencies):
 from torchfx.realtime.backend import (
     AudioBackend,
     AudioCallback,
+    BackendStatus,
     StreamConfig,
     StreamDirection,
     StreamState,
 )
+from torchfx.realtime.cuda_graph import CudaGraphRunner
 from torchfx.realtime.exceptions import (
     BackendNotAvailableError,
     BufferOverrunError,
@@ -84,12 +86,14 @@ __all__ = [
     # Core
     "AudioBackend",
     "AudioCallback",
+    "BackendStatus",
     "StreamConfig",
     "StreamDirection",
     "StreamState",
     "TensorRingBuffer",
     "RealtimeProcessor",
     "StreamProcessor",
+    "CudaGraphRunner",
     # Optional backends
     "SoundDeviceBackend",
     # Exceptions

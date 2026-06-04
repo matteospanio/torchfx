@@ -1,6 +1,7 @@
 #include <torch/torch.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <c10/cuda/CUDAStream.h>
 #include "torchfx/parallel_scan.h"
 
 // Parallel prefix scan for biquad IIR filtering.
@@ -17,28 +18,37 @@
 //
 // Optimization: Since the bottom row is always [0, 0, 1], we only store
 // and multiply the 2x3 top portion (6 elements per matrix).
+//
+// Kernels are templated on ``scalar_t`` (float or double): the host entry
+// points dispatch on the input tensor's dtype via AT_DISPATCH_FLOATING_TYPES,
+// so a float32 input runs the FP32 path natively instead of being upcast to
+// float64. The scalar coefficients arrive as ``double`` (host constants) and
+// are cast to ``scalar_t`` at launch.
 
 namespace torchfx {
 
 // A "reduced" 3x3 matrix where row 2 = [0, 0, 1].
-// We store rows 0 and 1 as 6 doubles.
+// We store rows 0 and 1 as 6 elements.
+// Layout: m[0]=r0c0, m[1]=r0c1, m[2]=r0c2,
+//         m[3]=r1c0, m[4]=r1c1, m[5]=r1c2
+template <typename scalar_t>
 struct Mat3x3 {
-  double m[6];
-  // Layout: m[0]=r0c0, m[1]=r0c1, m[2]=r0c2,
-  //         m[3]=r1c0, m[4]=r1c1, m[5]=r1c2
+  scalar_t m[6];
 };
 
-__device__ __forceinline__ Mat3x3 mat_identity() {
-  Mat3x3 I;
-  I.m[0] = 1.0; I.m[1] = 0.0; I.m[2] = 0.0;
-  I.m[3] = 0.0; I.m[4] = 1.0; I.m[5] = 0.0;
+template <typename scalar_t>
+__device__ __forceinline__ Mat3x3<scalar_t> mat_identity() {
+  Mat3x3<scalar_t> I;
+  I.m[0] = scalar_t(1); I.m[1] = scalar_t(0); I.m[2] = scalar_t(0);
+  I.m[3] = scalar_t(0); I.m[4] = scalar_t(1); I.m[5] = scalar_t(0);
   return I;
 }
 
 // Multiply A * B where both have implicit row 2 = [0, 0, 1].
 // Result also has implicit row 2 = [0, 0, 1].
-__device__ __forceinline__ Mat3x3 mat_mul(const Mat3x3& A, const Mat3x3& B) {
-  Mat3x3 R;
+template <typename scalar_t>
+__device__ __forceinline__ Mat3x3<scalar_t> mat_mul(const Mat3x3<scalar_t>& A, const Mat3x3<scalar_t>& B) {
+  Mat3x3<scalar_t> R;
   R.m[0] = A.m[0]*B.m[0] + A.m[1]*B.m[3];
   R.m[1] = A.m[0]*B.m[1] + A.m[1]*B.m[4];
   R.m[2] = A.m[0]*B.m[2] + A.m[1]*B.m[5] + A.m[2];
@@ -51,7 +61,8 @@ __device__ __forceinline__ Mat3x3 mat_mul(const Mat3x3& A, const Mat3x3& B) {
 
 // Extract y[n] = P[0]*state[0] + P[1]*state[1] + P[2]
 // where state = [y[-1], y[-2]] and the implicit 1 contributes P[2].
-__device__ __forceinline__ double extract_y(const Mat3x3& P, double y_m1, double y_m2) {
+template <typename scalar_t>
+__device__ __forceinline__ scalar_t extract_y(const Mat3x3<scalar_t>& P, scalar_t y_m1, scalar_t y_m2) {
   return P.m[0]*y_m1 + P.m[1]*y_m2 + P.m[2];
 }
 
@@ -67,7 +78,8 @@ constexpr int LOG2_BLOCK = 9;  // log2(512)
 // Output: sdata[tid] contains inclusive prefix product M[tid]*...*M[0].
 // original: the element at this thread's position (saved before scan modifies sdata).
 // Returns: the block's total product (valid for all threads after final sync).
-__device__ Mat3x3 blelloch_inclusive_scan(Mat3x3* sdata, const Mat3x3& original, int tid) {
+template <typename scalar_t>
+__device__ Mat3x3<scalar_t> blelloch_inclusive_scan(Mat3x3<scalar_t>* sdata, const Mat3x3<scalar_t>& original, int tid) {
 
   // ---- Up-sweep (reduce) ----
   for (int d = 0; d < LOG2_BLOCK; d++) {
@@ -77,17 +89,17 @@ __device__ Mat3x3 blelloch_inclusive_scan(Mat3x3* sdata, const Mat3x3& original,
     if (tid < num_active) {
       int right = (tid + 1) * stride - 1;
       int left = right - half;
-      sdata[right] = mat_mul(sdata[right], sdata[left]);
+      sdata[right] = mat_mul<scalar_t>(sdata[right], sdata[left]);
     }
     __syncthreads();
   }
 
   // Save block aggregate (total product) before down-sweep clobbers it
-  Mat3x3 block_total = sdata[BLOCK_SIZE - 1];
+  Mat3x3<scalar_t> block_total = sdata[BLOCK_SIZE - 1];
 
   // ---- Set root to identity for exclusive scan ----
   if (tid == 0) {
-    sdata[BLOCK_SIZE - 1] = mat_identity();
+    sdata[BLOCK_SIZE - 1] = mat_identity<scalar_t>();
   }
   __syncthreads();
 
@@ -99,27 +111,28 @@ __device__ Mat3x3 blelloch_inclusive_scan(Mat3x3* sdata, const Mat3x3& original,
     if (tid < num_active) {
       int right = (tid + 1) * stride - 1;
       int left = right - half;
-      Mat3x3 temp = sdata[left];
+      Mat3x3<scalar_t> temp = sdata[left];
       sdata[left] = sdata[right];
-      sdata[right] = mat_mul(temp, sdata[right]);
+      sdata[right] = mat_mul<scalar_t>(temp, sdata[right]);
     }
     __syncthreads();
   }
 
   // ---- Convert exclusive → inclusive ----
   // exclusive[i] = M[i-1]*...*M[0], inclusive[i] = M[i] * exclusive[i]
-  sdata[tid] = mat_mul(original, sdata[tid]);
+  sdata[tid] = mat_mul<scalar_t>(original, sdata[tid]);
   __syncthreads();
 
   return block_total;
 }
 
+template <typename scalar_t>
 __global__ void prefix_scan_phase1(
-    const double* __restrict__ f,        // [C, T] forcing function
-    double* __restrict__ y,              // [C, T] output
-    Mat3x3* __restrict__ block_agg,      // [C, num_blocks] per-block aggregate
-    const double* __restrict__ state,    // [C, 2] initial state {y[-1], y[-2]}
-    double a1, double a2,
+    const scalar_t* __restrict__ f,        // [C, T] forcing function
+    scalar_t* __restrict__ y,              // [C, T] output
+    Mat3x3<scalar_t>* __restrict__ block_agg,  // [C, num_blocks] per-block aggregate
+    const scalar_t* __restrict__ state,    // [C, 2] initial state {y[-1], y[-2]}
+    scalar_t a1, scalar_t a2,
     int T, int num_blocks) {
 
   const int channel = blockIdx.y;
@@ -127,22 +140,22 @@ __global__ void prefix_scan_phase1(
   const int tid = threadIdx.x;
   const int global_n = block_id * BLOCK_SIZE + tid;
 
-  __shared__ Mat3x3 sdata[BLOCK_SIZE];
+  __shared__ Mat3x3<scalar_t> sdata[BLOCK_SIZE];
 
   // Build per-sample matrix or identity if out of range
-  Mat3x3 my_mat;
+  Mat3x3<scalar_t> my_mat;
   if (global_n < T) {
-    double fn = f[channel * T + global_n];
+    scalar_t fn = f[channel * T + global_n];
     my_mat.m[0] = -a1; my_mat.m[1] = -a2; my_mat.m[2] = fn;
-    my_mat.m[3] = 1.0; my_mat.m[4] = 0.0; my_mat.m[5] = 0.0;
+    my_mat.m[3] = scalar_t(1); my_mat.m[4] = scalar_t(0); my_mat.m[5] = scalar_t(0);
   } else {
-    my_mat = mat_identity();
+    my_mat = mat_identity<scalar_t>();
   }
 
   sdata[tid] = my_mat;
   __syncthreads();
 
-  Mat3x3 block_total = blelloch_inclusive_scan(sdata, my_mat, tid);
+  Mat3x3<scalar_t> block_total = blelloch_inclusive_scan<scalar_t>(sdata, my_mat, tid);
 
   // Store block aggregate
   if (tid == 0) {
@@ -151,15 +164,16 @@ __global__ void prefix_scan_phase1(
 
   // For the first block, compute y directly using initial state
   if (block_id == 0 && global_n < T) {
-    double y_m1 = state[channel * 2 + 0];
-    double y_m2 = state[channel * 2 + 1];
-    double yn = extract_y(sdata[tid], y_m1, y_m2);
+    scalar_t y_m1 = state[channel * 2 + 0];
+    scalar_t y_m2 = state[channel * 2 + 1];
+    scalar_t yn = extract_y<scalar_t>(sdata[tid], y_m1, y_m2);
     y[channel * T + global_n] = yn;
   }
 }
 
+template <typename scalar_t>
 __global__ void prefix_scan_phase2(
-    Mat3x3* __restrict__ block_agg,  // [C, num_blocks] -- modified in-place
+    Mat3x3<scalar_t>* __restrict__ block_agg,  // [C, num_blocks] -- modified in-place
     int num_blocks) {
   // Sequential scan over block aggregates (num_blocks is typically small).
   // Each channel is handled by one thread.
@@ -169,16 +183,17 @@ __global__ void prefix_scan_phase2(
   for (int i = 1; i < num_blocks; ++i) {
     int idx = channel * num_blocks + i;
     int prev = channel * num_blocks + i - 1;
-    block_agg[idx] = mat_mul(block_agg[idx], block_agg[prev]);
+    block_agg[idx] = mat_mul<scalar_t>(block_agg[idx], block_agg[prev]);
   }
 }
 
+template <typename scalar_t>
 __global__ void prefix_scan_phase3(
-    const double* __restrict__ f,
-    double* __restrict__ y,
-    const Mat3x3* __restrict__ block_agg,
-    const double* __restrict__ state,
-    double a1, double a2,
+    const scalar_t* __restrict__ f,
+    scalar_t* __restrict__ y,
+    const Mat3x3<scalar_t>* __restrict__ block_agg,
+    const scalar_t* __restrict__ state,
+    scalar_t a1, scalar_t a2,
     int T, int num_blocks) {
 
   // For blocks > 0: recompute intra-block scan and apply inter-block prefix.
@@ -190,27 +205,27 @@ __global__ void prefix_scan_phase3(
   if (block_id == 0) return;  // Already computed in phase 1
   if (global_n >= T) return;
 
-  __shared__ Mat3x3 sdata[BLOCK_SIZE];
+  __shared__ Mat3x3<scalar_t> sdata[BLOCK_SIZE];
 
   // Rebuild per-sample matrix
-  double fn = f[channel * T + global_n];
-  Mat3x3 my_mat;
+  scalar_t fn = f[channel * T + global_n];
+  Mat3x3<scalar_t> my_mat;
   my_mat.m[0] = -a1; my_mat.m[1] = -a2; my_mat.m[2] = fn;
-  my_mat.m[3] = 1.0; my_mat.m[4] = 0.0; my_mat.m[5] = 0.0;
+  my_mat.m[3] = scalar_t(1); my_mat.m[4] = scalar_t(0); my_mat.m[5] = scalar_t(0);
 
   sdata[tid] = my_mat;
   __syncthreads();
 
-  blelloch_inclusive_scan(sdata, my_mat, tid);
+  blelloch_inclusive_scan<scalar_t>(sdata, my_mat, tid);
 
   // Compose with inter-block prefix: P_total = intra_prefix * inter_prefix
   // inter_prefix for block k = block_agg[k-1] (inclusive prefix of all previous blocks)
-  Mat3x3 inter_prefix = block_agg[channel * num_blocks + block_id - 1];
-  Mat3x3 total_prefix = mat_mul(sdata[tid], inter_prefix);
+  Mat3x3<scalar_t> inter_prefix = block_agg[channel * num_blocks + block_id - 1];
+  Mat3x3<scalar_t> total_prefix = mat_mul<scalar_t>(sdata[tid], inter_prefix);
 
-  double y_m1 = state[channel * 2 + 0];
-  double y_m2 = state[channel * 2 + 1];
-  double yn = extract_y(total_prefix, y_m1, y_m2);
+  scalar_t y_m1 = state[channel * 2 + 0];
+  scalar_t y_m2 = state[channel * 2 + 1];
+  scalar_t yn = extract_y<scalar_t>(total_prefix, y_m1, y_m2);
   y[channel * T + global_n] = yn;
 }
 
@@ -221,22 +236,23 @@ __global__ void prefix_scan_phase3(
 
 constexpr int SEQ_THREADS_PER_BLOCK = 128;
 
+template <typename scalar_t>
 __global__ void sequential_biquad_kernel(
-    const double* __restrict__ f,
-    double* __restrict__ y,
-    const double* __restrict__ state,
-    double a1, double a2,
+    const scalar_t* __restrict__ f,
+    scalar_t* __restrict__ y,
+    const scalar_t* __restrict__ state,
+    scalar_t a1, scalar_t a2,
     int T, int C) {
 
   const int channel = blockIdx.x * blockDim.x + threadIdx.x;
   if (channel >= C) return;
 
-  double y_m1 = state[channel * 2 + 0];
-  double y_m2 = state[channel * 2 + 1];
+  scalar_t y_m1 = state[channel * 2 + 0];
+  scalar_t y_m2 = state[channel * 2 + 1];
 
   for (int n = 0; n < T; ++n) {
-    double fn = f[channel * T + n];
-    double yn = fn - a1 * y_m1 - a2 * y_m2;
+    scalar_t fn = f[channel * T + n];
+    scalar_t yn = fn - a1 * y_m1 - a2 * y_m2;
     y[channel * T + n] = yn;
     y_m2 = y_m1;
     y_m1 = yn;
@@ -244,17 +260,16 @@ __global__ void sequential_biquad_kernel(
 }
 
 // ============================================================
-// Public API
-// ============================================================
-
 // Custom CUDA kernel for 3-tap FIR with state prepend.
 // Fuses the cat + conv1d into a single kernel launch, eliminating
 // ~5 intermediate tensor operations and cuDNN dispatch overhead.
+// ============================================================
+template <typename scalar_t>
 __global__ void forcing_kernel(
-    const double* __restrict__ x,     // [C, T]
-    const double* __restrict__ sx,    // [C, 2] = {x[-1], x[-2]}
-    double b0, double b1, double b2,
-    double* __restrict__ f,           // [C, T]
+    const scalar_t* __restrict__ x,     // [C, T]
+    const scalar_t* __restrict__ sx,    // [C, 2] = {x[-1], x[-2]}
+    scalar_t b0, scalar_t b1, scalar_t b2,
+    scalar_t* __restrict__ f,           // [C, T]
     int T, int total_elements) {
 
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -263,8 +278,8 @@ __global__ void forcing_kernel(
   const int c = idx / T;
   const int n = idx % T;
 
-  const double xn = x[c * T + n];
-  double xn_1, xn_2;
+  const scalar_t xn = x[c * T + n];
+  scalar_t xn_1, xn_2;
 
   if (n >= 2) {
     xn_1 = x[c * T + n - 1];
@@ -280,10 +295,15 @@ __global__ void forcing_kernel(
   f[c * T + n] = b0 * xn + b1 * xn_1 + b2 * xn_2;
 }
 
-torch::Tensor compute_forcing(
+// ============================================================
+// Public API (host)
+// ============================================================
+
+void compute_forcing_into(
     const torch::Tensor& x,
     double b0, double b1, double b2,
-    const torch::Tensor& state_x) {
+    const torch::Tensor& state_x,
+    torch::Tensor& f_out) {
   // f[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] with state prepend for n=0,1.
   auto x_cont = x.contiguous();
   auto sx_cont = state_x.contiguous();
@@ -292,74 +312,109 @@ torch::Tensor compute_forcing(
   const int64_t T = x_cont.size(1);
   const int total = static_cast<int>(C * T);
 
-  auto f = torch::empty({C, T}, x_cont.options());
-
   constexpr int THREADS = 256;
   const int blocks = (total + THREADS - 1) / THREADS;
-  forcing_kernel<<<blocks, THREADS>>>(
-      x_cont.data_ptr<double>(),
-      sx_cont.data_ptr<double>(),
-      b0, b1, b2,
-      f.data_ptr<double>(),
-      static_cast<int>(T), total);
 
+  // Launch on the current stream (not the default stream) so the kernels are
+  // recorded under torch.cuda.graph capture, which runs on a side stream.
+  const auto stream = c10::cuda::getCurrentCUDAStream();
+
+  AT_DISPATCH_FLOATING_TYPES(x_cont.scalar_type(), "compute_forcing", [&] {
+    forcing_kernel<scalar_t><<<blocks, THREADS, 0, stream>>>(
+        x_cont.data_ptr<scalar_t>(),
+        sx_cont.data_ptr<scalar_t>(),
+        static_cast<scalar_t>(b0), static_cast<scalar_t>(b1), static_cast<scalar_t>(b2),
+        f_out.data_ptr<scalar_t>(),
+        static_cast<int>(T), total);
+  });
+}
+
+torch::Tensor compute_forcing(
+    const torch::Tensor& x,
+    double b0, double b1, double b2,
+    const torch::Tensor& state_x) {
+  auto f = torch::empty({x.size(0), x.size(1)}, x.options());
+  compute_forcing_into(x, b0, b1, b2, state_x, f);
   return f;
 }
 
-std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
+void parallel_biquad_scan_into(
     const torch::Tensor& f,
     double a1,
     double a2,
-    const torch::Tensor& state) {
+    const torch::Tensor& state,
+    int threshold,
+    torch::Tensor& y_out,
+    torch::Tensor& block_agg) {
 
-  // Caller already provides float64 tensors; just ensure contiguity.
+  // Caller provides matching-dtype tensors; just ensure contiguity.
   auto f_cont = f.contiguous();
   auto state_cont = state.contiguous();
 
   const int64_t C = f_cont.size(0);
   const int64_t T = f_cont.size(1);
 
-  auto y = torch::empty({C, T}, f_cont.options());
+  // Launch on the current stream (not the default stream) so the kernels are
+  // recorded under torch.cuda.graph capture, which runs on a side stream.
+  const auto stream = c10::cuda::getCurrentCUDAStream();
 
-  const double* f_ptr = f_cont.data_ptr<double>();
-  double* y_ptr = y.data_ptr<double>();
-  const double* state_ptr = state_cont.data_ptr<double>();
+  AT_DISPATCH_FLOATING_TYPES(f_cont.scalar_type(), "parallel_biquad_scan", [&] {
+    const scalar_t* f_ptr = f_cont.data_ptr<scalar_t>();
+    scalar_t* y_ptr = y_out.data_ptr<scalar_t>();
+    const scalar_t* state_ptr = state_cont.data_ptr<scalar_t>();
+    const scalar_t a1s = static_cast<scalar_t>(a1);
+    const scalar_t a2s = static_cast<scalar_t>(a2);
 
-  if (T <= 2048) {
-    // Sequential kernel for short signals — multiple channels per block
-    const int seq_blocks = (C + SEQ_THREADS_PER_BLOCK - 1) / SEQ_THREADS_PER_BLOCK;
-    sequential_biquad_kernel<<<seq_blocks, SEQ_THREADS_PER_BLOCK>>>(
-        f_ptr, y_ptr, state_ptr, a1, a2, T, C);
-  } else {
-    const int num_blocks = (T + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    if (T <= threshold) {
+      // Sequential kernel for short signals — multiple channels per block
+      const int seq_blocks = (C + SEQ_THREADS_PER_BLOCK - 1) / SEQ_THREADS_PER_BLOCK;
+      sequential_biquad_kernel<scalar_t><<<seq_blocks, SEQ_THREADS_PER_BLOCK, 0, stream>>>(
+          f_ptr, y_ptr, state_ptr, a1s, a2s, static_cast<int>(T), static_cast<int>(C));
+    } else {
+      const int num_blocks = (T + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-    // Allocate block aggregates
-    auto block_agg = torch::empty({C * num_blocks * 6}, torch::dtype(torch::kFloat64).device(f.device()));
-    Mat3x3* agg_ptr = reinterpret_cast<Mat3x3*>(block_agg.data_ptr<double>());
+      // Caller-provided block aggregates: C * num_blocks reduced 3x3 matrices
+      // (6 scalars each), in the input dtype so the FP32 path stays FP32.
+      Mat3x3<scalar_t>* agg_ptr = reinterpret_cast<Mat3x3<scalar_t>*>(block_agg.data_ptr<scalar_t>());
 
-    // Phase 1: intra-block scan + store aggregates
-    dim3 grid1(num_blocks, C);
-    prefix_scan_phase1<<<grid1, BLOCK_SIZE>>>(
-        f_ptr, y_ptr, agg_ptr, state_ptr, a1, a2, T, num_blocks);
+      // Phase 1: intra-block scan + store aggregates
+      dim3 grid1(num_blocks, C);
+      prefix_scan_phase1<scalar_t><<<grid1, BLOCK_SIZE, 0, stream>>>(
+          f_ptr, y_ptr, agg_ptr, state_ptr, a1s, a2s, static_cast<int>(T), num_blocks);
 
-    // Phase 2: scan over block aggregates (sequential, one thread per channel)
-    const int threads_p2 = std::min(static_cast<int>(C), 256);
-    const int blocks_p2 = (C + threads_p2 - 1) / threads_p2;
-    prefix_scan_phase2<<<blocks_p2, threads_p2>>>(agg_ptr, num_blocks);
+      // Phase 2: scan over block aggregates (sequential, one thread per channel)
+      const int threads_p2 = std::min(static_cast<int>(C), 256);
+      const int blocks_p2 = (C + threads_p2 - 1) / threads_p2;
+      prefix_scan_phase2<scalar_t><<<blocks_p2, threads_p2, 0, stream>>>(agg_ptr, num_blocks);
 
-    // Phase 3: finalize blocks > 0
-    dim3 grid3(num_blocks, C);
-    prefix_scan_phase3<<<grid3, BLOCK_SIZE>>>(
-        f_ptr, y_ptr, agg_ptr, state_ptr, a1, a2, T, num_blocks);
-  }
+      // Phase 3: finalize blocks > 0
+      dim3 grid3(num_blocks, C);
+      prefix_scan_phase3<scalar_t><<<grid3, BLOCK_SIZE, 0, stream>>>(
+          f_ptr, y_ptr, agg_ptr, state_ptr, a1s, a2s, static_cast<int>(T), num_blocks);
+    }
+  });
+  // No state extraction here — the caller reads the new state from ``y_out``.
+}
 
-  // Extract updated state: [y[T-1], y[T-2]]
+std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
+    const torch::Tensor& f,
+    double a1,
+    double a2,
+    const torch::Tensor& state,
+    int threshold) {
+  const int64_t C = f.size(0);
+  const int64_t T = f.size(1);
+  auto y = torch::empty({C, T}, f.options());
+  const int num_blocks = (static_cast<int>(T) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+  auto block_agg = torch::empty({C * num_blocks * 6}, f.options());
+  parallel_biquad_scan_into(f, a1, a2, state, threshold, y, block_agg);
+
+  // Extract updated state: [y[T-1], y[T-2]].
   auto y_last = y.index({torch::indexing::Slice(), -1}).unsqueeze(1);  // [C, 1]
   auto y_prev = (T >= 2) ?
       y.index({torch::indexing::Slice(), -2}).unsqueeze(1) :
       torch::zeros({C, 1}, y.options());
   auto new_st = torch::cat({y_last, y_prev}, 1);  // [C, 2]
-
   return std::make_tuple(y, new_st);
 }
 

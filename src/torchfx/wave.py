@@ -211,38 +211,82 @@ class Wave:
         self._pipeline = []
 
     def _materialize(self) -> None:
-        """Execute the deferred pipeline, fusing consecutive IIR/biquad filters."""
+        """Execute the deferred pipeline, fusing consecutive IIR/biquad filters.
+
+        Materialization is an *independent* offline operation: any stateful module
+        in the plan is reset before execution, so reusing the same filter instance
+        across two different ``Wave`` objects can never leak DF1 state from one into
+        the other. Streaming (``StreamProcessor`` / ``RealtimeProcessor``) does not
+        go through this path — it drives effects directly and manages its own
+        chunk-to-chunk state — so this reset does not affect streaming continuity.
+
+        """
         if not self._pipeline:
             return
 
-        from torchfx.filter.biquad import Biquad
-        from torchfx.filter.fused import FusedSOSCascade
-        from torchfx.filter.iir import IIR
+        plan = self._build_plan(self._pipeline)
 
-        plan: list[nn.Module] = []
-        iir_run: list[IIR | Biquad] = []
-
-        def flush() -> None:
-            nonlocal iir_run
-            if len(iir_run) >= 2:
-                plan.append(FusedSOSCascade(*iir_run))
-            elif iir_run:
-                plan.append(iir_run[0])
-            iir_run = []
-
-        for module in self._pipeline:
-            if isinstance(module, (IIR, Biquad)):
-                iir_run.append(module)
-            else:
-                flush()
-                plan.append(module)
-        flush()
+        # Offline materialization is independent of any previous run: clear DF1
+        # state a stateful module may still hold from an earlier Wave that reused
+        # the same instance. Freshly-built FusedSOSCascades are already clean;
+        # stateless effects (Gain, Normalize) have no reset_state and are skipped.
+        for module in plan:
+            reset = getattr(module, "reset_state", None)
+            if callable(reset):
+                reset()
 
         data = self._ys
         for module in plan:
             data = module(data)
         self._ys = data
         self._pipeline = []
+
+    @staticmethod
+    def _build_plan(pipeline: list[nn.Module]) -> list[nn.Module]:
+        """Group a pipeline into the executable plan, fusing contiguous SOS stages.
+
+        Contiguous ``IIR``/``Biquad`` runs are merged into a single
+        ``FusedSOSCascade``. A static linear ``Gain`` (``clamp=False``) does **not**
+        break a run: its scalar is folded into the fused cascade's numerator (a
+        scalar commutes through a linear filter), so ``IIR | Gain | IIR`` becomes one
+        cascade instead of three stages. A dynamic ``Normalize`` or a clamping
+        ``Gain`` is non-linear and is kept as its own stage.
+
+        """
+        from torchfx.effect import Gain
+        from torchfx.filter.biquad import Biquad
+        from torchfx.filter.fused import FusedSOSCascade
+        from torchfx.filter.iir import IIR
+
+        plan: list[nn.Module] = []
+        iir_run: list[IIR | Biquad] = []
+        pending_gain = 1.0  # product of foldable gains to apply to the current run
+
+        def flush() -> None:
+            nonlocal iir_run, pending_gain
+            if iir_run:
+                if len(iir_run) >= 2 or pending_gain != 1.0:
+                    plan.append(FusedSOSCascade(*iir_run, gain=pending_gain))
+                else:
+                    plan.append(iir_run[0])
+            elif pending_gain != 1.0:
+                # A foldable gain with no SOS filter to fold into — keep it as an op.
+                plan.append(Gain(pending_gain))
+            iir_run = []
+            pending_gain = 1.0
+
+        for module in pipeline:
+            if isinstance(module, (IIR, Biquad)):
+                iir_run.append(module)
+            else:
+                factor = module._linear_gain() if isinstance(module, Gain) else None
+                if factor is not None:
+                    pending_gain *= factor  # fold into the current/next fused run
+                else:
+                    flush()
+                    plan.append(module)
+        flush()
+        return plan
 
     @classmethod
     def _deferred(
@@ -727,6 +771,10 @@ class Wave:
 
         if isinstance(f, AbstractFilter) and (fs_changed or not f._has_computed_coeff):
             f.compute_coefficients()
+            # Record the fs the coefficients were designed for so a subsequent
+            # direct forward() does not needlessly recompute (and so a genuine
+            # fs change is still detected on the direct-call path).
+            f._coeff_fs = getattr(f, "fs", None)
 
     def __len__(self) -> int:
         """Return the length, in samples, of the wave."""

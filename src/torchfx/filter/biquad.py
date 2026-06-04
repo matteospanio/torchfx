@@ -129,6 +129,8 @@ class Biquad(AbstractFilter):
         # Per-section DF1 state: [K=1, C, 2], None until first forward
         self._state_x: Tensor | None = None
         self._state_y: Tensor | None = None
+        # Sampling rate the cached coefficients were designed for (see forward).
+        self._coeff_fs: int | None = None
 
     @property
     def b(self) -> Tensor | None:
@@ -190,9 +192,15 @@ class Biquad(AbstractFilter):
         """
         if self.fs is None:
             raise ValueError("Sample rate (fs) must be set before filtering.")
-        if self._sos is None:
+        # Recompute when coefficients are missing or were designed for a
+        # different sampling rate, so a reused biquad never applies stale taps.
+        if self._sos is None or self.fs != self._coeff_fs:
             self.compute_coefficients()
+            self._coeff_fs = self.fs
             self._sos_device_cache = None
+            # Coefficients changed: accumulated DF1 state no longer matches.
+            self._state_x = None
+            self._state_y = None
         assert self._sos is not None
         from torchfx.filter.iir import _sos_cascade_forward
 

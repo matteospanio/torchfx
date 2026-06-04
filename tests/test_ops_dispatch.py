@@ -19,8 +19,16 @@ from torchfx import _ops
 
 class TestAvailability:
     def test_parallel_scan_threshold(self):
-        """The threshold is a public knob — lock the default so tuning is deliberate."""
+        """The threshold is a public knob — lock the defaults so tuning is
+        deliberate."""
         assert _ops.PARALLEL_SCAN_THRESHOLD == 2048
+        assert _ops.PARALLEL_SCAN_THRESHOLD_FP64 == 1024
+
+    def test_default_threshold_is_dtype_aware(self):
+        """FP64 hits the parallel-scan crossover sooner than FP32 (measured on RTX
+        3070)."""
+        assert _ops._default_threshold(torch.float32) == 2048
+        assert _ops._default_threshold(torch.float64) == 1024
 
     def test_is_native_available_returns_true(self):
         """Extension is always available — compiled at install time."""

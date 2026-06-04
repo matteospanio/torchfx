@@ -7,6 +7,210 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [0.6.0] - 2026-06-04
+
+### Added
+
+- **FP32 CUDA execution path.** The CUDA biquad / SOS parallel-scan kernels are
+  now templated on `scalar_t` and dispatch on the input dtype: a float32 input
+  runs the native FP32 path instead of being silently upcast to float64. On a
+  consumer GPU (RTX 3070, 1:32 FP32:FP64) this is a **3.0–3.6× throughput win**
+  for IIR cascades and resolves the multichannel inversion — a 60 s / 8-channel
+  8th-order Butterworth runs in ~24 ms (FP32) vs ~89 ms (FP64), now *beating* the
+  ~28 ms CPU path it previously lost to. float64 inputs still run FP64 for
+  maximum precision; pass the dtype you want. See
+  `benchmarks/bench_fp32_speedup.py`.
+- **`tests/test_fp32_precision.py`** — validates the FP64 path against
+  `scipy.signal.sosfilt` to double precision and the FP32 path against the same
+  reference within a documented float32 bound (`max_abs` + RMS-relative), across
+  Butterworth / Chebyshev1 at orders 2/4/8/16 on CPU and CUDA, recording
+  per-design errors so the FP32-safe vs needs-FP64 boundary is tracked.
+- **Explicit CUDA architectures.** The build now compiles native SASS for
+  `sm_75;80;86;89` (Turing…Ada) by default — override with the
+  `TORCHFX_CUDA_ARCHITECTURES` env var. Eliminates the first-CUDA-call PTX→SASS
+  JIT stall and pins occupancy instead of leaving it to the toolkit default.
+- **Tunable, dtype-aware dispatch threshold.** `PARALLEL_SCAN_THRESHOLD` (the
+  sequential-vs-parallel-scan boundary) is now threaded into the kernels — it was
+  previously dead in Python while the kernel hard-coded 2048. The default is
+  dtype-aware (`float32` → 2048, `float64` → 1024): a crossover sweep
+  (`benchmarks/bench_threshold_sweep.py`) showed the FP64 sequential kernel hits
+  the parallel scan's overhead sooner, so a single 2048 left FP64 ~57% slower at
+  T≈2048. `parallel_iir_forward` / `biquad_forward` accept a `threshold=` override
+  (`0` forces parallel scan, a large value forces sequential).
+- **Static-gain folding in the fusion planner.** A constant linear `Gain`
+  (`clamp=False`) between SOS filters is now folded into the fused cascade's
+  numerator instead of breaking the fused run, so `wave | IIR | Gain | IIR`
+  materialises as a single `FusedSOSCascade` rather than three stages. The fold is
+  exact (a scalar commutes through a linear filter); a clamping `Gain` or a dynamic
+  `Normalize` stays its own stage. The planner is exposed as the testable
+  `Wave._build_plan`.
+- **`torchfx.realtime.CudaGraphRunner`** — captures a fixed-shape fused-cascade GPU
+  forward into a `torch.cuda.CUDAGraph` and replays it per chunk, collapsing the
+  `~4·K` per-section kernel launches into one graph launch. The win is largest in
+  the short-chunk / realtime regime where launch overhead dominates: **4.0× faster
+  at 128-sample chunks** (52 vs 210 µs), 2.6× at 512, 1.8× at 1024 on an RTX 3070.
+  Streaming DF1 state is carried across replays; `reset_state()` restarts a stream.
+
+- **Realtime architecture: producer/consumer split.** `RealtimeProcessor`
+  now runs DSP in a dedicated worker thread (`torchfx-realtime-dsp`),
+  not inside the PortAudio callback. The audio callback only moves
+  samples between the backend buffers and a pair of `TensorRingBuffer`s
+  (input + output ring); the worker thread reads input chunks, runs the
+  effect chain, and writes results into the output ring. The output
+  ring is primed with one chunk of silence at start so the first
+  callback never underflows.
+- **Realtime instrumentation.** New properties / methods on
+  `RealtimeProcessor`:
+  - `latency_log_ns()` — snapshot of per-callback wall-clock durations.
+  - `latency_stats_ms()` — `count`/`min`/`median`/`mean`/`p95`/`p99`/`max`.
+  - `xrun_count`, `input_overflow_count`, `output_underflow_count`,
+    `backend_xrun_count`, `callback_count` — granular xrun attribution.
+  - `deadline_ms`, `reset_metrics()`.
+- **`BackendStatus` dataclass** (`torchfx.realtime.backend`) — carries
+  PortAudio's `paInputOverflow` / `paOutputUnderflow` etc. flags from
+  the backend into `RealtimeProcessor` so xruns are counted at their
+  source. `AudioCallback` accepts an optional 4th `status` argument;
+  `SoundDeviceBackend` populates it from sounddevice's `CallbackFlags`.
+- **`RealtimeProcessor.process_pending()`** — public method that drains
+  the input ring synchronously. Used by `start_worker=False` callers
+  (deterministic tests, host-scheduled embeddings).
+- **`start_worker=True/False` constructor flag** on `RealtimeProcessor`
+  to opt out of the worker thread.
+- **`benchmarks/test_realtime_bench.py`** — deterministic realtime
+  benchmarks driving `RealtimeProcessor` via a `DeterministicMockBackend`.
+  Reports per-callback round-trip wall time and p50/p95/p99 latency vs
+  buffer size and cascade depth, plus a `budget_p99 = p99 / deadline`
+  ratio in `extra_info` for downstream plotting.
+- **Realtime chunk-length validation.** The DSP worker raises
+  `RealtimeError` if any effect changes the time dimension of a chunk,
+  mirroring `StreamProcessor`'s check. Prevents `Delay`-style effects
+  from corrupting the output ring.
+- Tests for the new architecture (`tests/test_realtime.py`): latency
+  log, xrun counters under synthetic backend status, chunk-length
+  rejection in the realtime callback, worker-thread drainage.
+- **IS² 2026 benchmark infrastructure** (under `IS22026/`,
+  `benchmarks/`, and `tools/`):
+  - `benchmarks/test_torchaudio_bench.py` — head-to-head comparators
+    against `torchaudio.functional.biquad`, looped `biquad` cascades,
+    and `torchaudio.functional.fftconvolve`. On Linux x86_64 / Python
+    3.10 / torch 2.10.0+cu128 (local CPU run), TorchFX is **2.82×
+    faster** than torchaudio on single biquad and **5.7×–8.9×** faster
+    on order-4 / 8 / 16 IIR cascades thanks to fusion; FIR FFT is
+    **2.06×** faster. The benchmarks skip cleanly if torchaudio is
+    not installed.
+  - `tools/count_kernel_launches.py` — counts native-extension
+    dispatches (and CUDA `launchKernel` events when CUDA is available)
+    for fused vs unfused IIR cascades at depths {2, 5, 10, 20, 50}.
+    Validates claim C1 of the IS² 2026 plan: depth-K unfused chain
+    issues K Python-level dispatches; the fused path collapses these
+    to 1, with a measured 2.6×–2.8× wall-time speedup at depth 20–50.
+  - `tools/aggregate_benchmarks.py` — flattens one or more
+    pytest-benchmark JSON outputs into per-row p50 / p95 / p99 /
+    p99.9 / max / IQR; emits `table`, `csv`, or `json`. Propagates
+    each benchmark's `extra_info` so realtime jitter and budget
+    fractions survive aggregation. Non-pytest-benchmark JSON inputs
+    are skipped with a warning.
+  - `IS22026/Makefile` — single-command runner. `make all` writes
+    JSON per benchmark family into `IS22026/results/` and aggregates
+    into `summary.csv` + `summary.txt`. Targets: `bench-cpu`,
+    `bench-cuda`, `bench-comparators`, `bench-realtime`, `launches`,
+    `aggregate`. Host-tagged outputs (`*-<hostname>.json`) so multi-
+    machine results coexist.
+- **`torchaudio>=2.6.0,<2.11`** added to the `dev` dependency group as
+  an optional comparator. Not a runtime dependency. The upper bound is
+  because torchaudio 2.11 requires CUDA 13 runtime libraries which
+  break on systems whose torch is built against CUDA 12.x.
+- `tests/test_wave.py::test_filter_coefficients_recompute_on_fs_change`
+  — regression test locking in the existing correct behaviour that a
+  filter object piped through two Waves with different sample rates
+  recomputes its SOS coefficients (the `_has_computed_coeff` lazy
+  guard does not skip when `fs` changes).
+- **Energy + power measurement harness** (`tools/energy_meter.py`) —
+  context manager and CLI wrapper that records Intel RAPL CPU package
+  energy (via `/sys/class/powercap/intel-rapl:*/energy_uj`) and
+  GPU power-over-time (via streaming `nvidia-smi -lms`, integrated by
+  trapezoidal rule). Wraps any subprocess and emits a JSON with
+  `cpu_joules`, `gpu_joules`, `duration_s`, `gpu_mean_w`, `gpu_peak_w`,
+  and notes about any RAPL wraps. Degrades gracefully on systems
+  without RAPL access or `nvidia-smi`. Required for table T10 of the
+  IS² 2026 paper.
+- **`PARALLEL_SCAN_THRESHOLD` ablation tool** (`tools/threshold_sweep.py`)
+  — sweeps signal length `T` densely around the current 2048-sample
+  threshold (256 → 32 768 by default) at several channel counts, times
+  each point with CUDA sync, and emits per-(T, channels) median /
+  p95 / min. Reads the empirical crossover off the curve so the paper
+  can either justify 2048 or replace it with a measured value, per
+  C-7 of the IS² 2026 plan.
+- **Paper figure pipeline** (`IS22026/figs/plot.py` + matplotlib in
+  the dev dep group): single CLI with F4 (kernel-launch reduction),
+  F6 (TorchFX vs torchaudio pipeline), F7 (threshold crossover), F9
+  (realtime latency CCDF), F11 (Pi 5 RTF) subcommands. Uses the Wong
+  colour-blind-safe palette and emits PDF + companion PNG. Consumes
+  the JSON written by the bench / tool targets directly.
+- **Makefile extensions** in `IS22026/Makefile`: new targets
+  `launches-cuda`, `threshold-cuda`, `figs` (PHONY: regenerates all
+  available figures from `results/`), `paper-data` (end-to-end:
+  benches → aggregate → figs), and `ENERGY=1` flag that wraps any
+  target in the energy meter.
+- **SLURM driver for the L40S** (`IS22026/slurm/is2_l40s.sbatch`):
+  one-submission job that runs `bench-cuda`, `bench-comparators`,
+  `launches-cuda`, `threshold-cuda`, and `aggregate` on the cluster.
+- **`IS22026/RUN.md`** — copy-paste handoff for running the
+  Alienware (i9 + RTX 3070) and L40S batches from a less-capable
+  development box, plus rsync recipes for pulling JSON results back.
+
+### Changed
+
+- **CUDA SOS cascade is allocation-free per forward.** `sos_forward_cuda` now
+  updates DF1 state in place and reuses one set of scratch buffers (forcing,
+  ping-pong output, block-aggregate) across all cascade sections instead of
+  allocating per section. Cuts the GPU streaming SOS path ~27% (e.g. a 4-section
+  cascade at 1024-sample chunks: ~276 → ~202 µs/chunk on an RTX 3070).
+- **`RealtimeProcessor` no longer processes effects in the audio
+  callback.** This is a behavioural change: with the worker-thread
+  architecture, processed output appears on the *next* callback after
+  its input was pushed. The end-to-end latency therefore grows by one
+  buffer (now reported correctly by `latency_ms`, which includes the
+  priming chunk).
+- **`AudioCallback` type alias** broadened to
+  `Callable[..., None]`. New backends pass `(input, output, frames,
+  status)`; legacy 3-arg callbacks are still supported by
+  `SoundDeviceBackend` via a one-time signature inspection.
+
+### Fixed
+
+- **CUDA kernels now launch on the current stream.** The hand-written kernels
+  launched with `<<<grid, block>>>` (the default stream); they now pass
+  `c10::cuda::getCurrentCUDAStream()`. This is what lets `torch.cuda.graph` capture
+  record them (capture runs on a side stream and ignores default-stream work — so a
+  captured cascade previously replayed as a no-op), and it is also more correct in
+  eager mode (work runs on PyTorch's stream rather than relying on implicit
+  default-stream synchronisation).
+- The previously unused `TensorRingBuffer` instances inside
+  `RealtimeProcessor` are now actively the I/O path. The "lock-free
+  SPSC" claim in the docstring now reflects how the buffers are used —
+  one writer (callback) and one reader (worker), coordinated by an
+  `Event`.
+- **Stale-coefficient bug on sample-rate change.** `IIR` and `Biquad`
+  filters now track the `fs` their coefficients were designed for
+  (`_coeff_fs`) and recompute on the *direct* `forward()` path when
+  `fs` changes — previously a filter reused across sample rates would
+  silently keep applying coefficients designed for the old rate. The
+  fs change also clears accumulated DF1 state, and `Wave.__or__`'s
+  eager-compute path records `_coeff_fs` so it does not redundantly
+  recompute on the first forward.
+- **State leak across `Wave` reuse.** `Wave._materialize()` now resets
+  the state of stateful modules before running the offline pipeline, so
+  piping one filter instance into two different `Wave`s no longer bleeds
+  DF1 state from the first into the second. Streaming
+  (`StreamProcessor` / `RealtimeProcessor`) is unaffected — it drives
+  effects directly and manages its own chunk-to-chunk state.
+- **Half-precision inputs are now rejected** by the native filter
+  dispatch (`_select_native_dtype`) with a `TypeError` instead of being
+  silently upcast to `float64`. The IIR feedback recurrence is not
+  numerically safe in `float16` / `bfloat16`; callers should cast to
+  `float32` or `float64` explicitly.
+
 ## [0.5.4] - 2026-05-26
 
 ### Removed

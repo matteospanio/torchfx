@@ -27,13 +27,16 @@ torch::Tensor delay_line_forward_cpu(
     double mix);
 
 // Dispatch: select CUDA or CPU implementation based on tensor device.
+// `threshold` is the sequential-vs-parallel-scan boundary used by the CUDA path
+// (ignored on CPU, which is always sequential).
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward(
     const torch::Tensor& x,
     const torch::Tensor& b,
     double a1,
     double a2,
     const torch::Tensor& state_x,
-    const torch::Tensor& state_y) {
+    const torch::Tensor& state_y,
+    int threshold) {
 #ifdef WITH_CUDA
   if (x.is_cuda()) {
     // Extract b coefficients as scalars to avoid GPU→CPU sync in the kernel.
@@ -41,11 +44,12 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> biquad_forward(
     const double b0 = b_cpu[0].item<double>();
     const double b1 = b_cpu[1].item<double>();
     const double b2 = b_cpu[2].item<double>();
-    return torchfx::biquad_forward_cuda(x, b0, b1, b2, a1, a2, state_x, state_y);
+    return torchfx::biquad_forward_cuda(x, b0, b1, b2, a1, a2, state_x, state_y, threshold);
   }
 #else
   TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
 #endif
+  (void)threshold;  // CPU kernel is always sequential.
   return biquad_forward_cpu(x, b, a1, a2, state_x, state_y);
 }
 
@@ -54,14 +58,16 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward(
     const torch::Tensor& sos,
     const torch::Tensor& sos_cpu,
     const torch::Tensor& state_x,
-    const torch::Tensor& state_y) {
+    const torch::Tensor& state_y,
+    int threshold) {
 #ifdef WITH_CUDA
   if (x.is_cuda()) {
-    return torchfx::sos_forward_cuda(x, sos, sos_cpu, state_x, state_y);
+    return torchfx::sos_forward_cuda(x, sos, sos_cpu, state_x, state_y, threshold);
   }
 #else
   TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
 #endif
+  (void)threshold;  // CPU kernel is always sequential.
   return sos_forward_cpu(x, sos, state_x, state_y);
 }
 
@@ -84,11 +90,11 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("biquad_forward", &biquad_forward,
         "Biquad filter forward (CUDA/CPU)",
         py::arg("x"), py::arg("b"), py::arg("a1"), py::arg("a2"),
-        py::arg("state_x"), py::arg("state_y"));
+        py::arg("state_x"), py::arg("state_y"), py::arg("threshold") = 2048);
   m.def("sos_forward", &sos_forward,
         "SOS cascade forward (CUDA/CPU)",
         py::arg("x"), py::arg("sos"), py::arg("sos_cpu"),
-        py::arg("state_x"), py::arg("state_y"));
+        py::arg("state_x"), py::arg("state_y"), py::arg("threshold") = 2048);
   m.def("delay_line_forward", &delay_line_forward,
         "Delay line forward (CUDA only)",
         py::arg("x"), py::arg("delay_samples"),

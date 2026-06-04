@@ -8,9 +8,10 @@ MockBackend for testing without real audio hardware.
 from __future__ import annotations
 
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import soundfile as sf
@@ -18,10 +19,11 @@ import torch
 from torch import Tensor
 
 from torchfx.effect import Delay, FX, Gain
-from torchfx.filter.iir import HiButterworth, LoButterworth
+from torchfx.filter.iir import LoButterworth
 from torchfx.realtime.backend import (
     AudioBackend,
     AudioCallback,
+    BackendStatus,
     StreamConfig,
     StreamDirection,
     StreamState,
@@ -44,7 +46,17 @@ from torchfx.validation.exceptions import AudioProcessingError, TorchFXError
 
 
 class MockBackend(AudioBackend):
-    """Mock audio backend for testing."""
+    """Mock audio backend for testing.
+
+    Drives ``RealtimeProcessor`` deterministically: ``simulate_callback``
+    pushes input through the callback, then (because the processor runs
+    DSP on a worker thread) waits up to ``timeout_s`` for the worker to
+    fill the output ring before re-invoking the callback to pull the
+    processed output back. This restores the one-call-in, one-call-out
+    semantics of the old test suite while exercising the new
+    producer/consumer architecture end-to-end.
+
+    """
 
     def __init__(self) -> None:
         self._state: StreamState = StreamState.CLOSED
@@ -52,6 +64,9 @@ class MockBackend(AudioBackend):
         self._callback: AudioCallback | None = None
         self.start_count = 0
         self.stop_count = 0
+        # Pre-allocated output tensor — overwritten by each callback.
+        self._last_output: Tensor | None = None
+        self._processor: Any = None  # back-reference, set by tests if needed
 
     @property
     def name(self) -> str:
@@ -106,14 +121,63 @@ class MockBackend(AudioBackend):
     def write(self, data: Tensor) -> None:
         pass
 
-    def simulate_callback(self, input_data: Tensor) -> Tensor:
-        """Simulate an audio callback for testing."""
+    def simulate_callback(
+        self,
+        input_data: Tensor,
+        status: BackendStatus | None = None,
+    ) -> Tensor:
+        """Run one audio callback round-trip.
+
+        Push ``input_data`` through the callback, drive one DSP pass
+        synchronously via the bound processor's ``process_pending()``,
+        then pull the resulting output via a second callback. Restores
+        the one-call-in / one-call-out semantics that test code
+        expects, without depending on the worker thread's scheduling.
+
+        Requires ``RealtimeProcessor(..., start_worker=False)`` and
+        ``mock_backend._processor = processor`` after construction.
+
+        Parameters
+        ----------
+        input_data : Tensor
+            Shape ``(channels_in, frames)`` input.
+        status : BackendStatus | None
+            Optional backend status flags to simulate xrun conditions.
+
+        Returns
+        -------
+        Tensor
+            Processed output of shape ``(channels_out, frames)``.
+
+        """
         if self._callback is None:
             raise RuntimeError("No callback registered")
         if self._config is None:
             raise RuntimeError("No config set")
-        output_data = torch.zeros(self._config.channels_out, input_data.shape[-1])
-        self._callback(input_data, output_data, input_data.shape[-1])
+        if self._processor is None:
+            raise RuntimeError(
+                "MockBackend.simulate_callback requires a bound processor "
+                "(set mock_backend._processor = processor after construction)"
+            )
+
+        frames = input_data.shape[-1]
+        ch_out = max(self._config.channels_out, 1)
+
+        # First call: push input into the input ring; output_data here
+        # is filled with whatever's currently in the output ring (e.g.,
+        # priming silence on the first callback).
+        scratch_out = torch.zeros(ch_out, frames)
+        self._callback(input_data, scratch_out, frames, status)
+
+        # Drive DSP synchronously so the output ring is populated.
+        self._processor.process_pending()
+
+        # Second call: pull the processed output. Use a zero input so
+        # we don't double-count the original input.
+        output_data = torch.zeros(ch_out, frames)
+        zero_in = torch.zeros_like(input_data)
+        self._callback(zero_in, output_data, frames, status)
+        self._last_output = output_data
         return output_data
 
 
@@ -373,6 +437,30 @@ class TestTensorRingBuffer:
 # ---------------------------------------------------------------------------
 
 
+def _make_processor(
+    backend: MockBackend,
+    config: StreamConfig,
+    effects: list[FX],
+    **kwargs: Any,
+) -> RealtimeProcessor:
+    """Build a RealtimeProcessor in synchronous (no-worker) test mode.
+
+    The MockBackend needs a back-reference to drive ``process_pending()``
+    on each simulated callback, and the worker thread is disabled to
+    keep tests deterministic.
+
+    """
+    kwargs.setdefault("start_worker", False)
+    proc = RealtimeProcessor(
+        effects=effects,
+        backend=backend,
+        config=config,
+        **kwargs,
+    )
+    backend._processor = proc
+    return proc
+
+
 class TestRealtimeProcessor:
     """Tests for the real-time audio processor."""
 
@@ -390,20 +478,12 @@ class TestRealtimeProcessor:
         )
 
     def test_create_processor(self, mock_backend: MockBackend, duplex_config: StreamConfig) -> None:
-        processor = RealtimeProcessor(
-            effects=[Gain(0.5)],
-            backend=mock_backend,
-            config=duplex_config,
-        )
+        processor = _make_processor(mock_backend, duplex_config, [Gain(0.5)])
         assert not processor.is_running
         assert len(processor.effects) == 1
 
     def test_start_stop(self, mock_backend: MockBackend, duplex_config: StreamConfig) -> None:
-        processor = RealtimeProcessor(
-            effects=[Gain(0.5)],
-            backend=mock_backend,
-            config=duplex_config,
-        )
+        processor = _make_processor(mock_backend, duplex_config, [Gain(0.5)])
         processor.start()
         assert processor.is_running
         assert mock_backend.start_count == 1
@@ -415,11 +495,7 @@ class TestRealtimeProcessor:
     def test_start_when_already_running(
         self, mock_backend: MockBackend, duplex_config: StreamConfig
     ) -> None:
-        processor = RealtimeProcessor(
-            effects=[Gain(0.5)],
-            backend=mock_backend,
-            config=duplex_config,
-        )
+        processor = _make_processor(mock_backend, duplex_config, [Gain(0.5)])
         processor.start()
         with pytest.raises(RealtimeError, match="already running"):
             processor.start()
@@ -428,22 +504,14 @@ class TestRealtimeProcessor:
     def test_stop_when_not_running(
         self, mock_backend: MockBackend, duplex_config: StreamConfig
     ) -> None:
-        processor = RealtimeProcessor(
-            effects=[Gain(0.5)],
-            backend=mock_backend,
-            config=duplex_config,
-        )
+        processor = _make_processor(mock_backend, duplex_config, [Gain(0.5)])
         with pytest.raises(RealtimeError, match="not running"):
             processor.stop()
 
     def test_audio_callback_processes_effects(
         self, mock_backend: MockBackend, duplex_config: StreamConfig
     ) -> None:
-        processor = RealtimeProcessor(
-            effects=[Gain(2.0)],
-            backend=mock_backend,
-            config=duplex_config,
-        )
+        processor = _make_processor(mock_backend, duplex_config, [Gain(2.0)])
         processor.start()
 
         # Simulate a callback
@@ -456,11 +524,7 @@ class TestRealtimeProcessor:
     def test_multiple_effects_chain(
         self, mock_backend: MockBackend, duplex_config: StreamConfig
     ) -> None:
-        processor = RealtimeProcessor(
-            effects=[Gain(2.0), Gain(0.5)],
-            backend=mock_backend,
-            config=duplex_config,
-        )
+        processor = _make_processor(mock_backend, duplex_config, [Gain(2.0), Gain(0.5)])
         processor.start()
 
         input_data = torch.ones(1, 512)
@@ -475,36 +539,25 @@ class TestRealtimeProcessor:
         lpf = LoButterworth(cutoff=1000)
         assert lpf.fs is None
 
-        processor = RealtimeProcessor(
-            effects=[lpf],
-            backend=mock_backend,
-            config=config,
-        )
+        _make_processor(mock_backend, config, [lpf])
         assert lpf.fs == 44100
 
     def test_filter_coefficients_computed(self, mock_backend: MockBackend) -> None:
         config = StreamConfig(sample_rate=44100, buffer_size=256, channels_in=1, channels_out=1)
         lpf = LoButterworth(cutoff=1000)
-        processor = RealtimeProcessor(
-            effects=[lpf],
-            backend=mock_backend,
-            config=config,
-        )
+        _make_processor(mock_backend, config, [lpf])
         assert lpf._has_computed_coeff
 
     def test_set_parameter(self, mock_backend: MockBackend, duplex_config: StreamConfig) -> None:
         gain = Gain(1.0)
-        processor = RealtimeProcessor(
-            effects=[gain],
-            backend=mock_backend,
-            config=duplex_config,
-        )
+        processor = _make_processor(mock_backend, duplex_config, [gain])
         processor.start()
 
         # Set parameter
         processor.set_parameter("0.gain", 0.5)
 
-        # Simulate callback to apply pending params
+        # Simulate callback — pending params are applied at the start
+        # of the next DSP draining pass.
         input_data = torch.ones(1, 512)
         mock_backend.simulate_callback(input_data)
 
@@ -513,21 +566,27 @@ class TestRealtimeProcessor:
         processor.stop()
 
     def test_latency_ms(self, mock_backend: MockBackend, duplex_config: StreamConfig) -> None:
-        processor = RealtimeProcessor(
-            effects=[Gain(1.0)],
-            backend=mock_backend,
-            config=duplex_config,
-        )
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)])
+        # With prime_output=True (default), latency is two buffer
+        # blocks: one for the input/output round-trip and one for the
+        # priming silence.
+        expected = 2 * (512 / 48000) * 1000.0
+        assert abs(processor.latency_ms - expected) < 0.001
+
+    def test_latency_ms_without_prime(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)], prime_output=False)
         expected = (512 / 48000) * 1000.0
         assert abs(processor.latency_ms - expected) < 0.001
 
+    def test_deadline_ms(self, mock_backend: MockBackend, duplex_config: StreamConfig) -> None:
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)])
+        expected = (512 / 48000) * 1000.0
+        assert abs(processor.deadline_ms - expected) < 0.001
+
     def test_reset_state(self, mock_backend: MockBackend, duplex_config: StreamConfig) -> None:
-        processor = RealtimeProcessor(
-            effects=[Gain(1.0)],
-            backend=mock_backend,
-            config=duplex_config,
-        )
-        # Write some data to buffers
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)])
         processor._input_buffer.write(torch.ones(1, 100))
         processor.reset_state()
         assert processor._input_buffer.available_read == 0
@@ -542,15 +601,12 @@ class TestRealtimeProcessor:
             effects=effects,
             backend=mock_backend,
             config=duplex_config,
+            start_worker=False,
         )
         assert len(processor.effects) == 2
 
     def test_context_manager(self, mock_backend: MockBackend, duplex_config: StreamConfig) -> None:
-        with RealtimeProcessor(
-            effects=[Gain(2.0)],
-            backend=mock_backend,
-            config=duplex_config,
-        ) as processor:
+        with _make_processor(mock_backend, duplex_config, [Gain(2.0)]) as processor:
             assert processor.is_running
             input_data = torch.ones(1, 512) * 0.5
             output = mock_backend.simulate_callback(input_data)
@@ -561,15 +617,143 @@ class TestRealtimeProcessor:
         self, mock_backend: MockBackend, duplex_config: StreamConfig
     ) -> None:
         with pytest.raises(RuntimeError, match="test error"):
-            with RealtimeProcessor(
-                effects=[Gain(1.0)],
-                backend=mock_backend,
-                config=duplex_config,
-            ) as processor:
+            with _make_processor(mock_backend, duplex_config, [Gain(1.0)]) as processor:
                 assert processor.is_running
                 raise RuntimeError("test error")
         assert not processor.is_running
         assert mock_backend.stop_count == 1
+
+    # ------------------------------------------------------------------
+    # New tests: instrumentation, xrun detection, chunk-length validation
+    # ------------------------------------------------------------------
+
+    def test_callback_records_latency(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)])
+        processor.start()
+        mock_backend.simulate_callback(torch.ones(1, 512))
+        # Two callbacks per simulated round-trip (push + pull).
+        assert processor.callback_count == 2
+        samples = processor.latency_log_ns()
+        assert len(samples) == 2
+        assert all(s >= 0 for s in samples)
+        processor.stop()
+
+    def test_latency_stats_ms_empty(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)])
+        stats = processor.latency_stats_ms()
+        assert stats["count"] == 0.0
+        assert stats["p99"] == 0.0
+
+    def test_latency_stats_ms_after_callbacks(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)])
+        processor.start()
+        for _ in range(10):
+            mock_backend.simulate_callback(torch.ones(1, 512))
+        stats = processor.latency_stats_ms()
+        assert stats["count"] >= 10
+        assert stats["max"] >= stats["median"] >= stats["min"] >= 0
+        assert stats["p99"] >= stats["median"]
+        processor.stop()
+
+    def test_reset_metrics_clears_log_and_counters(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)])
+        processor.start()
+        mock_backend.simulate_callback(torch.ones(1, 512))
+        assert processor.callback_count > 0
+        assert len(processor.latency_log_ns()) > 0
+        processor.reset_metrics()
+        assert processor.callback_count == 0
+        assert processor.xrun_count == 0
+        assert len(processor.latency_log_ns()) == 0
+        processor.stop()
+
+    def test_backend_xrun_recorded(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)])
+        processor.start()
+        # Simulate a callback with backend-reported input overflow.
+        mock_backend.simulate_callback(
+            torch.ones(1, 512), status=BackendStatus(input_overflow=True)
+        )
+        assert processor.backend_xrun_count >= 1
+        assert processor.xrun_count >= 1
+        processor.stop()
+
+    def test_output_underflow_recorded(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        # Disable priming so the very first callback finds an empty
+        # output ring and triggers an underflow.
+        processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)], prime_output=False)
+        processor.start()
+        mock_backend.simulate_callback(torch.ones(1, 512))
+        # The first callback pulls from an empty ring → underflow. The
+        # second callback (after process_pending) finds samples and is
+        # fine.
+        assert processor.output_underflow_count >= 1
+        processor.stop()
+
+    def test_chunk_length_changing_effect_rejected(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        # Delay extends the chunk length by delay_samples * taps.
+        processor = _make_processor(
+            mock_backend,
+            duplex_config,
+            [Delay(delay_samples=64, taps=2, feedback=0.3, mix=0.5)],
+        )
+        processor.start()
+
+        with pytest.raises(RealtimeError, match="chunk-length-preserving"):
+            mock_backend.simulate_callback(torch.ones(1, 512))
+        # stop() re-raises the captured worker error if any; in
+        # synchronous mode the error propagated already, so stop must
+        # still work cleanly.
+        processor.stop()
+
+    def test_worker_thread_drains_input(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        # This test exercises the actual worker thread (start_worker=True).
+        processor = RealtimeProcessor(
+            effects=[Gain(2.0)],
+            backend=mock_backend,
+            config=duplex_config,
+            start_worker=True,
+        )
+        mock_backend._processor = processor
+        processor.start()
+        try:
+            # Push input straight into the input ring and let the worker
+            # process it. Poll with a timeout for determinism.
+            in_chunk = torch.ones(1, 512) * 0.25
+            processor._input_buffer.write(in_chunk)
+            processor._input_event.set()
+
+            deadline = time.monotonic() + 2.0
+            while time.monotonic() < deadline:
+                # Account for the primed silence chunk (which the worker
+                # must consume from the priming step before our data is
+                # available).
+                if processor._output_buffer.available_read >= 512 + 512:
+                    break
+                time.sleep(0.005)
+            assert processor._output_buffer.available_read >= 512 + 512
+            # First read = primed silence.
+            _ = processor._output_buffer.read(512)
+            processed = processor._output_buffer.read(512)
+            torch.testing.assert_close(processed, in_chunk * 2.0)
+        finally:
+            processor.stop()
 
 
 # ---------------------------------------------------------------------------

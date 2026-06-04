@@ -29,25 +29,48 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Minimum signal length for parallel scan to be worthwhile.
-# Below this, the sequential C++ kernel is faster.
-PARALLEL_SCAN_THRESHOLD = 2048
+# Dispatch boundary: signals with T <= threshold use the sequential CUDA kernel;
+# longer signals use the work-efficient parallel scan. The crossover is dtype-
+# dependent (measured on an RTX 3070 via benchmarks/bench_threshold_sweep.py): the
+# parallel scan is ~flat at its launch overhead (~135 us) regardless of dtype,
+# while the sequential kernel grows ~2x faster in FP64 than FP32 — so FP64 hits the
+# crossover sooner. float32 sequential wins up to ~2560 samples; float64 to ~1024.
+# A single 2048 default would leave FP64 ~57% slower at T~2048, so the default is
+# dtype-aware (use _default_threshold).
+PARALLEL_SCAN_THRESHOLD = 2048  # float32 default
+PARALLEL_SCAN_THRESHOLD_FP64 = 1024  # float64 default (FP64 scan overhead is hit sooner)
+
+
+def _default_threshold(dtype: torch.dtype) -> int:
+    """Dtype-aware sequential-vs-parallel-scan default boundary (see above)."""
+    return PARALLEL_SCAN_THRESHOLD_FP64 if dtype == torch.float64 else PARALLEL_SCAN_THRESHOLD
 
 
 def _select_native_dtype(x: Tensor) -> torch.dtype:
     """Select native kernel dtype for an input tensor.
 
-    CPU native IIR/biquad kernels support float32 and float64. CUDA native IIR/biquad
-    kernels currently execute on float64.
+    Both the CPU and CUDA native IIR/biquad kernels are templated on float32 and
+    float64. The native execution dtype follows the input: float64 in → float64,
+    float32 in → float32. This lets float32 inputs run the FP32 GPU path (a large
+    win on consumer cards with a 1:32 FP32:FP64 ratio) instead of being upcast.
 
-    Keep float64 inputs on float64, and route other CPU floating-point inputs through
-    float32.
+    Half-precision inputs are rejected rather than silently upcast: the IIR
+    feedback recurrence is not numerically safe in float16/bfloat16.
+
+    Raises
+    ------
+    TypeError
+        If ``x`` is not floating point, or uses ``float16``/``bfloat16``.
 
     """
     if not x.is_floating_point():
         raise TypeError("Input tensor must use a floating-point dtype.")
-    if x.is_cuda:
-        return torch.float64
+    if x.dtype in (torch.float16, torch.bfloat16):
+        raise TypeError(
+            f"Half-precision input ({x.dtype}) is not supported by the native filter "
+            "kernels: the IIR feedback recurrence is not numerically safe in "
+            "float16/bfloat16. Cast to float32 or float64 first (e.g. x.float())."
+        )
     return torch.float64 if x.dtype == torch.float64 else torch.float32
 
 
@@ -80,6 +103,7 @@ def biquad_forward(
     *,
     a1_f64: float | None = None,
     a2_f64: float | None = None,
+    threshold: int | None = None,
 ) -> tuple[Tensor, Tensor, Tensor]:
     """Dispatch biquad filter to native kernel.
 
@@ -91,12 +115,20 @@ def biquad_forward(
         Pre-extracted feedback coefficients as Python floats.  When supplied,
         avoids a ``float()`` call per forward — which on CUDA triggers a
         GPU→CPU synchronisation.
+    threshold : int, optional
+        Sequential-vs-parallel-scan boundary for the CUDA path (signals with
+        ``T <= threshold`` use the sequential kernel). Defaults to
+        :data:`PARALLEL_SCAN_THRESHOLD`. Pass ``0`` to force the parallel scan or
+        a large value to force the sequential kernel — used by the dispatch
+        crossover ablation. Ignored on CPU.
 
     """
     # Ensure state tensors exist
     C = x.shape[0] if x.ndim >= 2 else 1
     device = x.device
     dtype = _select_native_dtype(x)
+    if threshold is None:
+        threshold = _default_threshold(dtype)
 
     if state_x is None:
         state_x = torch.zeros(C, 2, device=device, dtype=dtype)
@@ -129,6 +161,7 @@ def biquad_forward(
         a2_f64,
         sx,
         sy,
+        threshold,
     )
     return result
 
@@ -140,6 +173,7 @@ def parallel_iir_forward(
     state_y: Tensor | None,
     *,
     sos_cpu: Tensor | None = None,
+    threshold: int | None = None,
 ) -> tuple[Tensor, Tensor, Tensor]:
     """Dispatch SOS cascade to native kernel.
 
@@ -152,12 +186,19 @@ def parallel_iir_forward(
         (float32 or float64). When supplied,
         avoids a per-call CUDA→CPU transfer that otherwise triggers a device
         synchronisation.
+    threshold : int, optional
+        Sequential-vs-parallel-scan boundary for the CUDA path (per section).
+        Defaults to :data:`PARALLEL_SCAN_THRESHOLD`. Pass ``0`` to force the
+        parallel scan or a large value to force the sequential kernel — used by
+        the dispatch crossover ablation. Ignored on CPU.
 
     """
     C = x.shape[0] if x.ndim >= 2 else 1
     K = sos.shape[0]
     device = x.device
     dtype = _select_native_dtype(x)
+    if threshold is None:
+        threshold = _default_threshold(dtype)
 
     if state_x is None:
         state_x = torch.zeros(K, C, 2, device=device, dtype=dtype)
@@ -192,6 +233,7 @@ def parallel_iir_forward(
         sos_cpu,
         sx,
         sy,
+        threshold,
     )
     return result
 

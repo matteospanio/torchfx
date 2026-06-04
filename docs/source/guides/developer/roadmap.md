@@ -1,6 +1,6 @@
 # Roadmap to v1.0.0
 
-**Current Version:** 0.5.2 (Beta Track)
+**Current Version:** 0.6.0 (Beta Track)
 **Target:** v1.0.0 Stable Release
 
 This roadmap outlines the development path for TorchFX from the current beta state to a production-ready v1.0.0 release. The plan is organized into major epics, each containing specific deliverables and tasks.
@@ -23,13 +23,15 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 ### Strengths
 - ✅ Solid core DSP architecture (~2000 LOC)
 - ✅ GPU acceleration with custom CUDA kernels (parallel scan IIR, biquad, delay)
-- ✅ JIT-compiled C++/CUDA native extension with automatic fallback
-- ✅ Transparent IIR/biquad filter fusion via deferred pipeline
+- ✅ **Build-time-compiled** C++/CUDA native extension (scikit-build-core), shipped as CPU + CUDA wheels with explicit `sm_75;80;86;89` SASS
+- ✅ **FP32 CUDA execution path** — float32 runs natively, **3.0–3.6× faster** than the old FP64-only path on consumer GPUs (v0.6.0)
+- ✅ **CUDA Graph capture** for fixed-shape streaming (`CudaGraphRunner`) — **up to 4× lower per-chunk latency** in the realtime regime (v0.6.0)
+- ✅ Transparent IIR/biquad filter fusion via deferred pipeline, with static-gain folding
 - ✅ 88% test coverage with coverage gate enforced in CI
 - ✅ Published research paper (arXiv:2504.08624)
 - ✅ Clean API with pipe operator support (`Wave | filter`, `filter | filter`)
 - ✅ Professional Sphinx documentation with tutorials
-- ✅ Real-time audio processing with circular buffers
+- ✅ Real-time audio processing with a producer/consumer worker-thread split + latency/xrun instrumentation
 - ✅ Full-featured CLI with sox compatibility
 - ✅ Interactive REPL with live performance mode
 - ✅ Complete validation and logging infrastructure
@@ -39,8 +41,9 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 - ❌ Limited ML integration examples
 - ❌ Missing some advanced effects (compressor, phaser, pitch shift)
 - ❌ No VST3 wrapper
+- ❌ GPU realtime path (the live `RealtimeProcessor` is CPU-only; GPU is for offline/streaming)
 
-**Estimated Completion:** ~90% ready for v1.0.0
+**Estimated Completion:** ~92% ready for v1.0.0
 
 ---
 
@@ -367,9 +370,14 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 ### 4.2 IIR Filter CUDA Kernels ✅
 
 - [x] **Parallel IIR implementation**
-  - ✅ Blelloch parallel prefix scan — O(N) total work, 24 KB shared memory per block
-  - ✅ `PARALLEL_SCAN_THRESHOLD` (default 2048) for automatic sequential/parallel dispatch
-  - ✅ 4x faster than SciPy (single-channel), 11x faster (8-channel) on RTX 6000
+  - ✅ Blelloch parallel prefix scan — O(N) total work
+  - ✅ `PARALLEL_SCAN_THRESHOLD` is now **dtype-aware and tunable** (float32 → 2048, float64 → 1024, threaded into the kernel; overridable per call) — a measured crossover sweep showed FP64 hits the parallel-scan overhead sooner
+  - ✅ 4x faster than SciPy (single-channel), 11x faster (8-channel)
+
+- [x] **FP32 CUDA execution path** (v0.6.0)
+  - ✅ Kernels templated on `scalar_t` and dispatched on the input dtype: `float32` in → FP32 path, `float64` in → FP64. No more silent upcast.
+  - ✅ **3.0–3.6× faster** for IIR cascades on an RTX 3070; resolves the multichannel inversion (60 s / 8-ch GPU now beats its own CPU)
+  - ✅ FP32/FP64 precision validation harness (`tests/test_fp32_precision.py`) against `scipy.signal.sosfilt`
 
 - [x] **Biquad cascade optimization**
   - ✅ Specialized biquad CUDA kernel — 128 channels batched per thread block
@@ -395,11 +403,20 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
   - ✅ Deferred pipeline with auto-fusion — consecutive IIR/biquad filters merged
     into single `FusedSOSCascade` kernel call (~2.5x faster for IIR chains)
   - ✅ `FilterChain` and `FX.__or__` for composable filter chains
-  - [ ] Fuse non-IIR effects: `gain + filter + normalize` → single kernel
+  - ✅ **Static-gain folding** (v0.6.0) — a constant linear `Gain` between filters is folded
+    into the cascade numerator, so `IIR | Gain | IIR` stays one fused stage
+  - [ ] Fuse a *dynamic* `Normalize` (per-chunk peak) — only the static, resolvable case is folded
+
+- [x] **CUDA Graph capture for streaming** (v0.6.0)
+  - ✅ `torchfx.realtime.CudaGraphRunner` captures a fixed-shape fused-cascade forward and
+    replays it per chunk, collapsing the `~4·K` per-section launches into one
+  - ✅ **Up to 4× lower per-chunk latency** at small (realtime) chunk sizes on an RTX 3070
 
 - [x] **Memory optimization**
   - ✅ SOS coefficient device caching (eliminates per-forward `.to()`)
   - ✅ In-place state updates (`copy_()` instead of `torch.stack()`)
+  - ✅ **Allocation-free GPU SOS forward** (v0.6.0) — per-section scratch reused once per
+    forward (O(K) → O(1) allocations), cutting the eager GPU streaming path **~27%**
   - ✅ Reverb op fusion (5 tensor ops → 2)
   - ✅ Delay wet/dry mix via `torch.lerp` (3 ops → 1)
 
@@ -426,6 +443,37 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 
 - [ ] **Profiling guides**
   - Documentation for profiling pipelines
+
+### 4.6 Advanced Kernel Optimizations (Future)
+
+The 0.6.0 GPU work (FP32 path, CUDA graphs, allocation-free streaming, dispatch tuning)
+landed the high-leverage wins. The remaining kernel-level optimizations — investigated,
+prioritized, and (where attempted) measured during the 0.6.0 cycle — are tracked here.
+Each item lists its difficulty and expected impact; none block a release.
+
+- [ ] **Single-kernel SOS-section fusion (mega-kernel)** — *hard.* One CUDA kernel that
+  processes all `K` sections of a cascade (sections serial within a block, time-blocks
+  parallel) instead of the per-section launch loop. **The only item that makes fusion
+  *kernel-level*** rather than Python-dispatch-level: today a fused cascade still issues
+  `~4·K` launches (700 → 406 at `K=50`). Expected **15–27%** wall-time at `K≥5`, larger
+  at small chunks. Depends on the FP32 templating + the once-per-forward scratch (both done).
+- [ ] **Single-pass scan** — *medium.* Replace the Blelloch up/down-sweep + phase-3
+  recompute with a decoupled-look-back single-pass scan (CUB `DeviceScan` with a 3×3-matrix
+  operator, or hand-rolled). The phase-3 recompute roughly doubles scan work; ~2% overall,
+  but it simplifies the code and de-risks the mega-kernel.
+- [ ] **Pinned host buffers + async H2D/D2H for GPU streaming** — *medium.* Overlap chunk
+  transfers with compute. Only pays off once a **GPU realtime/streaming I/O path** exists
+  (the live path is CPU-only today), so deferred until that lands.
+- [ ] **Cache-blocked cross-channel CPU SIMD** — *medium, edge-focused.* A naive
+  full-transpose SIMD kernel was tried in 0.6.0 and **measured a 4–8× regression** on a
+  10-core desktop: the transpose moves as much memory as the streaming-light recurrence
+  computes, and the scalar OpenMP-over-channels path already saturates the cores. A
+  cache-blocked transpose (tiles that stay in L1/L2, state carried across time blocks)
+  could win, but the payoff is concentrated on **few-core edge devices (Raspberry Pi 5)**
+  and needs that hardware to validate. The scalar path is already near-optimal on
+  multi-core (8-ch, 10 s @ 48 kHz ≈ 3.5 ms).
+- [ ] **CPU runtime feature dispatch (function multiversioning)** — *small.* Ship AVX2/AVX-512
+  CPU paths without `-march=native` breaking wheel portability (paired with the SIMD work above).
 
 ---
 
@@ -743,43 +791,43 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
   - ✅ 74% → 88% coverage, `fail_under = 87` gate in CI
   - ✅ 7 new test files covering fusion, dispatch, filter base, filterbank, utilities
 
-### Phase 6: Build-Time Native Extension Compilation — **NEXT**
+### Phase 6: Build-Time Native Extension Compilation (v0.5.3) ✅ **COMPLETED**
 **Priority:** High
 
-The current native extension (`torchfx._ops`) is JIT-compiled at runtime via
-`torch.utils.cpp_extension.load()`. This has several drawbacks:
+The native extension is now **compiled at build time** with
+[scikit-build-core](https://scikit-build-core.readthedocs.io/) + CMake, not JIT-compiled
+at first import. Shipped:
 
-- **First-import latency**: compilation takes 10–30s on first use, surprising users
-- **Compiler requirement**: end users need GCC ≥ 9 and matching CUDA toolkit installed
-- **Reproducibility**: compiled artifacts depend on the user's exact toolchain
-- **PyPI distribution**: wheels contain no compiled code — every install recompiles
+- [x] **scikit-build-core migration** — CMake-based build (`CMakeLists.txt`) compiles
+  `iir_cpu.cpp` / `delay_cpu.cpp` at `pip install` / `uv sync` time. The extension is
+  **required** (no pure-PyTorch fallback); `TORCHFX_NO_CUDA=1` forces a CPU-only build.
+- [x] **CUDA kernel packaging** — `biquad_forward.cu` / `parallel_scan.cu` /
+  `delay_forward.cu` built at wheel time with explicit `CUDA_ARCHITECTURES`
+  (`sm_75;80;86;89` by default, override via `TORCHFX_CUDA_ARCHITECTURES`) so wheels ship
+  native SASS with no first-call PTX→SASS JIT.
+- [x] **CI/CD wheel pipeline** — cibuildwheel across Linux x86_64 / macOS / Windows,
+  Python 3.10–3.14; CPU wheels on PyPI and CUDA wheels (cu124/cu128) on a PEP-503 index.
+- [x] **`is_native_available()`** unchanged; `TORCHFX_NO_CUDA=1` still forces CPU-only.
 
-**Goal:** Migrate from runtime JIT compilation to **build-time compilation** using
-[scikit-build-core](https://scikit-build-core.readthedocs.io/) as the build backend,
-so that compiled C++/CUDA extensions are included in distributed wheels.
+### Phase 8: GPU Performance & Streaming (v0.6.0) ✅ **COMPLETED**
+**Priority:** High
 
-- [ ] **scikit-build-core migration**
-  - Replace `torch.utils.cpp_extension.load()` with CMake-based build
-  - `CMakeLists.txt` for CPU C++ extension (`iir_cpu.cpp`)
-  - Compile at `pip install` / `uv sync` time, not at first import
-  - Maintain pure-PyTorch fallback when extension is unavailable
+The 0.6.0 cycle returned to the GPU side (the follow-up promised in 0.5.4) and the
+realtime path:
 
-- [ ] **CUDA kernel packaging**
-  - Build CUDA kernels (`biquad_forward.cu`, `parallel_scan.cu`, `delay_forward.cu`)
-    at wheel build time
-  - Fat binaries or per-arch wheels for common CUDA architectures (sm_70, sm_80, sm_89, sm_90)
-  - Handle PyPI distribution: publish separate CPU-only and CUDA wheels
-    (e.g., `torchfx` for CPU, `torchfx-cu128` for CUDA 12.8)
-
-- [ ] **CI/CD wheel pipeline**
-  - Build matrix: Linux x86_64, Python 3.10–3.13, CPU + CUDA 12.x
-  - cibuildwheel or similar for reproducible wheel builds
-  - Automated PyPI publishing on tag
-
-- [ ] **Backward compatibility**
-  - Keep JIT fallback path for development (`pip install -e .`) and unsupported platforms
-  - `torchfx.is_native_available()` works unchanged
-  - `TORCHFX_NO_CUDA=1` still forces CPU-only
+- [x] **FP32 CUDA path** — templated `scalar_t` kernels + dtype-aware dispatch; **3.0–3.6×**
+  for IIR cascades on an RTX 3070, resolving the multichannel GPU-vs-CPU inversion.
+- [x] **CUDA Graph capture** (`CudaGraphRunner`) — **up to 4×** lower per-chunk latency for
+  fixed-shape streaming; root-caused to launching kernels on the current CUDA stream.
+- [x] **Allocation-free GPU SOS forward** — O(K) → O(1) per-forward allocations (eager
+  streaming **~27%** faster).
+- [x] **Dtype-aware, tunable dispatch threshold** + explicit CUDA architectures.
+- [x] **Static-gain folding** in the fusion planner.
+- [x] **Realtime producer/consumer split** + latency/xrun instrumentation; **correctness
+  hardening** (stale-coefficient recompute on `fs` change, offline state-reset semantics,
+  half-precision rejection).
+- See {doc}`/blog/index` for the detailed release and feature posts, and Epic 4.6
+  for the remaining (deferred) kernel optimizations.
 
 ### Phase 7: Polish & v1.0 Release
 **Priority:** Medium
@@ -813,6 +861,8 @@ so that compiled C++/CUDA extensions are included in distributed wheels.
    - ✅ Real-time: 48kHz, 2048 buffer, ~46ms latency (tested in REPL)
    - ✅ Batch: custom CUDA kernels — 4x faster than SciPy (1ch), 11x faster (8ch)
    - ✅ Auto-fusion: ~2.5x faster IIR chains via deferred pipeline
+   - ✅ FP32 GPU path: 3.0–3.6x faster than FP64 on consumer GPUs (v0.6.0)
+   - ✅ CUDA Graph streaming: up to 4x lower per-chunk latency in the realtime regime (v0.6.0)
 5. ✅ **Platform Support**: Linux, macOS, Windows with Python 3.10-3.13
    - ✅ CI testing on multiple platforms
 6. ✅ **CLI Functionality**: All core commands working
@@ -853,8 +903,8 @@ TorchFX follows **SOLID** and **DRY** principles:
 
 We welcome contributions! See the [style guide](./style_guide.md) for guidelines.
 
-- **Current focus**: Phase 6 (Build-Time Native Extension Compilation)
-- **Phases 1–5**: ✅ COMPLETED
+- **Current focus**: v1.0 polish — additional effects (dynamics: compressor/limiter), audio-quality tests, and the deferred kernel optimizations in Epic 4.6
+- **Phases 1–6 and 8**: ✅ COMPLETED
 - **Good first issues**: Check GitHub issues tagged `good-first-issue`
 - **CLI Extension Ideas**: Real-time visualization, AB comparison mode, spectrum analyzer
 - **Questions**: Open a discussion on GitHub
