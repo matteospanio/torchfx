@@ -51,9 +51,9 @@ Notes
   ``nvidia-smi -lms 100 ...``) rather than per-sample. This avoids the
   ~30 ms startup cost of ``nvidia-smi`` per sample and keeps the
   sampling jitter under ~1 %.
-* CPU package and DRAM (RAPL ``intel-rapl:0:0``) are summed when both
-  are present. PSys (``intel-rapl:1``) is preferred when available
-  because it covers the whole package + uncore + DRAM.
+* Only top-level package domains (e.g. ``intel-rapl:0``) are read to avoid
+  double-counting subdomains (cores/uncore/DRAM), which are already included in
+  the package counter. PSys (``intel-rapl:1``) is preferred when available.
 
 """
 
