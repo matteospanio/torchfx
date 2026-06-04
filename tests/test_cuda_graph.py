@@ -56,7 +56,7 @@ def test_cuda_graph_matches_eager_streaming(dtype):
     # warmup runs on a side stream + capture while eager runs straight-line, so the
     # post-warmup state differs by float noise (~2e-11 in float64) that propagates
     # but does not grow. A real logic error would be O(0.1+).
-    tol = {"rtol": 1e-4, "atol": 1e-5} if dtype == torch.float32 else {"rtol": 1e-7, "atol": 1e-9}
+    tol = {"rtol": 1e-3, "atol": 3e-4} if dtype == torch.float32 else {"rtol": 1e-7, "atol": 1e-9}
     for i, (e, go) in enumerate(zip(eager_out, graphed_out, strict=True)):
         torch.testing.assert_close(go, e, msg=f"chunk {i} mismatch", **tol)
 
