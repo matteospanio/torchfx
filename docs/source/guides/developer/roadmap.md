@@ -451,16 +451,23 @@ landed the high-leverage wins. The remaining kernel-level optimizations — inve
 prioritized, and (where attempted) measured during the 0.6.0 cycle — are tracked here.
 Each item lists its difficulty and expected impact; none block a release.
 
-- [ ] **Single-kernel SOS-section fusion (mega-kernel)** — *hard.* One CUDA kernel that
-  processes all `K` sections of a cascade (sections serial within a block, time-blocks
-  parallel) instead of the per-section launch loop. **The only item that makes fusion
-  *kernel-level*** rather than Python-dispatch-level: today a fused cascade still issues
-  `~4·K` launches (700 → 406 at `K=50`). Expected **15–27%** wall-time at `K≥5`, larger
-  at small chunks. Depends on the FP32 templating + the once-per-forward scratch (both done).
-- [ ] **Single-pass scan** — *medium.* Replace the Blelloch up/down-sweep + phase-3
-  recompute with a decoupled-look-back single-pass scan (CUB `DeviceScan` with a 3×3-matrix
-  operator, or hand-rolled). The phase-3 recompute roughly doubles scan work; ~2% overall,
-  but it simplifies the code and de-risks the mega-kernel.
+- [x] **Single-pass scan (kernel-level fusion)** — *done, opt-in.* Each cascade section's
+  forcing pass + 3-phase Blelloch scan are folded into one **decoupled-look-back** kernel
+  (Merrill–Garland / CUB style, atomic per-section tile dispenser for deadlock-free forward
+  progress), and the per-section DF1 state update into one more — so a fused section is
+  **2 CUDA launches** instead of ~8, with the phase-3 recompute eliminated. Measured on an
+  RTX 3070 vs the 3-phase path: **5.9× fewer launches** (600 → 102 at K=50) and **~1.9×
+  faster** cascades; fused launches now sit *below* the unfused baseline (102 vs 400). This
+  is the item that makes fusion **kernel-level**, not just Python-dispatch-level. Opt-in via
+  `TORCHFX_FUSED_SCAN=1` (3-phase path stays the default) pending multi-GPU (L40S/A40) soak
+  before flipping the default. Source: `fused_scan_kernel` / `state_update_kernel` in
+  [parallel_scan.cu](src/torchfx/_csrc/cuda/parallel_scan.cu).
+- [ ] **Full all-sections mega-kernel** — *hard, future.* The single-pass scan above makes
+  each section one kernel but the K sections are still K separate launches (cross-section
+  dependency = a grid-wide barrier). A single kernel over all K sections (sections serial
+  within a block, cooperative-groups grid sync) would take the launch count to `O(1)`. Lower
+  marginal value now that per-section is already 2 launches; revisit if launch overhead
+  resurfaces at very high K / tiny chunks.
 - [ ] **Pinned host buffers + async H2D/D2H for GPU streaming** — *medium.* Overlap chunk
   transfers with compute. Only pays off once a **GPU realtime/streaming I/O path** exists
   (the live path is CPU-only today), so deferred until that lands.
