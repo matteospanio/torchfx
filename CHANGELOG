@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [Unreleased]
+
+### Added
+
+- **Single-pass SOS scan (kernel-level fusion).** A new GPU path folds each cascade
+  section's forcing pass and the three-phase Blelloch scan into a **single
+  decoupled-look-back kernel** (Merrill–Garland / CUB style, with an atomic
+  per-section tile dispenser for deadlock-free forward progress), and folds the
+  per-section DF1 state update into one more kernel. Per fused section drops from
+  ~8 CUDA launches (forcing + 3 scan phases + 4 state copies) to **2**, and the
+  phase-3 recompute is gone. Measured on an RTX 3070, vs the 3-phase path:
+  **5.9× fewer CUDA launches** (600 → 102 at K=50) and **~1.9× faster** fused
+  cascades (K=50 18.9 → 9.9 ms); the fused launch count now sits **below** the
+  unfused baseline (102 vs 400). Opt-in via `TORCHFX_FUSED_SCAN=1` (the validated
+  3-phase path remains the default); equivalence to it and to `scipy.signal.sosfilt`
+  is gated by `tests/test_fused_scan_equivalence.py`, and the full suite passes
+  through the fused path.
+
 ## [0.6.0] - 2026-06-04
 
 ### Added
