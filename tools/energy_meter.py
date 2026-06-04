@@ -10,7 +10,7 @@ via ``nvidia-smi``. The two sources are read with very different cadences:
   Intel parts).
 * **nvidia-smi** does not expose an energy counter, only an instantaneous
   power draw in watts. We sample it on a worker thread at a configurable
-  rate (default 10 Hz) and integrate by Simpson's rule.
+  rate (default 10 Hz) and integrate by the trapezoidal rule.
 
 Both sources are optional and degrade gracefully: an RTX-less box reports
 GPU as 0 W; an AMD or sandboxed Linux without RAPL reports CPU as 0 W.
