@@ -78,10 +78,11 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
   // Use the pre-supplied CPU copy — no GPU→CPU sync needed.
   auto sos_cpu = sos_cpu_in.contiguous();
 
-  // Opt-in fused per-section path (forcing folded into the scan). Read per call so
-  // tests can A/B against the 3-phase oracle within one process. Default: oracle.
+  // Fused per-section path (forcing folded into the scan) is the default. Read per
+  // call so tests can A/B against the 3-phase oracle within one process. Set
+  // TORCHFX_FUSED_SCAN=0 to force the legacy 3-phase oracle path.
   const char* fused_env = std::getenv("TORCHFX_FUSED_SCAN");
-  const bool use_fused = (fused_env != nullptr && fused_env[0] == '1');
+  const bool use_fused = (fused_env == nullptr) || (fused_env[0] != '0');
 
   // Persistent scratch reused across all sections (C3): allocated once, not per
   // section, so the per-forward kernel sequence and its buffer addresses stay stable

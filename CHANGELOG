@@ -20,10 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   phase-3 recompute is gone. Measured on an RTX 3070, vs the 3-phase path:
   **5.9× fewer CUDA launches** (600 → 102 at K=50) and **~1.9× faster** fused
   cascades (K=50 18.9 → 9.9 ms); the fused launch count now sits **below** the
-  unfused baseline (102 vs 400). Opt-in via `TORCHFX_FUSED_SCAN=1` (the validated
-  3-phase path remains the default); equivalence to it and to `scipy.signal.sosfilt`
-  is gated by `tests/test_fused_scan_equivalence.py`, and the full suite passes
-  through the fused path.
+  unfused baseline (102 vs 400). This is now the **default** GPU path for SOS
+  cascades; set `TORCHFX_FUSED_SCAN=0` to force the legacy 3-phase oracle. Equivalence
+  to that oracle and to `scipy.signal.sosfilt` is gated by
+  `tests/test_fused_scan_equivalence.py`, and the full suite passes through the fused
+  path on both sm_86 (RTX 3070) and sm_89 (L40S); the decoupled look-back's forward
+  progress is validated across 46–142 SMs.
 
 ## [0.6.0] - 2026-06-04
 
