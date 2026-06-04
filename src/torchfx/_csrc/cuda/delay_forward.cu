@@ -1,6 +1,7 @@
 #include <torch/torch.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <c10/cuda/CUDAStream.h>
 #include "torchfx/delay_kernel.h"
 
 // Fused delay line kernel with feedback and wet/dry mixing.
@@ -97,8 +98,11 @@ torch::Tensor delay_line_forward_cuda(
   const int blocks_t = (T + threads - 1) / threads;
   dim3 grid(blocks_t, C);
 
+  // Launch on the current stream (not the default stream) for graph-capture safety.
+  const auto stream = c10::cuda::getCurrentCUDAStream();
+
   if (x_cont.dtype() == torch::kFloat32) {
-    delay_line_kernel<<<grid, threads>>>(
+    delay_line_kernel<<<grid, threads, 0, stream>>>(
         x_cont.data_ptr<float>(),
         output.data_ptr<float>(),
         delay_samples,
@@ -106,7 +110,7 @@ torch::Tensor delay_line_forward_cuda(
         static_cast<float>(mix),
         T);
   } else {
-    delay_line_kernel_f64<<<grid, threads>>>(
+    delay_line_kernel_f64<<<grid, threads, 0, stream>>>(
         x_cont.data_ptr<double>(),
         output.data_ptr<double>(),
         delay_samples,

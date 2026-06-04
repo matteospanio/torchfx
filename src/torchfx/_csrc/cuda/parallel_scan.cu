@@ -1,6 +1,7 @@
 #include <torch/torch.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <c10/cuda/CUDAStream.h>
 #include "torchfx/parallel_scan.h"
 
 // Parallel prefix scan for biquad IIR filtering.
@@ -314,8 +315,12 @@ void compute_forcing_into(
   constexpr int THREADS = 256;
   const int blocks = (total + THREADS - 1) / THREADS;
 
+  // Launch on the current stream (not the default stream) so the kernels are
+  // recorded under torch.cuda.graph capture, which runs on a side stream.
+  const auto stream = c10::cuda::getCurrentCUDAStream();
+
   AT_DISPATCH_FLOATING_TYPES(x_cont.scalar_type(), "compute_forcing", [&] {
-    forcing_kernel<scalar_t><<<blocks, THREADS>>>(
+    forcing_kernel<scalar_t><<<blocks, THREADS, 0, stream>>>(
         x_cont.data_ptr<scalar_t>(),
         sx_cont.data_ptr<scalar_t>(),
         static_cast<scalar_t>(b0), static_cast<scalar_t>(b1), static_cast<scalar_t>(b2),
@@ -349,6 +354,10 @@ void parallel_biquad_scan_into(
   const int64_t C = f_cont.size(0);
   const int64_t T = f_cont.size(1);
 
+  // Launch on the current stream (not the default stream) so the kernels are
+  // recorded under torch.cuda.graph capture, which runs on a side stream.
+  const auto stream = c10::cuda::getCurrentCUDAStream();
+
   AT_DISPATCH_FLOATING_TYPES(f_cont.scalar_type(), "parallel_biquad_scan", [&] {
     const scalar_t* f_ptr = f_cont.data_ptr<scalar_t>();
     scalar_t* y_ptr = y_out.data_ptr<scalar_t>();
@@ -359,7 +368,7 @@ void parallel_biquad_scan_into(
     if (T <= threshold) {
       // Sequential kernel for short signals — multiple channels per block
       const int seq_blocks = (C + SEQ_THREADS_PER_BLOCK - 1) / SEQ_THREADS_PER_BLOCK;
-      sequential_biquad_kernel<scalar_t><<<seq_blocks, SEQ_THREADS_PER_BLOCK>>>(
+      sequential_biquad_kernel<scalar_t><<<seq_blocks, SEQ_THREADS_PER_BLOCK, 0, stream>>>(
           f_ptr, y_ptr, state_ptr, a1s, a2s, static_cast<int>(T), static_cast<int>(C));
     } else {
       const int num_blocks = (T + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -370,17 +379,17 @@ void parallel_biquad_scan_into(
 
       // Phase 1: intra-block scan + store aggregates
       dim3 grid1(num_blocks, C);
-      prefix_scan_phase1<scalar_t><<<grid1, BLOCK_SIZE>>>(
+      prefix_scan_phase1<scalar_t><<<grid1, BLOCK_SIZE, 0, stream>>>(
           f_ptr, y_ptr, agg_ptr, state_ptr, a1s, a2s, static_cast<int>(T), num_blocks);
 
       // Phase 2: scan over block aggregates (sequential, one thread per channel)
       const int threads_p2 = std::min(static_cast<int>(C), 256);
       const int blocks_p2 = (C + threads_p2 - 1) / threads_p2;
-      prefix_scan_phase2<scalar_t><<<blocks_p2, threads_p2>>>(agg_ptr, num_blocks);
+      prefix_scan_phase2<scalar_t><<<blocks_p2, threads_p2, 0, stream>>>(agg_ptr, num_blocks);
 
       // Phase 3: finalize blocks > 0
       dim3 grid3(num_blocks, C);
-      prefix_scan_phase3<scalar_t><<<grid3, BLOCK_SIZE>>>(
+      prefix_scan_phase3<scalar_t><<<grid3, BLOCK_SIZE, 0, stream>>>(
           f_ptr, y_ptr, agg_ptr, state_ptr, a1s, a2s, static_cast<int>(T), num_blocks);
     }
   });
