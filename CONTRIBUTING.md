@@ -147,11 +147,15 @@ Run specific test file:
 uv run pytest tests/test_wave.py
 ```
 
-Run with coverage:
+Run with coverage (matching CI):
 
 ```bash
-uv run pytest --cov=src/torchfx --cov-report=html
+uv run coverage run -m pytest
+uv run coverage report -m
+uv run coverage html -d htmlcov
 ```
+
+The CI coverage job also uploads `coverage.xml` to Codecov, which powers the coverage badge in the README.
 
 ### Writing Tests
 
