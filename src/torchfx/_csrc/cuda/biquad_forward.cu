@@ -78,24 +78,35 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
   // Use the pre-supplied CPU copy — no GPU→CPU sync needed.
   auto sos_cpu = sos_cpu_in.contiguous();
 
-  // Persistent scratch reused across all sections (C3): one forcing buffer, two
-  // ping-pong output buffers, and one block-aggregate scratch — allocated once, not
-  // per section. This is what keeps the per-forward kernel sequence and its buffer
-  // addresses stable so a captured CUDA graph replays correctly (per-section
-  // allocations otherwise alias in the capture pool and corrupt the replay).
-  auto opts = x_c.options();
-  auto f = torch::empty({C, T}, opts);
-  auto y_a = torch::empty({C, T}, opts);
-  auto y_b = torch::empty({C, T}, opts);
-  const int num_blocks = (static_cast<int>(T) + 512 - 1) / 512;  // BLOCK_SIZE = 512
-  auto block_agg = torch::empty({C * num_blocks * 6}, opts);
-
-  torch::Tensor section_input = x_c;
-
   // Opt-in fused per-section path (forcing folded into the scan). Read per call so
   // tests can A/B against the 3-phase oracle within one process. Default: oracle.
   const char* fused_env = std::getenv("TORCHFX_FUSED_SCAN");
   const bool use_fused = (fused_env != nullptr && fused_env[0] == '1');
+
+  // Persistent scratch reused across all sections (C3): allocated once, not per
+  // section, so the per-forward kernel sequence and its buffer addresses stay stable
+  // for CUDA-graph replay. Two ping-pong output buffers are needed in both paths.
+  auto opts = x_c.options();
+  auto y_a = torch::empty({C, T}, opts);
+  auto y_b = torch::empty({C, T}, opts);
+  const int num_blocks = (static_cast<int>(T) + 512 - 1) / 512;  // BLOCK_SIZE = 512
+
+  // Oracle path: forcing buffer + block-aggregate scratch. Fused path: epoch-tagged
+  // status (zeroed once), aggregate/prefix scratch, and a per-(section,channel) tile
+  // dispenser (zeroed once). status/tile_counter are zeros so section 0 sees "empty".
+  auto i32 = opts.dtype(torch::kInt32);
+  torch::Tensor f, block_agg, status, aggregate, prefix, tile_counter;
+  if (use_fused) {
+    status = torch::zeros({C * num_blocks}, i32);
+    aggregate = torch::empty({C * num_blocks * 6}, opts);
+    prefix = torch::empty({C * num_blocks * 6}, opts);
+    tile_counter = torch::zeros({K * C}, i32);
+  } else {
+    f = torch::empty({C, T}, opts);
+    block_agg = torch::empty({C * num_blocks * 6}, opts);
+  }
+
+  torch::Tensor section_input = x_c;
 
   // Process each SOS section sequentially, reusing the scratch buffers.
   for (int64_t s = 0; s < K; ++s) {
@@ -115,8 +126,10 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
     // after the reads, with no temporary allocation — so a captured CUDA graph sees
     // stable buffer addresses for the whole forward (no per-section allocs at all).
     if (use_fused) {
+      auto counter_s = tile_counter.narrow(0, s * C, C);  // this section's [C] dispenser
       fused_sos_scan_into(section_input, b0, b1, b2, a1, a2, sx_s, sy_s,
-                          threshold, y_out, f, block_agg);
+                          threshold, y_out, status, aggregate, prefix, counter_s,
+                          static_cast<int>(s));
     } else {
       compute_forcing_into(section_input, b0, b1, b2, sx_s, f);
       parallel_biquad_scan_into(f, a1, a2, sy_s, threshold, y_out, block_agg);

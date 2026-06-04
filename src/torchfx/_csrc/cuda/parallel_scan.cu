@@ -294,6 +294,114 @@ __global__ void fused_sequential_kernel(
 }
 
 // ============================================================
+// Single-pass scan with decoupled look-back (paper C1 / Epic 4.6).
+//
+// Replaces forcing_kernel + prefix_scan_phase1/2/3 with ONE launch per section:
+// each tile computes its forcing inline, runs the intra-tile Blelloch scan, then
+// gets its inter-tile (exclusive) prefix by decoupled look-back (Merrill-Garland /
+// CUB) over predecessor tiles of the same channel — no phase-2 scan, no phase-3
+// recompute.
+//
+// Forward progress: an atomic per-(section, channel) tile dispenser hands out
+// logical tile ids in execution order, so a block only ever waits on lower tile ids
+// held by already-running blocks (deadlock-free even when num_blocks exceeds the
+// number of resident blocks).
+//
+// Status is epoch-tagged (epoch = section index) so the per-forward status /
+// aggregate / prefix scratch is reused across all sections after a single up-front
+// zeroing of `status` (no per-section reset): status = (epoch << 2) | state, with
+// state in {0 empty, 1 aggregate-ready, 2 prefix-ready}. A stale value from an
+// earlier section carries an older epoch and reads as not-ready.
+// ============================================================
+
+constexpr int ST_EMPTY = 0;
+constexpr int ST_AGG = 1;
+constexpr int ST_PREFIX = 2;
+
+__device__ __forceinline__ int st_tag(int epoch, int state) { return (epoch << 2) | state; }
+
+template <typename scalar_t>
+__global__ void fused_scan_kernel(
+    const scalar_t* __restrict__ x,      // [C, T]
+    const scalar_t* __restrict__ sx,     // [C, 2] = {x[-1], x[-2]}
+    const scalar_t* __restrict__ sy,     // [C, 2] = {y[-1], y[-2]}
+    scalar_t b0, scalar_t b1, scalar_t b2,
+    scalar_t a1, scalar_t a2,
+    scalar_t* __restrict__ y,            // [C, T]
+    int* __restrict__ status,            // [C, num_blocks] epoch-tagged
+    Mat3x3<scalar_t>* __restrict__ aggregate,  // [C, num_blocks]
+    Mat3x3<scalar_t>* __restrict__ prefix,     // [C, num_blocks]
+    int* __restrict__ tile_counter,      // [C] dispenser for THIS section
+    int epoch, int T, int num_blocks) {
+
+  const int channel = blockIdx.y;
+  const int tid = threadIdx.x;
+
+  // Atomic tile dispenser: logical tile id in execution order (forward progress).
+  __shared__ int s_tile;
+  if (tid == 0) s_tile = atomicAdd(&tile_counter[channel], 1);
+  __syncthreads();
+  const int kt = s_tile;
+  if (kt >= num_blocks) return;  // safety; grid has exactly num_blocks blocks/channel
+
+  const int tile_start = kt * BLOCK_SIZE;
+  const int n = tile_start + tid;
+  const int base = channel * num_blocks;
+
+  __shared__ Mat3x3<scalar_t> sdata[BLOCK_SIZE];
+
+  // 1. Forcing inline -> per-sample matrix (identity for out-of-range samples).
+  Mat3x3<scalar_t> my_mat;
+  if (n < T) {
+    const scalar_t xn = x[channel * T + n];
+    scalar_t xn1, xn2;
+    if (n >= 2) { xn1 = x[channel * T + n - 1]; xn2 = x[channel * T + n - 2]; }
+    else if (n == 1) { xn1 = x[channel * T + 0]; xn2 = sx[channel * 2 + 0]; }
+    else { xn1 = sx[channel * 2 + 0]; xn2 = sx[channel * 2 + 1]; }
+    const scalar_t fn = b0 * xn + b1 * xn1 + b2 * xn2;
+    my_mat.m[0] = -a1; my_mat.m[1] = -a2; my_mat.m[2] = fn;
+    my_mat.m[3] = scalar_t(1); my_mat.m[4] = scalar_t(0); my_mat.m[5] = scalar_t(0);
+  } else {
+    my_mat = mat_identity<scalar_t>();
+  }
+  sdata[tid] = my_mat;
+  __syncthreads();
+
+  // 2. Intra-tile inclusive scan; sdata[tid] = local inclusive prefix, block_total = aggregate.
+  Mat3x3<scalar_t> block_total = blelloch_inclusive_scan<scalar_t>(sdata, my_mat, tid);
+
+  // 3. Thread 0: decoupled look-back -> exclusive (inter-tile) prefix.
+  __shared__ Mat3x3<scalar_t> s_excl;
+  if (tid == 0) {
+    Mat3x3<scalar_t> excl = mat_identity<scalar_t>();
+    if (kt > 0) {
+      aggregate[base + kt] = block_total;
+      __threadfence();
+      atomicExch(&status[base + kt], st_tag(epoch, ST_AGG));
+      for (int j = kt - 1; j >= 0; --j) {
+        int s;
+        do { s = atomicAdd(&status[base + j], 0); }  // forced fresh read
+        while (!((s >> 2) == epoch && (s & 3) >= ST_AGG));
+        __threadfence();
+        if ((s & 3) == ST_PREFIX) { excl = mat_mul<scalar_t>(excl, prefix[base + j]); break; }
+        excl = mat_mul<scalar_t>(excl, aggregate[base + j]);
+      }
+    }
+    prefix[base + kt] = mat_mul<scalar_t>(block_total, excl);
+    __threadfence();
+    atomicExch(&status[base + kt], st_tag(epoch, ST_PREFIX));
+    s_excl = excl;
+  }
+  __syncthreads();
+
+  // 4. Apply exclusive prefix + initial state -> output.
+  if (n < T) {
+    Mat3x3<scalar_t> total = mat_mul<scalar_t>(sdata[tid], s_excl);
+    y[channel * T + n] = extract_y<scalar_t>(total, sy[channel * 2 + 0], sy[channel * 2 + 1]);
+  }
+}
+
+// ============================================================
 // Custom CUDA kernel for 3-tap FIR with state prepend.
 // Fuses the cat + conv1d into a single kernel launch, eliminating
 // ~5 intermediate tensor operations and cuDNN dispatch overhead.
@@ -456,12 +564,15 @@ std::tuple<torch::Tensor, torch::Tensor> parallel_biquad_scan(
 //
 // Replaces the per-section (compute_forcing_into + parallel_biquad_scan_into) pair
 // with a single fused launch:
-//   - T <= threshold : fused_sequential_kernel (forcing inline)        -- 1 launch.
-//   - T  > threshold : single-pass decoupled-look-back scan (inline)   -- 1 launch
-//                      (NOT YET WIRED — falls back to the 3-phase path).
+//   - T <= threshold : fused_sequential_kernel (forcing inline)       -- 1 launch.
+//   - T  > threshold : single-pass decoupled-look-back scan (inline)  -- 1 launch.
 // Reads state_x (for forcing) and state_y (recurrence init); writes y_out. The
 // caller updates the state tails in place afterwards (unchanged from the 3-phase
 // path). All launches are on the current stream for CUDA-graph safety.
+//
+// status / aggregate / prefix are per-forward scratch reused across all sections
+// (gated by the epoch tag = section index); `tile_counter` is this section's [C]
+// dispenser. `status` and `tile_counter` must be zero before the FIRST section.
 void fused_sos_scan_into(
     const torch::Tensor& x,
     double b0, double b1, double b2,
@@ -470,8 +581,11 @@ void fused_sos_scan_into(
     const torch::Tensor& state_y,
     int threshold,
     torch::Tensor& y_out,
-    torch::Tensor& f_scratch,
-    torch::Tensor& block_agg) {
+    torch::Tensor& status,
+    torch::Tensor& aggregate,
+    torch::Tensor& prefix,
+    torch::Tensor& tile_counter,
+    int epoch) {
 
   auto x_c = x.contiguous();
   auto sx = state_x.contiguous();
@@ -490,9 +604,19 @@ void fused_sos_scan_into(
           y_out.data_ptr<scalar_t>(), static_cast<int>(T), static_cast<int>(C));
     });
   } else {
-    // Increment B will replace this with the single-pass fused_scan_kernel.
-    compute_forcing_into(x_c, b0, b1, b2, sx, f_scratch);
-    parallel_biquad_scan_into(f_scratch, a1, a2, sy, threshold, y_out, block_agg);
+    const int num_blocks = (static_cast<int>(T) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    dim3 grid(num_blocks, static_cast<int>(C));
+    AT_DISPATCH_FLOATING_TYPES(x_c.scalar_type(), "fused_scan", [&] {
+      auto agg_ptr = reinterpret_cast<Mat3x3<scalar_t>*>(aggregate.data_ptr<scalar_t>());
+      auto pre_ptr = reinterpret_cast<Mat3x3<scalar_t>*>(prefix.data_ptr<scalar_t>());
+      fused_scan_kernel<scalar_t><<<grid, BLOCK_SIZE, 0, stream>>>(
+          x_c.data_ptr<scalar_t>(), sx.data_ptr<scalar_t>(), sy.data_ptr<scalar_t>(),
+          static_cast<scalar_t>(b0), static_cast<scalar_t>(b1), static_cast<scalar_t>(b2),
+          static_cast<scalar_t>(a1), static_cast<scalar_t>(a2),
+          y_out.data_ptr<scalar_t>(),
+          status.data_ptr<int>(), agg_ptr, pre_ptr, tile_counter.data_ptr<int>(),
+          epoch, static_cast<int>(T), num_blocks);
+    });
   }
 }
 
