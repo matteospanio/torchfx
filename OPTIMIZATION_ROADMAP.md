@@ -331,43 +331,34 @@ partly bandwidth/overhead-bound.*
 
 ---
 
-## Epic C — Realtime & streaming execution efficiency — 🟡 PARTIAL
+## Epic C — Realtime & streaming execution efficiency — ✅ C1/C3/C4 DONE
 
-*Status: **C3 + C4 done** (committed, GPU-verified, full suite green). **C1 (CUDA-graph
-capture) is close but reverted** pending one more fix.*
+*Status: **C1 (CUDA-graph capture), C3 (scratch reuse), C4 (in-place state) all shipped
+and GPU-verified** (full suite 1178 passed). C2 (pinned/async) deferred until a GPU
+realtime I/O path exists.*
 
 **Done:**
+- **C1** — `torchfx.realtime.CudaGraphRunner` captures a fixed-shape fused-cascade
+  forward into a `torch.cuda.CUDAGraph` and replays it per chunk. **Measured 4.0× at
+  128-sample chunks** (52 vs 210 µs), 2.6× at 512, 1.8× at 1024 — the win is largest in
+  the short-chunk / realtime regime where launch overhead dominates. Graph replay
+  matches eager streaming to float precision.
 - **C4** — in-place DF1 state in `sos_forward_cuda` (no per-call `[K,C,2]` clone).
 - **C3** — per-section scratch (forcing, ping-pong `y`, `block_agg`) allocated **once
   per forward and reused across sections** (`compute_forcing_into` /
-  `parallel_biquad_scan_into`); per-forward allocations go **O(K) → O(1)**.
-- **K=1 sync fix** — the single-biquad CUDA fast path passes the **CPU** canonical
-  coefficients to the binding, so `b.cpu()` no longer issues a device→host sync that
-  invalidated stream capture.
+  `parallel_biquad_scan_into`); per-forward allocations go **O(K) → O(1)**, cutting the
+  **eager** GPU streaming path **~27%** independent of graphs.
 
-**Bonus win from the C1 work:** making `sos_forward_cuda` fully allocation-free per
-forward (scratch reuse + writing per-section DF1 state directly into the persistent
-state buffers) cut the **eager** GPU streaming path **~27%** (276 → 202 µs/chunk for a
-4-section cascade). That is kept and verified independently of graphs.
+**The real root cause (commit bf7e5e8):** the hand-written kernels launched with
+`<<<grid, block>>>` — the **default stream**. `torch.cuda.graph` capture runs on a side
+stream and does **not record default-stream work**, so the captured forward replayed as
+a no-op (the earlier "output-buffer / graph-pool" theories were wrong). Passing
+`c10::cuda::getCurrentCUDAStream()` to every kernel launch fixed it — and is correct in
+eager mode too (kernels now run on PyTorch's stream rather than relying on implicit
+default-stream sync). The deep-dive history is preserved (f70a375, 97ff5c1, bb78939).
 
-**C1 diagnosis (deep dive), preserved in git history (f70a375, 97ff5c1, bb78939):**
-- The graph **computes correctly on replay**: the input is read live and state advances
-  in place (verified: post-replay state == new chunk tail). Removing the per-section
-  scratch (C3) and the per-section state-extraction temps killed the ~39× corruption.
-- **Remaining blocker — output plumbing:** the model's *returned* tensor lives in the
-  graph's private pool, and even copying it into a persistent buffer inside the capture
-  does **not** surface the replayed output — the returned output is frozen across
-  replays while state correctly differs. A stubborn `torch.cuda.graph` + custom-op-return
-  interaction.
-- **Likely real fix:** give the SOS native op an explicit **output-buffer parameter** so
-  the graph writes into a stable, user-owned tensor (rather than returning a graph-pool
-  buffer). Larger change; that is the next step.
-- The prize is measured and large: **~6–8× per-chunk replay speedup** (≈34 µs vs
-  200–280 µs eager on an RTX 3070), since the parallel scan is ~135 µs of pure launch
-  overhead.
-
-*Remaining sequencing: **add an output-buffer param to sos_forward → C1 (capture) →
-C2 (pinned/async)**.*
+*Remaining: **C2 (pinned host buffers + async H2D/D2H)** — only meaningful once a GPU
+realtime/streaming I/O path exists; deferred.*
 
 *Theme: the realtime path already has a worker-thread producer/consumer split and latency/xrun
 instrumentation (shipped in 0.6.0). This epic attacks the per-chunk overheads that eat the audio

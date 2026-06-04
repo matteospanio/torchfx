@@ -44,6 +44,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exact (a scalar commutes through a linear filter); a clamping `Gain` or a dynamic
   `Normalize` stays its own stage. The planner is exposed as the testable
   `Wave._build_plan`.
+- **`torchfx.realtime.CudaGraphRunner`** — captures a fixed-shape fused-cascade GPU
+  forward into a `torch.cuda.CUDAGraph` and replays it per chunk, collapsing the
+  `~4·K` per-section kernel launches into one graph launch. The win is largest in
+  the short-chunk / realtime regime where launch overhead dominates: **4.0× faster
+  at 128-sample chunks** (52 vs 210 µs), 2.6× at 512, 1.8× at 1024 on an RTX 3070.
+  Streaming DF1 state is carried across replays; `reset_state()` restarts a stream.
 
 - **Realtime architecture: producer/consumer split.** `RealtimeProcessor`
   now runs DSP in a dedicated worker thread (`torchfx-realtime-dsp`),
@@ -173,6 +179,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CUDA kernels now launch on the current stream.** The hand-written kernels
+  launched with `<<<grid, block>>>` (the default stream); they now pass
+  `c10::cuda::getCurrentCUDAStream()`. This is what lets `torch.cuda.graph` capture
+  record them (capture runs on a side stream and ignores default-stream work — so a
+  captured cascade previously replayed as a no-op), and it is also more correct in
+  eager mode (work runs on PyTorch's stream rather than relying on implicit
+  default-stream synchronisation).
 - The previously unused `TensorRingBuffer` instances inside
   `RealtimeProcessor` are now actively the I/O path. The "lock-free
   SPSC" claim in the docstring now reflects how the buffers are used —
