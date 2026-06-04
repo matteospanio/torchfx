@@ -1,4 +1,4 @@
-"""Equivalence of the fused per-section SOS path (Roadmap Epic 4.6 / paper C1).
+"""Equivalence of the fused per-section SOS path (Roadmap Epic 4.6).
 
 ``TORCHFX_FUSED_SCAN=1`` switches ``sos_forward_cuda`` to the fused path that folds
 the FIR forcing into the scan (one kernel per section instead of forcing + scan).

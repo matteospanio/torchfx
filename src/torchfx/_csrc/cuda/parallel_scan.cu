@@ -294,7 +294,7 @@ __global__ void fused_sequential_kernel(
 }
 
 // ============================================================
-// Single-pass scan with decoupled look-back (paper C1 / Epic 4.6).
+// Single-pass scan with decoupled look-back (Epic 4.6).
 //
 // Replaces forcing_kernel + prefix_scan_phase1/2/3 with ONE launch per section:
 // each tile computes its forcing inline, runs the intra-tile Blelloch scan, then
