@@ -235,6 +235,15 @@ jobs:
       - name: Report coverage (enforces fail_under)
         run: uv run coverage report -m
 
+      - name: Generate XML report
+        run: uv run coverage xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Generate HTML report
         if: always()
         run: uv run coverage html -d htmlcov

@@ -8,6 +8,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2504.08624-b31b1b.svg)](https://arxiv.org/abs/2504.08624)
 [![PyPI version](https://badge.fury.io/py/torchfx.svg)](https://badge.fury.io/py/torchfx)
 ![PyPI - Status](https://img.shields.io/pypi/status/torchfx)
+[![codecov](https://codecov.io/gh/matteospanio/torchfx/branch/master/graph/badge.svg)](https://codecov.io/gh/matteospanio/torchfx)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/matteospanio/torchfx)
 
 **[Documentation](https://matteospanio.github.io/torchfx/)** | **[Getting Started](https://matteospanio.github.io/torchfx/guides/getting-started/getting_started.html)** | **[API Reference](https://matteospanio.github.io/torchfx/api/index.html)** | **[Blog](https://matteospanio.github.io/torchfx/blog/index.html)**
