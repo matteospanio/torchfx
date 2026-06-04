@@ -82,13 +82,15 @@ set(CSRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/torchfx/_csrc")
 Python_add_library(torchfx_ext MODULE WITH_SOABI
   "${CSRC_DIR}/binding.cpp"
   "${CSRC_DIR}/cpu/iir_cpu.cpp"
-  "${CSRC_DIR}/cpu/delay_cpu.cpp")
+  "${CSRC_DIR}/cpu/delay_cpu.cpp"
+  "${CSRC_DIR}/cpu/compressor_cpu.cpp")
 
 if(TORCHFX_USE_CUDA)
   target_sources(torchfx_ext PRIVATE
     "${CSRC_DIR}/cuda/parallel_scan.cu"
     "${CSRC_DIR}/cuda/biquad_forward.cu"
-    "${CSRC_DIR}/cuda/delay_forward.cu")
+    "${CSRC_DIR}/cuda/delay_forward.cu"
+    "${CSRC_DIR}/cuda/compressor_forward.cu")
   target_compile_definitions(torchfx_ext PRIVATE WITH_CUDA)
   set_target_properties(torchfx_ext PROPERTIES CUDA_ARCHITECTURES "${TORCHFX_CUDA_ARCHS}")
 endif()
