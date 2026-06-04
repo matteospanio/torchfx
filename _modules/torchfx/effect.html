@@ -1228,7 +1228,34 @@ window.runMermaid = runMermaid;</script>
             <span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">waveform</span></div>
-</div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_linear_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the constant linear factor this gain multiplies by, else ``None``.</span>
+
+<span class="sd">        Used by the fusion planner to fold a static gain into an adjacent SOS</span>
+<span class="sd">        cascade (a scalar commutes through a linear filter). Returns ``None`` when</span>
+<span class="sd">        the gain is *not* a pure linear scale — i.e. when ``clamp=True``, which adds</span>
+<span class="sd">        a non-linear clip — so such gains are left as standalone stages.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; import torchfx as fx</span>
+<span class="sd">        &gt;&gt;&gt; fx.Gain(2.0)._linear_gain()</span>
+<span class="sd">        2.0</span>
+<span class="sd">        &gt;&gt;&gt; fx.Gain(6.0, gain_type=&quot;db&quot;, clamp=True)._linear_gain() is None</span>
+<span class="sd">        True</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">==</span> <span class="s2">&quot;amplitude&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">==</span> <span class="s2">&quot;db&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">/</span> <span class="mi">20</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_type</span> <span class="o">==</span> <span class="s2">&quot;power&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">!=</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
 
 
 

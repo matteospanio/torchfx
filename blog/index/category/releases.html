@@ -844,6 +844,74 @@ window.runMermaid = runMermaid;</script>
    
   <div class="section ablog-post">
     <h2 class="ablog-post-title">
+      <a href="../../2026-06-04-release-060.html">TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path</a>
+    </h2>
+    <ul class="ablog-archive">
+      <li>
+         
+        <i class="fa fa-calendar"></i>
+        
+        <span>04 June 2026</span>
+        
+      </li>
+      <div class="ablog-sidebar-item ablog__postcard2">
+   
+  <li id="ablog-sidebar-item author ablog__author">
+    <span>
+      
+      <i class="fa-fw fa fa-user"></i>
+      
+    </span>
+     
+    <a href="../author/matteo-spanio.html">Matteo Spanio</a>
+      
+  </li>
+     
+  <li id="ablog-sidebar-item category ablog__category">
+    <span>
+      
+      <i class="fa-fw fa fa-folder-open"></i>
+      
+    </span>
+     
+    <a href="#">releases</a>
+      
+  </li>
+   
+  <li id="ablog-sidebar-item tags ablog__tags">
+    <span>
+       
+      <i class="fa-fw fa fa-tags"></i>
+       
+    </span>
+     
+    <a href="../tag/release.html">release</a>
+        
+    <a href="../tag/cuda.html">cuda</a>
+        
+    <a href="../tag/fp32.html">fp32</a>
+        
+    <a href="../tag/cuda-graphs.html">cuda-graphs</a>
+        
+    <a href="../tag/realtime.html">realtime</a>
+        
+    <a href="../tag/performance.html">performance</a>
+      
+  </li>
+   
+</div>
+    </ul>
+    <p class="ablog-post-excerpt"><p><strong>TorchFX 0.6.0</strong> is a performance and realtime release. The headline is the GPU follow-up promised back in 0.5.4: the CUDA kernels now run <strong>natively in <code class="docutils literal notranslate"><span class="pre">float32</span></code></strong> instead of silently upcasting to <code class="docutils literal notranslate"><span class="pre">float64</span></code>, which is <strong>3.0–3.6× faster</strong> on consumer GPUs and finally lets the GPU beat its own CPU on multichannel workloads. On top of that, a new <strong>CUDA Graph</strong> path collapses the per-chunk launch overhead for streaming — up to <strong>4× lower latency</strong> on short chunks — and the realtime engine moved its DSP off the audio callback into a dedicated worker thread.</p>
+</p>
+
+    <p class="ablog-post-expand">
+      <a href="../../2026-06-04-release-060.html"><em>Read more ...</em></a>
+    </p>
+    <hr />
+  </div>
+  
+  <div class="section ablog-post">
+    <h2 class="ablog-post-title">
       <a href="../../2026-05-26-release-054.html">TorchFX 0.5.4: Native Filter Design & Goodbye scipy</a>
     </h2>
     <ul class="ablog-archive">

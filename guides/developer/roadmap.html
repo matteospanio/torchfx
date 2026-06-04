@@ -468,7 +468,7 @@
                 <article class="bd-article">
                    <section id="roadmap-to-v1-0-0">
 <h1>Roadmap to v1.0.0<a class="headerlink" href="#roadmap-to-v1-0-0" title="Link to this heading">#</a></h1>
-<p><strong>Current Version:</strong> 0.5.2 (Beta Track)
+<p><strong>Current Version:</strong> 0.6.0 (Beta Track)
 <strong>Target:</strong> v1.0.0 Stable Release</p>
 <p>This roadmap outlines the development path for TorchFX from the current beta state to a production-ready v1.0.0 release. The plan is organized into major epics, each containing specific deliverables and tasks.</p>
 <section id="vision">
@@ -491,13 +491,15 @@
 <ul class="simple">
 <li><p>✅ Solid core DSP architecture (~2000 LOC)</p></li>
 <li><p>✅ GPU acceleration with custom CUDA kernels (parallel scan IIR, biquad, delay)</p></li>
-<li><p>✅ JIT-compiled C++/CUDA native extension with automatic fallback</p></li>
-<li><p>✅ Transparent IIR/biquad filter fusion via deferred pipeline</p></li>
+<li><p>✅ <strong>Build-time-compiled</strong> C++/CUDA native extension (scikit-build-core), shipped as CPU + CUDA wheels with explicit <code class="docutils literal notranslate"><span class="pre">sm_75;80;86;89</span></code> SASS</p></li>
+<li><p>✅ <strong>FP32 CUDA execution path</strong> — float32 runs natively, <strong>3.0–3.6× faster</strong> than the old FP64-only path on consumer GPUs (v0.6.0)</p></li>
+<li><p>✅ <strong>CUDA Graph capture</strong> for fixed-shape streaming (<code class="docutils literal notranslate"><span class="pre">CudaGraphRunner</span></code>) — <strong>up to 4× lower per-chunk latency</strong> in the realtime regime (v0.6.0)</p></li>
+<li><p>✅ Transparent IIR/biquad filter fusion via deferred pipeline, with static-gain folding</p></li>
 <li><p>✅ 88% test coverage with coverage gate enforced in CI</p></li>
 <li><p>✅ Published research paper (arXiv:2504.08624)</p></li>
 <li><p>✅ Clean API with pipe operator support (<code class="docutils literal notranslate"><span class="pre">Wave</span> <span class="pre">|</span> <span class="pre">filter</span></code>, <code class="docutils literal notranslate"><span class="pre">filter</span> <span class="pre">|</span> <span class="pre">filter</span></code>)</p></li>
 <li><p>✅ Professional Sphinx documentation with tutorials</p></li>
-<li><p>✅ Real-time audio processing with circular buffers</p></li>
+<li><p>✅ Real-time audio processing with a producer/consumer worker-thread split + latency/xrun instrumentation</p></li>
 <li><p>✅ Full-featured CLI with sox compatibility</p></li>
 <li><p>✅ Interactive REPL with live performance mode</p></li>
 <li><p>✅ Complete validation and logging infrastructure</p></li>
@@ -510,8 +512,9 @@
 <li><p>❌ Limited ML integration examples</p></li>
 <li><p>❌ Missing some advanced effects (compressor, phaser, pitch shift)</p></li>
 <li><p>❌ No VST3 wrapper</p></li>
+<li><p>❌ GPU realtime path (the live <code class="docutils literal notranslate"><span class="pre">RealtimeProcessor</span></code> is CPU-only; GPU is for offline/streaming)</p></li>
 </ul>
-<p><strong>Estimated Completion:</strong> ~90% ready for v1.0.0</p>
+<p><strong>Estimated Completion:</strong> ~92% ready for v1.0.0</p>
 </section>
 </section>
 <hr class="docutils" />
@@ -975,9 +978,16 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <ul class="contains-task-list simple">
 <li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Parallel IIR implementation</strong></p>
 <ul>
-<li><p>✅ Blelloch parallel prefix scan — O(N) total work, 24 KB shared memory per block</p></li>
-<li><p>✅ <code class="docutils literal notranslate"><span class="pre">PARALLEL_SCAN_THRESHOLD</span></code> (default 2048) for automatic sequential/parallel dispatch</p></li>
-<li><p>✅ 4x faster than SciPy (single-channel), 11x faster (8-channel) on RTX 6000</p></li>
+<li><p>✅ Blelloch parallel prefix scan — O(N) total work</p></li>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">PARALLEL_SCAN_THRESHOLD</span></code> is now <strong>dtype-aware and tunable</strong> (float32 → 2048, float64 → 1024, threaded into the kernel; overridable per call) — a measured crossover sweep showed FP64 hits the parallel-scan overhead sooner</p></li>
+<li><p>✅ 4x faster than SciPy (single-channel), 11x faster (8-channel)</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>FP32 CUDA execution path</strong> (v0.6.0)</p>
+<ul>
+<li><p>✅ Kernels templated on <code class="docutils literal notranslate"><span class="pre">scalar_t</span></code> and dispatched on the input dtype: <code class="docutils literal notranslate"><span class="pre">float32</span></code> in → FP32 path, <code class="docutils literal notranslate"><span class="pre">float64</span></code> in → FP64. No more silent upcast.</p></li>
+<li><p>✅ <strong>3.0–3.6× faster</strong> for IIR cascades on an RTX 3070; resolves the multichannel inversion (60 s / 8-ch GPU now beats its own CPU)</p></li>
+<li><p>✅ FP32/FP64 precision validation harness (<code class="docutils literal notranslate"><span class="pre">tests/test_fp32_precision.py</span></code>) against <code class="docutils literal notranslate"><span class="pre">scipy.signal.sosfilt</span></code></p></li>
 </ul>
 </li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Biquad cascade optimization</strong></p>
@@ -1019,13 +1029,24 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <li><p>✅ Deferred pipeline with auto-fusion — consecutive IIR/biquad filters merged
 into single <code class="docutils literal notranslate"><span class="pre">FusedSOSCascade</span></code> kernel call (~2.5x faster for IIR chains)</p></li>
 <li><p>✅ <code class="docutils literal notranslate"><span class="pre">FilterChain</span></code> and <code class="docutils literal notranslate"><span class="pre">FX.__or__</span></code> for composable filter chains</p></li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Fuse non-IIR effects: <code class="docutils literal notranslate"><span class="pre">gain</span> <span class="pre">+</span> <span class="pre">filter</span> <span class="pre">+</span> <span class="pre">normalize</span></code> → single kernel</p></li>
+<li><p>✅ <strong>Static-gain folding</strong> (v0.6.0) — a constant linear <code class="docutils literal notranslate"><span class="pre">Gain</span></code> between filters is folded
+into the cascade numerator, so <code class="docutils literal notranslate"><span class="pre">IIR</span> <span class="pre">|</span> <span class="pre">Gain</span> <span class="pre">|</span> <span class="pre">IIR</span></code> stays one fused stage</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Fuse a <em>dynamic</em> <code class="docutils literal notranslate"><span class="pre">Normalize</span></code> (per-chunk peak) — only the static, resolvable case is folded</p></li>
+</ul>
+</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>CUDA Graph capture for streaming</strong> (v0.6.0)</p>
+<ul>
+<li><p>✅ <code class="docutils literal notranslate"><span class="pre">torchfx.realtime.CudaGraphRunner</span></code> captures a fixed-shape fused-cascade forward and
+replays it per chunk, collapsing the <code class="docutils literal notranslate"><span class="pre">~4·K</span></code> per-section launches into one</p></li>
+<li><p>✅ <strong>Up to 4× lower per-chunk latency</strong> at small (realtime) chunk sizes on an RTX 3070</p></li>
 </ul>
 </li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Memory optimization</strong></p>
 <ul>
 <li><p>✅ SOS coefficient device caching (eliminates per-forward <code class="docutils literal notranslate"><span class="pre">.to()</span></code>)</p></li>
 <li><p>✅ In-place state updates (<code class="docutils literal notranslate"><span class="pre">copy_()</span></code> instead of <code class="docutils literal notranslate"><span class="pre">torch.stack()</span></code>)</p></li>
+<li><p>✅ <strong>Allocation-free GPU SOS forward</strong> (v0.6.0) — per-section scratch reused once per
+forward (O(K) → O(1) allocations), cutting the eager GPU streaming path <strong>~27%</strong></p></li>
 <li><p>✅ Reverb op fusion (5 tensor ops → 2)</p></li>
 <li><p>✅ Delay wet/dry mix via <code class="docutils literal notranslate"><span class="pre">torch.lerp</span></code> (3 ops → 1)</p></li>
 </ul>
@@ -1067,6 +1088,38 @@ into single <code class="docutils literal notranslate"><span class="pre">FusedSO
 <li><p>Documentation for profiling pipelines</p></li>
 </ul>
 </li>
+</ul>
+</section>
+<section id="advanced-kernel-optimizations-future">
+<h3>4.6 Advanced Kernel Optimizations (Future)<a class="headerlink" href="#advanced-kernel-optimizations-future" title="Link to this heading">#</a></h3>
+<p>The 0.6.0 GPU work (FP32 path, CUDA graphs, allocation-free streaming, dispatch tuning)
+landed the high-leverage wins. The remaining kernel-level optimizations — investigated,
+prioritized, and (where attempted) measured during the 0.6.0 cycle — are tracked here.
+Each item lists its difficulty and expected impact; none block a release.</p>
+<ul class="contains-task-list simple">
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Single-kernel SOS-section fusion (mega-kernel)</strong> — <em>hard.</em> One CUDA kernel that
+processes all <code class="docutils literal notranslate"><span class="pre">K</span></code> sections of a cascade (sections serial within a block, time-blocks
+parallel) instead of the per-section launch loop. <strong>The only item that makes fusion
+<em>kernel-level</em></strong> rather than Python-dispatch-level: today a fused cascade still issues
+<code class="docutils literal notranslate"><span class="pre">~4·K</span></code> launches (700 → 406 at <code class="docutils literal notranslate"><span class="pre">K=50</span></code>). Expected <strong>15–27%</strong> wall-time at <code class="docutils literal notranslate"><span class="pre">K≥5</span></code>, larger
+at small chunks. Depends on the FP32 templating + the once-per-forward scratch (both done).</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Single-pass scan</strong> — <em>medium.</em> Replace the Blelloch up/down-sweep + phase-3
+recompute with a decoupled-look-back single-pass scan (CUB <code class="docutils literal notranslate"><span class="pre">DeviceScan</span></code> with a 3×3-matrix
+operator, or hand-rolled). The phase-3 recompute roughly doubles scan work; ~2% overall,
+but it simplifies the code and de-risks the mega-kernel.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Pinned host buffers + async H2D/D2H for GPU streaming</strong> — <em>medium.</em> Overlap chunk
+transfers with compute. Only pays off once a <strong>GPU realtime/streaming I/O path</strong> exists
+(the live path is CPU-only today), so deferred until that lands.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Cache-blocked cross-channel CPU SIMD</strong> — <em>medium, edge-focused.</em> A naive
+full-transpose SIMD kernel was tried in 0.6.0 and <strong>measured a 4–8× regression</strong> on a
+10-core desktop: the transpose moves as much memory as the streaming-light recurrence
+computes, and the scalar OpenMP-over-channels path already saturates the cores. A
+cache-blocked transpose (tiles that stay in L1/L2, state carried across time blocks)
+could win, but the payoff is concentrated on <strong>few-core edge devices (Raspberry Pi 5)</strong>
+and needs that hardware to validate. The scalar path is already near-optimal on
+multi-core (8-ch, 10 s &#64; 48 kHz ≈ 3.5 ms).</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>CPU runtime feature dispatch (function multiversioning)</strong> — <em>small.</em> Ship AVX2/AVX-512
+CPU paths without <code class="docutils literal notranslate"><span class="pre">-march=native</span></code> breaking wheel portability (paired with the SIMD work above).</p></li>
 </ul>
 </section>
 </section>
@@ -1520,52 +1573,44 @@ into single <code class="docutils literal notranslate"><span class="pre">FusedSO
 </li>
 </ul>
 </section>
-<section id="phase-6-build-time-native-extension-compilation-next">
-<h3>Phase 6: Build-Time Native Extension Compilation — <strong>NEXT</strong><a class="headerlink" href="#phase-6-build-time-native-extension-compilation-next" title="Link to this heading">#</a></h3>
+<section id="phase-6-build-time-native-extension-compilation-v0-5-3-completed">
+<h3>Phase 6: Build-Time Native Extension Compilation (v0.5.3) ✅ <strong>COMPLETED</strong><a class="headerlink" href="#phase-6-build-time-native-extension-compilation-v0-5-3-completed" title="Link to this heading">#</a></h3>
 <p><strong>Priority:</strong> High</p>
-<p>The current native extension (<code class="docutils literal notranslate"><span class="pre">torchfx._ops</span></code>) is JIT-compiled at runtime via
-<code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension.load()</span></code>. This has several drawbacks:</p>
-<ul class="simple">
-<li><p><strong>First-import latency</strong>: compilation takes 10–30s on first use, surprising users</p></li>
-<li><p><strong>Compiler requirement</strong>: end users need GCC ≥ 9 and matching CUDA toolkit installed</p></li>
-<li><p><strong>Reproducibility</strong>: compiled artifacts depend on the user’s exact toolchain</p></li>
-<li><p><strong>PyPI distribution</strong>: wheels contain no compiled code — every install recompiles</p></li>
-</ul>
-<p><strong>Goal:</strong> Migrate from runtime JIT compilation to <strong>build-time compilation</strong> using
-<a class="reference external" href="https://scikit-build-core.readthedocs.io/">scikit-build-core</a> as the build backend,
-so that compiled C++/CUDA extensions are included in distributed wheels.</p>
+<p>The native extension is now <strong>compiled at build time</strong> with
+<a class="reference external" href="https://scikit-build-core.readthedocs.io/">scikit-build-core</a> + CMake, not JIT-compiled
+at first import. Shipped:</p>
 <ul class="contains-task-list simple">
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>scikit-build-core migration</strong></p>
-<ul>
-<li><p>Replace <code class="docutils literal notranslate"><span class="pre">torch.utils.cpp_extension.load()</span></code> with CMake-based build</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> for CPU C++ extension (<code class="docutils literal notranslate"><span class="pre">iir_cpu.cpp</span></code>)</p></li>
-<li><p>Compile at <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> / <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> time, not at first import</p></li>
-<li><p>Maintain pure-PyTorch fallback when extension is unavailable</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>scikit-build-core migration</strong> — CMake-based build (<code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code>) compiles
+<code class="docutils literal notranslate"><span class="pre">iir_cpu.cpp</span></code> / <code class="docutils literal notranslate"><span class="pre">delay_cpu.cpp</span></code> at <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> / <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> time. The extension is
+<strong>required</strong> (no pure-PyTorch fallback); <code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA=1</span></code> forces a CPU-only build.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>CUDA kernel packaging</strong> — <code class="docutils literal notranslate"><span class="pre">biquad_forward.cu</span></code> / <code class="docutils literal notranslate"><span class="pre">parallel_scan.cu</span></code> /
+<code class="docutils literal notranslate"><span class="pre">delay_forward.cu</span></code> built at wheel time with explicit <code class="docutils literal notranslate"><span class="pre">CUDA_ARCHITECTURES</span></code>
+(<code class="docutils literal notranslate"><span class="pre">sm_75;80;86;89</span></code> by default, override via <code class="docutils literal notranslate"><span class="pre">TORCHFX_CUDA_ARCHITECTURES</span></code>) so wheels ship
+native SASS with no first-call PTX→SASS JIT.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>CI/CD wheel pipeline</strong> — cibuildwheel across Linux x86_64 / macOS / Windows,
+Python 3.10–3.14; CPU wheels on PyPI and CUDA wheels (cu124/cu128) on a PEP-503 index.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong><code class="docutils literal notranslate"><span class="pre">is_native_available()</span></code></strong> unchanged; <code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA=1</span></code> still forces CPU-only.</p></li>
 </ul>
-</li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>CUDA kernel packaging</strong></p>
-<ul>
-<li><p>Build CUDA kernels (<code class="docutils literal notranslate"><span class="pre">biquad_forward.cu</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel_scan.cu</span></code>, <code class="docutils literal notranslate"><span class="pre">delay_forward.cu</span></code>)
-at wheel build time</p></li>
-<li><p>Fat binaries or per-arch wheels for common CUDA architectures (sm_70, sm_80, sm_89, sm_90)</p></li>
-<li><p>Handle PyPI distribution: publish separate CPU-only and CUDA wheels
-(e.g., <code class="docutils literal notranslate"><span class="pre">torchfx</span></code> for CPU, <code class="docutils literal notranslate"><span class="pre">torchfx-cu128</span></code> for CUDA 12.8)</p></li>
-</ul>
-</li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>CI/CD wheel pipeline</strong></p>
-<ul>
-<li><p>Build matrix: Linux x86_64, Python 3.10–3.13, CPU + CUDA 12.x</p></li>
-<li><p>cibuildwheel or similar for reproducible wheel builds</p></li>
-<li><p>Automated PyPI publishing on tag</p></li>
-</ul>
-</li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Backward compatibility</strong></p>
-<ul>
-<li><p>Keep JIT fallback path for development (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code>) and unsupported platforms</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">torchfx.is_native_available()</span></code> works unchanged</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_CUDA=1</span></code> still forces CPU-only</p></li>
-</ul>
-</li>
+</section>
+<section id="phase-8-gpu-performance-streaming-v0-6-0-completed">
+<h3>Phase 8: GPU Performance &amp; Streaming (v0.6.0) ✅ <strong>COMPLETED</strong><a class="headerlink" href="#phase-8-gpu-performance-streaming-v0-6-0-completed" title="Link to this heading">#</a></h3>
+<p><strong>Priority:</strong> High</p>
+<p>The 0.6.0 cycle returned to the GPU side (the follow-up promised in 0.5.4) and the
+realtime path:</p>
+<ul class="contains-task-list simple">
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>FP32 CUDA path</strong> — templated <code class="docutils literal notranslate"><span class="pre">scalar_t</span></code> kernels + dtype-aware dispatch; <strong>3.0–3.6×</strong>
+for IIR cascades on an RTX 3070, resolving the multichannel GPU-vs-CPU inversion.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>CUDA Graph capture</strong> (<code class="docutils literal notranslate"><span class="pre">CudaGraphRunner</span></code>) — <strong>up to 4×</strong> lower per-chunk latency for
+fixed-shape streaming; root-caused to launching kernels on the current CUDA stream.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Allocation-free GPU SOS forward</strong> — O(K) → O(1) per-forward allocations (eager
+streaming <strong>~27%</strong> faster).</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Dtype-aware, tunable dispatch threshold</strong> + explicit CUDA architectures.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Static-gain folding</strong> in the fusion planner.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Realtime producer/consumer split</strong> + latency/xrun instrumentation; <strong>correctness
+hardening</strong> (stale-coefficient recompute on <code class="docutils literal notranslate"><span class="pre">fs</span></code> change, offline state-reset semantics,
+half-precision rejection).</p></li>
+<li><p>See <a class="reference internal" href="../../blog/index.html"><span class="doc">Blog</span></a> for the detailed release and feature posts, and Epic 4.6
+for the remaining (deferred) kernel optimizations.</p></li>
 </ul>
 </section>
 <section id="phase-7-polish-v1-0-release">
@@ -1622,6 +1667,8 @@ at wheel build time</p></li>
 <li><p>✅ Real-time: 48kHz, 2048 buffer, ~46ms latency (tested in REPL)</p></li>
 <li><p>✅ Batch: custom CUDA kernels — 4x faster than SciPy (1ch), 11x faster (8ch)</p></li>
 <li><p>✅ Auto-fusion: ~2.5x faster IIR chains via deferred pipeline</p></li>
+<li><p>✅ FP32 GPU path: 3.0–3.6x faster than FP64 on consumer GPUs (v0.6.0)</p></li>
+<li><p>✅ CUDA Graph streaming: up to 4x lower per-chunk latency in the realtime regime (v0.6.0)</p></li>
 </ul>
 </li>
 <li><p>✅ <strong>Platform Support</strong>: Linux, macOS, Windows with Python 3.10-3.13</p>
@@ -1673,8 +1720,8 @@ at wheel build time</p></li>
 <h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">#</a></h2>
 <p>We welcome contributions! See the <a class="reference internal" href="style_guide.html"><span class="std std-doc">style guide</span></a> for guidelines.</p>
 <ul class="simple">
-<li><p><strong>Current focus</strong>: Phase 6 (Build-Time Native Extension Compilation)</p></li>
-<li><p><strong>Phases 1–5</strong>: ✅ COMPLETED</p></li>
+<li><p><strong>Current focus</strong>: v1.0 polish — additional effects (dynamics: compressor/limiter), audio-quality tests, and the deferred kernel optimizations in Epic 4.6</p></li>
+<li><p><strong>Phases 1–6 and 8</strong>: ✅ COMPLETED</p></li>
 <li><p><strong>Good first issues</strong>: Check GitHub issues tagged <code class="docutils literal notranslate"><span class="pre">good-first-issue</span></code></p></li>
 <li><p><strong>CLI Extension Ideas</strong>: Real-time visualization, AB comparison mode, spectrum analyzer</p></li>
 <li><p><strong>Questions</strong>: Open a discussion on GitHub</p></li>
@@ -1763,6 +1810,7 @@ at wheel build time</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#time-domain-effects-cuda-kernels">4.3 Time-Domain Effects CUDA Kernels</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-processing-optimizations">4.4 Batch Processing Optimizations</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-benchmarking">4.5 Performance Benchmarking ✅</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-kernel-optimizations-future">4.6 Advanced Kernel Optimizations (Future)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epic-5-comprehensive-documentation">Epic 5: Comprehensive Documentation</a><ul class="pst-show_toc_level nav section-nav flex-column">
@@ -1794,7 +1842,8 @@ at wheel build time</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-3-cuda-kernels-native-extension-v0-5-0-completed">Phase 3: CUDA Kernels &amp; Native Extension (v0.5.0) ✅ <strong>COMPLETED</strong></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-4-numerical-stability-sos-migration-v0-5-1-completed">Phase 4: Numerical Stability &amp; SOS Migration (v0.5.1) ✅ <strong>COMPLETED</strong></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-5-transparent-filter-fusion-code-unification-v0-5-2-completed">Phase 5: Transparent Filter Fusion &amp; Code Unification (v0.5.2) ✅ <strong>COMPLETED</strong></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-6-build-time-native-extension-compilation-next">Phase 6: Build-Time Native Extension Compilation — <strong>NEXT</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-6-build-time-native-extension-compilation-v0-5-3-completed">Phase 6: Build-Time Native Extension Compilation (v0.5.3) ✅ <strong>COMPLETED</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-8-gpu-performance-streaming-v0-6-0-completed">Phase 8: GPU Performance &amp; Streaming (v0.6.0) ✅ <strong>COMPLETED</strong></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-7-polish-v1-0-release">Phase 7: Polish &amp; v1.0 Release</a></li>
 </ul>
 </li>

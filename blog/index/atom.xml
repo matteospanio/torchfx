@@ -2,10 +2,485 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
   <id>https://matteospanio.github.io/torchfx/</id>
   <title>TorchFX Blog</title>
-  <updated>2026-05-26T19:32:27.010156+00:00</updated>
+  <updated>2026-06-04T11:05:33.640989+00:00</updated>
   <link href="https://matteospanio.github.io/torchfx/"/>
   <link href="https://matteospanio.github.io/torchfx/blog/index/atom.xml" rel="self"/>
   <generator uri="https://ablog.readthedocs.io/" version="0.11.12">ABlog</generator>
+  <entry>
+    <id>https://matteospanio.github.io/torchfx/blog/2026-06-04-release-060.html</id>
+    <title>TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path</title>
+    <updated>2026-06-04T00:00:00+00:00</updated>
+    <author>
+      <name>Matteo Spanio</name>
+    </author>
+    <content type="html">&lt;section id="torchfx-0-6-0-fp32-on-the-gpu-cuda-graphs-and-a-hardened-realtime-path"&gt;
+
+&lt;p&gt;&lt;strong&gt;TorchFX 0.6.0&lt;/strong&gt; is a performance and realtime release. The headline is the GPU follow-up promised back in 0.5.4: the CUDA kernels now run &lt;strong&gt;natively in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float32&lt;/span&gt;&lt;/code&gt;&lt;/strong&gt; instead of silently upcasting to &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float64&lt;/span&gt;&lt;/code&gt;, which is &lt;strong&gt;3.0–3.6× faster&lt;/strong&gt; on consumer GPUs and finally lets the GPU beat its own CPU on multichannel workloads. On top of that, a new &lt;strong&gt;CUDA Graph&lt;/strong&gt; path collapses the per-chunk launch overhead for streaming — up to &lt;strong&gt;4× lower latency&lt;/strong&gt; on short chunks — and the realtime engine moved its DSP off the audio callback into a dedicated worker thread.&lt;/p&gt;
+&lt;p&gt;Everything from 0.5.x still works unchanged. If your code ran on 0.5.4, it runs on 0.6.0 — the new GPU behaviour is opt-in by the dtype you pass.&lt;/p&gt;
+&lt;p&gt;This post is the overview. Each big-ticket item has its own deep-dive with benchmark numbers:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;🟢 &lt;strong&gt;&lt;a class="reference internal" href="2026-06-04-fp32-cuda.html"&gt;&lt;span class="std std-doc"&gt;FP32 on the GPU: 3–3.6× and the end of the consumer-GPU penalty&lt;/span&gt;&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;🟢 &lt;strong&gt;&lt;a class="reference internal" href="2026-06-04-cuda-graphs.html"&gt;&lt;span class="std std-doc"&gt;CUDA Graphs for streaming: one launch instead of a launch storm&lt;/span&gt;&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;🟢 &lt;strong&gt;&lt;a class="reference internal" href="2026-06-04-realtime-streaming.html"&gt;&lt;span class="std std-doc"&gt;A hardened realtime path: worker threads, allocation-free streaming, and dtype-aware dispatch&lt;/span&gt;&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;section id="the-big-three"&gt;
+&lt;h2&gt;The big three&lt;/h2&gt;
+&lt;section id="fp32-cuda-execution-path"&gt;
+&lt;h3&gt;FP32 CUDA execution path&lt;/h3&gt;
+&lt;p&gt;The CUDA biquad and SOS parallel-scan kernels were &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;double&lt;/span&gt;&lt;/code&gt;-only. A &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float32&lt;/span&gt;&lt;/code&gt; input — the norm for realtime and ML pipelines — was silently upcast, doubling memory traffic and, on a consumer GPU with a 1:32 FP32:FP64 ratio (RTX 3070, A40), running at a fraction of peak. 0.6.0 templates the kernels on &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;scalar_t&lt;/span&gt;&lt;/code&gt; and dispatches on the input dtype.&lt;/p&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;8th-order Butterworth &amp;#64; 48 kHz (RTX 3070)&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;GPU FP64&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;GPU FP32&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Speedup&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;30 s / 1 ch&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;9.49 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;2.80 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.39×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;60 s / 1 ch&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;18.31 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;6.00 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.05×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;60 s / 8 ch&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;89.18 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;24.49 ms&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.64×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;That 8-channel row is the interesting one: in FP64 the GPU (89 ms) &lt;em&gt;lost&lt;/em&gt; to its own CPU (28 ms). In FP32 (24 ms) it wins. &lt;a class="reference internal" href="2026-06-04-fp32-cuda.html"&gt;&lt;span class="std std-doc"&gt;Read the deep-dive →&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="cuda-graphs-for-streaming"&gt;
+&lt;h3&gt;CUDA Graphs for streaming&lt;/h3&gt;
+&lt;p&gt;A &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;K&lt;/span&gt;&lt;/code&gt;-section cascade issues roughly &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;4·K&lt;/span&gt;&lt;/code&gt; CUDA kernel launches &lt;em&gt;per chunk&lt;/em&gt;. At 48 kHz with 512-sample buffers that overhead dominates — the parallel scan measures ~135 µs of pure launch/dispatch overhead regardless of chunk length. The new &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.realtime.CudaGraphRunner&lt;/span&gt;&lt;/code&gt; captures the fixed-shape forward once and replays it per chunk:&lt;/p&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;Chunk size (4-section cascade, RTX 3070)&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Eager&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Graph replay&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Speedup&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;128&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;209.9 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;52.2 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;4.02×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;512&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;208.9 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;79.9 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;2.62×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;1024&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;207.9 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;116.7 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;1.78×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;The win is largest exactly where it matters — the small-chunk realtime regime. &lt;a class="reference internal" href="2026-06-04-cuda-graphs.html"&gt;&lt;span class="std std-doc"&gt;Read the deep-dive →&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="a-hardened-realtime-path"&gt;
+&lt;h3&gt;A hardened realtime path&lt;/h3&gt;
+&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;RealtimeProcessor&lt;/span&gt;&lt;/code&gt; now runs DSP in a dedicated worker thread, not inside the PortAudio callback, with per-callback latency logging and xrun counters. Underneath, the GPU SOS forward became &lt;strong&gt;allocation-free per call&lt;/strong&gt; (O(K) → O(1) allocations), cutting the eager GPU streaming path ~27%. &lt;a class="reference internal" href="2026-06-04-realtime-streaming.html"&gt;&lt;span class="std std-doc"&gt;Read the deep-dive →&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+&lt;section id="also-in-this-release"&gt;
+&lt;h2&gt;Also in this release&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Static-gain folding.&lt;/strong&gt; A constant linear &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Gain&lt;/span&gt;&lt;/code&gt; between filters is now folded into the fused SOS cascade, so &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;wave&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;IIR&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;Gain&lt;/span&gt; &lt;span class="pre"&gt;|&lt;/span&gt; &lt;span class="pre"&gt;IIR&lt;/span&gt;&lt;/code&gt; materialises as a &lt;em&gt;single&lt;/em&gt; &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;FusedSOSCascade&lt;/span&gt;&lt;/code&gt; rather than three stages. (A clamping &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Gain&lt;/span&gt;&lt;/code&gt; or a dynamic &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Normalize&lt;/span&gt;&lt;/code&gt; still stays its own stage.)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Dtype-aware dispatch threshold.&lt;/strong&gt; &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;PARALLEL_SCAN_THRESHOLD&lt;/span&gt;&lt;/code&gt; is now threaded into the kernels and tunable, with a dtype-aware default (float32 → 2048, float64 → 1024) backed by a crossover sweep.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Explicit CUDA architectures.&lt;/strong&gt; Wheels ship native SASS for &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;sm_75;80;86;89&lt;/span&gt;&lt;/code&gt; — no first-call PTX→SASS JIT stall.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Correctness hardening.&lt;/strong&gt; Filters reused across sample rates now recompute coefficients instead of silently applying stale ones; offline &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Wave&lt;/span&gt;&lt;/code&gt; materialisation resets state so reusing a filter across waves can’t leak DF1 state; half-precision inputs are rejected with a clear error rather than silently upcast.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section id="how-is-torchfx-doing-against-the-field"&gt;
+&lt;h2&gt;How is TorchFX doing against the field?&lt;/h2&gt;
+&lt;p&gt;On CPU, against &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchaudio&lt;/span&gt;&lt;/code&gt; (same machine, median over the swept axes):&lt;/p&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;Workload&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head"&gt;&lt;p&gt;TorchFX vs torchaudio&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;IIR cascade&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;&lt;strong&gt;5.4× faster&lt;/strong&gt; (up to 10.4×)&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;Single biquad&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;2.1× faster&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;FIR (FFT)&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;2.4× faster&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="installation"&gt;
+&lt;h2&gt;Installation&lt;/h2&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;==&lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.6.0
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;CUDA wheels from the GitHub Pages index:&lt;/p&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torch&lt;span class="w"&gt; &lt;/span&gt;--index-url&lt;span class="w"&gt; &lt;/span&gt;https://download.pytorch.org/whl/cu128
+pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;==&lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.6.0&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;--index-url&lt;span class="w"&gt; &lt;/span&gt;https://matteospanio.github.io/torchfx/wheels/cu128/&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;--extra-index-url&lt;span class="w"&gt; &lt;/span&gt;https://pypi.org/simple
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="whats-next"&gt;
+&lt;h2&gt;What’s next&lt;/h2&gt;
+&lt;p&gt;The high-leverage GPU wins are in. The remaining kernel work — a single-kernel SOS mega-kernel that makes fusion &lt;em&gt;kernel-level&lt;/em&gt; (not just dispatch-level), a single-pass scan, and a cache-blocked CPU SIMD path for edge devices — is tracked in the &lt;a class="reference internal" href="../guides/developer/roadmap.html"&gt;&lt;span class="std std-doc"&gt;roadmap&lt;/span&gt;&lt;/a&gt; (Epic 4.6). On the library side, the focus turns to dynamics effects (compressor/limiter) and audio-quality testing.&lt;/p&gt;
+&lt;p&gt;The full list of changes is in the &lt;a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/CHANGELOG"&gt;CHANGELOG&lt;/a&gt;. File issues and feature requests on &lt;a class="reference external" href="https://github.com/matteospanio/torchfx"&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+</content>
+    <link href="https://matteospanio.github.io/torchfx/blog/2026-06-04-release-060.html"/>
+    <summary>TorchFX 0.6.0 is a performance and realtime release. The headline is the GPU follow-up promised back in 0.5.4: the CUDA kernels now run natively in float32 instead of silently upcasting to float64, which is 3.0–3.6× faster on consumer GPUs and finally lets the GPU beat its own CPU on multichannel workloads. On top of that, a new CUDA Graph path collapses the per-chunk launch overhead for streaming — up to 4× lower latency on short chunks — and the realtime engine moved its DSP off the audio callback into a dedicated worker thread.</summary>
+    <category term="cuda" label="cuda"/>
+    <category term="cuda-graphs" label="cuda-graphs"/>
+    <category term="fp32" label="fp32"/>
+    <category term="performance" label="performance"/>
+    <category term="realtime" label="realtime"/>
+    <category term="release" label="release"/>
+    <published>2026-06-04T00:00:00+00:00</published>
+  </entry>
+  <entry>
+    <id>https://matteospanio.github.io/torchfx/blog/2026-06-04-fp32-cuda.html</id>
+    <title>FP32 on the GPU: 3–3.6× and the End of the Consumer-GPU Penalty</title>
+    <updated>2026-06-04T00:00:00+00:00</updated>
+    <author>
+      <name>Matteo Spanio</name>
+    </author>
+    <content type="html">&lt;section id="fp32-on-the-gpu-33-6-and-the-end-of-the-consumer-gpu-penalty"&gt;
+
+&lt;p&gt;This is the GPU half of the promise we made in &lt;a class="reference internal" href="2026-05-26-release-054.html"&gt;&lt;span class="std std-doc"&gt;0.5.4&lt;/span&gt;&lt;/a&gt;: &lt;em&gt;“retuning the CUDA SOS kernel for mixed precision so float32 gets the same fast path on GPU that it now has on CPU.”&lt;/em&gt; TorchFX 0.6.0 delivers it.&lt;/p&gt;
+&lt;section id="the-problem-a-double-only-kernel-on-a-float32-world"&gt;
+&lt;h2&gt;The problem: a double-only kernel on a float32 world&lt;/h2&gt;
+&lt;p&gt;The CUDA biquad and SOS parallel-scan kernels were written entirely in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;double&lt;/span&gt;&lt;/code&gt;. The 3×3 state-transition matrices, the forcing function, every phase of the Blelloch scan — all &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;double&lt;/span&gt;&lt;/code&gt;. The Python dispatch layer enforced it: any CUDA input was upcast to &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float64&lt;/span&gt;&lt;/code&gt; before the kernel ran.&lt;/p&gt;
+&lt;p&gt;That is the wrong default for two reasons:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Most audio is &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float32&lt;/span&gt;&lt;/code&gt;.&lt;/strong&gt; Realtime callbacks, ML feature pipelines, and game audio all carry &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float32&lt;/span&gt;&lt;/code&gt;. Forcing them through &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float64&lt;/span&gt;&lt;/code&gt; doubles the memory bandwidth for no accuracy gain at the filter orders TorchFX targets.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Consumer GPUs hate FP64.&lt;/strong&gt; An RTX 3070 (and the A40) has a &lt;strong&gt;1:32 FP32:FP64 throughput ratio&lt;/strong&gt; — FP64 runs at one-thirty-second of peak. The kernel was leaving most of the card on the floor.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The symptom was stark: on a 60-second, 8-channel cascade the GPU was &lt;em&gt;slower than its own CPU&lt;/em&gt;.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="the-fix-template-on-scalar-t-dispatch-on-the-input"&gt;
+&lt;h2&gt;The fix: template on &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;scalar_t&lt;/span&gt;&lt;/code&gt;, dispatch on the input&lt;/h2&gt;
+&lt;p&gt;The kernels are now templated on &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;scalar_t&lt;/span&gt;&lt;/code&gt; (the same pattern the CPU kernels already used). The &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Mat3x3&lt;/span&gt;&lt;/code&gt; state matrix, the forcing kernel, all three Blelloch phases, and the sequential fallback are instantiated for both &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;double&lt;/span&gt;&lt;/code&gt;. The two host entry points dispatch on the input tensor’s dtype via &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;AT_DISPATCH_FLOATING_TYPES&lt;/span&gt;&lt;/code&gt;, and the block-aggregate scratch is allocated in the input dtype so the FP32 path stays FP32 end to end. The scalar coefficients arrive as &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;double&lt;/span&gt;&lt;/code&gt; and are cast to &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;scalar_t&lt;/span&gt;&lt;/code&gt; at launch.&lt;/p&gt;
+&lt;p&gt;The dispatch rule is now simple and symmetric with the CPU:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;div&gt;&lt;p&gt;&lt;strong&gt;The native execution dtype follows the input.&lt;/strong&gt; &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float32&lt;/span&gt;&lt;/code&gt; in → FP32 kernels. &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float64&lt;/span&gt;&lt;/code&gt; in → FP64 kernels. Pass the dtype you want.&lt;/p&gt;
+&lt;/div&gt;&lt;/blockquote&gt;
+&lt;p&gt;No silent conversions in either direction. Half precision (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float16&lt;/span&gt;&lt;/code&gt; / &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;bfloat16&lt;/span&gt;&lt;/code&gt;) is &lt;em&gt;rejected&lt;/em&gt; with a clear error — the IIR feedback recurrence is not numerically safe there.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="the-numbers"&gt;
+&lt;h2&gt;The numbers&lt;/h2&gt;
+&lt;p&gt;8th-order Butterworth (4 SOS sections) &amp;#64; 48 kHz, RTX 3070, median over 30 iterations (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;benchmarks/bench_fp32_speedup.py&lt;/span&gt;&lt;/code&gt;):&lt;/p&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;Workload&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;GPU FP64&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;GPU FP32&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Speedup&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;30 s / 1 ch&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;9.49 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;2.80 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.39×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;60 s / 1 ch&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;18.31 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;6.00 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.05×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;60 s / 2 ch&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;29.03 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;9.32 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.11×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;60 s / 4 ch&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;49.22 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;14.41 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.42×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;60 s / 8 ch&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;89.18 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;24.49 ms&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.64×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;A consistent &lt;strong&gt;3.0–3.6×&lt;/strong&gt;. Note that this is &lt;em&gt;not&lt;/em&gt; the theoretical 32× FP32:FP64 ratio — the parallel scan is partly bandwidth- and launch-overhead-bound, not pure-FLOP-bound, so 3–4× is the honest, measured win. (It would be larger again on a datacenter card with a 1:2 ratio, where FP64 was never the bottleneck.)&lt;/p&gt;
+&lt;section id="the-inversion-resolved"&gt;
+&lt;h3&gt;The inversion, resolved&lt;/h3&gt;
+&lt;p&gt;The most satisfying row is 8 channels. Here is the full picture for that workload:&lt;/p&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;60 s / 8 ch&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Time&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head"&gt;&lt;p&gt;Verdict&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;CPU FP64&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;34.0 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;—&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;CPU FP32&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;27.6 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;—&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;&lt;strong&gt;GPU FP64&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;89.2 ms&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;&lt;em&gt;loses to its own CPU&lt;/em&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;&lt;strong&gt;GPU FP32&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;24.5 ms&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td&gt;&lt;p&gt;&lt;strong&gt;beats the CPU&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;In FP64 the consumer GPU genuinely lost to the OpenMP CPU kernel once the per-step working set widened across channels — an embarrassing inversion. FP32 erases it: the GPU is now the fastest backend everywhere on this card.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+&lt;section id="is-fp32-safe"&gt;
+&lt;h2&gt;Is FP32 safe?&lt;/h2&gt;
+&lt;p&gt;Lower precision is only a win if it’s still correct. 0.6.0 ships &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;tests/test_fp32_precision.py&lt;/span&gt;&lt;/code&gt;, which validates both paths against &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;scipy.signal.sosfilt&lt;/span&gt;&lt;/code&gt;:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;The &lt;strong&gt;FP64 path&lt;/strong&gt; matches scipy to ~double precision.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;The &lt;strong&gt;FP32 path&lt;/strong&gt; matches the reference within a documented float32 bound (max-abs + RMS-relative), swept across Butterworth and Chebyshev I at orders 2/4/8/16, on both CPU and CUDA.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The harness records the per-design error so the FP32-safe-vs-needs-FP64 boundary is tracked over time. For the well-conditioned audio designs TorchFX ships, FP32 tracks the FP64 reference to float32 precision with no surprises. If you have a pathological high-order, poles-near-the-unit-circle design, pass &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float64&lt;/span&gt;&lt;/code&gt; and you get the precise path — your choice, per call.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="try-it"&gt;
+&lt;h2&gt;Try it&lt;/h2&gt;
+&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torch&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Wave&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.filter&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;LoButterworth&lt;/span&gt;
+
+&lt;span class="c1"&gt;# float32 in -&amp;gt; FP32 GPU kernels (fast)&lt;/span&gt;
+&lt;span class="n"&gt;wave&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Wave&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;torch&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;randn&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;48000&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;60&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dtype&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;torch&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;float32&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;fs&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;48000&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;to&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;cuda&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;out&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;wave&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;LoButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;4000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="c1"&gt;# float64 in -&amp;gt; FP64 GPU kernels (precise), same code&lt;/span&gt;
+&lt;span class="n"&gt;wave64&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Wave&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;torch&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;randn&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;48000&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;60&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;dtype&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;torch&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;float64&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;fs&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;48000&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;to&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;cuda&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;out64&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;wave64&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;LoButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;4000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;python&lt;span class="w"&gt; &lt;/span&gt;benchmarks/bench_fp32_speedup.py
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Back to the &lt;a class="reference internal" href="2026-06-04-release-060.html"&gt;&lt;span class="std std-doc"&gt;0.6.0 release notes&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+</content>
+    <link href="https://matteospanio.github.io/torchfx/blog/2026-06-04-fp32-cuda.html"/>
+    <summary>This is the GPU half of the promise we made in 0.5.4: “retuning the CUDA SOS kernel for mixed precision so float32 gets the same fast path on GPU that it now has on CPU.” TorchFX 0.6.0 delivers it.</summary>
+    <category term="cuda" label="cuda"/>
+    <category term="fp32" label="fp32"/>
+    <category term="kernels" label="kernels"/>
+    <category term="performance" label="performance"/>
+    <category term="precision" label="precision"/>
+    <published>2026-06-04T00:00:00+00:00</published>
+  </entry>
+  <entry>
+    <id>https://matteospanio.github.io/torchfx/blog/2026-06-04-cuda-graphs.html</id>
+    <title>CUDA Graphs for Streaming: One Launch Instead of a Launch Storm</title>
+    <updated>2026-06-04T00:00:00+00:00</updated>
+    <author>
+      <name>Matteo Spanio</name>
+    </author>
+    <content type="html">&lt;section id="cuda-graphs-for-streaming-one-launch-instead-of-a-launch-storm"&gt;
+
+&lt;p&gt;For offline batch processing, GPU kernel-launch overhead disappears into the noise. For &lt;strong&gt;realtime streaming&lt;/strong&gt;, it &lt;em&gt;is&lt;/em&gt; the cost. TorchFX 0.6.0 adds &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.realtime.CudaGraphRunner&lt;/span&gt;&lt;/code&gt;, which captures a fixed-shape filter forward into a CUDA Graph and replays it per chunk — up to &lt;strong&gt;4× lower per-chunk latency&lt;/strong&gt;.&lt;/p&gt;
+&lt;section id="why-launch-overhead-dominates-short-chunks"&gt;
+&lt;h2&gt;Why launch overhead dominates short chunks&lt;/h2&gt;
+&lt;p&gt;A &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;K&lt;/span&gt;&lt;/code&gt;-section SOS cascade issues roughly &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;4·K&lt;/span&gt;&lt;/code&gt; CUDA kernel launches per forward — a forcing pass plus the three Blelloch scan phases for each section. At 48 kHz with a 512-sample buffer you do ~94 of those per second, each re-issuing the whole launch sequence.&lt;/p&gt;
+&lt;p&gt;How much is overhead versus compute? Our dispatch-threshold sweep gave a clean answer: the parallel scan measures &lt;strong&gt;~135 µs of essentially fixed launch/dispatch overhead regardless of chunk length&lt;/strong&gt; — a 256-sample chunk and an 8192-sample chunk cost almost the same. For a realtime chunk, you are paying for launches, not arithmetic.&lt;/p&gt;
+&lt;p&gt;CUDA Graphs are the textbook fix: record the kernel sequence once, then replay it as a single graph launch.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="the-api"&gt;
+&lt;h2&gt;The API&lt;/h2&gt;
+&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torch&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.filter&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;HiButterworth&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;LoButterworth&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.filter.fused&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;FusedSOSCascade&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.realtime&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;CudaGraphRunner&lt;/span&gt;
+
+&lt;span class="n"&gt;chain&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;FusedSOSCascade&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+    &lt;span class="n"&gt;HiButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;80&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fs&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;48000&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+    &lt;span class="n"&gt;LoButterworth&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;8000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;order&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fs&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;48000&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;example&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;torch&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;randn&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;512&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;device&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;cuda&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;   &lt;span class="c1"&gt;# fixes shape + dtype&lt;/span&gt;
+&lt;span class="n"&gt;runner&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;CudaGraphRunner&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;chain&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;example&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;chunk&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;stream&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;                            &lt;span class="c1"&gt;# each chunk is [2, 512] cuda&lt;/span&gt;
+    &lt;span class="n"&gt;y&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;runner&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;chunk&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;clone&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;CudaGraphRunner&lt;/span&gt;&lt;/code&gt; warms up on a side stream, captures the fixed-shape forward, and on each &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;run()&lt;/span&gt;&lt;/code&gt; copies the chunk into the static input buffer and replays the graph. Streaming DF1 state is carried across replays — the captured kernels read and write the filter’s persistent state buffers in place — so the result is identical to running the cascade eagerly chunk by chunk. Call &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;reset_state()&lt;/span&gt;&lt;/code&gt; to start a fresh stream.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="the-numbers"&gt;
+&lt;h2&gt;The numbers&lt;/h2&gt;
+&lt;p&gt;4-section SOS cascade, RTX 3070, per-chunk median (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;benchmarks/bench_cuda_graph.py&lt;/span&gt;&lt;/code&gt;):&lt;/p&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;Chunk size&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Eager&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Graph replay&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Speedup&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;128&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;209.9 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;52.2 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;4.02×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;256&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;208.9 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;61.4 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;3.40×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;512&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;208.9 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;79.9 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;2.62×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;1024&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;207.9 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;116.7 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;1.78×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;2048&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;240.6 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;190.5 µs&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;1.26×&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;The pattern is exactly what the theory predicts: the smaller the chunk, the more the fixed launch overhead dominates, and the bigger the graph win. At 128 samples — deep in the realtime regime — replay is &lt;strong&gt;4× faster&lt;/strong&gt;. As chunks grow and real compute takes over, the multiplier shrinks toward 1.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="the-bug-that-taught-us-something"&gt;
+&lt;h2&gt;The bug that taught us something&lt;/h2&gt;
+&lt;p&gt;Getting here took a detour worth sharing, because the root cause is a trap any CUDA extension author can fall into.&lt;/p&gt;
+&lt;p&gt;The first attempts &lt;em&gt;looked&lt;/em&gt; like they captured correctly but &lt;strong&gt;replayed as a no-op&lt;/strong&gt; — the output was frozen no matter what input we fed in. We chased several wrong theories (the returned tensor living in the graph’s private memory pool; per-section scratch aliasing) and even shipped allocation-free kernels to rule them out.&lt;/p&gt;
+&lt;p&gt;The actual cause was one line, repeated across every kernel launch:&lt;/p&gt;
+&lt;div class="highlight-cpp notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;forcing_kernel&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;scalar_t&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&amp;lt;&amp;lt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;blocks&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(...);&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="c1"&gt;// default stream!&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;The hand-written kernels launched on the &lt;strong&gt;default stream&lt;/strong&gt;. &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torch.cuda.graph&lt;/span&gt;&lt;/code&gt; capture runs on a &lt;em&gt;side&lt;/em&gt; stream and &lt;strong&gt;does not record default-stream work&lt;/strong&gt; — so the captured graph contained none of our kernels, and replay did nothing. (A trivial &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;y&lt;/span&gt; &lt;span class="pre"&gt;=&lt;/span&gt; &lt;span class="pre"&gt;x&lt;/span&gt; &lt;span class="pre"&gt;*&lt;/span&gt; &lt;span class="pre"&gt;2&lt;/span&gt;&lt;/code&gt; graph worked fine, because PyTorch’s own aten ops correctly launch on the current stream. That contrast is what cracked it.)&lt;/p&gt;
+&lt;p&gt;The fix is to pass the current stream to every launch:&lt;/p&gt;
+&lt;div class="highlight-cpp notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;const&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;auto&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;stream&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;c10&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;cuda&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="n"&gt;getCurrentCUDAStream&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;span class="n"&gt;forcing_kernel&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;scalar_t&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&amp;lt;&amp;lt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;blocks&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;threads&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;stream&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;(...);&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;This is not just a graph fix — it is &lt;em&gt;more correct in eager mode too&lt;/em&gt;, since the kernels now run on PyTorch’s stream instead of relying on implicit default-stream synchronisation. The lesson, now written into our contributor notes: &lt;strong&gt;a hand-written CUDA kernel must always launch on &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;getCurrentCUDAStream()&lt;/span&gt;&lt;/code&gt;.&lt;/strong&gt;&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="caveats"&gt;
+&lt;h2&gt;Caveats&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;The graph is &lt;strong&gt;shape- and dtype-fixed&lt;/strong&gt;: every &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;run()&lt;/span&gt;&lt;/code&gt; input must match the captured example. Change buffer size and you re-capture.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;The captured filter must have &lt;strong&gt;static coefficients&lt;/strong&gt; — the SOS taps are baked into the graph.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Graph replay matches eager streaming to &lt;em&gt;float precision&lt;/em&gt;, not bit-for-bit: the graphed warmup runs on a side stream + capture while an eager filter runs straight-line, so the post-warmup state carries float noise (~2e-11 in float64) that propagates but does not grow.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;The live &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;RealtimeProcessor&lt;/span&gt;&lt;/code&gt; is still CPU-only; &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;CudaGraphRunner&lt;/span&gt;&lt;/code&gt; targets GPU streaming (e.g. a GPU &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;StreamProcessor&lt;/span&gt;&lt;/code&gt; or your own chunk loop). Wiring it into a GPU realtime path is future work.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;python&lt;span class="w"&gt; &lt;/span&gt;benchmarks/bench_cuda_graph.py
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Back to the &lt;a class="reference internal" href="2026-06-04-release-060.html"&gt;&lt;span class="std std-doc"&gt;0.6.0 release notes&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+</content>
+    <link href="https://matteospanio.github.io/torchfx/blog/2026-06-04-cuda-graphs.html"/>
+    <summary>For offline batch processing, GPU kernel-launch overhead disappears into the noise. For realtime streaming, it is the cost. TorchFX 0.6.0 adds torchfx.realtime.CudaGraphRunner, which captures a fixed-shape filter forward into a CUDA Graph and replays it per chunk — up to 4× lower per-chunk latency.</summary>
+    <category term="cuda" label="cuda"/>
+    <category term="cuda-graphs" label="cuda-graphs"/>
+    <category term="latency" label="latency"/>
+    <category term="realtime" label="realtime"/>
+    <category term="streaming" label="streaming"/>
+    <published>2026-06-04T00:00:00+00:00</published>
+  </entry>
+  <entry>
+    <id>https://matteospanio.github.io/torchfx/blog/2026-06-04-realtime-streaming.html</id>
+    <title>A Hardened Realtime Path: Worker Threads, Allocation-Free Streaming, and Dtype-Aware Dispatch</title>
+    <updated>2026-06-04T00:00:00+00:00</updated>
+    <author>
+      <name>Matteo Spanio</name>
+    </author>
+    <content type="html">&lt;section id="a-hardened-realtime-path-worker-threads-allocation-free-streaming-and-dtype-aware-dispatch"&gt;
+
+&lt;p&gt;The flashy 0.6.0 numbers are &lt;a class="reference internal" href="2026-06-04-fp32-cuda.html"&gt;&lt;span class="std std-doc"&gt;FP32 on the GPU&lt;/span&gt;&lt;/a&gt; and &lt;a class="reference internal" href="2026-06-04-cuda-graphs.html"&gt;&lt;span class="std std-doc"&gt;CUDA Graphs&lt;/span&gt;&lt;/a&gt;. This post covers the quieter work that makes the streaming path actually dependable: the realtime architecture, the per-call allocations, the dispatch heuristic, and a handful of silent-correctness bugs.&lt;/p&gt;
+&lt;section id="realtime-dsp-off-the-audio-callback"&gt;
+&lt;h2&gt;Realtime: DSP off the audio callback&lt;/h2&gt;
+&lt;p&gt;Previously, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;RealtimeProcessor&lt;/span&gt;&lt;/code&gt; ran the entire effect chain &lt;em&gt;inside&lt;/em&gt; the PortAudio callback. That is the classic realtime-audio mistake: any allocation, GC pause, or slow kernel on the callback thread is an audible glitch.&lt;/p&gt;
+&lt;p&gt;0.6.0 restructures it into a &lt;strong&gt;producer/consumer split&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;The &lt;strong&gt;audio callback&lt;/strong&gt; does almost nothing — it moves samples between the backend buffers and a pair of lock-free &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TensorRingBuffer&lt;/span&gt;&lt;/code&gt;s (input + output), then returns.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;A dedicated &lt;strong&gt;worker thread&lt;/strong&gt; (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx-realtime-dsp&lt;/span&gt;&lt;/code&gt;) pulls input chunks, runs the effect chain, and writes results back to the output ring.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;The output ring is primed with one chunk of silence at start, so the first callback never underflows.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;It also ships &lt;strong&gt;instrumentation&lt;/strong&gt; you can actually measure with: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;latency_log_ns()&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;latency_stats_ms()&lt;/span&gt;&lt;/code&gt; (count/min/median/mean/p95/p99/max), and granular xrun counters (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;xrun_count&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;input_overflow_count&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;output_underflow_count&lt;/span&gt;&lt;/code&gt;, …) written only from the audio thread.&lt;/p&gt;
+&lt;p&gt;On the workstation CPU, a 5-section Butterworth cascade at a 256-sample buffer / 48 kHz holds a &lt;strong&gt;p99 per-callback time of ~0.038 ms against a 5.33 ms deadline — under 1% of budget — with zero xruns&lt;/strong&gt; over thousands of callbacks. (The live path remains CPU-only; GPU realtime is future work.)&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="allocation-free-gpu-streaming"&gt;
+&lt;h2&gt;Allocation-free GPU streaming&lt;/h2&gt;
+&lt;p&gt;Streaming means many small forwards, and the GPU SOS cascade was allocating on every one. For a &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;K&lt;/span&gt;&lt;/code&gt;-section cascade it allocated, &lt;em&gt;per section&lt;/em&gt;, a forcing buffer, an output buffer, and the scan’s block-aggregate scratch — &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;O(K)&lt;/span&gt;&lt;/code&gt; allocations per chunk, recurring forever.&lt;/p&gt;
+&lt;p&gt;0.6.0 makes &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;sos_forward_cuda&lt;/span&gt;&lt;/code&gt; &lt;strong&gt;allocation-free per forward&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;One forcing buffer, two ping-pong output buffers, and one block-aggregate scratch are allocated &lt;strong&gt;once per forward and reused across all sections&lt;/strong&gt; (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;O(K)&lt;/span&gt;&lt;/code&gt; → &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;O(1)&lt;/span&gt;&lt;/code&gt;).&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;The per-section DF1 state is updated &lt;strong&gt;in place&lt;/strong&gt; in the persistent state buffers, instead of allocating &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;narrow&lt;/span&gt;&lt;/code&gt;/&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;flip&lt;/span&gt;&lt;/code&gt;/&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;cat&lt;/span&gt;&lt;/code&gt; temporaries.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The payoff on the eager path is &lt;strong&gt;~27%&lt;/strong&gt; (276 → 202 µs/chunk for a 4-section cascade on an RTX 3070) — and, as a bonus, this allocation discipline is exactly what made &lt;a class="reference internal" href="2026-06-04-cuda-graphs.html"&gt;&lt;span class="std std-doc"&gt;CUDA Graph capture&lt;/span&gt;&lt;/a&gt; possible.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="a-dispatch-threshold-that-knows-about-dtype"&gt;
+&lt;h2&gt;A dispatch threshold that knows about dtype&lt;/h2&gt;
+&lt;p&gt;TorchFX picks between a sequential CUDA kernel and the work-efficient parallel scan based on signal length. That boundary, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;PARALLEL_SCAN_THRESHOLD&lt;/span&gt;&lt;/code&gt;, used to be a hard-coded &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;2048&lt;/span&gt;&lt;/code&gt; — and worse, it was &lt;em&gt;dead&lt;/em&gt; in Python while the kernel hard-coded the same constant in two places.&lt;/p&gt;
+&lt;p&gt;0.6.0 threads it through as a real, tunable parameter and re-measured the crossover with a sweep (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;benchmarks/bench_threshold_sweep.py&lt;/span&gt;&lt;/code&gt;). The result is that &lt;strong&gt;the crossover depends on dtype&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;The parallel scan is essentially flat at ~135 µs (it’s launch-overhead-bound).&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;The sequential kernel grows ~2× faster in FP64 than FP32.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;So the sequential kernel stays competitive up to ~2560 samples in FP32 but only ~1024 in FP64. A single &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;2048&lt;/span&gt;&lt;/code&gt; default left &lt;strong&gt;FP64 ~57% slower at T≈2048&lt;/strong&gt; (211 µs sequential vs 134 µs parallel). The new default is &lt;strong&gt;dtype-aware: float32 → 2048, float64 → 1024&lt;/strong&gt;, and you can override it per call (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;threshold=0&lt;/span&gt;&lt;/code&gt; forces the parallel scan, a large value forces sequential — handy for benchmarking).&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="silent-correctness-fixes"&gt;
+&lt;h2&gt;Silent-correctness fixes&lt;/h2&gt;
+&lt;p&gt;Performance is worthless if the output is quietly wrong. Three footguns closed in 0.6.0:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Stale coefficients on sample-rate change.&lt;/strong&gt; A filter materialised at 44.1 kHz, then reused on a 48 kHz signal, used to keep applying the 44.1 kHz coefficients — silently. Filters now track the &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;fs&lt;/span&gt;&lt;/code&gt; their coefficients were designed for and recompute (and reset state) when it changes, on the direct &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;forward()&lt;/span&gt;&lt;/code&gt; path as well as through the pipe operator.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;State leak across &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Wave&lt;/span&gt;&lt;/code&gt; reuse.&lt;/strong&gt; Offline &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Wave&lt;/span&gt;&lt;/code&gt; materialisation now resets stateful modules before running, so piping one filter instance into two different &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Wave&lt;/span&gt;&lt;/code&gt;s can’t bleed DF1 state from the first into the second. Streaming, which deliberately preserves state across chunks, is unaffected.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Silent half-precision upcast.&lt;/strong&gt; &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float16&lt;/span&gt;&lt;/code&gt; / &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;bfloat16&lt;/span&gt;&lt;/code&gt; inputs to the native filters were silently promoted to &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float64&lt;/span&gt;&lt;/code&gt;. They now raise a clear &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TypeError&lt;/span&gt;&lt;/code&gt; — the IIR feedback recurrence is not numerically safe in half precision; cast to &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float32&lt;/span&gt;&lt;/code&gt; or &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;float64&lt;/span&gt;&lt;/code&gt; yourself.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;None of these are glamorous, but a DSP library that quietly returns the wrong audio is worse than a slow one. These are locked in by regression tests.&lt;/p&gt;
+&lt;p&gt;Back to the &lt;a class="reference internal" href="2026-06-04-release-060.html"&gt;&lt;span class="std std-doc"&gt;0.6.0 release notes&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+</content>
+    <link href="https://matteospanio.github.io/torchfx/blog/2026-06-04-realtime-streaming.html"/>
+    <summary>The flashy 0.6.0 numbers are FP32 on the GPU and CUDA Graphs. This post covers the quieter work that makes the streaming path actually dependable: the realtime architecture, the per-call allocations, the dispatch heuristic, and a handful of silent-correctness bugs.</summary>
+    <category term="correctness" label="correctness"/>
+    <category term="dispatch" label="dispatch"/>
+    <category term="performance" label="performance"/>
+    <category term="realtime" label="realtime"/>
+    <category term="streaming" label="streaming"/>
+    <published>2026-06-04T00:00:00+00:00</published>
+  </entry>
   <entry>
     <id>https://matteospanio.github.io/torchfx/blog/2026-05-26-release-054.html</id>
     <title>TorchFX 0.5.4: Native Filter Design &amp; Goodbye scipy</title>
@@ -1339,511 +1814,5 @@ torchfx&lt;span class="w"&gt; &lt;/span&gt;--help
     <category term="release" label="release"/>
     <category term="validation" label="validation"/>
     <published>2026-02-15T00:00:00+00:00</published>
-  </entry>
-  <entry>
-    <id>https://matteospanio.github.io/torchfx/blog/2026-02-15-repl-live-performance.html</id>
-    <title>Interactive Audio Magic: The TorchFX REPL</title>
-    <updated>2026-02-15T00:00:00+00:00</updated>
-    <author>
-      <name>Matteo Spanio</name>
-    </author>
-    <content type="html">&lt;section id="interactive-audio-magic-the-torchfx-repl"&gt;
-
-&lt;p&gt;Imagine tweaking a reverb decay parameter and hearing the change &lt;em&gt;instantly&lt;/em&gt; while your audio loops continuously. No stopping, no reprocessing, no waiting. Just &lt;strong&gt;live, real-time effect manipulation&lt;/strong&gt;. That’s the power of the new TorchFX REPL.&lt;/p&gt;
-&lt;section id="beyond-batch-processing"&gt;
-&lt;h2&gt;Beyond Batch Processing&lt;/h2&gt;
-&lt;p&gt;While command-line audio tools excel at batch processing, they fall short for iterative sound design. You typically write a command, run it, listen to the output, adjust parameters, and repeat. This cycle breaks creative flow.&lt;/p&gt;
-&lt;p&gt;The TorchFX REPL changes the game by providing an &lt;strong&gt;interactive shell&lt;/strong&gt; where you can:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Load audio files&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Build effect chains incrementally&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Preview changes in real-time&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Save your work as presets&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Experiment freely without scripts&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Think of it as a &lt;strong&gt;live coding environment for audio DSP&lt;/strong&gt;, powered by PyTorch and GPU acceleration.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="getting-started"&gt;
-&lt;h2&gt;Getting Started&lt;/h2&gt;
-&lt;p&gt;Launch the REPL with a single command:&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&lt;span class="w"&gt; &lt;/span&gt;interactive
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;You’re greeted with a prompt and tab completion:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;TorchFX&lt;/span&gt; &lt;span class="n"&gt;Interactive&lt;/span&gt; &lt;span class="n"&gt;REPL&lt;/span&gt;
-&lt;span class="n"&gt;Type&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;help&amp;#39;&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;commands&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;exit&amp;#39;&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;quit&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;
-
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;section id="loading-audio"&gt;
-&lt;h3&gt;Loading Audio&lt;/h3&gt;
-&lt;p&gt;Start by loading a file:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; load song.wav
-✓ Loaded song.wav  (2 ch, 44100 Hz, 180.50s)
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;The REPL shows you key metadata immediately — channels, sample rate, and duration.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="building-effect-chains"&gt;
-&lt;h3&gt;Building Effect Chains&lt;/h3&gt;
-&lt;p&gt;Add effects one at a time:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; add normalize
-✓ [1] Added normalize
-
-torchfx&amp;gt; add reverb:decay=0.5,mix=0.2
-✓ [2] Added reverb:decay=0.5,mix=0.2
-
-torchfx&amp;gt; list
-Effect Chain:
-  1. normalize
-  2. reverb:decay=0.5,mix=0.2
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Each effect gets an index, making it easy to manage complex chains.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="preview-your-work"&gt;
-&lt;h3&gt;Preview Your Work&lt;/h3&gt;
-&lt;p&gt;Play the processed audio:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; play
-▶ Playback complete (processed).
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Want to compare with the original?&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; play raw
-▶ Playback complete (raw).
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section id="live-performance-mode-the-game-changer"&gt;
-&lt;h2&gt;Live Performance Mode: The Game Changer&lt;/h2&gt;
-&lt;p&gt;Here’s where it gets exciting. Traditional audio tools process files offline — load, process, save. The REPL introduces &lt;strong&gt;live playback mode&lt;/strong&gt; where audio loops continuously and effect changes apply &lt;strong&gt;immediately&lt;/strong&gt;:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; live
-▶ Live playback started  (2 ch, 44100 Hz, looping)
-Change effects with &amp;#39;add&amp;#39;, &amp;#39;remove&amp;#39;, or &amp;#39;preset load&amp;#39; — changes apply immediately!
-Use &amp;#39;live stop&amp;#39; to end playback.
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Now, while the audio is playing:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; add reverb:decay=0.8,mix=0.5
-✓ [1] Added reverb:decay=0.8,mix=0.5
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;&lt;strong&gt;The reverb starts INSTANTLY.&lt;/strong&gt; No stopping, no reprocessing. The effect integrates seamlessly into the ongoing playback.&lt;/p&gt;
-&lt;section id="hot-swapping-effect-chains"&gt;
-&lt;h3&gt;Hot-Swapping Effect Chains&lt;/h3&gt;
-&lt;p&gt;The real power emerges when you swap entire chains mid-playback:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; preset load vocal-cleanup
-✓ Loaded preset &amp;#39;vocal-cleanup&amp;#39; (3 effects).
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Your audio transitions to the new chain at the next buffer boundary (~46ms latency). It’s like switching between guitar pedals — instant and glitch-free.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="removing-effects-live"&gt;
-&lt;h3&gt;Removing Effects Live&lt;/h3&gt;
-&lt;p&gt;Made a mistake? Remove it in real-time:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; remove 2
-✗ Removed [2] lowpass:cutoff=8000
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;The filter disappears from the audio stream immediately.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="stop-when-youre-done"&gt;
-&lt;h3&gt;Stop When You’re Done&lt;/h3&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; live stop
-⏹ Live playback stopped.
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section id="technical-deep-dive-lock-free-audio"&gt;
-&lt;h2&gt;Technical Deep Dive: Lock-Free Audio&lt;/h2&gt;
-&lt;p&gt;How does the REPL achieve glitch-free, real-time effect switching? The secret is a &lt;strong&gt;lock-free circular buffer pattern&lt;/strong&gt; inspired by professional audio software:&lt;/p&gt;
-&lt;ol class="arabic simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Audio Thread&lt;/strong&gt;: Runs in real-time, reading chunks from the file and passing them through the effect chain&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;REPL Thread&lt;/strong&gt;: Handles user commands, modifying the effect list&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Lock-Free Reads&lt;/strong&gt;: The audio thread reads the effect list without locks, seeing a consistent snapshot&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Buffer Boundaries&lt;/strong&gt;: Changes apply atomically at buffer boundaries (~46ms &amp;#64; 2048 samples, 44.1kHz)&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;This architecture ensures:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Zero dropouts&lt;/strong&gt; during effect changes&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Immediate response&lt;/strong&gt; (one buffer latency)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Thread safety&lt;/strong&gt; without blocking the audio path&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Graceful degradation&lt;/strong&gt; (broken effects are skipped)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;It’s the same pattern used in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;RealtimeProcessor&lt;/span&gt;&lt;/code&gt; for live microphone input, adapted here for file-based playback.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="complete-command-reference"&gt;
-&lt;h2&gt;Complete Command Reference&lt;/h2&gt;
-&lt;section id="file-operations"&gt;
-&lt;h3&gt;File Operations&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;load&lt;/span&gt; &lt;span class="pre"&gt;&amp;lt;file&amp;gt;&lt;/span&gt;&lt;/code&gt; — Load an audio file&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;info&lt;/span&gt;&lt;/code&gt; — Show loaded file metadata&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;save&lt;/span&gt; &lt;span class="pre"&gt;&amp;lt;file&amp;gt;&lt;/span&gt;&lt;/code&gt; — Save processed audio&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="effect-chain-management"&gt;
-&lt;h3&gt;Effect Chain Management&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;add&lt;/span&gt; &lt;span class="pre"&gt;&amp;lt;spec&amp;gt;&lt;/span&gt;&lt;/code&gt; — Add effect (e.g., &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;add&lt;/span&gt; &lt;span class="pre"&gt;reverb:decay=0.5&lt;/span&gt;&lt;/code&gt;)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;remove&lt;/span&gt; &lt;span class="pre"&gt;&amp;lt;n&amp;gt;&lt;/span&gt;&lt;/code&gt; — Remove effect at index (1-based)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;list&lt;/span&gt;&lt;/code&gt; — Show current effect chain&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;clear&lt;/span&gt;&lt;/code&gt; — Clear all effects&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;effects&lt;/span&gt;&lt;/code&gt; — List all available effect names&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="playback"&gt;
-&lt;h3&gt;Playback&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;play&lt;/span&gt;&lt;/code&gt; — Play processed audio (blocks until complete)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;play&lt;/span&gt; &lt;span class="pre"&gt;raw&lt;/span&gt;&lt;/code&gt; — Play original unprocessed audio&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;live&lt;/span&gt;&lt;/code&gt; — &lt;strong&gt;Start live playback (non-blocking, loops)&lt;/strong&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;live&lt;/span&gt; &lt;span class="pre"&gt;stop&lt;/span&gt;&lt;/code&gt; — &lt;strong&gt;Stop live playback&lt;/strong&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="preset-management"&gt;
-&lt;h3&gt;Preset Management&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;preset&lt;/span&gt; &lt;span class="pre"&gt;save&lt;/span&gt; &lt;span class="pre"&gt;&amp;lt;name&amp;gt;&lt;/span&gt;&lt;/code&gt; — Save chain as preset&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;preset&lt;/span&gt; &lt;span class="pre"&gt;load&lt;/span&gt; &lt;span class="pre"&gt;&amp;lt;name&amp;gt;&lt;/span&gt;&lt;/code&gt; — Load preset into chain&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;preset&lt;/span&gt; &lt;span class="pre"&gt;list&lt;/span&gt;&lt;/code&gt; — List saved presets&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="utility"&gt;
-&lt;h3&gt;Utility&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;help&lt;/span&gt;&lt;/code&gt; — Show command reference&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;exit&lt;/span&gt;&lt;/code&gt; / &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;quit&lt;/span&gt;&lt;/code&gt; — Exit REPL&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section id="real-world-use-cases"&gt;
-&lt;h2&gt;Real-World Use Cases&lt;/h2&gt;
-&lt;section id="sound-design-iteration"&gt;
-&lt;h3&gt;Sound Design Iteration&lt;/h3&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;load&lt;/span&gt; &lt;span class="n"&gt;synth&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;pad&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wav&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;live&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Try different reverb settings&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;add&lt;/span&gt; &lt;span class="n"&gt;reverb&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;decay&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;mix&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.1&lt;/span&gt;
-&lt;span class="c1"&gt;# Too dry...&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;remove&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;add&lt;/span&gt; &lt;span class="n"&gt;reverb&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;decay&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.8&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;mix&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.4&lt;/span&gt;
-&lt;span class="c1"&gt;# Perfect!&lt;/span&gt;
-
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;preset&lt;/span&gt; &lt;span class="n"&gt;save&lt;/span&gt; &lt;span class="n"&gt;lush&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;pad&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;live&lt;/span&gt; &lt;span class="n"&gt;stop&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/section&gt;
-&lt;section id="mastering-chain-development"&gt;
-&lt;h3&gt;Mastering Chain Development&lt;/h3&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;load&lt;/span&gt; &lt;span class="n"&gt;mix&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wav&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;add&lt;/span&gt; &lt;span class="n"&gt;normalize&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;add&lt;/span&gt; &lt;span class="n"&gt;parametriceq&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;frequency&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;q&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;1.5&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;gain&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;add&lt;/span&gt; &lt;span class="n"&gt;reverb&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;decay&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;mix&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.1&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;play&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Tweak until satisfied&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;preset&lt;/span&gt; &lt;span class="n"&gt;save&lt;/span&gt; &lt;span class="n"&gt;mastering&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;v1&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;save&lt;/span&gt; &lt;span class="n"&gt;mastered&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wav&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/section&gt;
-&lt;section id="dj-set-preparation"&gt;
-&lt;h3&gt;DJ Set Preparation&lt;/h3&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;load&lt;/span&gt; &lt;span class="n"&gt;track&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wav&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;live&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Test different combinations rapidly&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;preset&lt;/span&gt; &lt;span class="n"&gt;load&lt;/span&gt; &lt;span class="nb"&gt;filter&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;sweep&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;preset&lt;/span&gt; &lt;span class="n"&gt;load&lt;/span&gt; &lt;span class="n"&gt;heavy&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;reverb&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;preset&lt;/span&gt; &lt;span class="n"&gt;load&lt;/span&gt; &lt;span class="n"&gt;clean&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Find the winner&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;save&lt;/span&gt; &lt;span class="n"&gt;processed&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;track&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wav&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;live&lt;/span&gt; &lt;span class="n"&gt;stop&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/section&gt;
-&lt;section id="educational-demos"&gt;
-&lt;h3&gt;Educational Demos&lt;/h3&gt;
-&lt;p&gt;The REPL is perfect for teaching audio DSP. Students can hear parameter changes instantly:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;load&lt;/span&gt; &lt;span class="n"&gt;tone&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wav&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;live&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;add&lt;/span&gt; &lt;span class="n"&gt;lowpass&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;cutoff&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;1000&lt;/span&gt;
-&lt;span class="c1"&gt;# Hear the filtering&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;remove&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;
-&lt;span class="n"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;add&lt;/span&gt; &lt;span class="n"&gt;lowpass&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;cutoff&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;500&lt;/span&gt;
-&lt;span class="c1"&gt;# Hear the difference&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section id="advanced-features"&gt;
-&lt;h2&gt;Advanced Features&lt;/h2&gt;
-&lt;section id="tab-completion"&gt;
-&lt;h3&gt;Tab Completion&lt;/h3&gt;
-&lt;p&gt;Press Tab to complete:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Command names&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Effect names&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;File paths&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Preset names&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="command-history"&gt;
-&lt;h3&gt;Command History&lt;/h3&gt;
-&lt;p&gt;Navigate previous commands with ↑/↓ arrows. History is persistent across sessions in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;~/.config/torchfx/repl_history&lt;/span&gt;&lt;/code&gt;.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="rich-formatting"&gt;
-&lt;h3&gt;Rich Formatting&lt;/h3&gt;
-&lt;p&gt;All output uses Rich markup for beautiful, colorful formatting:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Green for success messages&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Red for errors&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Yellow for warnings&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Cyan for highlights&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Dim for hints&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="error-resilience"&gt;
-&lt;h3&gt;Error Resilience&lt;/h3&gt;
-&lt;p&gt;During live playback, if an effect throws an error, it’s silently skipped to prevent audio dropouts. You’ll see errors when adding effects, but playback stays robust.&lt;/p&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section id="installation"&gt;
-&lt;h2&gt;Installation&lt;/h2&gt;
-&lt;p&gt;The REPL is included with the CLI package:&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="o"&gt;[&lt;/span&gt;cli&lt;span class="o"&gt;]&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;For playback (required for &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;play&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;live&lt;/span&gt;&lt;/code&gt; commands):&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="o"&gt;[&lt;/span&gt;realtime&lt;span class="o"&gt;]&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Then just run:&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&lt;span class="w"&gt; &lt;/span&gt;interactive
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/section&gt;
-&lt;section id="performance-notes"&gt;
-&lt;h2&gt;Performance Notes&lt;/h2&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Latency&lt;/strong&gt;: ~46ms at default buffer size (2048 samples &amp;#64; 44.1kHz)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Loop Performance&lt;/strong&gt;: File reads are lock-protected; effect application is lock-free&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Effect Count&lt;/strong&gt;: Tested with 10+ effects in real-time without issues&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;GPU Support&lt;/strong&gt;: Not currently used in REPL (CPU is plenty fast for real-time with reasonable chains)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="future-enhancements"&gt;
-&lt;h2&gt;Future Enhancements&lt;/h2&gt;
-&lt;p&gt;We’re exploring additions for future versions:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Waveform visualization&lt;/strong&gt; in the terminal&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Spectrum analyzer&lt;/strong&gt; with ASCII/Unicode rendering&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Parameter automation&lt;/strong&gt; over time&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;MIDI controller support&lt;/strong&gt; for live parameter changes&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Multi-file session management&lt;/strong&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Recording mode&lt;/strong&gt; (mic → live effects → disk)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="philosophy-flow-state-for-audio"&gt;
-&lt;h2&gt;Philosophy: Flow State for Audio&lt;/h2&gt;
-&lt;p&gt;The REPL isn’t just a tool — it’s designed to &lt;strong&gt;enable flow states&lt;/strong&gt; in audio work. By removing friction between idea and sound, it lets you:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Explore creatively without breaking concentration&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Iterate faster than ever before&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Learn DSP concepts through immediate feedback&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Perform live with confidence&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="try-it-now"&gt;
-&lt;h2&gt;Try It Now&lt;/h2&gt;
-&lt;p&gt;Experience the magic of real-time audio manipulation:&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="o"&gt;[&lt;/span&gt;cli,realtime&lt;span class="o"&gt;]&lt;/span&gt;
-torchfx&lt;span class="w"&gt; &lt;/span&gt;interactive
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Load a file, type &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;live&lt;/span&gt;&lt;/code&gt;, and start experimenting. You’ll never go back to batch processing for creative work.&lt;/p&gt;
-&lt;hr class="docutils" /&gt;
-&lt;p&gt;&lt;em&gt;Questions? Join the discussion on &lt;a class="reference external" href="https://github.com/matteospanio/torchfx"&gt;GitHub&lt;/a&gt;!&lt;/em&gt;&lt;/p&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-</content>
-    <link href="https://matteospanio.github.io/torchfx/blog/2026-02-15-repl-live-performance.html"/>
-    <summary>Imagine tweaking a reverb decay parameter and hearing the change instantly while your audio loops continuously. No stopping, no reprocessing, no waiting. Just live, real-time effect manipulation. That’s the power of the new TorchFX REPL.</summary>
-    <category term="interactive" label="interactive"/>
-    <category term="live-performance" label="live-performance"/>
-    <category term="real-time" label="real-time"/>
-    <category term="repl" label="repl"/>
-    <published>2026-02-15T00:00:00+00:00</published>
-  </entry>
-  <entry>
-    <id>https://matteospanio.github.io/torchfx/blog/2026-01-11-new-docs.html</id>
-    <title>TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉</title>
-    <updated>2026-01-11T00:00:00+00:00</updated>
-    <author>
-      <name>Matteo Spanio</name>
-    </author>
-    <content type="html">&lt;section id="torchfx-0-3-0-is-here-new-roadmap-and-documentation-refresh"&gt;
-
-&lt;p&gt;I’m excited to announce the release of &lt;strong&gt;TorchFX 0.3.0&lt;/strong&gt;, which brings a significant update to the project’s documentation and a clearer roadmap for future development.&lt;/p&gt;
-&lt;p&gt;As interest in TorchFX continues to grow within the audio and research community, it became clear that the documentation needed to evolve alongside the project.&lt;/p&gt;
-&lt;p&gt;To better support users, developers, and contributors, I’ve carried out a &lt;strong&gt;documentation refresh&lt;/strong&gt; focused on clarity, structure, and long-term sustainability.&lt;/p&gt;
-&lt;section id="whats-new"&gt;
-&lt;h2&gt;What’s New&lt;/h2&gt;
-&lt;section id="guides"&gt;
-&lt;h3&gt;📘 Guides&lt;/h3&gt;
-&lt;p&gt;The documentation now includes a dedicated &lt;strong&gt;Guides&lt;/strong&gt; section, designed to explain:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;how TorchFX works internally,&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;the core design ideas behind the library,&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;recommended usage patterns for both users and developers.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;The goal is to make TorchFX easier to approach, without hiding the underlying concepts.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="filters"&gt;
-&lt;h3&gt;Filters&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Brand new Elliptic filters: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;HiElliptic&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;LoElliptic&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;New ParametricEQ filter for precise frequency band adjustments&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;LoShelving filter implementation based on the Audio EQ Cookbook&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="improved-api-reference"&gt;
-&lt;h3&gt;🧩 Improved API Reference&lt;/h3&gt;
-&lt;p&gt;The &lt;strong&gt;API reference&lt;/strong&gt; has been reorganized and is now clearly divided by &lt;strong&gt;modules&lt;/strong&gt;, making it easier to navigate, understand, and extend the library.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="blog-section"&gt;
-&lt;h3&gt;📰 Blog Section&lt;/h3&gt;
-&lt;p&gt;A new &lt;strong&gt;Blog&lt;/strong&gt; section has been added to the documentation.&lt;br /&gt;
-This space will be used for announcements, project updates, and general communications related to TorchFX.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="contributing-guide"&gt;
-&lt;h3&gt;🤝 Contributing Guide&lt;/h3&gt;
-&lt;p&gt;For those interested in getting involved, I’ve added a &lt;strong&gt;contribution guide&lt;/strong&gt; (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;CONTRIBUTING.md&lt;/span&gt;&lt;/code&gt;) in the root of the repository.&lt;br /&gt;
-It explains how to contribute, propose changes, and collaborate on the project in a structured way.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="project-roadmap"&gt;
-&lt;h3&gt;🛣️ Project Roadmap&lt;/h3&gt;
-&lt;p&gt;Finally, a &lt;strong&gt;roadmap&lt;/strong&gt; is now available to better organize and communicate the future development of TorchFX.&lt;br /&gt;
-This helps align expectations and provides a clearer picture of where the project is heading.&lt;/p&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section id="looking-ahead"&gt;
-&lt;h2&gt;Looking Ahead&lt;/h2&gt;
-&lt;p&gt;This documentation update is a foundation for the next phase of TorchFX.&lt;br /&gt;
-As the project grows, the documentation will continue to improve with feedback from the community.&lt;/p&gt;
-&lt;p&gt;Thank you to everyone who has shown interest so far — your curiosity and engagement are what make open-source research projects like this possible.&lt;/p&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-</content>
-    <link href="https://matteospanio.github.io/torchfx/blog/2026-01-11-new-docs.html"/>
-    <summary>I’m excited to announce the release of TorchFX 0.3.0, which brings a significant update to the project’s documentation and a clearer roadmap for future development.</summary>
-    <category term="documentation" label="documentation"/>
-    <category term="release" label="release"/>
-    <published>2026-01-11T00:00:00+00:00</published>
-  </entry>
-  <entry>
-    <id>https://matteospanio.github.io/torchfx/blog/2026-01-06-deepwiki.html</id>
-    <title>TorchFX is now indexed on DeepWiki</title>
-    <updated>2026-01-06T00:00:00+00:00</updated>
-    <author>
-      <name>Matteo Spanio</name>
-    </author>
-    <content type="html">&lt;section id="torchfx-is-now-indexed-on-deepwiki"&gt;
-
-&lt;p&gt;I’m happy to share a small but meaningful update for the TorchFX project.&lt;/p&gt;
-&lt;p&gt;Thanks to the contribution of &lt;strong&gt;kaigouthro&lt;/strong&gt;, TorchFX is now &lt;strong&gt;indexed on DeepWiki&lt;/strong&gt;, making the library more accessible to anyone interested in understanding its design, usage, or contributing to its development.&lt;/p&gt;
-&lt;section id="torchfx-on-deepwiki"&gt;
-&lt;h2&gt;TorchFX on DeepWiki&lt;/h2&gt;
-&lt;p&gt;DeepWiki offers an alternative, structured way to explore open-source projects, focusing on documentation, code organization, and conceptual clarity. Being indexed there is a great opportunity for:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;new users who want to explore TorchFX before diving into the code,&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;researchers looking for differentiable audio DSP tools,&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;contributors who want a high-level overview of the project structure.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;You can find TorchFX on DeepWiki here:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;👉 &lt;a class="reference external" href="https://deepwiki.com/matteospanio/torchfx"&gt;https://deepwiki.com/matteospanio/torchfx&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="downloadable-documentation-dump"&gt;
-&lt;h2&gt;Downloadable Documentation Dump&lt;/h2&gt;
-&lt;p&gt;In addition to the online index, a &lt;strong&gt;local dump of the DeepWiki documentation&lt;/strong&gt; is available.&lt;br /&gt;
-This can be useful for offline exploration, archival purposes, or experimentation.&lt;/p&gt;
-&lt;p&gt;The documentation dump is available in the following branch:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;👉 &lt;a class="reference external" href="https://github.com/kaigouthro/torchfx/tree/deepwiki-01-2026"&gt;https://github.com/kaigouthro/torchfx/tree/deepwiki-01-2026&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="a-community-driven-improvement"&gt;
-&lt;h2&gt;A Community-Driven Improvement&lt;/h2&gt;
-&lt;p&gt;This update is a great example of how community contributions can improve a project in ways that go beyond code alone. Better visibility and alternative documentation formats make TorchFX easier to approach, understand, and extend.&lt;/p&gt;
-&lt;p&gt;Many thanks to &lt;a class="reference external" href="https://github.com/kaigouthro"&gt;https://github.com/kaigouthro&lt;/a&gt; for the contribution!&lt;/p&gt;
-&lt;p&gt;As always, feedback and contributions are welcome — whether they come in the form of code, documentation, or ideas.&lt;/p&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-</content>
-    <link href="https://matteospanio.github.io/torchfx/blog/2026-01-06-deepwiki.html"/>
-    <summary>I’m happy to share a small but meaningful update for the TorchFX project.</summary>
-    <category term="documentation" label="documentation"/>
-    <category term="open-source" label="open-source"/>
-    <published>2026-01-06T00:00:00+00:00</published>
-  </entry>
-  <entry>
-    <id>https://matteospanio.github.io/torchfx/blog/2025-12-13-release-021.html</id>
-    <title>TorchFX 0.2.1 Released 🎉</title>
-    <updated>2025-12-13T00:00:00+00:00</updated>
-    <author>
-      <name>Matteo Spanio</name>
-    </author>
-    <content type="html">&lt;section id="torchfx-0-2-1-released"&gt;
-
-&lt;p&gt;I’m excited to announce the release of &lt;strong&gt;TorchFX version 0.2.1&lt;/strong&gt;! This update brings new functionality, improved documentation, and several important fixes — thanks to contributions from the community.&lt;/p&gt;
-&lt;section id="major-highlights"&gt;
-&lt;h2&gt;✨ Major Highlights&lt;/h2&gt;
-&lt;section id="added"&gt;
-&lt;h3&gt;Added&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Delay&lt;/span&gt;&lt;/code&gt; effect&lt;/strong&gt; with BPM synchronization option by &lt;a class="reference external" href="https://github.com/itsuzef"&gt;https://github.com/itsuzef&lt;/a&gt;, supporting multiple delay strategies&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;New examples in the &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;examples/&lt;/span&gt;&lt;/code&gt; folder:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;delay.py&lt;/span&gt;&lt;/code&gt; showcasing the new Delay effect&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Citation file (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;CITATION.cff&lt;/span&gt;&lt;/code&gt;)&lt;/strong&gt; for easy referencing of TorchFX in academic works&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="changed"&gt;
-&lt;h3&gt;Changed&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Updated &lt;strong&gt;documentation&lt;/strong&gt; to include the new Delay effect and refresh existing examples&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;GitHub workflow updated to &lt;strong&gt;run checks in parallel jobs&lt;/strong&gt;, providing faster feedback&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="fixed"&gt;
-&lt;h3&gt;Fixed&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Pre-commit configuration now properly runs &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;mypy&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;docformatter&lt;/span&gt;&lt;/code&gt;, and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;black&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Fixed many type hints across the codebase&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;For full details, check out the &lt;strong&gt;&lt;a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/CHANGELOG"&gt;changelog&lt;/a&gt;&lt;/strong&gt;.&lt;/p&gt;
-&lt;hr class="docutils" /&gt;
-&lt;p&gt;This release continues the mission of TorchFX: providing &lt;strong&gt;fast, differentiable audio filters&lt;/strong&gt;, robust examples, and a strong foundation for research and open-source contributions.&lt;/p&gt;
-&lt;p&gt;A big thanks to everyone who contributed, tested, or suggested improvements — your support keeps the project moving forward!&lt;/p&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-</content>
-    <link href="https://matteospanio.github.io/torchfx/blog/2025-12-13-release-021.html"/>
-    <summary>I’m excited to announce the release of TorchFX version 0.2.1! This update brings new functionality, improved documentation, and several important fixes — thanks to contributions from the community.</summary>
-    <category term="open-source" label="open-source"/>
-    <category term="release" label="release"/>
-    <published>2025-12-13T00:00:00+00:00</published>
   </entry>
 </feed>

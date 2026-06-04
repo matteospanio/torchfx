@@ -4942,7 +4942,7 @@ filtered through band <code class="docutils literal notranslate"><span class="pr
 
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.filter.FusedSOSCascade">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">FusedSOSCascade</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">filters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/fused.html#FusedSOSCascade"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.FusedSOSCascade" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.filter.</span></span><span class="sig-name descname"><span class="pre">FusedSOSCascade</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">filters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/filter/fused.html#FusedSOSCascade"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.filter.FusedSOSCascade" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>A fused second-order-sections cascade combining multiple IIR filters.</p>
 <p>Merges the SOS matrices of several IIR filters into a single <code class="docutils literal notranslate"><span class="pre">[K_total,</span> <span class="pre">6]</span></code>
@@ -4950,8 +4950,11 @@ tensor and processes them in one native <code class="docutils literal notranslat
 per-filter Python dispatch overhead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>filters</strong> (<a class="reference internal" href="#torchfx.filter.IIR" title="torchfx.filter.IIR"><em>IIR</em></a>) – One or more IIR filter instances to fuse.  Coefficients are computed
-eagerly (<code class="docutils literal notranslate"><span class="pre">compute_coefficients</span></code> is called at construction time).</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filters</strong> (<a class="reference internal" href="#torchfx.filter.IIR" title="torchfx.filter.IIR"><em>IIR</em></a>) – One or more IIR filter instances to fuse.  Coefficients are computed
+eagerly (<code class="docutils literal notranslate"><span class="pre">compute_coefficients</span></code> is called at construction time).</p></li>
+<li><p><strong>gain</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+</ul>
 </dd>
 </dl>
 <p class="rubric">Examples</p>

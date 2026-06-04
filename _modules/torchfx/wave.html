@@ -1052,38 +1052,82 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_materialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the deferred pipeline, fusing consecutive IIR/biquad filters.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the deferred pipeline, fusing consecutive IIR/biquad filters.</span>
+
+<span class="sd">        Materialization is an *independent* offline operation: any stateful module</span>
+<span class="sd">        in the plan is reset before execution, so reusing the same filter instance</span>
+<span class="sd">        across two different ``Wave`` objects can never leak DF1 state from one into</span>
+<span class="sd">        the other. Streaming (``StreamProcessor`` / ``RealtimeProcessor``) does not</span>
+<span class="sd">        go through this path — it drives effects directly and manages its own</span>
+<span class="sd">        chunk-to-chunk state — so this reset does not affect streaming continuity.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.biquad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Biquad</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.fused</span><span class="w"> </span><span class="kn">import</span> <span class="n">FusedSOSCascade</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.iir</span><span class="w"> </span><span class="kn">import</span> <span class="n">IIR</span>
+        <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">)</span>
 
-        <span class="n">plan</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">iir_run</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IIR</span> <span class="o">|</span> <span class="n">Biquad</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">flush</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">nonlocal</span> <span class="n">iir_run</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">iir_run</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FusedSOSCascade</span><span class="p">(</span><span class="o">*</span><span class="n">iir_run</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">iir_run</span><span class="p">:</span>
-                <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iir_run</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">iir_run</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">IIR</span><span class="p">,</span> <span class="n">Biquad</span><span class="p">)):</span>
-                <span class="n">iir_run</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">flush</span><span class="p">()</span>
-                <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
-        <span class="n">flush</span><span class="p">()</span>
+        <span class="c1"># Offline materialization is independent of any previous run: clear DF1</span>
+        <span class="c1"># state a stateful module may still hold from an earlier Wave that reused</span>
+        <span class="c1"># the same instance. Freshly-built FusedSOSCascades are already clean;</span>
+        <span class="c1"># stateless effects (Gain, Normalize) have no reset_state and are skipped.</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">plan</span><span class="p">:</span>
+            <span class="n">reset</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;reset_state&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">reset</span><span class="p">):</span>
+                <span class="n">reset</span><span class="p">()</span>
 
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span>
         <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">plan</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">module</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ys</span> <span class="o">=</span> <span class="n">data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_plan</span><span class="p">(</span><span class="n">pipeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Group a pipeline into the executable plan, fusing contiguous SOS stages.</span>
+
+<span class="sd">        Contiguous ``IIR``/``Biquad`` runs are merged into a single</span>
+<span class="sd">        ``FusedSOSCascade``. A static linear ``Gain`` (``clamp=False``) does **not**</span>
+<span class="sd">        break a run: its scalar is folded into the fused cascade&#39;s numerator (a</span>
+<span class="sd">        scalar commutes through a linear filter), so ``IIR | Gain | IIR`` becomes one</span>
+<span class="sd">        cascade instead of three stages. A dynamic ``Normalize`` or a clamping</span>
+<span class="sd">        ``Gain`` is non-linear and is kept as its own stage.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gain</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.biquad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Biquad</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.fused</span><span class="w"> </span><span class="kn">import</span> <span class="n">FusedSOSCascade</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.iir</span><span class="w"> </span><span class="kn">import</span> <span class="n">IIR</span>
+
+        <span class="n">plan</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">iir_run</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IIR</span> <span class="o">|</span> <span class="n">Biquad</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pending_gain</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># product of foldable gains to apply to the current run</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">flush</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">nonlocal</span> <span class="n">iir_run</span><span class="p">,</span> <span class="n">pending_gain</span>
+            <span class="k">if</span> <span class="n">iir_run</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">iir_run</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">pending_gain</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+                    <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FusedSOSCascade</span><span class="p">(</span><span class="o">*</span><span class="n">iir_run</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="n">pending_gain</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iir_run</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">pending_gain</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="c1"># A foldable gain with no SOS filter to fold into — keep it as an op.</span>
+                <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Gain</span><span class="p">(</span><span class="n">pending_gain</span><span class="p">))</span>
+            <span class="n">iir_run</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">pending_gain</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">pipeline</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">IIR</span><span class="p">,</span> <span class="n">Biquad</span><span class="p">)):</span>
+                <span class="n">iir_run</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">factor</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">_linear_gain</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">Gain</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">factor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">pending_gain</span> <span class="o">*=</span> <span class="n">factor</span>  <span class="c1"># fold into the current/next fused run</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">flush</span><span class="p">()</span>
+                    <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="n">flush</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">plan</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_deferred</span><span class="p">(</span>
@@ -1580,6 +1624,10 @@ window.runMermaid = runMermaid;</script>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">AbstractFilter</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">fs_changed</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">_has_computed_coeff</span><span class="p">):</span>
             <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+            <span class="c1"># Record the fs the coefficients were designed for so a subsequent</span>
+            <span class="c1"># direct forward() does not needlessly recompute (and so a genuine</span>
+            <span class="c1"># fs change is still detected on the direct-call path).</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">_coeff_fs</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;fs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the length, in samples, of the wave.&quot;&quot;&quot;</span>

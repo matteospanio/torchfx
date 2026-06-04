@@ -869,7 +869,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
@@ -899,14 +899,71 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BackendStatus</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-callback status flags reported by the audio backend.</span>
+
+<span class="sd">    Backends populate this dataclass when invoking the audio callback to</span>
+<span class="sd">    surface conditions that ``RealtimeProcessor`` needs in order to track</span>
+<span class="sd">    xruns and reason about realtime correctness.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_overflow : bool</span>
+<span class="sd">        Backend dropped input frames before the callback ran. Set when</span>
+<span class="sd">        PortAudio reports ``paInputOverflow``.</span>
+<span class="sd">    output_underflow : bool</span>
+<span class="sd">        Backend ran out of output frames after the previous callback. Set</span>
+<span class="sd">        when PortAudio reports ``paOutputUnderflow``.</span>
+<span class="sd">    input_underflow : bool</span>
+<span class="sd">        Input stream produced fewer frames than requested (rare).</span>
+<span class="sd">    output_overflow : bool</span>
+<span class="sd">        Output stream had unconsumed frames (rare).</span>
+<span class="sd">    priming_output : bool</span>
+<span class="sd">        Backend is priming the output stream and supplied no real input</span>
+<span class="sd">        (PortAudio&#39;s ``paPrimingOutput``).</span>
+<span class="sd">    extra : dict</span>
+<span class="sd">        Backend-specific extra flags.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx.realtime.backend import BackendStatus</span>
+<span class="sd">    &gt;&gt;&gt; s = BackendStatus(input_overflow=True)</span>
+<span class="sd">    &gt;&gt;&gt; s.has_xrun</span>
+<span class="sd">    True</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">input_overflow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">output_underflow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">input_underflow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">output_overflow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">priming_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">extra</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_xrun</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether any xrun-type condition is set.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_overflow</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_underflow</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_underflow</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_overflow</span>
+        <span class="p">)</span>
+
+
 <span class="c1"># Type alias for the audio callback function.</span>
 <span class="c1">#</span>
-<span class="c1"># Signature: ``callback(input_data, output_data, frame_count) -&gt; None``</span>
+<span class="c1"># Signature: ``callback(input_data, output_data, frame_count, status=None) -&gt; None``</span>
 <span class="c1">#</span>
 <span class="c1"># - ``input_data``: shape ``(channels_in, buffer_size)`` or empty tensor</span>
 <span class="c1"># - ``output_data``: shape ``(channels_out, buffer_size)`` -- write processed audio here</span>
 <span class="c1"># - ``frame_count``: number of frames in this callback</span>
-<span class="n">AudioCallback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+<span class="c1"># - ``status``: optional ``BackendStatus`` populated by the backend</span>
+<span class="c1">#</span>
+<span class="c1"># The ``status`` argument is optional so existing single-callback callers and</span>
+<span class="c1"># backends continue to work; new backends should always pass it.</span>
+<span class="n">AudioCallback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="StreamConfig">

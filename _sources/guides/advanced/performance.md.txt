@@ -827,6 +827,40 @@ flowchart TD
 When in doubt, benchmark your specific workload. Use the patterns from the benchmark suite as templates.
 ```
 
+### GPU Precision: `float32` vs `float64`
+
+Since v0.6.0, the native CUDA kernels are dtype-aware: **the execution precision follows the input tensor's dtype**. A `float32` input runs the native FP32 path; a `float64` input runs FP64. There is no silent upcast in either direction.
+
+On consumer GPUs (e.g. RTX 3070, A40) the FP32 path is **3.0–3.6× faster** for IIR cascades, because those cards have a 1:32 FP32:FP64 throughput ratio. Prefer `float32` for realtime and ML pipelines, where it matches the FP64 reference to float32 precision for the filter orders TorchFX ships:
+
+```python
+# float32 in -> fast FP32 GPU kernels
+wave = Wave(audio_f32, fs=48000).to("cuda")
+out = wave | LoButterworth(4000, order=8)
+
+# float64 in -> precise FP64 kernels, identical code (use for pathological high-order designs)
+wave64 = Wave(audio_f64, fs=48000).to("cuda")
+```
+
+Half precision (`float16` / `bfloat16`) is rejected with a `TypeError` — the IIR feedback recurrence is not numerically safe there; cast to `float32` or `float64` first.
+
+### Streaming with CUDA Graphs
+
+When you stream **fixed-shape chunks** through a fused cascade on the GPU, the per-chunk
+kernel-launch overhead dominates at small buffer sizes. {class}`~torchfx.realtime.CudaGraphRunner`
+captures the forward once and replays it as a single graph launch — **up to ~4× lower
+per-chunk latency** at realtime chunk sizes:
+
+```python
+from torchfx.realtime import CudaGraphRunner
+
+runner = CudaGraphRunner(fused_chain, example_chunk)  # example fixes shape + dtype
+for chunk in stream:
+    y = runner.run(chunk).clone()
+```
+
+See the {doc}`API reference <../../api/realtime>` for details and constraints (fixed shape/dtype, static coefficients).
+
 ### Filter Chain Optimization
 
 Optimize filter chains by pre-computing coefficients and reusing filters:

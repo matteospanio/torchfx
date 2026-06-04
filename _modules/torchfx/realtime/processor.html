@@ -840,13 +840,38 @@ window.runMermaid = runMermaid;</script>
 <span></span><span class="sd">&quot;&quot;&quot;Real-time audio processor for TorchFX.</span>
 
 <span class="sd">This module provides the ``RealtimeProcessor`` class that orchestrates</span>
-<span class="sd">audio I/O through a backend, buffering through a ring buffer, and</span>
-<span class="sd">processing through a chain of FX effects.</span>
+<span class="sd">audio I/O through a backend and processing through a chain of FX</span>
+<span class="sd">effects.</span>
+
+<span class="sd">Architecture</span>
+<span class="sd">------------</span>
+<span class="sd">The realtime path is split into two threads to keep DSP work out of the</span>
+<span class="sd">audio callback&#39;s deadline-critical context:</span>
+
+<span class="sd">* **Audio I/O thread** (driven by the backend, e.g. PortAudio). The</span>
+<span class="sd">  callback only moves samples between the backend&#39;s interleaved buffers</span>
+<span class="sd">  and the processor&#39;s two ring buffers; no effect processing happens</span>
+<span class="sd">  here. The callback records its own wall-clock duration into</span>
+<span class="sd">  ``latency_log`` and increments ``xrun_count`` whenever the backend</span>
+<span class="sd">  reports an xrun or the output ring underflows.</span>
+<span class="sd">* **DSP worker thread**. Reads input chunks from the input ring buffer,</span>
+<span class="sd">  runs the effect chain, writes the result into the output ring buffer.</span>
+<span class="sd">  Wakes on a ``threading.Event`` signalled by the audio callback or runs</span>
+<span class="sd">  on a short timeout so it can be joined cleanly on stop.</span>
+
+<span class="sd">The output ring is *primed* with one chunk of silence at start so the</span>
+<span class="sd">first callback always finds data ready. This costs one extra block of</span>
+<span class="sd">latency in exchange for zero startup xruns.</span>
+
+<span class="sd">Streaming filter state is preserved across chunks because effect</span>
+<span class="sd">instances are long-lived; the DSP worker calls them once per block in</span>
+<span class="sd">order.</span>
 
 <span class="sd">Classes</span>
 <span class="sd">-------</span>
 <span class="sd">RealtimeProcessor</span>
-<span class="sd">    Real-time audio processor connecting backend to effect chain.</span>
+<span class="sd">    Real-time audio processor with worker-thread DSP and instrumented</span>
+<span class="sd">    callback path.</span>
 
 <span class="sd">Examples</span>
 <span class="sd">--------</span>
@@ -864,7 +889,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">collections</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -874,12 +901,20 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">FX</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.filter.__base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractFilter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime.backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioBackend</span><span class="p">,</span> <span class="n">StreamConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime.backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioBackend</span><span class="p">,</span> <span class="n">BackendStatus</span><span class="p">,</span> <span class="n">StreamConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimeError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime.ring_buffer</span><span class="w"> </span><span class="kn">import</span> <span class="n">TensorRingBuffer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_positive</span><span class="p">,</span> <span class="n">validate_sample_rate</span>
 
 <span class="n">_logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;realtime.processor&quot;</span><span class="p">)</span>
+
+<span class="c1"># Default latency log size — enough for ~10 minutes at 512-sample /</span>
+<span class="c1"># 48 kHz callbacks (~94 callbacks/s).</span>
+<span class="n">_DEFAULT_LATENCY_LOG_SIZE</span> <span class="o">=</span> <span class="mi">65536</span>
+
+<span class="c1"># How many buffer_size chunks the input/output ring buffers should hold.</span>
+<span class="c1"># Larger values trade memory for tolerance against worker-thread jitter.</span>
+<span class="n">_DEFAULT_RING_BLOCKS</span> <span class="o">=</span> <span class="mi">4</span>
 
 
 <div class="viewcode-block" id="RealtimeProcessor">
@@ -887,20 +922,35 @@ window.runMermaid = runMermaid;</script>
 <span class="k">class</span><span class="w"> </span><span class="nc">RealtimeProcessor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Real-time audio processor connecting an audio backend to an effect chain.</span>
 
-<span class="sd">    Orchestrates audio I/O through a backend and processing through</span>
-<span class="sd">    a chain of FX effects. Supports thread-safe parameter updates</span>
-<span class="sd">    during processing.</span>
-
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    effects : Sequence[FX] | nn.Sequential</span>
-<span class="sd">        Chain of effects to apply in order.</span>
+<span class="sd">        Chain of effects to apply in order. Each effect must preserve</span>
+<span class="sd">        chunk length; effects that change the time dimension (e.g.,</span>
+<span class="sd">        ``Delay`` with feedback that grows the buffer) are rejected at</span>
+<span class="sd">        runtime.</span>
 <span class="sd">    backend : AudioBackend</span>
-<span class="sd">        Audio backend for I/O.</span>
+<span class="sd">        Audio backend driving the I/O thread.</span>
 <span class="sd">    config : StreamConfig</span>
-<span class="sd">        Stream configuration.</span>
-<span class="sd">    buffer_capacity : int</span>
-<span class="sd">        Ring buffer capacity in samples per channel. Default is 8192.</span>
+<span class="sd">        Stream configuration. ``config.buffer_size`` defines the DSP</span>
+<span class="sd">        chunk size.</span>
+<span class="sd">    ring_blocks : int</span>
+<span class="sd">        Capacity of each ring buffer in units of ``buffer_size``. Default</span>
+<span class="sd">        is 4 (≈40 ms tolerance at 512-sample / 48 kHz).</span>
+<span class="sd">    latency_log_size : int</span>
+<span class="sd">        Maximum number of per-callback latency samples retained. Default</span>
+<span class="sd">        is 65 536 (≈ 11 min at 512-sample / 48 kHz). Older entries are</span>
+<span class="sd">        evicted FIFO.</span>
+<span class="sd">    prime_output : bool</span>
+<span class="sd">        If True (default), write one chunk of silence into the output</span>
+<span class="sd">        ring at start so the first callback never underflows.</span>
+<span class="sd">    start_worker : bool</span>
+<span class="sd">        If True (default), ``start()`` spawns a dedicated DSP worker</span>
+<span class="sd">        thread that drains the input ring continuously. If False, the</span>
+<span class="sd">        caller is responsible for calling ``process_pending()`` after</span>
+<span class="sd">        each callback round-trip. The latter mode is intended for</span>
+<span class="sd">        deterministic testing and for embedding the processor inside a</span>
+<span class="sd">        host-driven scheduler.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -916,15 +966,26 @@ window.runMermaid = runMermaid;</script>
         <span class="n">effects</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FX</span><span class="p">]</span> <span class="o">|</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">,</span>
         <span class="n">backend</span><span class="p">:</span> <span class="n">AudioBackend</span><span class="p">,</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">StreamConfig</span><span class="p">,</span>
-        <span class="n">buffer_capacity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8192</span><span class="p">,</span>
+        <span class="n">ring_blocks</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_DEFAULT_RING_BLOCKS</span><span class="p">,</span>
+        <span class="n">latency_log_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_DEFAULT_LATENCY_LOG_SIZE</span><span class="p">,</span>
+        <span class="n">prime_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">start_worker</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">validate_sample_rate</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span>
         <span class="n">validate_positive</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="s2">&quot;buffer_size&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ring_blocks</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;ring_blocks must be at least 2 (got </span><span class="si">{</span><span class="n">ring_blocks</span><span class="si">}</span><span class="s2">); &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;need at least one block for the producer and one for the consumer&quot;</span>
+            <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_effects</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FX</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_effects</span><span class="p">(</span><span class="n">effects</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span> <span class="o">=</span> <span class="n">backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="o">=</span> <span class="n">config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ring_blocks</span> <span class="o">=</span> <span class="n">ring_blocks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prime_output</span> <span class="o">=</span> <span class="n">prime_output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_worker</span> <span class="o">=</span> <span class="n">start_worker</span>
 
         <span class="c1"># Configure effects with sample rate (same pattern as Wave.__or__)</span>
         <span class="k">for</span> <span class="n">effect</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_effects</span><span class="p">:</span>
@@ -933,15 +994,37 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">effect</span><span class="p">,</span> <span class="n">AbstractFilter</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">effect</span><span class="o">.</span><span class="n">_has_computed_coeff</span><span class="p">:</span>
                 <span class="n">effect</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
 
-        <span class="c1"># Ring buffers for input and output</span>
+        <span class="c1"># Ring buffers. Capacity is rounded up to next power of 2 by</span>
+        <span class="c1"># TensorRingBuffer; we request ring_blocks * buffer_size so the</span>
+        <span class="c1"># producer can stay ahead of the consumer for ring_blocks - 1</span>
+        <span class="c1"># callbacks before underflowing.</span>
         <span class="n">ch_in</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">channels_in</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">ch_out</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">channels_out</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_input_buffer</span> <span class="o">=</span> <span class="n">TensorRingBuffer</span><span class="p">(</span><span class="n">buffer_capacity</span><span class="p">,</span> <span class="n">ch_in</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span> <span class="o">=</span> <span class="n">TensorRingBuffer</span><span class="p">(</span><span class="n">buffer_capacity</span><span class="p">,</span> <span class="n">ch_out</span><span class="p">)</span>
+        <span class="n">capacity</span> <span class="o">=</span> <span class="n">ring_blocks</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">buffer_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_buffer</span> <span class="o">=</span> <span class="n">TensorRingBuffer</span><span class="p">(</span><span class="n">capacity</span><span class="p">,</span> <span class="n">ch_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span> <span class="o">=</span> <span class="n">TensorRingBuffer</span><span class="p">(</span><span class="n">capacity</span><span class="p">,</span> <span class="n">ch_out</span><span class="p">)</span>
 
-        <span class="c1"># Thread-safe parameter updates: double-buffered</span>
+        <span class="c1"># Thread-safe parameter updates: pending dict drained at each</span>
+        <span class="c1"># DSP worker iteration.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pending_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_param_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+        <span class="c1"># Worker thread coordination.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_event</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_worker_thread</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_worker_error</span><span class="p">:</span> <span class="ne">BaseException</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Instrumentation. Counters are int-valued and only the audio</span>
+        <span class="c1"># callback writes to them, so plain ``+=`` is safe under CPython</span>
+        <span class="c1"># GIL. ``latency_log`` is a bounded deque; ``deque.append`` is</span>
+        <span class="c1"># atomic so the callback can append without locking.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latency_log</span><span class="p">:</span> <span class="n">collections</span><span class="o">.</span><span class="n">deque</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="n">latency_log_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xrun_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_overflow_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_underflow_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backend_xrun_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callback_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealtimeProcessor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Start processing and return self for use as context manager.</span>
@@ -980,13 +1063,20 @@ window.runMermaid = runMermaid;</script>
 
         <span class="k">return</span> <span class="n">normalized</span>
 
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Lifecycle</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
 <div class="viewcode-block" id="RealtimeProcessor.start">
 <a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.RealtimeProcessor.start">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Start real-time processing.</span>
 
-<span class="sd">        Opens and starts the audio stream. The backend callback</span>
-<span class="sd">        routes audio through the effect chain.</span>
+<span class="sd">        Spawns the DSP worker thread, primes the output ring, and starts</span>
+<span class="sd">        the audio backend. The audio callback is registered with the</span>
+<span class="sd">        backend; once running, sample movement between the backend&#39;s</span>
+<span class="sd">        buffers and the ring buffers happens on every callback while the</span>
+<span class="sd">        effect chain runs in the worker thread.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -1001,15 +1091,52 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
 
         <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Starting real-time processor: </span><span class="si">%d</span><span class="s2">Hz, </span><span class="si">%d</span><span class="s2"> buffer, </span><span class="si">%d</span><span class="s2">in/</span><span class="si">%d</span><span class="s2">out&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Starting real-time processor: </span><span class="si">%d</span><span class="s2">Hz, </span><span class="si">%d</span><span class="s2"> buffer, </span><span class="si">%d</span><span class="s2">in/</span><span class="si">%d</span><span class="s2">out, ring=</span><span class="si">%d</span><span class="s2"> blocks&quot;</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">channels_in</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">channels_out</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ring_blocks</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">open_stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_audio_callback</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_event</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_worker_error</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Prime the output ring with one block of silence so the first</span>
+        <span class="c1"># audio callback never has to underflow.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prime_output</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">channels_out</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">silence</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span><span class="o">.</span><span class="n">channels</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">silence</span><span class="p">)</span>
+
+        <span class="c1"># Start the worker BEFORE the audio backend so the first</span>
+        <span class="c1"># callback has a thread waiting to service it. Skipped in</span>
+        <span class="c1"># ``start_worker=False`` mode, where the caller drives DSP via</span>
+        <span class="c1"># ``process_pending()``.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_worker</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_worker_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span>
+                <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dsp_worker_loop</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;torchfx-realtime-dsp&quot;</span><span class="p">,</span>
+                <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_worker_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">open_stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_audio_callback</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
+            <span class="c1"># If backend setup fails, tear the worker thread down.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_input_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worker_thread</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_worker_thread</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_worker_thread</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">raise</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
@@ -1017,6 +1144,11 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.RealtimeProcessor.stop">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop real-time processing and close the stream.</span>
+
+<span class="sd">        Stops the audio backend first (so no more callbacks fire) and</span>
+<span class="sd">        then signals the worker thread to exit. Any exception captured</span>
+<span class="sd">        from the worker thread is re-raised here so callers see DSP</span>
+<span class="sd">        errors at a known point in their code.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -1030,11 +1162,33 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">suggestion</span><span class="o">=</span><span class="s2">&quot;Call start() first&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stopping real-time processor&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Stopping real-time processor (</span><span class="si">%d</span><span class="s2"> callbacks, </span><span class="si">%d</span><span class="s2"> xruns)&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_callback_count</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_xrun_count</span><span class="p">,</span>
+        <span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worker_thread</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_worker_thread</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_worker_thread</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worker_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worker_error</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_worker_error</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">raise</span> <span class="n">err</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Parameter updates</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="RealtimeProcessor.set_parameter">
 <a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.RealtimeProcessor.set_parameter">[docs]</a>
@@ -1042,8 +1196,8 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Thread-safe parameter update.</span>
 
 <span class="sd">        Parameters are staged in a pending dict and applied at the</span>
-<span class="sd">        next processing boundary (start of next audio callback).</span>
-<span class="sd">        This avoids locks in the audio processing path.</span>
+<span class="sd">        next DSP worker iteration boundary, *not* in the audio</span>
+<span class="sd">        callback. This keeps the callback allocation-free.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1064,11 +1218,7 @@ window.runMermaid = runMermaid;</script>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_apply_pending_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Swap pending parameters into active effects.</span>
-
-<span class="sd">        Called at the start of each audio callback (buffer boundary).</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Swap pending parameters into active effects (worker thread).&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending_params</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -1078,7 +1228,11 @@ window.runMermaid = runMermaid;</script>
 
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">parts</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">effect_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">effect_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Invalid effect index in parameter key: </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+                <span class="k">continue</span>
             <span class="n">attr_name</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
 
             <span class="k">if</span> <span class="n">effect_idx</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">effect_idx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_effects</span><span class="p">):</span>
@@ -1088,7 +1242,6 @@ window.runMermaid = runMermaid;</script>
             <span class="n">effect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_effects</span><span class="p">[</span><span class="n">effect_idx</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">attr_name</span><span class="p">:</span>
                 <span class="nb">setattr</span><span class="p">(</span><span class="n">effect</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-                <span class="c1"># Recompute coefficients if it&#39;s a filter parameter</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">effect</span><span class="p">,</span> <span class="n">AbstractFilter</span><span class="p">):</span>
                     <span class="n">reset_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">effect</span><span class="p">,</span> <span class="s2">&quot;reset_state&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                     <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">reset_state</span><span class="p">):</span>
@@ -1097,53 +1250,209 @@ window.runMermaid = runMermaid;</script>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No attribute specified for effect </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">effect_idx</span><span class="p">)</span>
 
-    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Audio callback (runs in backend thread)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_audio_callback</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">input_data</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">output_data</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">frame_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>  <span class="c1"># noqa: ARG002</span>
+        <span class="n">frame_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">status</span><span class="p">:</span> <span class="n">BackendStatus</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Audio callback invoked by the backend for each buffer.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Audio callback: ring buffer I/O only.</span>
 
-<span class="sd">        1. Apply pending parameter updates</span>
-<span class="sd">        2. Process input through effect chain</span>
-<span class="sd">        3. Write processed audio to output tensor</span>
+<span class="sd">        Invoked by the backend on every buffer. This routine must</span>
+<span class="sd">        complete well within ``buffer_size / sample_rate`` seconds; it</span>
+<span class="sd">        therefore does **no** effect processing, only sample movement</span>
+<span class="sd">        between the backend&#39;s tensors and the processor&#39;s ring buffers.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        input_data : Tensor</span>
-<span class="sd">            Input audio of shape ``(channels_in, buffer_size)``.</span>
+<span class="sd">            Input audio of shape ``(channels_in, frame_count)`` or empty</span>
+<span class="sd">            tensor for output-only streams.</span>
 <span class="sd">        output_data : Tensor</span>
-<span class="sd">            Output tensor to write into, shape ``(channels_out, buffer_size)``.</span>
+<span class="sd">            Output tensor to fill, shape ``(channels_out, frame_count)``</span>
+<span class="sd">            or empty for input-only streams.</span>
 <span class="sd">        frame_count : int</span>
 <span class="sd">            Number of frames in this callback.</span>
+<span class="sd">        status : BackendStatus | None</span>
+<span class="sd">            Backend-reported status flags. May be ``None`` for backends</span>
+<span class="sd">            that don&#39;t surface them; this is treated as &quot;no xruns&quot;.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_apply_pending_params</span><span class="p">()</span>
+        <span class="n">t_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter_ns</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Track backend-reported xruns separately so the user can</span>
+            <span class="c1"># tell whether dropouts came from us (output ring underflow)</span>
+            <span class="c1"># or from the backend / OS (PortAudio overflow).</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">status</span><span class="o">.</span><span class="n">has_xrun</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_backend_xrun_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_xrun_count</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="c1"># Process through effect chain (all effects validated as FX/nn.Module at init)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">input_data</span>
-        <span class="k">for</span> <span class="n">effect</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_effects</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">effect</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="c1"># Push input into the input ring. Truncated writes are a</span>
+            <span class="c1"># ring overflow — the worker isn&#39;t draining fast enough.</span>
+            <span class="k">if</span> <span class="n">input_data</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">written</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_buffer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">written</span> <span class="o">&lt;</span> <span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_input_overflow_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_xrun_count</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="c1"># Write processed audio to output</span>
-        <span class="k">if</span> <span class="n">output_data</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># Handle potential channel mismatch</span>
-            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">output_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-                <span class="c1"># Simple mono-to-stereo or truncation</span>
-                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">output_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">output_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span> <span class="n">output_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-            <span class="n">output_data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="c1"># Pull processed output from the output ring. If less than</span>
+            <span class="c1"># frame_count samples are available, copy what we have and</span>
+            <span class="c1"># zero the rest — an audible underflow.</span>
+            <span class="k">if</span> <span class="n">output_data</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fill_output</span><span class="p">(</span><span class="n">output_data</span><span class="p">,</span> <span class="n">frame_count</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_callback_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="c1"># Signal the worker that there&#39;s input to drain. The event</span>
+            <span class="c1"># is edge-triggered: clearing happens in the worker.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_input_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">t_end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter_ns</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_latency_log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t_end</span> <span class="o">-</span> <span class="n">t_start</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fill_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_data</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">frame_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Copy processed samples from the output ring into ``output_data``.</span>
+
+<span class="sd">        Always advances the read pointer by ``frame_count`` to keep the</span>
+<span class="sd">        backend&#39;s stream in lock-step with the DSP worker. When the</span>
+<span class="sd">        output ring has fewer than ``frame_count`` samples ready, the</span>
+<span class="sd">        tail of ``output_data`` is zeroed and an xrun is recorded.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span><span class="o">.</span><span class="n">available_read</span>
+        <span class="n">out_channels</span> <span class="o">=</span> <span class="n">output_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">in_channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span><span class="o">.</span><span class="n">channels</span>
+
+        <span class="k">if</span> <span class="n">available</span> <span class="o">&gt;=</span> <span class="n">frame_count</span><span class="p">:</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">frame_count</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_copy_with_channel_adapt</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">output_data</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Underflow: copy what we have, zero the rest.</span>
+        <span class="k">if</span> <span class="n">available</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">available</span><span class="p">)</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[:,</span> <span class="p">:</span><span class="n">available</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_copy_with_channel_adapt</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">head</span><span class="p">)</span>
+        <span class="n">output_data</span><span class="p">[:,</span> <span class="n">available</span><span class="p">:]</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_underflow_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xrun_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># Silence the unused-variable lints from out/in_channels.</span>
+        <span class="k">del</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">in_channels</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_copy_with_channel_adapt</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Copy ``src`` into ``dst`` with simple channel adaptation.</span>
+
+<span class="sd">        - Equal channel counts: direct copy.</span>
+<span class="sd">        - Mono source, multi-channel destination: broadcast mono into</span>
+<span class="sd">          every destination channel.</span>
+<span class="sd">        - Multi-channel source, narrower destination: truncate to the</span>
+<span class="sd">          destination&#39;s channel count.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">dst</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">dst</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">dst</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">dst</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">dst</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dst</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">src</span><span class="p">[:</span> <span class="n">dst</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># DSP worker (runs in worker thread)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dsp_worker_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;DSP worker thread: drain input → effects → output, repeat.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+                <span class="c1"># Wait for the callback to signal new input. Time out so</span>
+                <span class="c1"># that even with no audio activity, the worker can still</span>
+                <span class="c1"># observe ``_stop_event`` and exit promptly.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_input_event</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_input_event</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dsp_drain_available</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+            <span class="c1"># Capture and surface from ``stop()``.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_worker_error</span> <span class="o">=</span> <span class="n">exc</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;DSP worker thread terminated: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RealtimeProcessor.process_pending">
+<a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.RealtimeProcessor.process_pending">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drive one DSP draining pass synchronously.</span>
+
+<span class="sd">        Intended for tests and host-scheduled deployments using</span>
+<span class="sd">        ``start_worker=False``. Reads as many ``buffer_size``-aligned</span>
+<span class="sd">        chunks as are available in the input ring, runs the effect</span>
+<span class="sd">        chain on each, and writes results to the output ring.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            Number of chunks processed.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dsp_drain_available</span><span class="p">()</span></div>
+
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dsp_drain_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process every full chunk currently in the input ring.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            Number of chunks processed.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">buffer_size</span>
+        <span class="n">chunks_processed</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_buffer</span><span class="o">.</span><span class="n">available_read</span> <span class="o">&lt;</span> <span class="n">chunk_size</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span><span class="o">.</span><span class="n">available_write</span> <span class="o">&lt;</span> <span class="n">chunk_size</span><span class="p">:</span>
+                <span class="c1"># Output ring is full — the audio callback isn&#39;t</span>
+                <span class="c1"># draining (e.g., backend stopped). Yield to avoid a</span>
+                <span class="c1"># busy loop.</span>
+                <span class="k">break</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_pending_params</span><span class="p">()</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_buffer</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">)</span>
+
+            <span class="n">x</span> <span class="o">=</span> <span class="n">chunk</span>
+            <span class="k">for</span> <span class="n">effect</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_effects</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">effect</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">chunk_size</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RealtimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;RealtimeProcessor requires chunk-length-preserving effects, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;but </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">effect</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> changed length from &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">chunk_size</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="s2">&quot;Avoid effects that change time dimension (e.g. Delay with &quot;</span>
+                    <span class="s2">&quot;taps&gt;1) in the realtime chain, or pre-process them with StreamProcessor.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output_buffer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">chunks_processed</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">chunks_processed</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># State management &amp; introspection</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="RealtimeProcessor.reset_state">
 <a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.RealtimeProcessor.reset_state">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">reset_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset all internal state (filter states, ring buffers).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset internal state: ring buffers and stateful effects.</span>
 
-<span class="sd">        Useful after seeking in a file or switching audio sources.</span>
+<span class="sd">        Useful after seeking in a file or switching audio sources. Safe</span>
+<span class="sd">        to call while running, but typically called between sessions.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_input_buffer</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -1154,10 +1463,132 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">reset_state</span><span class="p">()</span></div>
 
 
+<div class="viewcode-block" id="RealtimeProcessor.reset_metrics">
+<a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.RealtimeProcessor.reset_metrics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset latency log and xrun counters.</span>
+
+<span class="sd">        Useful between benchmark phases to discard startup transients.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latency_log</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xrun_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_overflow_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_underflow_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backend_xrun_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callback_count</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="RealtimeProcessor.latency_log_ns">
+<a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.RealtimeProcessor.latency_log_ns">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">latency_log_ns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Snapshot of per-callback wall-clock durations in nanoseconds.</span>
+
+<span class="sd">        The returned list is a copy; safe to consume from any thread.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; # samples = processor.latency_log_ns()</span>
+<span class="sd">        &gt;&gt;&gt; # p99 = sorted(samples)[int(len(samples) * 0.99)] / 1e6  # ms</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_latency_log</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RealtimeProcessor.latency_stats_ms">
+<a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.RealtimeProcessor.latency_stats_ms">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">latency_stats_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Summary statistics of per-callback latency in milliseconds.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Keys ``count``, ``min``, ``median``, ``mean``, ``p95``,</span>
+<span class="sd">            ``p99``, ``max``. Empty log returns zeros except ``count``.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; # stats = processor.latency_stats_ms()</span>
+<span class="sd">        &gt;&gt;&gt; # print(stats[&quot;p99&quot;], stats[&quot;count&quot;])</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latency_log_ns</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">samples</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;median&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;p95&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;p99&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="n">sorted_ms</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">s</span> <span class="o">/</span> <span class="mf">1_000_000.0</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_ms</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">pct</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">n</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">sorted_ms</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
+            <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">sorted_ms</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;median&quot;</span><span class="p">:</span> <span class="n">pct</span><span class="p">(</span><span class="mf">0.5</span><span class="p">),</span>
+            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sorted_ms</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">,</span>
+            <span class="s2">&quot;p95&quot;</span><span class="p">:</span> <span class="n">pct</span><span class="p">(</span><span class="mf">0.95</span><span class="p">),</span>
+            <span class="s2">&quot;p99&quot;</span><span class="p">:</span> <span class="n">pct</span><span class="p">(</span><span class="mf">0.99</span><span class="p">),</span>
+            <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">sorted_ms</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">}</span></div>
+
+
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">latency_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimated total latency in milliseconds.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">latency_ms</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimated total latency in milliseconds.</span>
+
+<span class="sd">        Computed as ``(buffer_size + 1 block of output priming) /</span>
+<span class="sd">        sample_rate``. With output priming enabled this is two buffers</span>
+<span class="sd">        of latency; without priming it is one.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prime_output</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">blocks</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1000.0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">xrun_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Total number of xruns seen since start (or last ``reset_metrics``).</span>
+
+<span class="sd">        Includes input ring overflows, output ring underflows, and backend-reported</span>
+<span class="sd">        xruns. Use the more granular properties below to attribute by source.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xrun_count</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">input_overflow_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Times the audio callback couldn&#39;t push all input samples into the ring.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_overflow_count</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_underflow_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Times the audio callback found the output ring empty.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_underflow_count</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backend_xrun_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Xruns reported by the audio backend itself (e.g. PortAudio</span>
+<span class="sd">        paInputOverflow).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_xrun_count</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">callback_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of audio callbacks serviced since start (or last</span>
+<span class="sd">        ``reset_metrics``).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_count</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deadline_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Per-callback deadline in milliseconds (``buffer_size / sample_rate``).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1000.0</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_running</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>

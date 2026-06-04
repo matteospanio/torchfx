@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Posts tagged release &#8212; TorchFX 1 documentation</title>
+    <title>torchfx.realtime.cuda_graph &#8212; TorchFX 1 documentation</title>
   
   
   
@@ -478,7 +478,7 @@ mermaid.initialize(
 
 window.addEventListener("load", load);
 window.runMermaid = runMermaid;</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/index/tag/release';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/torchfx/realtime/cuda_graph';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -494,8 +494,8 @@ window.runMermaid = runMermaid;</script>
 <link
   rel="alternate"
   type="application/atom+xml"
-  href="../../index/atom.xml"
-  title="Posts tagged release"
+  href="../../../blog/index/atom.xml"
+  title="TorchFX Blog"
 />
   
   </head>
@@ -594,7 +594,7 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../index.html">
+  <a class="nav-link nav-internal" href="../../../blog/index.html">
     Blog
   </a>
 </li>
@@ -720,7 +720,7 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../index.html">
+  <a class="nav-link nav-internal" href="../../../blog/index.html">
     Blog
   </a>
 </li>
@@ -817,7 +817,10 @@ window.runMermaid = runMermaid;</script>
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Posts tagged release</span></li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">torchfx.realtime.cuda_graph</span></li>
   </ul>
 </nav>
 </div>
@@ -833,530 +836,146 @@ window.runMermaid = runMermaid;</script>
                 
 <div id="searchbox"></div>
                 <article class="bd-article">
-                   
-<div class="section ablog__collection">
-  <h1>
-    
-    <span
-      >Posts tagged  release 
-    </span>
-  </h1>
-   
-  <div class="section ablog-post">
-    <h2 class="ablog-post-title">
-      <a href="../../2026-06-04-release-060.html">TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path</a>
-    </h2>
-    <ul class="ablog-archive">
-      <li>
-         
-        <i class="fa fa-calendar"></i>
-        
-        <span>04 June 2026</span>
-        
-      </li>
-      <div class="ablog-sidebar-item ablog__postcard2">
-   
-  <li id="ablog-sidebar-item author ablog__author">
-    <span>
-      
-      <i class="fa-fw fa fa-user"></i>
-      
-    </span>
-     
-    <a href="../author/matteo-spanio.html">Matteo Spanio</a>
-      
-  </li>
-     
-  <li id="ablog-sidebar-item category ablog__category">
-    <span>
-      
-      <i class="fa-fw fa fa-folder-open"></i>
-      
-    </span>
-     
-    <a href="../category/releases.html">releases</a>
-      
-  </li>
-   
-  <li id="ablog-sidebar-item tags ablog__tags">
-    <span>
-       
-      <i class="fa-fw fa fa-tags"></i>
-       
-    </span>
-     
-    <a href="#">release</a>
-        
-    <a href="cuda.html">cuda</a>
-        
-    <a href="fp32.html">fp32</a>
-        
-    <a href="cuda-graphs.html">cuda-graphs</a>
-        
-    <a href="realtime.html">realtime</a>
-        
-    <a href="performance.html">performance</a>
-      
-  </li>
-   
-</div>
-    </ul>
-    <p class="ablog-post-excerpt"><p><strong>TorchFX 0.6.0</strong> is a performance and realtime release. The headline is the GPU follow-up promised back in 0.5.4: the CUDA kernels now run <strong>natively in <code class="docutils literal notranslate"><span class="pre">float32</span></code></strong> instead of silently upcasting to <code class="docutils literal notranslate"><span class="pre">float64</span></code>, which is <strong>3.0–3.6× faster</strong> on consumer GPUs and finally lets the GPU beat its own CPU on multichannel workloads. On top of that, a new <strong>CUDA Graph</strong> path collapses the per-chunk launch overhead for streaming — up to <strong>4× lower latency</strong> on short chunks — and the realtime engine moved its DSP off the audio callback into a dedicated worker thread.</p>
-</p>
+                   <h1>Source code for torchfx.realtime.cuda_graph</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;CUDA Graph capture for fixed-shape streaming filter chains (Roadmap Epic C1).</span>
 
-    <p class="ablog-post-expand">
-      <a href="../../2026-06-04-release-060.html"><em>Read more ...</em></a>
-    </p>
-    <hr />
-  </div>
-  
-  <div class="section ablog-post">
-    <h2 class="ablog-post-title">
-      <a href="../../2026-05-26-release-054.html">TorchFX 0.5.4: Native Filter Design & Goodbye scipy</a>
-    </h2>
-    <ul class="ablog-archive">
-      <li>
-         
-        <i class="fa fa-calendar"></i>
-        
-        <span>26 May 2026</span>
-        
-      </li>
-      <div class="ablog-sidebar-item ablog__postcard2">
-   
-  <li id="ablog-sidebar-item author ablog__author">
-    <span>
-      
-      <i class="fa-fw fa fa-user"></i>
-      
-    </span>
-     
-    <a href="../author/matteo-spanio.html">Matteo Spanio</a>
-      
-  </li>
-     
-  <li id="ablog-sidebar-item category ablog__category">
-    <span>
-      
-      <i class="fa-fw fa fa-folder-open"></i>
-      
-    </span>
-     
-    <a href="../category/releases.html">releases</a>
-      
-  </li>
-   
-  <li id="ablog-sidebar-item tags ablog__tags">
-    <span>
-       
-      <i class="fa-fw fa fa-tags"></i>
-       
-    </span>
-     
-    <a href="#">release</a>
-        
-    <a href="scipy.html">scipy</a>
-        
-    <a href="filter-design.html">filter-design</a>
-        
-    <a href="performance.html">performance</a>
-        
-    <a href="validation.html">validation</a>
-      
-  </li>
-   
-</div>
-    </ul>
-    <p class="ablog-post-excerpt"><p><strong>TorchFX 0.5.4</strong> drops <code class="docutils literal notranslate"><span class="pre">scipy</span></code> as a runtime dependency. Every filter-design call that used to go through <code class="docutils literal notranslate"><span class="pre">scipy.signal</span></code> — Butterworth, Chebyshev I/II, Elliptic, Linkwitz-Riley, and <code class="docutils literal notranslate"><span class="pre">DesignableFIR</span></code> — is now performed by a native pure-PyTorch design module. The library is leaner, the dependency tree is shorter, and the design step itself is <strong>14–50× faster</strong> than scipy on the parameter ranges we ship.</p>
-</p>
+<span class="sd">When a stateful SOS cascade is streamed over fixed-size chunks (e.g. a GPU</span>
+<span class="sd">``StreamProcessor``), every chunk issues the *same* sequence of CUDA kernels — a</span>
+<span class="sd">``K``-section cascade is ~``4*K`` launches per chunk. For short chunks that launch</span>
+<span class="sd">overhead dominates: the parallel scan measures ~135 us of pure launch/dispatch</span>
+<span class="sd">overhead on an RTX 3070 regardless of chunk length. Capturing the per-chunk forward</span>
+<span class="sd">into a :class:`torch.cuda.CUDAGraph` once and replaying it collapses that to a single</span>
+<span class="sd">graph launch.</span>
 
-    <p class="ablog-post-expand">
-      <a href="../../2026-05-26-release-054.html"><em>Read more ...</em></a>
-    </p>
-    <hr />
-  </div>
-  
-  <div class="section ablog-post">
-    <h2 class="ablog-post-title">
-      <a href="../../2026-05-03-release-053.html">TorchFX 0.5.3: Build System Overhaul & Prebuilt Wheels</a>
-    </h2>
-    <ul class="ablog-archive">
-      <li>
-         
-        <i class="fa fa-calendar"></i>
-        
-        <span>03 May 2026</span>
-        
-      </li>
-      <div class="ablog-sidebar-item ablog__postcard2">
-   
-  <li id="ablog-sidebar-item author ablog__author">
-    <span>
-      
-      <i class="fa-fw fa fa-user"></i>
-      
-    </span>
-     
-    <a href="../author/matteo-spanio.html">Matteo Spanio</a>
-      
-  </li>
-     
-  <li id="ablog-sidebar-item category ablog__category">
-    <span>
-      
-      <i class="fa-fw fa fa-folder-open"></i>
-      
-    </span>
-     
-    <a href="../category/releases.html">releases</a>
-      
-  </li>
-   
-  <li id="ablog-sidebar-item tags ablog__tags">
-    <span>
-       
-      <i class="fa-fw fa fa-tags"></i>
-       
-    </span>
-     
-    <a href="#">release</a>
-        
-    <a href="build-system.html">build-system</a>
-        
-    <a href="packaging.html">packaging</a>
-        
-    <a href="wheels.html">wheels</a>
-        
-    <a href="cmake.html">cmake</a>
-      
-  </li>
-   
-</div>
-    </ul>
-    <p class="ablog-post-excerpt"><p><strong>TorchFX 0.5.3</strong> is a packaging-focused release. The headline change is invisible if you only read the API docs but very visible the first time you <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> the library: TorchFX has migrated from runtime JIT compilation to <strong>scikit-build-core + CMake</strong>, and the project now ships <strong>prebuilt CPU wheels</strong> for Linux x86_64, macOS (Intel and Apple Silicon), and Windows x86_64 across Python 3.10–3.14.</p>
-</p>
+<span class="sd">This works because the native SOS kernel updates its DF1 state *in place*</span>
+<span class="sd">(``sos_forward_cuda``), so the captured graph carries streaming state across replays</span>
+<span class="sd">through stable buffer addresses — no per-chunk re-issue, no per-chunk allocation.</span>
 
-    <p class="ablog-post-expand">
-      <a href="../../2026-05-03-release-053.html"><em>Read more ...</em></a>
-    </p>
-    <hr />
-  </div>
-  
-  <div class="section ablog-post">
-    <h2 class="ablog-post-title">
-      <a href="../../2026-04-13-release-052.html">TorchFX 0.5.2: Transparent Filter Fusion & Unified Forward Paths</a>
-    </h2>
-    <ul class="ablog-archive">
-      <li>
-         
-        <i class="fa fa-calendar"></i>
-        
-        <span>13 April 2026</span>
-        
-      </li>
-      <div class="ablog-sidebar-item ablog__postcard2">
-   
-  <li id="ablog-sidebar-item author ablog__author">
-    <span>
-      
-      <i class="fa-fw fa fa-user"></i>
-      
-    </span>
-     
-    <a href="../author/matteo-spanio.html">Matteo Spanio</a>
-      
-  </li>
-     
-  <li id="ablog-sidebar-item category ablog__category">
-    <span>
-      
-      <i class="fa-fw fa fa-folder-open"></i>
-      
-    </span>
-     
-    <a href="../category/releases.html">releases</a>
-      
-  </li>
-   
-  <li id="ablog-sidebar-item tags ablog__tags">
-    <span>
-       
-      <i class="fa-fw fa fa-tags"></i>
-       
-    </span>
-     
-    <a href="#">release</a>
-        
-    <a href="performance.html">performance</a>
-        
-    <a href="fusion.html">fusion</a>
-        
-    <a href="pipeline.html">pipeline</a>
-      
-  </li>
-   
-</div>
-    </ul>
-    <p class="ablog-post-excerpt"><p><strong>TorchFX 0.5.2</strong> focuses on two things: making filter chains faster without changing your code, and cleaning up internal duplication so the library is easier to maintain and extend.</p>
-</p>
+<span class="sd">Example</span>
+<span class="sd">-------</span>
+<span class="sd">&gt;&gt;&gt; import torch</span>
+<span class="sd">&gt;&gt;&gt; from torchfx.filter import HiButterworth, LoButterworth</span>
+<span class="sd">&gt;&gt;&gt; from torchfx.filter.fused import FusedSOSCascade</span>
+<span class="sd">&gt;&gt;&gt; from torchfx.realtime.cuda_graph import CudaGraphRunner</span>
+<span class="sd">&gt;&gt;&gt; chain = FusedSOSCascade(</span>
+<span class="sd">...     HiButterworth(80, order=2, fs=48000), LoButterworth(8000, order=4, fs=48000)</span>
+<span class="sd">... )</span>
+<span class="sd">&gt;&gt;&gt; example = torch.randn(2, 1024, device=&quot;cuda&quot;)           # doctest: +SKIP</span>
+<span class="sd">&gt;&gt;&gt; runner = CudaGraphRunner(chain, example)                # doctest: +SKIP</span>
+<span class="sd">&gt;&gt;&gt; for chunk in chunks:                                    # doctest: +SKIP</span>
+<span class="sd">...     y = runner.run(chunk).clone()</span>
 
-    <p class="ablog-post-expand">
-      <a href="../../2026-04-13-release-052.html"><em>Read more ...</em></a>
-    </p>
-    <hr />
-  </div>
-  
-  <div class="section ablog-post">
-    <h2 class="ablog-post-title">
-      <a href="../../2026-03-27-release-050.html">TorchFX 0.5.0: Custom CUDA Kernels & Native C++ Extension</a>
-    </h2>
-    <ul class="ablog-archive">
-      <li>
-         
-        <i class="fa fa-calendar"></i>
-        
-        <span>27 March 2026</span>
-        
-      </li>
-      <div class="ablog-sidebar-item ablog__postcard2">
-   
-  <li id="ablog-sidebar-item author ablog__author">
-    <span>
-      
-      <i class="fa-fw fa fa-user"></i>
-      
-    </span>
-     
-    <a href="../author/matteo-spanio.html">Matteo Spanio</a>
-      
-  </li>
-     
-  <li id="ablog-sidebar-item category ablog__category">
-    <span>
-      
-      <i class="fa-fw fa fa-folder-open"></i>
-      
-    </span>
-     
-    <a href="../category/releases.html">releases</a>
-      
-  </li>
-   
-  <li id="ablog-sidebar-item tags ablog__tags">
-    <span>
-       
-      <i class="fa-fw fa fa-tags"></i>
-       
-    </span>
-     
-    <a href="#">release</a>
-        
-    <a href="cuda.html">cuda</a>
-        
-    <a href="performance.html">performance</a>
-        
-    <a href="native-extension.html">native-extension</a>
-        
-    <a href="fft.html">fft</a>
-      
-  </li>
-   
-</div>
-    </ul>
-    <p class="ablog-post-excerpt"><p>I’m excited to announce <strong>TorchFX 0.5.0</strong>, a performance-focused release that introduces custom CUDA kernels, a JIT-compiled C++ native extension, and major algorithmic improvements across the entire filter pipeline.</p>
-</p>
+<span class="sd">&quot;&quot;&quot;</span>
 
-    <p class="ablog-post-expand">
-      <a href="../../2026-03-27-release-050.html"><em>Read more ...</em></a>
-    </p>
-    <hr />
-  </div>
-  
-  <div class="section ablog-post">
-    <h2 class="ablog-post-title">
-      <a href="../../2026-02-15-release-040.html">TorchFX 0.4.0: Production-Ready Audio DSP 🚀</a>
-    </h2>
-    <ul class="ablog-archive">
-      <li>
-         
-        <i class="fa fa-calendar"></i>
-        
-        <span>15 February 2026</span>
-        
-      </li>
-      <div class="ablog-sidebar-item ablog__postcard2">
-   
-  <li id="ablog-sidebar-item author ablog__author">
-    <span>
-      
-      <i class="fa-fw fa fa-user"></i>
-      
-    </span>
-     
-    <a href="../author/matteo-spanio.html">Matteo Spanio</a>
-      
-  </li>
-     
-  <li id="ablog-sidebar-item category ablog__category">
-    <span>
-      
-      <i class="fa-fw fa fa-folder-open"></i>
-      
-    </span>
-     
-    <a href="../category/releases.html">releases</a>
-      
-  </li>
-   
-  <li id="ablog-sidebar-item tags ablog__tags">
-    <span>
-       
-      <i class="fa-fw fa fa-tags"></i>
-       
-    </span>
-     
-    <a href="#">release</a>
-        
-    <a href="cli.html">cli</a>
-        
-    <a href="validation.html">validation</a>
-        
-    <a href="logging.html">logging</a>
-        
-    <a href="real-time.html">real-time</a>
-      
-  </li>
-   
-</div>
-    </ul>
-    <p class="ablog-post-excerpt"><p>I’m thrilled to announce <strong>TorchFX 0.4.0</strong>, the biggest release yet. This version transforms TorchFX from a research library into a <strong>audio DSP toolkit</strong> with real-time processing, and a powerful CLI interface.</p>
-</p>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-    <p class="ablog-post-expand">
-      <a href="../../2026-02-15-release-040.html"><em>Read more ...</em></a>
-    </p>
-    <hr />
-  </div>
-  
-  <div class="section ablog-post">
-    <h2 class="ablog-post-title">
-      <a href="../../2026-01-11-new-docs.html">TorchFX 0.3.0 is here: new roadmap and documentation refresh 🎉</a>
-    </h2>
-    <ul class="ablog-archive">
-      <li>
-         
-        <i class="fa fa-calendar"></i>
-        
-        <span>11 January 2026</span>
-        
-      </li>
-      <div class="ablog-sidebar-item ablog__postcard2">
-   
-  <li id="ablog-sidebar-item author ablog__author">
-    <span>
-      
-      <i class="fa-fw fa fa-user"></i>
-      
-    </span>
-     
-    <a href="../author/matteo-spanio.html">Matteo Spanio</a>
-      
-  </li>
-     
-  <li id="ablog-sidebar-item category ablog__category">
-    <span>
-      
-      <i class="fa-fw fa fa-folder-open"></i>
-      
-    </span>
-     
-    <a href="../category/announcements.html">announcements</a>
-      
-  </li>
-   
-  <li id="ablog-sidebar-item tags ablog__tags">
-    <span>
-       
-      <i class="fa-fw fa fa-tags"></i>
-       
-    </span>
-     
-    <a href="documentation.html">documentation</a>
-        
-    <a href="#">release</a>
-      
-  </li>
-   
-</div>
-    </ul>
-    <p class="ablog-post-excerpt"><p>I’m excited to announce the release of <strong>TorchFX 0.3.0</strong>, which brings a significant update to the project’s documentation and a clearer roadmap for future development.</p>
-</p>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-    <p class="ablog-post-expand">
-      <a href="../../2026-01-11-new-docs.html"><em>Read more ...</em></a>
-    </p>
-    <hr />
-  </div>
-  
-  <div class="section ablog-post">
-    <h2 class="ablog-post-title">
-      <a href="../../2025-12-13-release-021.html">TorchFX 0.2.1 Released 🎉</a>
-    </h2>
-    <ul class="ablog-archive">
-      <li>
-         
-        <i class="fa fa-calendar"></i>
-        
-        <span>13 December 2025</span>
-        
-      </li>
-      <div class="ablog-sidebar-item ablog__postcard2">
-   
-  <li id="ablog-sidebar-item author ablog__author">
-    <span>
-      
-      <i class="fa-fw fa fa-user"></i>
-      
-    </span>
-     
-    <a href="../author/matteo-spanio.html">Matteo Spanio</a>
-      
-  </li>
-     
-  <li id="ablog-sidebar-item category ablog__category">
-    <span>
-      
-      <i class="fa-fw fa fa-folder-open"></i>
-      
-    </span>
-     
-    <a href="../category/announcements.html">announcements</a>
-      
-  </li>
-   
-  <li id="ablog-sidebar-item tags ablog__tags">
-    <span>
-       
-      <i class="fa-fw fa fa-tags"></i>
-       
-    </span>
-     
-    <a href="open-source.html">open-source</a>
-        
-    <a href="#">release</a>
-      
-  </li>
-   
-</div>
-    </ul>
-    <p class="ablog-post-excerpt"><p>I’m excited to announce the release of <strong>TorchFX version 0.2.1</strong>! This update brings new functionality, improved documentation, and several important fixes — thanks to contributions from the community.</p>
-</p>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-    <p class="ablog-post-expand">
-      <a href="../../2025-12-13-release-021.html"><em>Read more ...</em></a>
-    </p>
-    <hr />
-  </div>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+
+<div class="viewcode-block" id="CudaGraphRunner">
+<a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.CudaGraphRunner">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CudaGraphRunner</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture a fixed-shape GPU forward into a CUDA graph and replay it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    module : nn.Module</span>
+<span class="sd">        A GPU filter/cascade whose ``forward`` updates its state in place (the</span>
+<span class="sd">        native SOS path does). The captured graph reuses the module&#39;s state</span>
+<span class="sd">        buffers, so streaming continuity is preserved across :meth:`run` calls.</span>
+<span class="sd">    example : Tensor</span>
+<span class="sd">        A representative input chunk on CUDA. Its shape, dtype, and device fix the</span>
+<span class="sd">        graph; every :meth:`run` input must match.</span>
+<span class="sd">    warmup : int, default 3</span>
+<span class="sd">        Eager iterations on a side stream before capture, so coefficient caches and</span>
+<span class="sd">        scratch allocations are established (required for stable capture).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The captured filter must have static coefficients — the SOS taps are baked into</span>
+<span class="sd">    the graph at capture time. Call :meth:`reset_state` to restart streaming from a</span>
+<span class="sd">    zero state (e.g. between files). The returned tensor from :meth:`run` is the</span>
+<span class="sd">    module&#39;s *shared* output buffer; clone it before the next :meth:`run`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">example</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">warmup</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">example</span><span class="o">.</span><span class="n">is_cuda</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;CudaGraphRunner requires a CUDA example input.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">warmup</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;warmup must be &gt;= 1 so allocations exist before capture.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_static_in</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+        <span class="c1"># Warm up on a side stream so the coefficient cache, state buffers, and</span>
+        <span class="c1"># scratch are allocated before the capture stream records anything.</span>
+        <span class="n">side</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">Stream</span><span class="p">()</span>  <span class="c1"># type: ignore[no-untyped-call]</span>
+        <span class="n">side</span><span class="o">.</span><span class="n">wait_stream</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">current_stream</span><span class="p">())</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">side</span><span class="p">):</span>
+            <span class="n">warm_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_static_in</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">warmup</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">warm_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_static_in</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">current_stream</span><span class="p">()</span><span class="o">.</span><span class="n">wait_stream</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
+
+        <span class="c1"># The module&#39;s returned tensor lives in the graph&#39;s private memory pool and</span>
+        <span class="c1"># is not reliably observable after a replay. Copy it into a persistent buffer</span>
+        <span class="c1"># *inside* the captured region, so each replay&#39;s result lands in a stable</span>
+        <span class="c1"># tensor we own. (The input is read live and state updates in place — only</span>
+        <span class="c1"># the output needs this.)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_static_out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">warm_out</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_graph</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">CUDAGraph</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">graph</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_graph</span><span class="p">):</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_static_in</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_static_out</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CudaGraphRunner.reset_state">
+<a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.CudaGraphRunner.reset_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Zero the captured streaming state in place to restart a new stream.</span>
+
+<span class="sd">        Does not call ``module.reset_state()`` — that may drop coefficients or</span>
+<span class="sd">        rebind the state buffers the graph was captured against; instead the</span>
+<span class="sd">        existing state buffers are zeroed in place.</span>
+
+<span class="sd">        Caveat: graph *continuation* is exact, but the very first chunk after a</span>
+<span class="sd">        reset can show a small initial transient versus a never-run eager filter,</span>
+<span class="sd">        because the capture warmup is baked into the recorded kernels. For exact</span>
+<span class="sd">        fresh-stream behaviour, warm up the runner with input representative of the</span>
+<span class="sd">        stream&#39;s start (e.g. silence). The transient decays within a few samples.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;_state_x&quot;</span><span class="p">,</span> <span class="s2">&quot;_state_y&quot;</span><span class="p">):</span>
+            <span class="n">buf</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+                <span class="n">buf</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CudaGraphRunner.run">
+<a class="viewcode-back" href="../../../api/realtime.html#torchfx.realtime.CudaGraphRunner.run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process one fixed-shape chunk via graph replay.</span>
+
+<span class="sd">        Returns the module&#39;s shared output buffer (clone it before the next call).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">chunk</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_static_in</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;chunk shape </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2"> does not match captured shape &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_static_in</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_static_in</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_graph</span><span class="o">.</span><span class="n">replay</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_static_out</span></div>
+</div>
+
+</pre></div>
+<div class="section ablog__blog_comments">
    
 </div>
 

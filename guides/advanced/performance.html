@@ -1829,6 +1829,35 @@ device transfer is performed via <code class="docutils literal notranslate"><spa
 <p>When in doubt, benchmark your specific workload. Use the patterns from the benchmark suite as templates.</p>
 </div>
 </section>
+<section id="gpu-precision-float32-vs-float64">
+<h3>GPU Precision: <code class="docutils literal notranslate"><span class="pre">float32</span></code> vs <code class="docutils literal notranslate"><span class="pre">float64</span></code><a class="headerlink" href="#gpu-precision-float32-vs-float64" title="Link to this heading">#</a></h3>
+<p>Since v0.6.0, the native CUDA kernels are dtype-aware: <strong>the execution precision follows the input tensor’s dtype</strong>. A <code class="docutils literal notranslate"><span class="pre">float32</span></code> input runs the native FP32 path; a <code class="docutils literal notranslate"><span class="pre">float64</span></code> input runs FP64. There is no silent upcast in either direction.</p>
+<p>On consumer GPUs (e.g. RTX 3070, A40) the FP32 path is <strong>3.0–3.6× faster</strong> for IIR cascades, because those cards have a 1:32 FP32:FP64 throughput ratio. Prefer <code class="docutils literal notranslate"><span class="pre">float32</span></code> for realtime and ML pipelines, where it matches the FP64 reference to float32 precision for the filter orders TorchFX ships:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># float32 in -&gt; fast FP32 GPU kernels</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span><span class="n">audio_f32</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">48000</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">LoButterworth</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="c1"># float64 in -&gt; precise FP64 kernels, identical code (use for pathological high-order designs)</span>
+<span class="n">wave64</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span><span class="n">audio_f64</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">48000</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Half precision (<code class="docutils literal notranslate"><span class="pre">float16</span></code> / <code class="docutils literal notranslate"><span class="pre">bfloat16</span></code>) is rejected with a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> — the IIR feedback recurrence is not numerically safe there; cast to <code class="docutils literal notranslate"><span class="pre">float32</span></code> or <code class="docutils literal notranslate"><span class="pre">float64</span></code> first.</p>
+</section>
+<section id="streaming-with-cuda-graphs">
+<h3>Streaming with CUDA Graphs<a class="headerlink" href="#streaming-with-cuda-graphs" title="Link to this heading">#</a></h3>
+<p>When you stream <strong>fixed-shape chunks</strong> through a fused cascade on the GPU, the per-chunk
+kernel-launch overhead dominates at small buffer sizes. <a class="reference internal" href="../../api/realtime.html#torchfx.realtime.CudaGraphRunner" title="torchfx.realtime.CudaGraphRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">CudaGraphRunner</span></code></a>
+captures the forward once and replays it as a single graph launch — <strong>up to ~4× lower
+per-chunk latency</strong> at realtime chunk sizes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.realtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">CudaGraphRunner</span>
+
+<span class="n">runner</span> <span class="o">=</span> <span class="n">CudaGraphRunner</span><span class="p">(</span><span class="n">fused_chain</span><span class="p">,</span> <span class="n">example_chunk</span><span class="p">)</span>  <span class="c1"># example fixes shape + dtype</span>
+<span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="../../api/realtime.html"><span class="doc">API reference</span></a> for details and constraints (fixed shape/dtype, static coefficients).</p>
+</section>
 <section id="filter-chain-optimization">
 <h3>Filter Chain Optimization<a class="headerlink" href="#filter-chain-optimization" title="Link to this heading">#</a></h3>
 <p>Optimize filter chains by pre-computing coefficients and reusing filters:</p>
@@ -2511,6 +2540,8 @@ device transfer is performed via <code class="docutils literal notranslate"><spa
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-optimization-guidelines">Performance Optimization Guidelines</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#when-to-use-gpu-acceleration">When to Use GPU Acceleration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-precision-float32-vs-float64">GPU Precision: <code class="docutils literal notranslate"><span class="pre">float32</span></code> vs <code class="docutils literal notranslate"><span class="pre">float64</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#streaming-with-cuda-graphs">Streaming with CUDA Graphs</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filter-chain-optimization">Filter Chain Optimization</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#device-placement-strategy">Device Placement Strategy</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#memory-management-best-practices">Memory Management Best Practices</a></li>

@@ -878,7 +878,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">filters</span><span class="p">:</span> <span class="n">IIR</span> <span class="o">|</span> <span class="n">Biquad</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">filters</span><span class="p">:</span> <span class="n">IIR</span> <span class="o">|</span> <span class="n">Biquad</span><span class="p">,</span> <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">filters</span><span class="p">:</span>
@@ -912,8 +912,15 @@ window.runMermaid = runMermaid;</script>
                         <span class="sa">f</span><span class="s2">&quot;Cannot fuse filters with different sample rates: </span><span class="si">{</span><span class="n">fs_val</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">fs</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="p">)</span>
 
-        <span class="c1"># Concatenate all SOS sections: [K_total, 6]</span>
+        <span class="c1"># Concatenate all SOS sections: [K_total, 6]. torch.cat copies, so the</span>
+        <span class="c1"># source filters&#39; coefficients are never mutated by the gain fold below.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sos_parts</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="c1"># Fold a static scalar gain (e.g. a `Gain` between fused filters) into the</span>
+        <span class="c1"># LAST section&#39;s numerator. A scalar commutes through the linear cascade, so</span>
+        <span class="c1"># this is exact; folding into the last section scales only the final output,</span>
+        <span class="c1"># avoiding any intermediate over/underflow the gain might otherwise cause.</span>
+        <span class="k">if</span> <span class="n">gain</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">*=</span> <span class="n">gain</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_sections</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">fs_val</span>
 

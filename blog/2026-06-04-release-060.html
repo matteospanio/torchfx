@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>🚀 TorchFX: Audio Filters Powered by PyTorch &#8212; TorchFX 1 documentation</title>
+    <title>TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path &#8212; TorchFX 1 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2025-04-10-early-release';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-06-04-release-060';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -359,7 +359,7 @@
      
     <i class="fa fa-calendar"></i>
     
-    <span>14 April 2025</span>
+    <span>04 June 2026</span>
     
   </h2>
   <ul>
@@ -383,7 +383,7 @@
       
     </span>
      
-    <a href="index/category/announcements.html">announcements</a>
+    <a href="index/category/releases.html">releases</a>
       
   </li>
    
@@ -394,11 +394,17 @@
        
     </span>
      
-    <a href="index/tag/open-source.html">open-source</a>
+    <a href="index/tag/release.html">release</a>
         
-    <a href="index/tag/dafx.html">dafx</a>
+    <a href="index/tag/cuda.html">cuda</a>
         
-    <a href="index/tag/welcome.html">welcome</a>
+    <a href="index/tag/fp32.html">fp32</a>
+        
+    <a href="index/tag/cuda-graphs.html">cuda-graphs</a>
+        
+    <a href="index/tag/realtime.html">realtime</a>
+        
+    <a href="index/tag/performance.html">performance</a>
       
   </li>
    
@@ -413,12 +419,6 @@
   </h3>
   <ul>
      
-    <li>
-      <a href="2026-06-04-release-060.html">
-        04 June - TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path
-      </a>
-    </li>
-    
     <li>
       <a href="2026-06-04-fp32-cuda.html">
         04 June - FP32 on the GPU: 3–3.6× and the End of the Consumer-GPU Penalty
@@ -440,6 +440,12 @@
     <li>
       <a href="2026-05-26-release-054.html">
         26 May - TorchFX 0.5.4: Native Filter Design & Goodbye scipy
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-05-03-release-053.html">
+        03 May - TorchFX 0.5.3: Build System Overhaul & Prebuilt Wheels
       </a>
     </li>
     
@@ -690,7 +696,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">🚀 TorchFX: Audio Filters Powered by PyTorch</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path</span></li>
   </ul>
 </nav>
 </div>
@@ -706,105 +712,136 @@
                 
 <div id="searchbox"></div>
                 <article class="bd-article">
-                   <section id="torchfx-audio-filters-powered-by-pytorch">
-<h1>🚀 TorchFX: Audio Filters Powered by PyTorch<a class="headerlink" href="#torchfx-audio-filters-powered-by-pytorch" title="Link to this heading">#</a></h1>
-<p><em>An open-source academic project at the intersection of audio DSP, performance, and modern machine learning tooling.</em></p>
-<section id="why-torchfx">
-<h2>🔊 Why TorchFX?<a class="headerlink" href="#why-torchfx" title="Link to this heading">#</a></h2>
-<p>TorchFX was born from a <strong>very concrete research and industry need</strong>.</p>
-<p>During my PhD, while collaborating with an industrial partner, I needed <strong>fast, flexible, and expressive software</strong> to prototype <strong>audio filters</strong>. Existing DSP tools were powerful but often rigid, CPU-bound, or disconnected from the rapidly evolving deep learning ecosystem.</p>
-<p>So I asked a simple question:</p>
-<blockquote>
-<div><p><em>What if we built audio filters on top of PyTorch instead of NumPy / SciPy?</em></p>
-</div></blockquote>
-<p>TorchFX is my answer.</p>
+                   <section id="torchfx-0-6-0-fp32-on-the-gpu-cuda-graphs-and-a-hardened-realtime-path">
+<h1>TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path<a class="headerlink" href="#torchfx-0-6-0-fp32-on-the-gpu-cuda-graphs-and-a-hardened-realtime-path" title="Link to this heading">#</a></h1>
+<p><strong>TorchFX 0.6.0</strong> is a performance and realtime release. The headline is the GPU follow-up promised back in 0.5.4: the CUDA kernels now run <strong>natively in <code class="docutils literal notranslate"><span class="pre">float32</span></code></strong> instead of silently upcasting to <code class="docutils literal notranslate"><span class="pre">float64</span></code>, which is <strong>3.0–3.6× faster</strong> on consumer GPUs and finally lets the GPU beat its own CPU on multichannel workloads. On top of that, a new <strong>CUDA Graph</strong> path collapses the per-chunk launch overhead for streaming — up to <strong>4× lower latency</strong> on short chunks — and the realtime engine moved its DSP off the audio callback into a dedicated worker thread.</p>
+<p>Everything from 0.5.x still works unchanged. If your code ran on 0.5.4, it runs on 0.6.0 — the new GPU behaviour is opt-in by the dtype you pass.</p>
+<p>This post is the overview. Each big-ticket item has its own deep-dive with benchmark numbers:</p>
+<ul class="simple">
+<li><p>🟢 <strong><a class="reference internal" href="2026-06-04-fp32-cuda.html"><span class="std std-doc">FP32 on the GPU: 3–3.6× and the end of the consumer-GPU penalty</span></a></strong></p></li>
+<li><p>🟢 <strong><a class="reference internal" href="2026-06-04-cuda-graphs.html"><span class="std std-doc">CUDA Graphs for streaming: one launch instead of a launch storm</span></a></strong></p></li>
+<li><p>🟢 <strong><a class="reference internal" href="2026-06-04-realtime-streaming.html"><span class="std std-doc">A hardened realtime path: worker threads, allocation-free streaming, and dtype-aware dispatch</span></a></strong></p></li>
+</ul>
+<section id="the-big-three">
+<h2>The big three<a class="headerlink" href="#the-big-three" title="Link to this heading">#</a></h2>
+<section id="fp32-cuda-execution-path">
+<h3>FP32 CUDA execution path<a class="headerlink" href="#fp32-cuda-execution-path" title="Link to this heading">#</a></h3>
+<p>The CUDA biquad and SOS parallel-scan kernels were <code class="docutils literal notranslate"><span class="pre">double</span></code>-only. A <code class="docutils literal notranslate"><span class="pre">float32</span></code> input — the norm for realtime and ML pipelines — was silently upcast, doubling memory traffic and, on a consumer GPU with a 1:32 FP32:FP64 ratio (RTX 3070, A40), running at a fraction of peak. 0.6.0 templates the kernels on <code class="docutils literal notranslate"><span class="pre">scalar_t</span></code> and dispatches on the input dtype.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>8th-order Butterworth &#64; 48 kHz (RTX 3070)</p></th>
+<th class="head text-right"><p>GPU FP64</p></th>
+<th class="head text-right"><p>GPU FP32</p></th>
+<th class="head text-right"><p>Speedup</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>30 s / 1 ch</p></td>
+<td class="text-right"><p>9.49 ms</p></td>
+<td class="text-right"><p>2.80 ms</p></td>
+<td class="text-right"><p><strong>3.39×</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>60 s / 1 ch</p></td>
+<td class="text-right"><p>18.31 ms</p></td>
+<td class="text-right"><p>6.00 ms</p></td>
+<td class="text-right"><p><strong>3.05×</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>60 s / 8 ch</p></td>
+<td class="text-right"><p>89.18 ms</p></td>
+<td class="text-right"><p><strong>24.49 ms</strong></p></td>
+<td class="text-right"><p><strong>3.64×</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>That 8-channel row is the interesting one: in FP64 the GPU (89 ms) <em>lost</em> to its own CPU (28 ms). In FP32 (24 ms) it wins. <a class="reference internal" href="2026-06-04-fp32-cuda.html"><span class="std std-doc">Read the deep-dive →</span></a></p>
 </section>
-<section id="the-core-idea">
-<h2>⚡ The Core Idea<a class="headerlink" href="#the-core-idea" title="Link to this heading">#</a></h2>
-<p>The idea behind TorchFX is intentionally simple:</p>
-<ul class="simple">
-<li><p><strong>Use PyTorch as the computational backend</strong></p></li>
-<li><p>Treat audio filters as <strong>first-class differentiable operators</strong></p></li>
-<li><p>Enable:</p>
-<ul>
-<li><p>🚀 <strong>GPU acceleration</strong></p></li>
-<li><p>🧮 <strong>Automatic differentiation</strong></p></li>
-<li><p>🧵 <strong>Efficient multithreaded CPU execution</strong></p></li>
-<li><p>🔬 Seamless integration with deep learning workflows</p></li>
-</ul>
-</li>
-</ul>
-<p>Even when running on CPU, PyTorch often outperforms NumPy thanks to its <strong>optimized multithreading</strong>.
-And while tools like <strong>Numba</strong> can provide performance boosts, I found them:</p>
-<ul class="simple">
-<li><p>harder to install and maintain across systems</p></li>
-<li><p>less aligned with the fast-moving deep learning ecosystem</p></li>
-</ul>
-<p>PyTorch, instead, gives us access to a <strong>huge and growing ecosystem</strong> of tools, libraries, and researchers — making TorchFX future-proof by design.</p>
+<section id="cuda-graphs-for-streaming">
+<h3>CUDA Graphs for streaming<a class="headerlink" href="#cuda-graphs-for-streaming" title="Link to this heading">#</a></h3>
+<p>A <code class="docutils literal notranslate"><span class="pre">K</span></code>-section cascade issues roughly <code class="docutils literal notranslate"><span class="pre">4·K</span></code> CUDA kernel launches <em>per chunk</em>. At 48 kHz with 512-sample buffers that overhead dominates — the parallel scan measures ~135 µs of pure launch/dispatch overhead regardless of chunk length. The new <code class="docutils literal notranslate"><span class="pre">torchfx.realtime.CudaGraphRunner</span></code> captures the fixed-shape forward once and replays it per chunk:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Chunk size (4-section cascade, RTX 3070)</p></th>
+<th class="head text-right"><p>Eager</p></th>
+<th class="head text-right"><p>Graph replay</p></th>
+<th class="head text-right"><p>Speedup</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>128</p></td>
+<td class="text-right"><p>209.9 µs</p></td>
+<td class="text-right"><p>52.2 µs</p></td>
+<td class="text-right"><p><strong>4.02×</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>512</p></td>
+<td class="text-right"><p>208.9 µs</p></td>
+<td class="text-right"><p>79.9 µs</p></td>
+<td class="text-right"><p><strong>2.62×</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>1024</p></td>
+<td class="text-right"><p>207.9 µs</p></td>
+<td class="text-right"><p>116.7 µs</p></td>
+<td class="text-right"><p><strong>1.78×</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The win is largest exactly where it matters — the small-chunk realtime regime. <a class="reference internal" href="2026-06-04-cuda-graphs.html"><span class="std std-doc">Read the deep-dive →</span></a></p>
 </section>
-<section id="differentiable-audio-dsp">
-<h2>🧠 Differentiable Audio DSP<a class="headerlink" href="#differentiable-audio-dsp" title="Link to this heading">#</a></h2>
-<p>With TorchFX, audio filters are not just fast — they are <strong>differentiable</strong>.</p>
-<p>This unlocks exciting possibilities:</p>
-<ul class="simple">
-<li><p>Gradient-based optimization of filter parameters</p></li>
-<li><p>End-to-end learning systems that include classical DSP blocks</p></li>
-<li><p>Hybrid models combining <strong>signal processing and neural networks</strong></p></li>
-</ul>
-<p>TorchFX is designed for:</p>
-<ul class="simple">
-<li><p>audio researchers</p></li>
-<li><p>DSP practitioners</p></li>
-<li><p>ML engineers working with sound</p></li>
-<li><p>anyone interested in <strong>bridging classic audio DSP and modern ML</strong></p></li>
-</ul>
+<section id="a-hardened-realtime-path">
+<h3>A hardened realtime path<a class="headerlink" href="#a-hardened-realtime-path" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">RealtimeProcessor</span></code> now runs DSP in a dedicated worker thread, not inside the PortAudio callback, with per-callback latency logging and xrun counters. Underneath, the GPU SOS forward became <strong>allocation-free per call</strong> (O(K) → O(1) allocations), cutting the eager GPU streaming path ~27%. <a class="reference internal" href="2026-06-04-realtime-streaming.html"><span class="std std-doc">Read the deep-dive →</span></a></p>
 </section>
-<section id="from-research-to-open-source">
-<h2>📄 From Research to Open Source<a class="headerlink" href="#from-research-to-open-source" title="Link to this heading">#</a></h2>
-<p>TorchFX is not just a library — it is also a <strong>research contribution</strong>.</p>
-<ul class="simple">
-<li><p>📘 The accompanying paper has been <strong>accepted at DAFx 2025</strong></p></li>
-<li><p>🧾 A <strong>preprint is available on arXiv</strong>
-👉 <em>(link to be added)</em></p></li>
-</ul>
-<p>Releasing the preprint immediately sparked interest in the audio research community.
-TorchFX even appeared among the <strong>trending projects on Papers With Code</strong> (RIP 💔 — but we remember).</p>
-<p>This response confirmed something important to me:</p>
-<blockquote>
-<div><p>There is a real need for open, performant, and differentiable audio DSP tools.</p>
-</div></blockquote>
 </section>
-<section id="an-open-source-academic-project">
-<h2>🌱 An Open-Source Academic Project<a class="headerlink" href="#an-open-source-academic-project" title="Link to this heading">#</a></h2>
-<p>TorchFX is proudly:</p>
+<section id="also-in-this-release">
+<h2>Also in this release<a class="headerlink" href="#also-in-this-release" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>🧪 <strong>academic</strong></p></li>
-<li><p>🔓 <strong>open source</strong></p></li>
-<li><p>🤝 <strong>open to contributions</strong></p></li>
-</ul>
-<p>My hope is that TorchFX will grow into a shared platform for experimenting, prototyping, and researching audio filters — whether for classic DSP, machine learning, or something in between.</p>
-<p>If you are curious, excited, or skeptical — I’d love for you to try it, break it, and improve it.</p>
-</section>
-<hr class="docutils" />
-<section id="project-links">
-<h2>🔗 Project Links<a class="headerlink" href="#project-links" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>📦 GitHub repository: <a class="reference external" href="https://github.com/matteospanio/torchfx">https://github.com/matteospanio/torchfx</a></p></li>
-<li><p>📖 Documentation: <a class="reference external" href="https://matteospanio.github.io/torchfx/">https://matteospanio.github.io/torchfx/</a></p></li>
-<li><p>🧾 arXiv preprint: <a class="reference external" href="https://arxiv.org/abs/2504.08624">https://arxiv.org/abs/2504.08624</a></p></li>
+<li><p><strong>Static-gain folding.</strong> A constant linear <code class="docutils literal notranslate"><span class="pre">Gain</span></code> between filters is now folded into the fused SOS cascade, so <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">IIR</span> <span class="pre">|</span> <span class="pre">Gain</span> <span class="pre">|</span> <span class="pre">IIR</span></code> materialises as a <em>single</em> <code class="docutils literal notranslate"><span class="pre">FusedSOSCascade</span></code> rather than three stages. (A clamping <code class="docutils literal notranslate"><span class="pre">Gain</span></code> or a dynamic <code class="docutils literal notranslate"><span class="pre">Normalize</span></code> still stays its own stage.)</p></li>
+<li><p><strong>Dtype-aware dispatch threshold.</strong> <code class="docutils literal notranslate"><span class="pre">PARALLEL_SCAN_THRESHOLD</span></code> is now threaded into the kernels and tunable, with a dtype-aware default (float32 → 2048, float64 → 1024) backed by a crossover sweep.</p></li>
+<li><p><strong>Explicit CUDA architectures.</strong> Wheels ship native SASS for <code class="docutils literal notranslate"><span class="pre">sm_75;80;86;89</span></code> — no first-call PTX→SASS JIT stall.</p></li>
+<li><p><strong>Correctness hardening.</strong> Filters reused across sample rates now recompute coefficients instead of silently applying stale ones; offline <code class="docutils literal notranslate"><span class="pre">Wave</span></code> materialisation resets state so reusing a filter across waves can’t leak DF1 state; half-precision inputs are rejected with a clear error rather than silently upcast.</p></li>
 </ul>
 </section>
-<section id="looking-ahead">
-<h2>🌍 Looking Ahead<a class="headerlink" href="#looking-ahead" title="Link to this heading">#</a></h2>
-<p>TorchFX is just getting started.</p>
-<p>The future I’m excited about is one where:</p>
-<ul class="simple">
-<li><p>audio DSP is <strong>fully differentiable</strong></p></li>
-<li><p>prototypes are <strong>fast and expressive</strong></p></li>
-<li><p>researchers and practitioners share tools, not silos</p></li>
-</ul>
-<p>Thanks for being here at the beginning 🚀
-Let’s build the future of audio processing — together.</p>
+<section id="how-is-torchfx-doing-against-the-field">
+<h2>How is TorchFX doing against the field?<a class="headerlink" href="#how-is-torchfx-doing-against-the-field" title="Link to this heading">#</a></h2>
+<p>On CPU, against <code class="docutils literal notranslate"><span class="pre">torchaudio</span></code> (same machine, median over the swept axes):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Workload</p></th>
+<th class="head"><p>TorchFX vs torchaudio</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IIR cascade</p></td>
+<td><p><strong>5.4× faster</strong> (up to 10.4×)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Single biquad</p></td>
+<td><p>2.1× faster</p></td>
+</tr>
+<tr class="row-even"><td><p>FIR (FFT)</p></td>
+<td><p>2.4× faster</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torchfx</span><span class="o">==</span><span class="m">0</span>.6.0
+</pre></div>
+</div>
+<p>CUDA wheels from the GitHub Pages index:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu128
+pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torchfx</span><span class="o">==</span><span class="m">0</span>.6.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--index-url<span class="w"> </span>https://matteospanio.github.io/torchfx/wheels/cu128/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--extra-index-url<span class="w"> </span>https://pypi.org/simple
+</pre></div>
+</div>
+</section>
+<section id="whats-next">
+<h2>What’s next<a class="headerlink" href="#whats-next" title="Link to this heading">#</a></h2>
+<p>The high-leverage GPU wins are in. The remaining kernel work — a single-kernel SOS mega-kernel that makes fusion <em>kernel-level</em> (not just dispatch-level), a single-pass scan, and a cache-blocked CPU SIMD path for edge devices — is tracked in the <a class="reference internal" href="../guides/developer/roadmap.html"><span class="std std-doc">roadmap</span></a> (Epic 4.6). On the library side, the focus turns to dynamics effects (compressor/limiter) and audio-quality testing.</p>
+<p>The full list of changes is in the <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/CHANGELOG">CHANGELOG</a>. File issues and feature requests on <a class="reference external" href="https://github.com/matteospanio/torchfx">GitHub</a>.</p>
 </section>
 </section>
 
@@ -812,17 +849,17 @@ Let’s build the future of audio processing — together.</p>
      
 <div class="section ablog__prev-next">
   <span class="ablog__prev">
+     
+    <a href="2026-06-04-fp32-cuda.html">
+      
+      <i class="fa fa-arrow-circle-left"></i>
+      
+      <span>FP32 on the GPU: 3–3.6× and the End of the Consumer-GPU Penalty</span>
+    </a>
     
   </span>
   <span class="ablog__spacer">&nbsp;</span>
   <span class="ablog__next">
-     
-    <a href="2025-12-13-release-021.html">
-      <span>TorchFX 0.2.1 Released 🎉</span>
-      
-      <i class="fa fa-arrow-circle-right"></i>
-      
-    </a>
     
   </span>
 </div>
@@ -857,13 +894,16 @@ Let’s build the future of audio processing — together.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-torchfx">🔊 Why TorchFX?</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-core-idea">⚡ The Core Idea</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differentiable-audio-dsp">🧠 Differentiable Audio DSP</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#from-research-to-open-source">📄 From Research to Open Source</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#an-open-source-academic-project">🌱 An Open-Source Academic Project</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#project-links">🔗 Project Links</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#looking-ahead">🌍 Looking Ahead</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-big-three">The big three</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fp32-cuda-execution-path">FP32 CUDA execution path</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-graphs-for-streaming">CUDA Graphs for streaming</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-hardened-realtime-path">A hardened realtime path</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#also-in-this-release">Also in this release</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-is-torchfx-doing-against-the-field">How is TorchFX doing against the field?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whats-next">What’s next</a></li>
 </ul>
   </nav></div>
 
@@ -871,7 +911,7 @@ Let’s build the future of audio processing — together.</p>
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2025-04-10-early-release.md">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-06-04-release-060.md">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -886,7 +926,7 @@ Let’s build the future of audio processing — together.</p>
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../_sources/blog/2025-04-10-early-release.md.txt">
+    <a href="../_sources/blog/2026-06-04-release-060.md.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

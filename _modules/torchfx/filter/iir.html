@@ -951,7 +951,10 @@ window.runMermaid = runMermaid;</script>
 
     <span class="n">orig_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
     <span class="n">out_dtype</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
-    <span class="n">native_dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">is_cuda</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span>
+    <span class="c1"># Native execution dtype follows the input on both CPU and CUDA: float32 in</span>
+    <span class="c1"># runs the FP32 kernels, float64 in runs FP64. (Keep in sync with</span>
+    <span class="c1"># torchfx._ops._select_native_dtype.)</span>
+    <span class="n">native_dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span>
     <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>
 
     <span class="c1"># Normalize to [C, T]</span>
@@ -995,8 +998,8 @@ window.runMermaid = runMermaid;</script>
 
         <span class="n">out</span><span class="p">,</span> <span class="n">state_x_0</span><span class="p">,</span> <span class="n">state_y_0</span> <span class="o">=</span> <span class="n">biquad_forward</span><span class="p">(</span>
             <span class="n">x</span><span class="p">,</span>
-            <span class="n">sos</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">],</span>  <span class="c1"># b on device</span>
-            <span class="n">sos</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">:],</span>  <span class="c1"># a on device (only used if a1/a2 floats missing)</span>
+            <span class="n">sos_canonical</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">],</span>  <span class="c1"># b on CPU — avoids a device-&gt;host sync in the</span>
+            <span class="n">sos_canonical</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">:],</span>  <span class="c1"># binding (which would break CUDA-graph capture)</span>
             <span class="n">state_x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="n">state_y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="n">a1_f64</span><span class="o">=</span><span class="n">a1_f64</span><span class="p">,</span>
@@ -1079,6 +1082,8 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># Per-section, per-channel DF1 state: [num_sections, C, 2] for x and y</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Sampling rate the cached coefficients were designed for (see forward).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="IIR.forward">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.IIR.forward">[docs]</a>
@@ -1088,9 +1093,16 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">NONE_FS_ERR</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Recompute when coefficients are missing or were designed for a</span>
+        <span class="c1"># different sampling rate. Without the fs check, a filter reused across</span>
+        <span class="c1"># sample rates would silently apply stale coefficients.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fs</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sos_device_cache</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># invalidate after recomputation</span>
+            <span class="c1"># Coefficients changed: accumulated DF1 state no longer matches.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos_device_cache</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="n">_sos_cascade_forward</span><span class="p">(</span>
