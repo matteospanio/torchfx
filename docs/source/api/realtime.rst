@@ -95,6 +95,32 @@ Stream Processor
 .. autoclass:: torchfx.realtime.StreamProcessor
    :members:
 
+CUDA Graph Runner
+^^^^^^^^^^^^^^^^^
+
+Captures a fixed-shape GPU filter forward into a :class:`torch.cuda.CUDAGraph` and
+replays it per chunk, collapsing the per-section kernel launches of an SOS cascade into a
+single graph launch. The win is largest in the short-chunk / realtime regime (up to ~4×
+lower per-chunk latency on an RTX 3070). Streaming DF1 state is carried across replays.
+
+.. code-block:: python
+
+   import torch
+   from torchfx.filter import HiButterworth, LoButterworth
+   from torchfx.filter.fused import FusedSOSCascade
+   from torchfx.realtime import CudaGraphRunner
+
+   chain = FusedSOSCascade(
+       HiButterworth(80, order=2, fs=48000),
+       LoButterworth(8000, order=4, fs=48000),
+   )
+   runner = CudaGraphRunner(chain, torch.randn(2, 512, device="cuda"))
+   for chunk in stream:                 # each chunk is [2, 512] on CUDA
+       y = runner.run(chunk).clone()
+
+.. autoclass:: torchfx.realtime.CudaGraphRunner
+   :members:
+
 Exceptions
 ----------
 
