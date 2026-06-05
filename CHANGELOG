@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cache-blocked cross-channel CPU SIMD for SOS cascades.** When channels outnumber
+  CPU cores, the scalar per-channel kernel runs several channels serially on each core.
+  A new path packs a SIMD vector of channels: it transposes small `[W, B]` tiles to
+  channel-contiguous layout that stays in L1 (so the recurrence's per-time-step channel
+  loop auto-vectorises to NEON/SSE/AVX), and engages automatically once
+  `C > num_threads`. Measured on a 4-section SOS cascade (float32): **1.8–2.6× on a
+  Raspberry Pi 5** (Cortex-A76 ×4, the edge target) and **1.3–2.4× on a 12-core x86**
+  for `C` ≥ 8/16 — with **no regression** below that, since `C ≤ cores` keeps the
+  optimal scalar path. `TORCHFX_NO_SIMD=1` forces the scalar kernel. (Resolves #24.)
 - **Single-pass SOS scan (kernel-level fusion).** A new GPU path folds each cascade
   section's forcing pass and the three-phase Blelloch scan into a **single
   decoupled-look-back kernel** (Merrill–Garland / CUB style, with an atomic
