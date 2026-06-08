@@ -1560,3 +1560,194 @@ class Delay(FX):
 
         # Wet/dry mix — fused via lerp (single kernel, avoids intermediates).
         return torch.lerp(waveform, delayed, self.mix)
+
+
+class Compressor(FX):
+    r"""Feed-forward dynamic-range compressor with a decoupled peak detector.
+
+    Reduces the dynamic range of a signal: levels above ``threshold`` are turned
+    down according to ``ratio``, with a soft ``knee`` around the threshold and
+    attack/release ballistics that control how quickly the gain reacts. An optional
+    ``makeup_gain`` restores overall loudness.
+
+    The side-chain level is tracked with a *decoupled* peak detector (a release
+    max-hold followed by an attack one-pole), the standard high-quality topology
+    (Giannoulis, Massberg & Reiss, 2012). Detection runs in native C++/CUDA, one
+    channel per thread.
+
+    Parameters
+    ----------
+    threshold : float, default=-20.0
+        Level above which compression begins, in **dBFS** (decibels relative to a
+        full-scale amplitude of 1.0).
+    ratio : float, default=4.0
+        Input/output ratio above the threshold (``>= 1.0``). ``4.0`` means 4 dB in
+        yields 1 dB out over threshold. ``float("inf")`` is a brick-wall limiter.
+    attack : float, default=0.005
+        Attack time in **seconds** (how fast gain reduction engages). ``0`` is
+        instantaneous.
+    release : float, default=0.05
+        Release time in **seconds** (how fast gain recovers). ``0`` is instantaneous.
+    knee : float, default=6.0
+        Full width of the soft knee in **dB**, centred on the threshold. ``0`` gives
+        a hard knee.
+    makeup_gain : float, default=0.0
+        Output gain applied after compression, in **dB**.
+    detector : {"peak", "rms"}, default="peak"
+        Side-chain level detection. ``"peak"`` follows ``|x|``; ``"rms"`` follows a
+        smoothed root-mean-square (averaging window tied to ``attack``).
+    fs : int or None, default=None
+        Sampling rate in Hz. May be left ``None`` and supplied lazily by a ``Wave``
+        pipeline (``wave | compressor``); the ballistics coefficients are then
+        derived from the times and ``fs`` on first ``forward``.
+
+    Returns
+    -------
+    Tensor
+        The compressed waveform, same shape and dtype as the input.
+
+    Raises
+    ------
+    ValueError
+        If ``ratio < 1``, ``attack``/``release``/``knee`` is negative, ``detector``
+        is not ``"peak"``/``"rms"``, ``fs`` is non-positive, or ``forward`` is called
+        before ``fs`` is known.
+
+    See Also
+    --------
+    Gain : Static volume adjustment.
+    Normalize : Amplitude normalization.
+
+    Notes
+    -----
+    Per channel, sequentially over samples :math:`n` (linear detector level, then
+    the gain computed in dB):
+
+    .. math::
+
+        \text{rect}[n] &= |x[n]| \quad (\text{peak}) \\
+        y_1[n] &= \max(\text{rect}[n],\ a_R\, y_1[n-1]) \\
+        y_L[n] &= a_A\, y_L[n-1] + (1 - a_A)\, y_1[n] \\
+        L &= 20 \log_{10}(\max(y_L[n], \epsilon))
+
+    with attack/release coefficients :math:`a_A = e^{-1/(\text{attack}\cdot f_s)}`,
+    :math:`a_R = e^{-1/(\text{release}\cdot f_s)}`. The static curve (soft knee of
+    width :math:`W` centred on threshold :math:`T`, ``r`` = ratio) maps :math:`L` to
+    :math:`L_{sc}`, and the per-sample gain is
+    :math:`g[n] = 10^{(L_{sc} - L + \text{makeup})/20}`, applied as
+    :math:`y[n] = g[n]\, x[n]`.
+
+    This is a **zero-latency feed-forward** design (no look-ahead). The ballistics
+    state is reset on each ``forward`` call, so block-wise streaming is *not*
+    state-continuous across chunks (a follow-up could thread the state in/out).
+
+    Examples
+    --------
+    Compress a signal 4:1 above -12 dBFS:
+
+    >>> import torch
+    >>> from torchfx.effect import Compressor
+    >>> x = torch.randn(2, 48000) * 0.5  # (channels, samples)
+    >>> comp = Compressor(threshold=-12.0, ratio=4.0, attack=0.005, release=0.08, fs=48000)
+    >>> y = comp(x)
+    >>> y.shape
+    torch.Size([2, 48000])
+
+    Use in a ``Wave`` pipeline (``fs`` is supplied automatically):
+
+    >>> import torchfx as fx
+    >>> processed = wave | fx.effect.Compressor(threshold=-18.0, ratio=3.0)  # doctest: +SKIP
+
+    Brick-wall limiting at -1 dBFS with makeup gain:
+
+    >>> limiter = Compressor(threshold=-1.0, ratio=float("inf"), makeup_gain=1.0, fs=48000)
+
+    References
+    ----------
+    D. Giannoulis, M. Massberg, J. D. Reiss, "Digital Dynamic Range Compressor
+    Design — A Tutorial and Analysis," J. Audio Eng. Soc., 60(6), 2012.
+
+    """
+
+    def __init__(
+        self,
+        threshold: float = -20.0,
+        ratio: float = 4.0,
+        attack: float = 0.005,
+        release: float = 0.05,
+        knee: float = 6.0,
+        makeup_gain: float = 0.0,
+        detector: str = "peak",
+        fs: int | None = None,
+    ) -> None:
+        super().__init__()
+        valid_detectors = {"peak", "rms"}
+        if detector not in valid_detectors:
+            raise ValueError(
+                f"detector must be one of {sorted(valid_detectors)}, got {detector!r}."
+            )
+        if ratio < 1.0:
+            raise ValueError(f"ratio must be >= 1.0, got {ratio}.")
+        if attack < 0:
+            raise ValueError(f"attack must be non-negative (seconds), got {attack}.")
+        if release < 0:
+            raise ValueError(f"release must be non-negative (seconds), got {release}.")
+        if knee < 0:
+            raise ValueError(f"knee must be non-negative (dB), got {knee}.")
+        if fs is not None and fs <= 0:
+            raise ValueError(f"Sample rate (fs) must be positive, got {fs}.")
+
+        self.threshold = float(threshold)
+        self.ratio = float(ratio)
+        self.attack = float(attack)
+        self.release = float(release)
+        self.knee = float(knee)
+        self.makeup_gain = float(makeup_gain)
+        self.detector = detector
+        self.fs = fs
+
+        # 1/ratio (0 for an inf-ratio limiter) so the kernel never does inf math.
+        self._inv_ratio = 0.0 if math.isinf(self.ratio) else 1.0 / self.ratio
+        self._aA = 0.0
+        self._aR = 0.0
+        self._aRMS = 0.0
+        self._last_fs: int | None = None
+        self._needs_calculation = True
+
+    def _compute_coeffs(self) -> None:
+        """Derive attack/release/RMS coefficients from the times and ``fs``."""
+        assert self.fs is not None
+        fs = self.fs
+        self._aA = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
+        self._aR = 0.0 if self.release == 0 else math.exp(-1.0 / (self.release * fs))
+        # The RMS averaging window defaults to the attack time.
+        self._aRMS = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
+        self._last_fs = fs
+        self._needs_calculation = False
+
+    @override
+    @torch.no_grad()
+    def forward(self, waveform: Tensor) -> Tensor:
+        if self._needs_calculation or self._last_fs != self.fs:
+            if self.fs is None:
+                raise ValueError(
+                    "Sample rate (fs) is required for the compressor. Use it in a "
+                    "Wave pipeline (wave | compressor) or pass fs at construction."
+                )
+            if self.fs <= 0:
+                raise ValueError("Sample rate (fs) must be positive.")
+            self._compute_coeffs()
+
+        from torchfx._ops import compressor_forward
+
+        return compressor_forward(
+            waveform,
+            self.threshold,
+            self._inv_ratio,
+            self.knee,
+            self.makeup_gain,
+            self._aA,
+            self._aR,
+            self._aRMS,
+            1 if self.detector == "rms" else 0,
+        )
