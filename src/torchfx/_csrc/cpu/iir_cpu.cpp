@@ -7,6 +7,16 @@
 #include <tuple>
 #include <vector>
 
+// MSVC's default `/openmp` (2.0) rejects `#pragma omp simd` with a hard error (C7660,
+// it needs `/openmp:experimental`). Emit the SIMD hint only on GCC/Clang, where it is
+// validated and works with or without `-fopenmp`; MSVC still auto-vectorises the small
+// fixed-trip channel loop (its operands are `__restrict`) under `/O2`.
+#ifdef _MSC_VER
+#define TORCHFX_OMP_SIMD
+#else
+#define TORCHFX_OMP_SIMD _Pragma("omp simd")
+#endif
+
 // CPU implementation of biquad Direct Form 1.
 // Vectorized across channels, sequential across time.
 // This is significantly faster than the Python for-loop.
@@ -284,7 +294,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cpu_simd_imp
           scalar_t* __restrict py0 = &ssy0[s * W];
           scalar_t* __restrict py1 = &ssy1[s * W];
           const scalar_t b0 = cb0[s], b1 = cb1[s], b2 = cb2[s], a1 = ca1[s], a2 = ca2[s];
-          #pragma omp simd
+          TORCHFX_OMP_SIMD
           for (int64_t c = 0; c < W; ++c) {
             const scalar_t yn = b0 * row[c] + b1 * px0[c] + b2 * px1[c] - a1 * py0[c] - a2 * py1[c];
             px1[c] = px0[c];
