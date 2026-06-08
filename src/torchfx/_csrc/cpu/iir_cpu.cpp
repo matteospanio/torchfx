@@ -340,10 +340,18 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cpu(
   const char* no_simd = std::getenv("TORCHFX_NO_SIMD");
   const char* force_simd = std::getenv("TORCHFX_FORCE_SIMD");
   const int64_t C = x_exec.size(0);
+  // omp_get_max_threads() is a runtime call; guard it so the extension still links
+  // where OpenMP is unavailable (e.g. MSVC/cibuildwheel, which doesn't link the
+  // runtime — only the #pragma omp directives, which it harmlessly ignores). Without
+  // OpenMP the SIMD path still vectorises, just single-threaded, so gate on 1.
+#ifdef _OPENMP
+  const int64_t nthreads = static_cast<int64_t>(omp_get_max_threads());
+#else
+  const int64_t nthreads = 1;
+#endif
   const bool use_simd =
       (no_simd == nullptr || no_simd[0] != '1') &&
-      ((force_simd != nullptr && force_simd[0] == '1') ||
-       C > static_cast<int64_t>(omp_get_max_threads()));
+      ((force_simd != nullptr && force_simd[0] == '1') || C > nthreads);
 
   if (exec_dtype == torch::kFloat32) {
     return use_simd ? sos_forward_cpu_simd_impl<float>(x_exec, sos_exec, sx_exec, sy_exec)
