@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Compressor` dynamics effect.** A feed-forward dynamic-range compressor with a
+  decoupled peak detector (release max-hold + attack one-pole), a soft-knee dB gain
+  curve (`threshold`/`ratio`/`knee`), `makeup_gain`, peak or RMS detection, and a
+  `ratio=inf` brick-wall limiter mode. Detection runs in a native per-channel
+  C++/CUDA kernel (`compressor_forward`). Usage: `wave | Compressor(threshold=-18,
+  ratio=4)`. (Resolves #30.)
 - **Cache-blocked cross-channel CPU SIMD for SOS cascades.** When channels outnumber
   CPU cores, the scalar per-channel kernel runs several channels serially on each core.
   A new path packs a SIMD vector of channels: it transposes small `[W, B]` tiles to
