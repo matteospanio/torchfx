@@ -393,9 +393,10 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 - [x] **Optimized delay line**
   - ✅ CUDA delay forward kernel
 
-- [ ] **Reverb optimization**
-  - Parallel all-pass filters
-  - Fused feedback delay network
+- [x] **Reverb optimization** (#18) — `Reverb` reworked into a Freeverb-style network: 8
+  parallel low-pass-feedback comb filters + 4 series all-pass diffusers per channel, in a
+  fused native per-channel C++/CUDA kernel (ring buffers in per-channel scratch). Replaces
+  the single feedforward comb; breaking API (`room_size`/`damping`/`mix`/`fs`).
 
 ### 4.4 Batch Processing Optimizations
 
@@ -420,9 +421,12 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
   - ✅ Reverb op fusion (5 tensor ops → 2)
   - ✅ Delay wet/dry mix via `torch.lerp` (3 ops → 1)
 
-- [ ] **Multi-file batch processing**
-  - Process multiple files in single kernel launch
-  - Maximize GPU occupancy
+- [x] **Multi-file batch processing** (#19) — `torchfx.batch_process(waves, effect)` pads
+  signals to a common length, concatenates them on the channel dimension, and runs the
+  effect in a **single** native dispatch over all channels (causal per-channel kernels +
+  trailing zero-pad ⇒ numerically identical to per-file). Measured **~2.5–7× on CPU and
+  ~3–4× on GPU** for 8–512 stereo files (8th-order Butterworth). See
+  `benchmarks/bench_batch.py`.
 
 ### 4.5 Performance Benchmarking ✅
 
@@ -437,12 +441,15 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
   - ✅ CPU `torch.profiler` findings captured
   - ✅ Coverage gate `fail_under = 87` enforced in CI
 
-- [ ] **Performance regression testing**
-  - Automated benchmarks in CI
-  - Alert on >5% regression
+- [x] **Performance regression testing** (#21) — `tests/test_perf_regression.py` runs in
+  ordinary CI and gates on *deterministic* invariants (fusion collapses a depth-K cascade
+  to one native dispatch; a static `Gain` folds without adding one) plus a same-machine
+  relative wall-time smoke. Avoids flaky absolute-timing baselines on shared runners; see
+  the developer testing guide. (Absolute wall-time budgets would need a dedicated runner.)
 
-- [ ] **Profiling guides**
-  - Documentation for profiling pipelines
+- [x] **Profiling guides** (#22) — developer guide on diagnosing a pipeline: correct
+  warm-up/CUDA-sync timing, `torch.profiler` timelines, counting native dispatches to spot
+  un-fused chains, and a bottleneck→fix table. See the developer profiling guide.
 
 ### 4.6 Advanced Kernel Optimizations (Future)
 
@@ -451,27 +458,38 @@ landed the high-leverage wins. The remaining kernel-level optimizations — inve
 prioritized, and (where attempted) measured during the 0.6.0 cycle — are tracked here.
 Each item lists its difficulty and expected impact; none block a release.
 
-- [ ] **Single-kernel SOS-section fusion (mega-kernel)** — *hard.* One CUDA kernel that
-  processes all `K` sections of a cascade (sections serial within a block, time-blocks
-  parallel) instead of the per-section launch loop. **The only item that makes fusion
-  *kernel-level*** rather than Python-dispatch-level: today a fused cascade still issues
-  `~4·K` launches (700 → 406 at `K=50`). Expected **15–27%** wall-time at `K≥5`, larger
-  at small chunks. Depends on the FP32 templating + the once-per-forward scratch (both done).
-- [ ] **Single-pass scan** — *medium.* Replace the Blelloch up/down-sweep + phase-3
-  recompute with a decoupled-look-back single-pass scan (CUB `DeviceScan` with a 3×3-matrix
-  operator, or hand-rolled). The phase-3 recompute roughly doubles scan work; ~2% overall,
-  but it simplifies the code and de-risks the mega-kernel.
+- [x] **Single-pass scan (kernel-level fusion)** — *done, default-on (0.7.0).* Each cascade
+  section's forcing pass + 3-phase Blelloch scan are folded into one **decoupled-look-back**
+  kernel (Merrill–Garland / CUB style, atomic per-section tile dispenser for deadlock-free
+  forward progress), and the per-section DF1 state update into one more — so a fused section
+  is **2 CUDA launches** instead of ~8, with the phase-3 recompute eliminated. Measured on an
+  RTX 3070 vs the 3-phase path: **5.9× fewer launches** (600 → 102 at K=50) and **~1.9×
+  faster** cascades; fused launches now sit *below* the unfused baseline (102 vs 400). This
+  is the item that makes fusion **kernel-level**, not just Python-dispatch-level. Now the
+  **default**; set `TORCHFX_FUSED_SCAN=0` to force the legacy 3-phase oracle. Validated on
+  sm_86 (RTX 3070, 46 SMs) and sm_89 (L40S, 142 SMs) — forward progress holds across the SM
+  range. Source: `fused_scan_kernel` / `state_update_kernel` in
+  [parallel_scan.cu](src/torchfx/_csrc/cuda/parallel_scan.cu).
+- [ ] **Full all-sections mega-kernel** — *hard, future.* The single-pass scan above makes
+  each section one kernel but the K sections are still K separate launches (cross-section
+  dependency = a grid-wide barrier). A single kernel over all K sections (sections serial
+  within a block, cooperative-groups grid sync) would take the launch count to `O(1)`. Lower
+  marginal value now that per-section is already 2 launches; revisit if launch overhead
+  resurfaces at very high K / tiny chunks.
 - [ ] **Pinned host buffers + async H2D/D2H for GPU streaming** — *medium.* Overlap chunk
   transfers with compute. Only pays off once a **GPU realtime/streaming I/O path** exists
   (the live path is CPU-only today), so deferred until that lands.
-- [ ] **Cache-blocked cross-channel CPU SIMD** — *medium, edge-focused.* A naive
-  full-transpose SIMD kernel was tried in 0.6.0 and **measured a 4–8× regression** on a
-  10-core desktop: the transpose moves as much memory as the streaming-light recurrence
-  computes, and the scalar OpenMP-over-channels path already saturates the cores. A
-  cache-blocked transpose (tiles that stay in L1/L2, state carried across time blocks)
-  could win, but the payoff is concentrated on **few-core edge devices (Raspberry Pi 5)**
-  and needs that hardware to validate. The scalar path is already near-optimal on
-  multi-core (8-ch, 10 s @ 48 kHz ≈ 3.5 ms).
+- [x] **Cache-blocked cross-channel CPU SIMD** — *done (#24).* A naive full-transpose
+  SIMD kernel (F1) regressed 4–8× on a 10-core desktop — the whole-`[C,T]` transpose
+  moved as much memory as the streaming-light recurrence computes. The fix: transpose
+  only small `[W=4, B=256]` tiles that stay in **L1**, auto-vectorise the per-time-step
+  channel loop (NEON/SSE/AVX), and **gate the path to `C > num_threads`** so the
+  scalar kernel stays for `C ≤ cores`. Validated on a **Raspberry Pi 5** (Cortex-A76
+  ×4): **1.8× at C=8, 2.6× at C=16/32**; and on **x86 (12 cores)**: 1.3–2.4× for
+  `C > cores`, **no regression** below. Correct vs scalar + `scipy.signal.sosfilt`
+  (full suite green with `TORCHFX_FORCE_SIMD=1`). `TORCHFX_NO_SIMD=1` forces scalar.
+  Source: `sos_forward_cpu_simd_impl` in
+  [iir_cpu.cpp](src/torchfx/_csrc/cpu/iir_cpu.cpp).
 - [ ] **CPU runtime feature dispatch (function multiversioning)** — *small.* Ship AVX2/AVX-512
   CPU paths without `-march=native` breaking wheel portability (paired with the SIMD work above).
 
@@ -652,7 +670,9 @@ Each item lists its difficulty and expected impact; none block a release.
 - [x] **Coverage reporting**
   - ✅ HTML coverage CI job on Python 3.12
   - ✅ `fail_under = 87` coverage gate enforced
-  - [ ] Codecov integration
+  - ✅ Codecov integration (#26) — CI uploads `coverage.xml` via `codecov-action`, README
+    badge, and a `codecov.yml` with project/patch status targets (ignoring the
+    CPU-unreachable sounddevice backend)
   - [ ] Coverage badge
 
 - [ ] **Multi-platform testing**
@@ -664,9 +684,10 @@ Each item lists its difficulty and expected impact; none block a release.
   - Self-hosted or cloud GPU
   - CUDA tests and benchmarks
 
-- [ ] **Automated releases**
-  - PyPI publishing on tag
-  - Changelog generation
+- [x] **Automated releases** (#29) — `release.yml` already auto-tags on a `pyproject.toml`
+  version bump and the wheel workflows publish to PyPI / the CUDA index on the tag. Now it
+  also publishes a **GitHub Release** whose notes are the `## [<version>]` CHANGELOG
+  section (`tools/extract_changelog.py`). See the developer releasing guide.
 
 ---
 
@@ -677,9 +698,15 @@ Each item lists its difficulty and expected impact; none block a release.
 
 ### 7.1 Dynamics Processing
 
-- [ ] Compressor (threshold, ratio, attack, release, knee)
-- [ ] Limiter (brickwall, true peak, look-ahead)
-- [ ] Expander / Gate
+- [x] Compressor (threshold, ratio, attack, release, knee) — `Compressor` (#30), native
+  per-channel C++/CUDA detector, peak/RMS, soft knee, `ratio=inf` limiter mode.
+- [x] Limiter (brickwall, look-ahead) — `Limiter` (#31): look-ahead windowed peak
+  (vectorised max-pool) + attack/release gain smoothing + a per-sample clamp that
+  guarantees `|y| <= threshold`; native CPU + CUDA. (True-peak / oversampled detection
+  is a possible follow-up.)
+- [x] Expander / Gate — `Expander` (downward expansion below threshold) + `Gate`
+  (infinite-ratio convenience) (#32), mirroring the compressor detector with an
+  optional `floor` (range); native CPU + CUDA.
 
 ### 7.2 Modulation Effects
 

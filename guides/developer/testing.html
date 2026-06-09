@@ -834,6 +834,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="project-structure.html">Project Structure</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Testing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profiling.html">Profiling pipelines</a></li>
 <li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="style_guide.html">Style Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="releasing.html">Releasing</a></li>
@@ -1703,6 +1704,27 @@ pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o"
 </div>
 </section>
 </section>
+<section id="performance-regression-gates">
+<h2>Performance-regression gates<a class="headerlink" href="#performance-regression-gates" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">tests/test_perf_regression.py</span></code> guards the headline performance wins against silent
+regressions, and <strong>runs in ordinary CI</strong> (no separate workflow or GPU needed). Because
+shared CI runners are noisy, it does <strong>not</strong> compare absolute wall-times against a stored
+baseline (which is flaky); it asserts the <em>deterministic</em> invariants those wins depend on:</p>
+<ul class="simple">
+<li><p><strong>Fusion collapses dispatches.</strong> A depth-<code class="docutils literal notranslate"><span class="pre">K</span></code> IIR cascade <code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">(f1</span> <span class="pre">|</span> <span class="pre">...</span> <span class="pre">|</span> <span class="pre">fK)</span></code> must
+execute as exactly <strong>one</strong> native SOS dispatch (the unfused reference issues <code class="docutils literal notranslate"><span class="pre">K</span></code>), and a
+static <code class="docutils literal notranslate"><span class="pre">Gain</span></code> folded between sections must not add one. Dispatches are counted by
+wrapping the <code class="docutils literal notranslate"><span class="pre">torchfx._ops</span></code> entry points — the same mechanism as
+<code class="docutils literal notranslate"><span class="pre">tools/count_kernel_launches.py</span></code>. If the planner ever stops fusing, the count jumps and
+the test fails.</p></li>
+<li><p><strong>A relative wall-time smoke.</strong> With both modules pre-built (so planning cost is
+excluded), the fused <em>forward</em> must not be slower than <code class="docutils literal notranslate"><span class="pre">K</span></code> separate forwards. This is a
+ratio on the same machine, so it is speed-independent, and the margin is generous
+(<code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">1.1×</span></code>) so it only trips on a catastrophic regression.</p></li>
+</ul>
+<p>When you add a new fused or kernel-level fast path, add a deterministic invariant here
+(dispatch/launch count, or a same-machine ratio) rather than an absolute timing budget.</p>
+</section>
 <section id="related-resources">
 <h2>Related Resources<a class="headerlink" href="#related-resources" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -1830,6 +1852,7 @@ pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o"
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#keep-tests-independent">Keep Tests Independent</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-regression-gates">Performance-regression gates</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-resources">Related Resources</a></li>
 </ul>
   </nav></div>

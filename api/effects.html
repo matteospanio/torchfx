@@ -931,122 +931,61 @@ func(waveform: Tensor, peak: float) -&gt; Tensor</p>
 <h3>Reverb<a class="headerlink" href="#reverb" title="Link to this heading">#</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.effect.Reverb">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">Reverb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4410</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Reverb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Reverb" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">Reverb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">room_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">damping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Reverb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Reverb" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="core.html#torchfx.FX" title="torchfx.effect.FX"><code class="xref py py-class docutils literal notranslate"><span class="pre">FX</span></code></a></p>
-<p>Apply reverb effect using a feedback delay network for spatial ambiance.</p>
-<p>The Reverb effect creates spatial ambiance by simulating sound reflections
-in an acoustic space. It uses a simple feedback comb filter (feedback delay
-network) to produce reverb-like effects with controllable decay time and
-wet/dry mix.</p>
-<p>This is a basic reverb implementation suitable for adding spatial depth to
-audio signals. For more complex reverb algorithms, consider using convolution
-reverbs with impulse responses.</p>
+<p>Freeverb-style algorithmic reverb (parallel combs + series all-passes).</p>
+<p>Replaces the original single-comb reverb with the classic Schroeder/Moorer structure:
+per channel, <strong>8 parallel low-pass-feedback comb filters</strong> are summed and fed through
+<strong>4 series all-pass diffusers</strong>, producing a dense, natural decay. The comb/all-pass
+delay tunings scale with the sampling rate so the character is consistent across
+<code class="docutils literal notranslate"><span class="pre">fs</span></code>. The network runs in a native per-channel C++/CUDA kernel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>delay</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Delay time in samples for the feedback comb filter. Determines the
-apparent size of the simulated space. Default is 4410 samples, which
-corresponds to approximately 100ms at 44.1kHz sample rate.</p></li>
-<li><p><strong>decay</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – Feedback decay factor controlling how quickly the reverb tail fades.
-Must be in the range (0, 1). Higher values create longer reverb tails.
-Default is 0.5.</p></li>
-<li><p><strong>mix</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – <p>Wet/dry mix controlling the balance between processed (wet) and
-original (dry) signals. Range is [0, 1] where:</p>
-<ul>
-<li><p>0.0 = fully dry (no reverb)</p></li>
-<li><p>1.0 = fully wet (only reverb)</p></li>
-<li><p>0.5 = equal mix</p></li>
-</ul>
-<p>Default is 0.5.</p>
-</p></li>
+<li><p><strong>room_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>default=0.5</em>) – Apparent room size in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> — sets the comb feedback (decay length). Larger
+values give a longer reverb tail.</p></li>
+<li><p><strong>damping</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>default=0.5</em>) – High-frequency damping in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>. Larger values absorb highs faster, for a
+warmer/darker tail.</p></li>
+<li><p><strong>mix</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>default=0.3</em>) – Wet/dry balance in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> (<code class="docutils literal notranslate"><span class="pre">0</span></code> = dry, <code class="docutils literal notranslate"><span class="pre">1</span></code> = fully wet).</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Sampling rate in Hz, used to scale the delay tunings. May be left <code class="docutils literal notranslate"><span class="pre">None</span></code> and
+supplied lazily by a <code class="docutils literal notranslate"><span class="pre">Wave</span></code> pipeline (<code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">reverb</span></code>).</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reverberated waveform, same shape and dtype as the input.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.14)"><strong>AssertionError</strong></a> – If delay is not positive, decay is not in (0, 1), or mix is not in [0, 1].</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">room_size</span></code>/<code class="docutils literal notranslate"><span class="pre">damping</span></code>/<code class="docutils literal notranslate"><span class="pre">mix</span></code> are outside <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>, <code class="docutils literal notranslate"><span class="pre">fs</span></code> is
+    non-positive, or <code class="docutils literal notranslate"><span class="pre">forward</span></code> is called before <code class="docutils literal notranslate"><span class="pre">fs</span></code> is known.</p>
 </dd>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <dl class="simple">
-<dt><a class="reference internal" href="#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Delay</span></code></a></dt><dd><p>Multi-tap delay effect with BPM synchronization</p>
-</dd>
-<dt><a class="reference internal" href="#torchfx.effect.Gain" title="torchfx.effect.Gain"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gain</span></code></a></dt><dd><p>Volume adjustment effect</p>
+<dt><a class="reference internal" href="#torchfx.effect.Delay" title="torchfx.effect.Delay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Delay</span></code></a></dt><dd><p>Multi-tap delay effect with BPM synchronisation.</p>
 </dd>
 </dl>
 </div>
 <p class="rubric">Notes</p>
-<p><strong>Algorithm:</strong></p>
-<p>The reverb is computed using a feedback comb filter:</p>
-<div class="math notranslate nohighlight">
-\[y[n] = (1 - mix) \cdot x[n] + mix \cdot (x[n] + decay \cdot x[n - delay])\]</div>
-<dl class="simple">
-<dt>where:</dt><dd><ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(x[n]\)</span> is the input signal</p></li>
-<li><p><span class="math notranslate nohighlight">\(y[n]\)</span> is the output signal</p></li>
-<li><p><span class="math notranslate nohighlight">\(delay\)</span> is the delay time in samples</p></li>
-<li><p><span class="math notranslate nohighlight">\(decay\)</span> is the feedback decay factor</p></li>
-<li><p><span class="math notranslate nohighlight">\(mix\)</span> is the wet/dry mix parameter</p></li>
-</ul>
-</dd>
-</dl>
-<p><strong>Processing Details:</strong></p>
-<ul class="simple">
-<li><p>If the input waveform is shorter than the delay time, the input is returned
-unchanged.</p></li>
-<li><p>The effect processes tensors of arbitrary shape (…, time).</p></li>
-<li><p>Uses &#64;torch.no_grad() decorator for efficient inference-only operation.</p></li>
-<li><p>Padding is applied using torch.nn.functional.pad for the delay buffer.</p></li>
-</ul>
-<p><strong>Delay Time Calculation:</strong></p>
-<p>To convert time in milliseconds to samples:</p>
-<div class="math notranslate nohighlight">
-\[delay_{samples} = \frac{time_{ms}}{1000} \cdot sample\_rate\]</div>
-<dl class="simple">
-<dt>For example, at 44.1kHz:</dt><dd><ul class="simple">
-<li><p>50ms = 2205 samples</p></li>
-<li><p>100ms = 4410 samples (default)</p></li>
-<li><p>200ms = 8820 samples</p></li>
-</ul>
-</dd>
-</dl>
+<p>Each channel is processed independently with identical tunings (no stereo-width spread
+— a possible follow-up). State is reset per <code class="docutils literal notranslate"><span class="pre">forward</span></code> call, so block-wise streaming
+is not state-continuous across chunks. This is a <strong>breaking change</strong> from the pre-0.7
+<code class="docutils literal notranslate"><span class="pre">Reverb(delay,</span> <span class="pre">decay,</span> <span class="pre">mix)</span></code> API.</p>
 <p class="rubric">Examples</p>
-<p>Basic reverb with default parameters:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
-</pre></div>
-</div>
-<p>Short room reverb (50ms delay):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">2205</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
-</pre></div>
-</div>
-<p>Long hall reverb (200ms delay):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">8820</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
-</pre></div>
-</div>
-<p>Subtle reverb with low mix:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
-</pre></div>
-</div>
-<p>Direct tensor processing:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">waveform</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>  <span class="c1"># (channels, samples)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reverberated</span> <span class="o">=</span> <span class="n">reverb</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx.effect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Reverb</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">48000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">Reverb</span><span class="p">(</span><span class="n">room_size</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">damping</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">48000</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([2, 48000])</span>
 </pre></div>
 </div>
-<p>Chain with other effects:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Gain</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>GPU processing:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">wave</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reverb</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">reverb</span>
+<p>In a <code class="docutils literal notranslate"><span class="pre">Wave</span></code> pipeline (<code class="docutils literal notranslate"><span class="pre">fs</span></code> supplied automatically):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">room_size</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>  
 </pre></div>
 </div>
 <dl class="py method">

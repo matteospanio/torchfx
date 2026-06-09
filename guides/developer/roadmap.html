@@ -398,6 +398,7 @@
 <li class="toctree-l2"><a class="reference internal" href="project-structure.html">Project Structure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profiling.html">Profiling pipelines</a></li>
 <li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="style_guide.html">Style Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="releasing.html">Releasing</a></li>
@@ -1013,12 +1014,10 @@ torchfx<span class="w"> </span>watch<span class="w"> </span>./bounces/<span clas
 <li><p>✅ CUDA delay forward kernel</p></li>
 </ul>
 </li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Reverb optimization</strong></p>
-<ul>
-<li><p>Parallel all-pass filters</p></li>
-<li><p>Fused feedback delay network</p></li>
-</ul>
-</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Reverb optimization</strong> (#18) — <code class="docutils literal notranslate"><span class="pre">Reverb</span></code> reworked into a Freeverb-style network: 8
+parallel low-pass-feedback comb filters + 4 series all-pass diffusers per channel, in a
+fused native per-channel C++/CUDA kernel (ring buffers in per-channel scratch). Replaces
+the single feedforward comb; breaking API (<code class="docutils literal notranslate"><span class="pre">room_size</span></code>/<code class="docutils literal notranslate"><span class="pre">damping</span></code>/<code class="docutils literal notranslate"><span class="pre">mix</span></code>/<code class="docutils literal notranslate"><span class="pre">fs</span></code>).</p></li>
 </ul>
 </section>
 <section id="batch-processing-optimizations">
@@ -1051,12 +1050,12 @@ forward (O(K) → O(1) allocations), cutting the eager GPU streaming path <stron
 <li><p>✅ Delay wet/dry mix via <code class="docutils literal notranslate"><span class="pre">torch.lerp</span></code> (3 ops → 1)</p></li>
 </ul>
 </li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Multi-file batch processing</strong></p>
-<ul>
-<li><p>Process multiple files in single kernel launch</p></li>
-<li><p>Maximize GPU occupancy</p></li>
-</ul>
-</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Multi-file batch processing</strong> (#19) — <code class="docutils literal notranslate"><span class="pre">torchfx.batch_process(waves,</span> <span class="pre">effect)</span></code> pads
+signals to a common length, concatenates them on the channel dimension, and runs the
+effect in a <strong>single</strong> native dispatch over all channels (causal per-channel kernels +
+trailing zero-pad ⇒ numerically identical to per-file). Measured <strong>~2.5–7× on CPU and
+~3–4× on GPU</strong> for 8–512 stereo files (8th-order Butterworth). See
+<code class="docutils literal notranslate"><span class="pre">benchmarks/bench_batch.py</span></code>.</p></li>
 </ul>
 </section>
 <section id="performance-benchmarking">
@@ -1077,17 +1076,14 @@ forward (O(K) → O(1) allocations), cutting the eager GPU streaming path <stron
 <li><p>✅ Coverage gate <code class="docutils literal notranslate"><span class="pre">fail_under</span> <span class="pre">=</span> <span class="pre">87</span></code> enforced in CI</p></li>
 </ul>
 </li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Performance regression testing</strong></p>
-<ul>
-<li><p>Automated benchmarks in CI</p></li>
-<li><p>Alert on &gt;5% regression</p></li>
-</ul>
-</li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Profiling guides</strong></p>
-<ul>
-<li><p>Documentation for profiling pipelines</p></li>
-</ul>
-</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Performance regression testing</strong> (#21) — <code class="docutils literal notranslate"><span class="pre">tests/test_perf_regression.py</span></code> runs in
+ordinary CI and gates on <em>deterministic</em> invariants (fusion collapses a depth-K cascade
+to one native dispatch; a static <code class="docutils literal notranslate"><span class="pre">Gain</span></code> folds without adding one) plus a same-machine
+relative wall-time smoke. Avoids flaky absolute-timing baselines on shared runners; see
+the developer testing guide. (Absolute wall-time budgets would need a dedicated runner.)</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Profiling guides</strong> (#22) — developer guide on diagnosing a pipeline: correct
+warm-up/CUDA-sync timing, <code class="docutils literal notranslate"><span class="pre">torch.profiler</span></code> timelines, counting native dispatches to spot
+un-fused chains, and a bottleneck→fix table. See the developer profiling guide.</p></li>
 </ul>
 </section>
 <section id="advanced-kernel-optimizations-future">
@@ -1097,27 +1093,38 @@ landed the high-leverage wins. The remaining kernel-level optimizations — inve
 prioritized, and (where attempted) measured during the 0.6.0 cycle — are tracked here.
 Each item lists its difficulty and expected impact; none block a release.</p>
 <ul class="contains-task-list simple">
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Single-kernel SOS-section fusion (mega-kernel)</strong> — <em>hard.</em> One CUDA kernel that
-processes all <code class="docutils literal notranslate"><span class="pre">K</span></code> sections of a cascade (sections serial within a block, time-blocks
-parallel) instead of the per-section launch loop. <strong>The only item that makes fusion
-<em>kernel-level</em></strong> rather than Python-dispatch-level: today a fused cascade still issues
-<code class="docutils literal notranslate"><span class="pre">~4·K</span></code> launches (700 → 406 at <code class="docutils literal notranslate"><span class="pre">K=50</span></code>). Expected <strong>15–27%</strong> wall-time at <code class="docutils literal notranslate"><span class="pre">K≥5</span></code>, larger
-at small chunks. Depends on the FP32 templating + the once-per-forward scratch (both done).</p></li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Single-pass scan</strong> — <em>medium.</em> Replace the Blelloch up/down-sweep + phase-3
-recompute with a decoupled-look-back single-pass scan (CUB <code class="docutils literal notranslate"><span class="pre">DeviceScan</span></code> with a 3×3-matrix
-operator, or hand-rolled). The phase-3 recompute roughly doubles scan work; ~2% overall,
-but it simplifies the code and de-risks the mega-kernel.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Single-pass scan (kernel-level fusion)</strong> — <em>done, default-on (0.7.0).</em> Each cascade
+section’s forcing pass + 3-phase Blelloch scan are folded into one <strong>decoupled-look-back</strong>
+kernel (Merrill–Garland / CUB style, atomic per-section tile dispenser for deadlock-free
+forward progress), and the per-section DF1 state update into one more — so a fused section
+is <strong>2 CUDA launches</strong> instead of ~8, with the phase-3 recompute eliminated. Measured on an
+RTX 3070 vs the 3-phase path: <strong>5.9× fewer launches</strong> (600 → 102 at K=50) and <strong>~1.9×
+faster</strong> cascades; fused launches now sit <em>below</em> the unfused baseline (102 vs 400). This
+is the item that makes fusion <strong>kernel-level</strong>, not just Python-dispatch-level. Now the
+<strong>default</strong>; set <code class="docutils literal notranslate"><span class="pre">TORCHFX_FUSED_SCAN=0</span></code> to force the legacy 3-phase oracle. Validated on
+sm_86 (RTX 3070, 46 SMs) and sm_89 (L40S, 142 SMs) — forward progress holds across the SM
+range. Source: <code class="docutils literal notranslate"><span class="pre">fused_scan_kernel</span></code> / <code class="docutils literal notranslate"><span class="pre">state_update_kernel</span></code> in
+<a class="reference internal" href="#src/torchfx/_csrc/cuda/parallel_scan.cu"><span class="xref myst">parallel_scan.cu</span></a>.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Full all-sections mega-kernel</strong> — <em>hard, future.</em> The single-pass scan above makes
+each section one kernel but the K sections are still K separate launches (cross-section
+dependency = a grid-wide barrier). A single kernel over all K sections (sections serial
+within a block, cooperative-groups grid sync) would take the launch count to <code class="docutils literal notranslate"><span class="pre">O(1)</span></code>. Lower
+marginal value now that per-section is already 2 launches; revisit if launch overhead
+resurfaces at very high K / tiny chunks.</p></li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Pinned host buffers + async H2D/D2H for GPU streaming</strong> — <em>medium.</em> Overlap chunk
 transfers with compute. Only pays off once a <strong>GPU realtime/streaming I/O path</strong> exists
 (the live path is CPU-only today), so deferred until that lands.</p></li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Cache-blocked cross-channel CPU SIMD</strong> — <em>medium, edge-focused.</em> A naive
-full-transpose SIMD kernel was tried in 0.6.0 and <strong>measured a 4–8× regression</strong> on a
-10-core desktop: the transpose moves as much memory as the streaming-light recurrence
-computes, and the scalar OpenMP-over-channels path already saturates the cores. A
-cache-blocked transpose (tiles that stay in L1/L2, state carried across time blocks)
-could win, but the payoff is concentrated on <strong>few-core edge devices (Raspberry Pi 5)</strong>
-and needs that hardware to validate. The scalar path is already near-optimal on
-multi-core (8-ch, 10 s &#64; 48 kHz ≈ 3.5 ms).</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Cache-blocked cross-channel CPU SIMD</strong> — <em>done (#24).</em> A naive full-transpose
+SIMD kernel (F1) regressed 4–8× on a 10-core desktop — the whole-<code class="docutils literal notranslate"><span class="pre">[C,T]</span></code> transpose
+moved as much memory as the streaming-light recurrence computes. The fix: transpose
+only small <code class="docutils literal notranslate"><span class="pre">[W=4,</span> <span class="pre">B=256]</span></code> tiles that stay in <strong>L1</strong>, auto-vectorise the per-time-step
+channel loop (NEON/SSE/AVX), and <strong>gate the path to <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">&gt;</span> <span class="pre">num_threads</span></code></strong> so the
+scalar kernel stays for <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">≤</span> <span class="pre">cores</span></code>. Validated on a <strong>Raspberry Pi 5</strong> (Cortex-A76
+×4): <strong>1.8× at C=8, 2.6× at C=16/32</strong>; and on <strong>x86 (12 cores)</strong>: 1.3–2.4× for
+<code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">&gt;</span> <span class="pre">cores</span></code>, <strong>no regression</strong> below. Correct vs scalar + <code class="docutils literal notranslate"><span class="pre">scipy.signal.sosfilt</span></code>
+(full suite green with <code class="docutils literal notranslate"><span class="pre">TORCHFX_FORCE_SIMD=1</span></code>). <code class="docutils literal notranslate"><span class="pre">TORCHFX_NO_SIMD=1</span></code> forces scalar.
+Source: <code class="docutils literal notranslate"><span class="pre">sos_forward_cpu_simd_impl</span></code> in
+<a class="reference internal" href="#src/torchfx/_csrc/cpu/iir_cpu.cpp"><span class="xref myst">iir_cpu.cpp</span></a>.</p></li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>CPU runtime feature dispatch (function multiversioning)</strong> — <em>small.</em> Ship AVX2/AVX-512
 CPU paths without <code class="docutils literal notranslate"><span class="pre">-march=native</span></code> breaking wheel portability (paired with the SIMD work above).</p></li>
 </ul>
@@ -1373,7 +1380,9 @@ CPU paths without <code class="docutils literal notranslate"><span class="pre">-
 <ul class="contains-task-list">
 <li><p>✅ HTML coverage CI job on Python 3.12</p></li>
 <li><p>✅ <code class="docutils literal notranslate"><span class="pre">fail_under</span> <span class="pre">=</span> <span class="pre">87</span></code> coverage gate enforced</p></li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Codecov integration</p></li>
+<li><p>✅ Codecov integration (#26) — CI uploads <code class="docutils literal notranslate"><span class="pre">coverage.xml</span></code> via <code class="docutils literal notranslate"><span class="pre">codecov-action</span></code>, README
+badge, and a <code class="docutils literal notranslate"><span class="pre">codecov.yml</span></code> with project/patch status targets (ignoring the
+CPU-unreachable sounddevice backend)</p></li>
 <li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Coverage badge</p></li>
 </ul>
 </li>
@@ -1390,12 +1399,10 @@ CPU paths without <code class="docutils literal notranslate"><span class="pre">-
 <li><p>CUDA tests and benchmarks</p></li>
 </ul>
 </li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> <strong>Automated releases</strong></p>
-<ul>
-<li><p>PyPI publishing on tag</p></li>
-<li><p>Changelog generation</p></li>
-</ul>
-</li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> <strong>Automated releases</strong> (#29) — <code class="docutils literal notranslate"><span class="pre">release.yml</span></code> already auto-tags on a <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>
+version bump and the wheel workflows publish to PyPI / the CUDA index on the tag. Now it
+also publishes a <strong>GitHub Release</strong> whose notes are the <code class="docutils literal notranslate"><span class="pre">##</span> <span class="pre">[&lt;version&gt;]</span></code> CHANGELOG
+section (<code class="docutils literal notranslate"><span class="pre">tools/extract_changelog.py</span></code>). See the developer releasing guide.</p></li>
 </ul>
 </section>
 </section>
@@ -1407,9 +1414,15 @@ CPU paths without <code class="docutils literal notranslate"><span class="pre">-
 <section id="dynamics-processing">
 <h3>7.1 Dynamics Processing<a class="headerlink" href="#dynamics-processing" title="Link to this heading">#</a></h3>
 <ul class="contains-task-list simple">
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Compressor (threshold, ratio, attack, release, knee)</p></li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Limiter (brickwall, true peak, look-ahead)</p></li>
-<li class="task-list-item"><p><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> Expander / Gate</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Compressor (threshold, ratio, attack, release, knee) — <code class="docutils literal notranslate"><span class="pre">Compressor</span></code> (#30), native
+per-channel C++/CUDA detector, peak/RMS, soft knee, <code class="docutils literal notranslate"><span class="pre">ratio=inf</span></code> limiter mode.</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Limiter (brickwall, look-ahead) — <code class="docutils literal notranslate"><span class="pre">Limiter</span></code> (#31): look-ahead windowed peak
+(vectorised max-pool) + attack/release gain smoothing + a per-sample clamp that
+guarantees <code class="docutils literal notranslate"><span class="pre">|y|</span> <span class="pre">&lt;=</span> <span class="pre">threshold</span></code>; native CPU + CUDA. (True-peak / oversampled detection
+is a possible follow-up.)</p></li>
+<li class="task-list-item"><p><input class="task-list-item-checkbox" checked="checked" disabled="disabled" type="checkbox"> Expander / Gate — <code class="docutils literal notranslate"><span class="pre">Expander</span></code> (downward expansion below threshold) + <code class="docutils literal notranslate"><span class="pre">Gate</span></code>
+(infinite-ratio convenience) (#32), mirroring the compressor detector with an
+optional <code class="docutils literal notranslate"><span class="pre">floor</span></code> (range); native CPU + CUDA.</p></li>
 </ul>
 </section>
 <section id="modulation-effects">

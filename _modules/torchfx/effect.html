@@ -1692,150 +1692,120 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="Reverb">
 <a class="viewcode-back" href="../../api/effects.html#torchfx.Reverb">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Reverb</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply reverb effect using a feedback delay network for spatial ambiance.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Freeverb-style algorithmic reverb (parallel combs + series all-passes).</span>
 
-<span class="sd">    The Reverb effect creates spatial ambiance by simulating sound reflections</span>
-<span class="sd">    in an acoustic space. It uses a simple feedback comb filter (feedback delay</span>
-<span class="sd">    network) to produce reverb-like effects with controllable decay time and</span>
-<span class="sd">    wet/dry mix.</span>
-
-<span class="sd">    This is a basic reverb implementation suitable for adding spatial depth to</span>
-<span class="sd">    audio signals. For more complex reverb algorithms, consider using convolution</span>
-<span class="sd">    reverbs with impulse responses.</span>
+<span class="sd">    Replaces the original single-comb reverb with the classic Schroeder/Moorer structure:</span>
+<span class="sd">    per channel, **8 parallel low-pass-feedback comb filters** are summed and fed through</span>
+<span class="sd">    **4 series all-pass diffusers**, producing a dense, natural decay. The comb/all-pass</span>
+<span class="sd">    delay tunings scale with the sampling rate so the character is consistent across</span>
+<span class="sd">    ``fs``. The network runs in a native per-channel C++/CUDA kernel.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    delay : int, optional</span>
-<span class="sd">        Delay time in samples for the feedback comb filter. Determines the</span>
-<span class="sd">        apparent size of the simulated space. Default is 4410 samples, which</span>
-<span class="sd">        corresponds to approximately 100ms at 44.1kHz sample rate.</span>
-<span class="sd">    decay : float, optional</span>
-<span class="sd">        Feedback decay factor controlling how quickly the reverb tail fades.</span>
-<span class="sd">        Must be in the range (0, 1). Higher values create longer reverb tails.</span>
-<span class="sd">        Default is 0.5.</span>
-<span class="sd">    mix : float, optional</span>
-<span class="sd">        Wet/dry mix controlling the balance between processed (wet) and</span>
-<span class="sd">        original (dry) signals. Range is [0, 1] where:</span>
+<span class="sd">    room_size : float, default=0.5</span>
+<span class="sd">        Apparent room size in ``[0, 1]`` — sets the comb feedback (decay length). Larger</span>
+<span class="sd">        values give a longer reverb tail.</span>
+<span class="sd">    damping : float, default=0.5</span>
+<span class="sd">        High-frequency damping in ``[0, 1]``. Larger values absorb highs faster, for a</span>
+<span class="sd">        warmer/darker tail.</span>
+<span class="sd">    mix : float, default=0.3</span>
+<span class="sd">        Wet/dry balance in ``[0, 1]`` (``0`` = dry, ``1`` = fully wet).</span>
+<span class="sd">    fs : int or None, default=None</span>
+<span class="sd">        Sampling rate in Hz, used to scale the delay tunings. May be left ``None`` and</span>
+<span class="sd">        supplied lazily by a ``Wave`` pipeline (``wave | reverb``).</span>
 
-<span class="sd">        - 0.0 = fully dry (no reverb)</span>
-<span class="sd">        - 1.0 = fully wet (only reverb)</span>
-<span class="sd">        - 0.5 = equal mix</span>
-
-<span class="sd">        Default is 0.5.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The reverberated waveform, same shape and dtype as the input.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
-<span class="sd">    AssertionError</span>
-<span class="sd">        If delay is not positive, decay is not in (0, 1), or mix is not in [0, 1].</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``room_size``/``damping``/``mix`` are outside ``[0, 1]``, ``fs`` is</span>
+<span class="sd">        non-positive, or ``forward`` is called before ``fs`` is known.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    Delay : Multi-tap delay effect with BPM synchronization</span>
-<span class="sd">    Gain : Volume adjustment effect</span>
+<span class="sd">    Delay : Multi-tap delay effect with BPM synchronisation.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    **Algorithm:**</span>
-
-<span class="sd">    The reverb is computed using a feedback comb filter:</span>
-
-<span class="sd">    .. math::</span>
-
-<span class="sd">        y[n] = (1 - mix) \cdot x[n] + mix \cdot (x[n] + decay \cdot x[n - delay])</span>
-
-<span class="sd">    where:</span>
-<span class="sd">        - :math:`x[n]` is the input signal</span>
-<span class="sd">        - :math:`y[n]` is the output signal</span>
-<span class="sd">        - :math:`delay` is the delay time in samples</span>
-<span class="sd">        - :math:`decay` is the feedback decay factor</span>
-<span class="sd">        - :math:`mix` is the wet/dry mix parameter</span>
-
-<span class="sd">    **Processing Details:**</span>
-
-<span class="sd">    - If the input waveform is shorter than the delay time, the input is returned</span>
-<span class="sd">      unchanged.</span>
-<span class="sd">    - The effect processes tensors of arbitrary shape (..., time).</span>
-<span class="sd">    - Uses @torch.no_grad() decorator for efficient inference-only operation.</span>
-<span class="sd">    - Padding is applied using torch.nn.functional.pad for the delay buffer.</span>
-
-<span class="sd">    **Delay Time Calculation:**</span>
-
-<span class="sd">    To convert time in milliseconds to samples:</span>
-
-<span class="sd">    .. math::</span>
-
-<span class="sd">        delay_{samples} = \frac{time_{ms}}{1000} \cdot sample\_rate</span>
-
-<span class="sd">    For example, at 44.1kHz:</span>
-<span class="sd">        - 50ms = 2205 samples</span>
-<span class="sd">        - 100ms = 4410 samples (default)</span>
-<span class="sd">        - 200ms = 8820 samples</span>
+<span class="sd">    Each channel is processed independently with identical tunings (no stereo-width spread</span>
+<span class="sd">    — a possible follow-up). State is reset per ``forward`` call, so block-wise streaming</span>
+<span class="sd">    is not state-continuous across chunks. This is a **breaking change** from the pre-0.7</span>
+<span class="sd">    ``Reverb(delay, decay, mix)`` API.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    Basic reverb with default parameters:</span>
+<span class="sd">    &gt;&gt;&gt; import torch</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx.effect import Reverb</span>
+<span class="sd">    &gt;&gt;&gt; x = torch.randn(2, 48000)</span>
+<span class="sd">    &gt;&gt;&gt; y = Reverb(room_size=0.7, damping=0.4, mix=0.3, fs=48000)(x)</span>
+<span class="sd">    &gt;&gt;&gt; y.shape</span>
+<span class="sd">    torch.Size([2, 48000])</span>
+
+<span class="sd">    In a ``Wave`` pipeline (``fs`` supplied automatically):</span>
 
 <span class="sd">    &gt;&gt;&gt; import torchfx as fx</span>
-<span class="sd">    &gt;&gt;&gt; wave = fx.Wave.from_file(&quot;audio.wav&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; reverb = fx.Reverb()</span>
-<span class="sd">    &gt;&gt;&gt; processed = wave | reverb</span>
-
-<span class="sd">    Short room reverb (50ms delay):</span>
-
-<span class="sd">    &gt;&gt;&gt; reverb = fx.Reverb(delay=2205, decay=0.4, mix=0.3)</span>
-<span class="sd">    &gt;&gt;&gt; processed = wave | reverb</span>
-
-<span class="sd">    Long hall reverb (200ms delay):</span>
-
-<span class="sd">    &gt;&gt;&gt; reverb = fx.Reverb(delay=8820, decay=0.7, mix=0.4)</span>
-<span class="sd">    &gt;&gt;&gt; processed = wave | reverb</span>
-
-<span class="sd">    Subtle reverb with low mix:</span>
-
-<span class="sd">    &gt;&gt;&gt; reverb = fx.Reverb(delay=4410, decay=0.5, mix=0.2)</span>
-<span class="sd">    &gt;&gt;&gt; processed = wave | reverb</span>
-
-<span class="sd">    Direct tensor processing:</span>
-
-<span class="sd">    &gt;&gt;&gt; import torch</span>
-<span class="sd">    &gt;&gt;&gt; waveform = torch.randn(2, 44100)  # (channels, samples)</span>
-<span class="sd">    &gt;&gt;&gt; reverb = fx.Reverb(delay=4410, decay=0.6, mix=0.3)</span>
-<span class="sd">    &gt;&gt;&gt; reverberated = reverb(waveform)</span>
-
-<span class="sd">    Chain with other effects:</span>
-
-<span class="sd">    &gt;&gt;&gt; processed = wave | fx.Gain(0.8) | fx.Reverb(delay=4410, decay=0.5, mix=0.3)</span>
-
-<span class="sd">    GPU processing:</span>
-
-<span class="sd">    &gt;&gt;&gt; wave = wave.to(&quot;cuda&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; reverb = fx.Reverb(delay=4410, decay=0.6, mix=0.3).to(&quot;cuda&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; processed = wave | reverb</span>
+<span class="sd">    &gt;&gt;&gt; processed = wave | fx.Reverb(room_size=0.8, mix=0.25)  # doctest: +SKIP</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4410</span><span class="p">,</span> <span class="n">decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">mix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="k">assert</span> <span class="n">delay</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Delay must be positive.&quot;</span>
-        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">decay</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Decay must be between 0 and 1.&quot;</span>
-        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">mix</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Mix must be between 0 and 1.&quot;</span>
+    <span class="c1"># Freeverb fixed constants (input gain into the comb bank; all-pass feedback).</span>
+    <span class="n">_INPUT_GAIN</span> <span class="o">=</span> <span class="mf">0.015</span>
+    <span class="n">_ALLPASS_FB</span> <span class="o">=</span> <span class="mf">0.5</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">delay</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">decay</span> <span class="o">=</span> <span class="n">decay</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="n">mix</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">room_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">damping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">mix</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">room_size</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;room_size must be in [0, 1], got </span><span class="si">{</span><span class="n">room_size</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">damping</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;damping must be in [0, 1], got </span><span class="si">{</span><span class="n">damping</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">mix</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mix must be in [0, 1], got </span><span class="si">{</span><span class="n">mix</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample rate (fs) must be positive, got </span><span class="si">{</span><span class="n">fs</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">room_size</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">room_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">damping</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">damping</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
 
 <div class="viewcode-block" id="Reverb.forward">
 <a class="viewcode-back" href="../../api/effects.html#torchfx.Reverb.forward">[docs]</a>
     <span class="nd">@override</span>
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="c1"># waveform: (..., time)</span>
-        <span class="k">if</span> <span class="n">waveform</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">waveform</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Sample rate (fs) is required for the reverb. Use it in a Wave &quot;</span>
+                <span class="s2">&quot;pipeline (wave | reverb) or pass fs at construction.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span><span class="p">)</span>
 
-        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">delay_line_forward</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverb_forward</span>
 
-        <span class="k">return</span> <span class="n">delay_line_forward</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span></div>
+        <span class="c1"># Freeverb parameter mapping: room_size -&gt; comb feedback, damping -&gt; LP coefficient.</span>
+        <span class="n">feedback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">room_size</span> <span class="o">*</span> <span class="mf">0.28</span> <span class="o">+</span> <span class="mf">0.7</span>
+        <span class="n">damp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">damping</span> <span class="o">*</span> <span class="mf">0.4</span>
+        <span class="k">return</span> <span class="n">reverb_forward</span><span class="p">(</span>
+            <span class="n">waveform</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
+            <span class="n">feedback</span><span class="p">,</span>
+            <span class="n">damp</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_INPUT_GAIN</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ALLPASS_FB</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">,</span>  <span class="c1"># wet</span>
+            <span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">,</span>  <span class="c1"># dry</span>
+        <span class="p">)</span></div>
 </div>
 
 
@@ -2468,6 +2438,589 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">lerp</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">delayed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">)</span></div>
 </div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Compressor</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Feed-forward dynamic-range compressor with a decoupled peak detector.</span>
+
+<span class="sd">    Reduces the dynamic range of a signal: levels above ``threshold`` are turned</span>
+<span class="sd">    down according to ``ratio``, with a soft ``knee`` around the threshold and</span>
+<span class="sd">    attack/release ballistics that control how quickly the gain reacts. An optional</span>
+<span class="sd">    ``makeup_gain`` restores overall loudness.</span>
+
+<span class="sd">    The side-chain level is tracked with a *decoupled* peak detector (a release</span>
+<span class="sd">    max-hold followed by an attack one-pole), the standard high-quality topology</span>
+<span class="sd">    (Giannoulis, Massberg &amp; Reiss, 2012). Detection runs in native C++/CUDA, one</span>
+<span class="sd">    channel per thread.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    threshold : float, default=-20.0</span>
+<span class="sd">        Level above which compression begins, in **dBFS** (decibels relative to a</span>
+<span class="sd">        full-scale amplitude of 1.0).</span>
+<span class="sd">    ratio : float, default=4.0</span>
+<span class="sd">        Input/output ratio above the threshold (``&gt;= 1.0``). ``4.0`` means 4 dB in</span>
+<span class="sd">        yields 1 dB out over threshold. ``float(&quot;inf&quot;)`` is a brick-wall limiter.</span>
+<span class="sd">    attack : float, default=0.005</span>
+<span class="sd">        Attack time in **seconds** (how fast gain reduction engages). ``0`` is</span>
+<span class="sd">        instantaneous.</span>
+<span class="sd">    release : float, default=0.05</span>
+<span class="sd">        Release time in **seconds** (how fast gain recovers). ``0`` is instantaneous.</span>
+<span class="sd">    knee : float, default=6.0</span>
+<span class="sd">        Full width of the soft knee in **dB**, centred on the threshold. ``0`` gives</span>
+<span class="sd">        a hard knee.</span>
+<span class="sd">    makeup_gain : float, default=0.0</span>
+<span class="sd">        Output gain applied after compression, in **dB**.</span>
+<span class="sd">    detector : {&quot;peak&quot;, &quot;rms&quot;}, default=&quot;peak&quot;</span>
+<span class="sd">        Side-chain level detection. ``&quot;peak&quot;`` follows ``|x|``; ``&quot;rms&quot;`` follows a</span>
+<span class="sd">        smoothed root-mean-square (averaging window tied to ``attack``).</span>
+<span class="sd">    fs : int or None, default=None</span>
+<span class="sd">        Sampling rate in Hz. May be left ``None`` and supplied lazily by a ``Wave``</span>
+<span class="sd">        pipeline (``wave | compressor``); the ballistics coefficients are then</span>
+<span class="sd">        derived from the times and ``fs`` on first ``forward``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The compressed waveform, same shape and dtype as the input.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``ratio &lt; 1``, ``attack``/``release``/``knee`` is negative, ``detector``</span>
+<span class="sd">        is not ``&quot;peak&quot;``/``&quot;rms&quot;``, ``fs`` is non-positive, or ``forward`` is called</span>
+<span class="sd">        before ``fs`` is known.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    Gain : Static volume adjustment.</span>
+<span class="sd">    Normalize : Amplitude normalization.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Per channel, sequentially over samples :math:`n` (linear detector level, then</span>
+<span class="sd">    the gain computed in dB):</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \text{rect}[n] &amp;= |x[n]| \quad (\text{peak}) \\</span>
+<span class="sd">        y_1[n] &amp;= \max(\text{rect}[n],\ a_R\, y_1[n-1]) \\</span>
+<span class="sd">        y_L[n] &amp;= a_A\, y_L[n-1] + (1 - a_A)\, y_1[n] \\</span>
+<span class="sd">        L &amp;= 20 \log_{10}(\max(y_L[n], \epsilon))</span>
+
+<span class="sd">    with attack/release coefficients :math:`a_A = e^{-1/(\text{attack}\cdot f_s)}`,</span>
+<span class="sd">    :math:`a_R = e^{-1/(\text{release}\cdot f_s)}`. The static curve (soft knee of</span>
+<span class="sd">    width :math:`W` centred on threshold :math:`T`, ``r`` = ratio) maps :math:`L` to</span>
+<span class="sd">    :math:`L_{sc}`, and the per-sample gain is</span>
+<span class="sd">    :math:`g[n] = 10^{(L_{sc} - L + \text{makeup})/20}`, applied as</span>
+<span class="sd">    :math:`y[n] = g[n]\, x[n]`.</span>
+
+<span class="sd">    This is a **zero-latency feed-forward** design (no look-ahead). The ballistics</span>
+<span class="sd">    state is reset on each ``forward`` call, so block-wise streaming is *not*</span>
+<span class="sd">    state-continuous across chunks (a follow-up could thread the state in/out).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Compress a signal 4:1 above -12 dBFS:</span>
+
+<span class="sd">    &gt;&gt;&gt; import torch</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx.effect import Compressor</span>
+<span class="sd">    &gt;&gt;&gt; x = torch.randn(2, 48000) * 0.5  # (channels, samples)</span>
+<span class="sd">    &gt;&gt;&gt; comp = Compressor(threshold=-12.0, ratio=4.0, attack=0.005, release=0.08, fs=48000)</span>
+<span class="sd">    &gt;&gt;&gt; y = comp(x)</span>
+<span class="sd">    &gt;&gt;&gt; y.shape</span>
+<span class="sd">    torch.Size([2, 48000])</span>
+
+<span class="sd">    Use in a ``Wave`` pipeline (``fs`` is supplied automatically):</span>
+
+<span class="sd">    &gt;&gt;&gt; import torchfx as fx</span>
+<span class="sd">    &gt;&gt;&gt; processed = wave | fx.effect.Compressor(threshold=-18.0, ratio=3.0)  # doctest: +SKIP</span>
+
+<span class="sd">    Brick-wall limiting at -1 dBFS with makeup gain:</span>
+
+<span class="sd">    &gt;&gt;&gt; limiter = Compressor(threshold=-1.0, ratio=float(&quot;inf&quot;), makeup_gain=1.0, fs=48000)</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    D. Giannoulis, M. Massberg, J. D. Reiss, &quot;Digital Dynamic Range Compressor</span>
+<span class="sd">    Design — A Tutorial and Analysis,&quot; J. Audio Eng. Soc., 60(6), 2012.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">20.0</span><span class="p">,</span>
+        <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+        <span class="n">attack</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.005</span><span class="p">,</span>
+        <span class="n">release</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">knee</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">6.0</span><span class="p">,</span>
+        <span class="n">makeup_gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">detector</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;peak&quot;</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="n">valid_detectors</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;peak&quot;</span><span class="p">,</span> <span class="s2">&quot;rms&quot;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">detector</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_detectors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;detector must be one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">valid_detectors</span><span class="p">)</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">detector</span><span class="si">!r}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ratio</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ratio must be &gt;= 1.0, got </span><span class="si">{</span><span class="n">ratio</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attack</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;attack must be non-negative (seconds), got </span><span class="si">{</span><span class="n">attack</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">release</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;release must be non-negative (seconds), got </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">knee</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;knee must be non-negative (dB), got </span><span class="si">{</span><span class="n">knee</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample rate (fs) must be positive, got </span><span class="si">{</span><span class="n">fs</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">threshold</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ratio</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">attack</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">release</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">release</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">knee</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">knee</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">makeup_gain</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">makeup_gain</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="o">=</span> <span class="n">detector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+
+        <span class="c1"># 1/ratio (0 for an inf-ratio limiter) so the kernel never does inf math.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inv_ratio</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ratio</span><span class="p">)</span> <span class="k">else</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aA</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aR</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_coeffs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Derive attack/release/RMS coefficients from the times and ``fs``.&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aA</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aR</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">release</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+        <span class="c1"># The RMS averaging window defaults to the attack time.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@override</span>
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Sample rate (fs) is required for the compressor. Use it in a &quot;</span>
+                    <span class="s2">&quot;Wave pipeline (wave | compressor) or pass fs at construction.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_coeffs</span><span class="p">()</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">compressor_forward</span>
+
+        <span class="k">return</span> <span class="n">compressor_forward</span><span class="p">(</span>
+            <span class="n">waveform</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inv_ratio</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">knee</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">makeup_gain</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_aA</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_aR</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span><span class="p">,</span>
+            <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="o">==</span> <span class="s2">&quot;rms&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Expander</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Downward expander / noise gate with a decoupled peak detector.</span>
+
+<span class="sd">    The mirror image of :class:`Compressor`: levels **below** ``threshold`` are turned</span>
+<span class="sd">    *down* (their dynamic range is expanded), which pushes quiet passages and noise</span>
+<span class="sd">    toward silence while leaving louder signal untouched. With a high ``ratio`` (or</span>
+<span class="sd">    ``ratio=inf``) it acts as a **noise gate**.</span>
+
+<span class="sd">    The side-chain level uses the same *decoupled* peak detector as the compressor (a</span>
+<span class="sd">    release max-hold followed by an attack one-pole; Giannoulis, Massberg &amp; Reiss,</span>
+<span class="sd">    2012). Detection runs in native C++/CUDA, one channel per thread.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    threshold : float, default=-40.0</span>
+<span class="sd">        Level below which downward expansion begins, in **dBFS**.</span>
+<span class="sd">    ratio : float, default=2.0</span>
+<span class="sd">        Expansion ratio below the threshold (``&gt;= 1.0``). ``2.0`` means a signal 1 dB</span>
+<span class="sd">        below threshold is pushed a further 1 dB down. ``float(&quot;inf&quot;)`` is a hard gate.</span>
+<span class="sd">    attack : float, default=0.005</span>
+<span class="sd">        Attack time in **seconds** (how fast the gate opens as level rises). ``0`` is</span>
+<span class="sd">        instantaneous.</span>
+<span class="sd">    release : float, default=0.05</span>
+<span class="sd">        Release time in **seconds** (how fast the gate closes as level falls). ``0`` is</span>
+<span class="sd">        instantaneous.</span>
+<span class="sd">    knee : float, default=6.0</span>
+<span class="sd">        Full width of the soft knee in **dB**, centred on the threshold. ``0`` gives a</span>
+<span class="sd">        hard knee.</span>
+<span class="sd">    floor : float or None, default=None</span>
+<span class="sd">        Deepest attenuation in **dB** (a negative number), limiting how far the signal</span>
+<span class="sd">        is pushed down — i.e. an expander/gate *range*. ``None`` applies no floor (full</span>
+<span class="sd">        downward expansion; with ``ratio=inf`` this gates to near-silence).</span>
+<span class="sd">    detector : {&quot;peak&quot;, &quot;rms&quot;}, default=&quot;peak&quot;</span>
+<span class="sd">        Side-chain level detection. ``&quot;peak&quot;`` follows ``|x|``; ``&quot;rms&quot;`` follows a</span>
+<span class="sd">        smoothed root-mean-square (averaging window tied to ``attack``).</span>
+<span class="sd">    fs : int or None, default=None</span>
+<span class="sd">        Sampling rate in Hz. May be left ``None`` and supplied lazily by a ``Wave``</span>
+<span class="sd">        pipeline (``wave | expander``).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The expanded waveform, same shape and dtype as the input.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``ratio &lt; 1``, ``attack``/``release``/``knee`` is negative, ``floor`` is</span>
+<span class="sd">        positive, ``detector`` is not ``&quot;peak&quot;``/``&quot;rms&quot;``, ``fs`` is non-positive, or</span>
+<span class="sd">        ``forward`` is called before ``fs`` is known.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    Compressor : Reduces dynamic range *above* the threshold.</span>
+<span class="sd">    Gate : Convenience subclass with an infinite ratio (a hard noise gate).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The detector is identical to :class:`Compressor`; only the static curve differs.</span>
+<span class="sd">    Per channel, with linear detector level :math:`L = 20\log_{10}(\max(y_L, \epsilon))`,</span>
+<span class="sd">    over-threshold amount :math:`o = L - T`, slope :math:`s = r - 1`, and soft knee of</span>
+<span class="sd">    width :math:`W`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        g_{dB} =</span>
+<span class="sd">        \begin{cases}</span>
+<span class="sd">        -s\,(o - W/2)^2 / (2W) &amp; |2o| \le W \quad (\text{knee}) \\</span>
+<span class="sd">        s\,o &amp; o &lt; 0 \quad (\text{below threshold}) \\</span>
+<span class="sd">        0 &amp; \text{otherwise}</span>
+<span class="sd">        \end{cases}</span>
+
+<span class="sd">    clamped to ``floor`` (``g_{dB} \ge`` floor), and :math:`y[n] = 10^{g_{dB}/20}\,x[n]`.</span>
+
+<span class="sd">    This is a **zero-latency feed-forward** design (no look-ahead). The ballistics state</span>
+<span class="sd">    is reset on each ``forward`` call, so block-wise streaming is *not* state-continuous</span>
+<span class="sd">    across chunks (see the compressor streaming follow-up).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Gently expand a signal 2:1 below -40 dBFS:</span>
+
+<span class="sd">    &gt;&gt;&gt; import torch</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx.effect import Expander</span>
+<span class="sd">    &gt;&gt;&gt; x = torch.randn(2, 48000) * 0.5  # (channels, samples)</span>
+<span class="sd">    &gt;&gt;&gt; exp = Expander(threshold=-40.0, ratio=2.0, attack=0.005, release=0.1, fs=48000)</span>
+<span class="sd">    &gt;&gt;&gt; y = exp(x)</span>
+<span class="sd">    &gt;&gt;&gt; y.shape</span>
+<span class="sd">    torch.Size([2, 48000])</span>
+
+<span class="sd">    A noise gate (infinite ratio) with an 80 dB range:</span>
+
+<span class="sd">    &gt;&gt;&gt; gate = Expander(threshold=-50.0, ratio=float(&quot;inf&quot;), floor=-80.0, fs=48000)</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    D. Giannoulis, M. Massberg, J. D. Reiss, &quot;Digital Dynamic Range Compressor</span>
+<span class="sd">    Design — A Tutorial and Analysis,&quot; J. Audio Eng. Soc., 60(6), 2012.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Stands in for ``ratio=inf`` so the kernel never does inf arithmetic: a slope this</span>
+    <span class="c1"># steep drives any below-threshold sample straight to the floor (i.e. a hard gate).</span>
+    <span class="n">_GATE_SLOPE</span> <span class="o">=</span> <span class="mf">1.0e6</span>
+    <span class="c1"># Applied when ``floor`` is None — far below any real signal, so effectively no floor.</span>
+    <span class="n">_NO_FLOOR_DB</span> <span class="o">=</span> <span class="o">-</span><span class="mf">240.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">40.0</span><span class="p">,</span>
+        <span class="n">ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+        <span class="n">attack</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.005</span><span class="p">,</span>
+        <span class="n">release</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">knee</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">6.0</span><span class="p">,</span>
+        <span class="n">floor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">detector</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;peak&quot;</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="n">valid_detectors</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;peak&quot;</span><span class="p">,</span> <span class="s2">&quot;rms&quot;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">detector</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_detectors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;detector must be one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">valid_detectors</span><span class="p">)</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">detector</span><span class="si">!r}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ratio</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ratio must be &gt;= 1.0, got </span><span class="si">{</span><span class="n">ratio</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attack</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;attack must be non-negative (seconds), got </span><span class="si">{</span><span class="n">attack</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">release</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;release must be non-negative (seconds), got </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">knee</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;knee must be non-negative (dB), got </span><span class="si">{</span><span class="n">knee</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">floor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">floor</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;floor must be non-positive (dB of attenuation), got </span><span class="si">{</span><span class="n">floor</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample rate (fs) must be positive, got </span><span class="si">{</span><span class="n">fs</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">threshold</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ratio</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">attack</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">release</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">release</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">knee</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">knee</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">floor</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">floor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="o">=</span> <span class="n">detector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+
+        <span class="c1"># slope = ratio - 1 (a large finite value for an infinite-ratio gate).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_slope</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GATE_SLOPE</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ratio</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">ratio</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_floor_db</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NO_FLOOR_DB</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">floor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">floor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aA</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aR</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_coeffs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Derive attack/release/RMS coefficients from the times and ``fs``.&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aA</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aR</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">release</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+        <span class="c1"># The RMS averaging window defaults to the attack time.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@override</span>
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Sample rate (fs) is required for the expander. Use it in a &quot;</span>
+                    <span class="s2">&quot;Wave pipeline (wave | expander) or pass fs at construction.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_coeffs</span><span class="p">()</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">expander_forward</span>
+
+        <span class="k">return</span> <span class="n">expander_forward</span><span class="p">(</span>
+            <span class="n">waveform</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_slope</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">knee</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_floor_db</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_aA</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_aR</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span><span class="p">,</span>
+            <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="o">==</span> <span class="s2">&quot;rms&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Gate</span><span class="p">(</span><span class="n">Expander</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Noise gate — an :class:`Expander` with an infinite ratio (hard gating).</span>
+
+<span class="sd">    Below ``threshold`` the signal is attenuated to the ``floor`` (a hard downward</span>
+<span class="sd">    expansion); above it the signal passes unchanged. This is a basic gate without</span>
+<span class="sd">    hysteresis or a hold time (a possible future refinement).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    threshold : float, default=-50.0</span>
+<span class="sd">        Level below which the gate closes, in **dBFS**.</span>
+<span class="sd">    attack : float, default=0.001</span>
+<span class="sd">        How fast the gate opens as level rises, in **seconds**.</span>
+<span class="sd">    release : float, default=0.05</span>
+<span class="sd">        How fast the gate closes as level falls, in **seconds**.</span>
+<span class="sd">    floor : float or None, default=-80.0</span>
+<span class="sd">        Attenuation applied when the gate is closed, in **dB**. ``None`` gates to</span>
+<span class="sd">        near-silence.</span>
+<span class="sd">    knee : float, default=3.0</span>
+<span class="sd">        Soft-knee width in **dB** around the threshold.</span>
+<span class="sd">    detector : {&quot;peak&quot;, &quot;rms&quot;}, default=&quot;peak&quot;</span>
+<span class="sd">        Side-chain level detection.</span>
+<span class="sd">    fs : int or None, default=None</span>
+<span class="sd">        Sampling rate in Hz (may be supplied lazily by a ``Wave`` pipeline).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import torch</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx.effect import Gate</span>
+<span class="sd">    &gt;&gt;&gt; x = torch.randn(1, 48000) * 0.5</span>
+<span class="sd">    &gt;&gt;&gt; y = Gate(threshold=-45.0, floor=-90.0, fs=48000)(x)</span>
+<span class="sd">    &gt;&gt;&gt; y.shape</span>
+<span class="sd">    torch.Size([1, 48000])</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">50.0</span><span class="p">,</span>
+        <span class="n">attack</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+        <span class="n">release</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">floor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="o">-</span><span class="mf">80.0</span><span class="p">,</span>
+        <span class="n">knee</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span>
+        <span class="n">detector</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;peak&quot;</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+            <span class="n">ratio</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span>
+            <span class="n">attack</span><span class="o">=</span><span class="n">attack</span><span class="p">,</span>
+            <span class="n">release</span><span class="o">=</span><span class="n">release</span><span class="p">,</span>
+            <span class="n">knee</span><span class="o">=</span><span class="n">knee</span><span class="p">,</span>
+            <span class="n">floor</span><span class="o">=</span><span class="n">floor</span><span class="p">,</span>
+            <span class="n">detector</span><span class="o">=</span><span class="n">detector</span><span class="p">,</span>
+            <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Limiter</span><span class="p">(</span><span class="n">FX</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Look-ahead brick-wall peak limiter.</span>
+
+<span class="sd">    Guarantees the output magnitude never exceeds ``threshold`` (a true brick wall) while</span>
+<span class="sd">    staying transparent: a short ``lookahead`` lets the gain reduce *before* a peak</span>
+<span class="sd">    arrives, so there is no transient overshoot and none of the distortion an</span>
+<span class="sd">    instantaneous gain change would cause. The gain then recovers over ``release``.</span>
+
+<span class="sd">    The look-ahead windowed peak of ``|x|`` is computed with a vectorised max-pool, and the</span>
+<span class="sd">    sequential gain recurrence runs in a native C++/CUDA kernel (one channel per thread).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    threshold : float, default=-1.0</span>
+<span class="sd">        Output ceiling in **dBFS**. The output magnitude never exceeds this.</span>
+<span class="sd">    lookahead : float, default=0.005</span>
+<span class="sd">        Look-ahead time in **seconds**: the gain is reduced over this window ahead of a</span>
+<span class="sd">        peak so the limiter never overshoots. ``0`` is a zero-look-ahead limiter.</span>
+<span class="sd">    release : float, default=0.05</span>
+<span class="sd">        Release time in **seconds** — how fast the gain recovers after a peak. ``0`` is</span>
+<span class="sd">        instantaneous.</span>
+<span class="sd">    fs : int or None, default=None</span>
+<span class="sd">        Sampling rate in Hz. May be left ``None`` and supplied lazily by a ``Wave``</span>
+<span class="sd">        pipeline (``wave | limiter``).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The limited waveform, same shape and dtype as the input, with</span>
+<span class="sd">        ``|y| &lt;= 10**(threshold/20)`` everywhere.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``lookahead`` or ``release`` is negative, ``fs`` is non-positive, or ``forward``</span>
+<span class="sd">        is called before ``fs`` is known.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    Compressor : ``Compressor(ratio=inf)`` is a zero-look-ahead feed-forward limiter that</span>
+<span class="sd">        can overshoot on a single sample before its gain reacts; ``Limiter`` cannot.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    For each sample the applied gain is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        g[n] = \min\!\Big(\tfrac{T_\text{lin}}{\max(p[n], \epsilon)},\ a_R\,g[n-1] + (1-a_R)\Big),</span>
+<span class="sd">        \qquad p[n] = \max_{0 \le k \le L} |x[n+k]|</span>
+
+<span class="sd">    with linear ceiling :math:`T_\text{lin} = 10^{\text{threshold}/20}`, release coefficient</span>
+<span class="sd">    :math:`a_R = e^{-1/(\text{release}\cdot f_s)}`, and look-ahead :math:`L`. Since</span>
+<span class="sd">    :math:`|x[n]| \le p[n]`, the output :math:`y[n] = g[n]\,x[n]` satisfies</span>
+<span class="sd">    :math:`|y[n]| \le T_\text{lin}` — a guaranteed brick wall.</span>
+
+<span class="sd">    This is a **peak** (not true-peak / oversampled) limiter, so inter-sample peaks may</span>
+<span class="sd">    slightly exceed the ceiling after conversion to analog (true-peak limiting is a possible</span>
+<span class="sd">    follow-up). The output is time-aligned with the input (no net latency). Ballistics state</span>
+<span class="sd">    is reset per ``forward`` call (not state-continuous across streaming chunks).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Brick-wall a signal that exceeds full scale to a -1 dBFS ceiling:</span>
+
+<span class="sd">    &gt;&gt;&gt; import torch</span>
+<span class="sd">    &gt;&gt;&gt; from torchfx.effect import Limiter</span>
+<span class="sd">    &gt;&gt;&gt; x = torch.randn(2, 48000) * 3.0  # well over +/-1</span>
+<span class="sd">    &gt;&gt;&gt; lim = Limiter(threshold=-1.0, lookahead=0.005, release=0.05, fs=48000)</span>
+<span class="sd">    &gt;&gt;&gt; y = lim(x)</span>
+<span class="sd">    &gt;&gt;&gt; bool(y.abs().max() &lt;= 10 ** (-1.0 / 20) + 1e-4)</span>
+<span class="sd">    True</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">lookahead</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.005</span><span class="p">,</span>
+        <span class="n">release</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">lookahead</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;lookahead must be non-negative (seconds), got </span><span class="si">{</span><span class="n">lookahead</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">release</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;release must be non-negative (seconds), got </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample rate (fs) must be positive, got </span><span class="si">{</span><span class="n">fs</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">threshold</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lookahead</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">lookahead</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">release</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">release</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thr_lin</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">/</span> <span class="mf">20.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attack_coeff</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_release_coeff</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lookahead_samples</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_coeffs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Derive ceiling, attack/release coefficients and look-ahead samples from</span>
+<span class="sd">        ``fs``.&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thr_lin</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">/</span> <span class="mf">20.0</span><span class="p">)</span>
+        <span class="c1"># Ramp the gain down over the look-ahead window so it is already low when the peak</span>
+        <span class="c1"># arrives (the per-sample clamp guarantees the brick wall regardless).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attack_coeff</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookahead</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookahead</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_release_coeff</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">release</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lookahead_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookahead</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@override</span>
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Sample rate (fs) is required for the limiter. Use it in a &quot;</span>
+                    <span class="s2">&quot;Wave pipeline (wave | limiter) or pass fs at construction.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_coeffs</span><span class="p">()</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">limiter_forward</span>
+
+        <span class="k">return</span> <span class="n">limiter_forward</span><span class="p">(</span>
+            <span class="n">waveform</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thr_lin</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_attack_coeff</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_release_coeff</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lookahead_samples</span><span class="p">,</span>
+        <span class="p">)</span>
 </pre></div>
 <div class="section ablog__blog_comments">
    

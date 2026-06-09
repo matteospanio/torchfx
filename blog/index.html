@@ -789,6 +789,12 @@ window.runMermaid = runMermaid;</script>
   <ul>
      
     <li>
+      <a href="2026-06-09-release-070.html">
+        09 June - TorchFX 0.7.0: A Dynamics Suite, a Real Reverb, and the Edge
+      </a>
+    </li>
+    
+    <li>
       <a href="2026-06-04-release-060.html">
         04 June - TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path
       </a>
@@ -809,12 +815,6 @@ window.runMermaid = runMermaid;</script>
     <li>
       <a href="2026-06-04-realtime-streaming.html">
         04 June - A Hardened Realtime Path: Worker Threads, Allocation-Free Streaming, and Dtype-Aware Dispatch
-      </a>
-    </li>
-    
-    <li>
-      <a href="2026-05-26-release-054.html">
-        26 May - TorchFX 0.5.4: Native Filter Design & Goodbye scipy
       </a>
     </li>
     
@@ -868,6 +868,14 @@ window.runMermaid = runMermaid;</script>
     </li>
       
     <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/dynamics.html">dynamics</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/edge.html">edge</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
       <a href="index/tag/fft.html">fft</a>
     </li>
       
@@ -915,7 +923,7 @@ window.runMermaid = runMermaid;</script>
       <a href="index/tag/packaging.html">packaging</a>
     </li>
       
-    <li class="ablog-cloud ablog-cloud-3">
+    <li class="ablog-cloud ablog-cloud-4">
       <a href="index/tag/performance.html">performance</a>
     </li>
       
@@ -944,11 +952,23 @@ window.runMermaid = runMermaid;</script>
     </li>
       
     <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/reverb.html">reverb</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
       <a href="index/tag/scipy.html">scipy</a>
     </li>
       
     <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/simd.html">simd</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
       <a href="index/tag/streaming.html">streaming</a>
+    </li>
+      
+    <li class="ablog-cloud ablog-cloud-1">
+      <a href="index/tag/tooling.html">tooling</a>
     </li>
       
     <li class="ablog-cloud ablog-cloud-1">
@@ -990,7 +1010,7 @@ window.runMermaid = runMermaid;</script>
     </li>
       
     <li>
-      <a href="index/category/releases.html">releases (6)</a>
+      <a href="index/category/releases.html">releases (7)</a>
     </li>
      
   </ul>
@@ -1004,7 +1024,7 @@ window.runMermaid = runMermaid;</script>
   <ul>
        
     <li>
-      <a href="index/author/matteo-spanio.html">Matteo Spanio (15)</a>
+      <a href="index/author/matteo-spanio.html">Matteo Spanio (16)</a>
     </li>
      
   </ul>
@@ -1018,7 +1038,7 @@ window.runMermaid = runMermaid;</script>
   <ul>
      
     <li>
-      <a href="index/2026.html">2026 (13)</a>
+      <a href="index/2026.html">2026 (14)</a>
     </li>
       
     <li>
@@ -1090,6 +1110,76 @@ window.runMermaid = runMermaid;</script>
     </span>
   </h1>
    
+  <div class="section ablog-post">
+    <h2 class="ablog-post-title">
+      <a href="2026-06-09-release-070.html">TorchFX 0.7.0: A Dynamics Suite, a Real Reverb, and the Edge</a>
+    </h2>
+    <ul class="ablog-archive">
+      <li>
+         
+        <i class="fa fa-calendar"></i>
+        
+        <span>09 June 2026</span>
+        
+      </li>
+      <div class="ablog-sidebar-item ablog__postcard2">
+   
+  <li id="ablog-sidebar-item author ablog__author">
+    <span>
+      
+      <i class="fa-fw fa fa-user"></i>
+      
+    </span>
+     
+    <a href="index/author/matteo-spanio.html">Matteo Spanio</a>
+      
+  </li>
+     
+  <li id="ablog-sidebar-item category ablog__category">
+    <span>
+      
+      <i class="fa-fw fa fa-folder-open"></i>
+      
+    </span>
+     
+    <a href="index/category/releases.html">releases</a>
+      
+  </li>
+   
+  <li id="ablog-sidebar-item tags ablog__tags">
+    <span>
+       
+      <i class="fa-fw fa fa-tags"></i>
+       
+    </span>
+     
+    <a href="index/tag/release.html">release</a>
+        
+    <a href="index/tag/dynamics.html">dynamics</a>
+        
+    <a href="index/tag/reverb.html">reverb</a>
+        
+    <a href="index/tag/simd.html">simd</a>
+        
+    <a href="index/tag/performance.html">performance</a>
+        
+    <a href="index/tag/edge.html">edge</a>
+        
+    <a href="index/tag/tooling.html">tooling</a>
+      
+  </li>
+   
+</div>
+    </ul>
+    <p class="ablog-post-excerpt"><p><strong>TorchFX 0.7.0</strong> delivers exactly what 0.6.0’s “what’s next” promised — the single-pass GPU scan, a cache-blocked CPU SIMD path for edge devices, and a full dynamics toolkit — and then some. The headline is <strong>dynamics</strong>: a <code class="docutils literal notranslate"><span class="pre">Compressor</span></code>, an <code class="docutils literal notranslate"><span class="pre">Expander</span></code>/<code class="docutils literal notranslate"><span class="pre">Gate</span></code>, and a look-ahead brick-wall <code class="docutils literal notranslate"><span class="pre">Limiter</span></code>, each a native per-channel C++/CUDA kernel. Alongside them the old toy <code class="docutils literal notranslate"><span class="pre">Reverb</span></code> is replaced by a proper <strong>Freeverb-style</strong> algorithmic reverb, many short signals can now be processed in a <strong>single batched launch</strong>, and the whole release ships itself: tagging, PyPI, and these very release notes are now automated.</p>
+</p>
+
+    <p class="ablog-post-expand">
+      <a href="2026-06-09-release-070.html"><em>Read more ...</em></a>
+    </p>
+    <hr />
+  </div>
+  
   <div class="section ablog-post">
     <h2 class="ablog-post-title">
       <a href="2026-06-04-release-060.html">TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path</a>

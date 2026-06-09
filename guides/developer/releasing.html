@@ -834,6 +834,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="project-structure.html">Project Structure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profiling.html">Profiling pipelines</a></li>
 <li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="style_guide.html">Style Guide</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Releasing</a></li>
@@ -915,6 +916,7 @@ window.runMermaid = runMermaid;</script>
 <ul class="simple">
 <li><p>Reads the new version out of <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>.</p></li>
 <li><p>If a tag <code class="docutils literal notranslate"><span class="pre">v&lt;version&gt;</span></code> doesn’t exist yet, it creates and pushes one (<code class="docutils literal notranslate"><span class="pre">v0.5.4</span></code>, <code class="docutils literal notranslate"><span class="pre">v0.6.0</span></code>, …).</p></li>
+<li><p>Creates a <strong>GitHub Release</strong> for the tag whose notes are the <code class="docutils literal notranslate"><span class="pre">##</span> <span class="pre">[&lt;version&gt;]</span></code> section of the <code class="docutils literal notranslate"><span class="pre">CHANGELOG</span></code>, extracted by <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/tools/extract_changelog.py"><code class="docutils literal notranslate"><span class="pre">tools/extract_changelog.py</span></code></a>. So the CHANGELOG entry you write in step 1 <em>is</em> the release notes — make sure it has a matching <code class="docutils literal notranslate"><span class="pre">##</span> <span class="pre">[&lt;version&gt;]</span></code> header (a placeholder is used if it doesn’t).</p></li>
 <li><p>Dispatches <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/.github/workflows/wheels.yml"><code class="docutils literal notranslate"><span class="pre">wheels.yml</span></code></a> and <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/.github/workflows/wheels-cuda.yml"><code class="docutils literal notranslate"><span class="pre">wheels-cuda.yml</span></code></a> against the new tag.</p></li>
 </ul>
 <p>The wheel workflows then:</p>
@@ -927,6 +929,7 @@ window.runMermaid = runMermaid;</script>
         flowchart LR
     PR[&quot;Version-bump PR&quot;] --&gt; Merge[&quot;Merge to master&quot;]
     Merge --&gt; Release[&quot;release.yml&lt;br/&gt;(detects bump,&lt;br/&gt;tags vX.Y.Z)&quot;]
+    Release --&gt; Notes[&quot;GitHub Release&lt;br/&gt;(CHANGELOG section)&quot;]
     Release --&gt;|workflow_dispatch| CPU[&quot;wheels.yml&lt;br/&gt;cibuildwheel × 4 OSes&quot;]
     Release --&gt;|workflow_dispatch| GPU[&quot;wheels-cuda.yml&lt;br/&gt;cu124 + cu128&quot;]
     CPU --&gt; PyPI[&quot;PyPI&lt;br/&gt;(trusted publishing)&quot;]

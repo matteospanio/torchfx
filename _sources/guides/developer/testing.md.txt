@@ -777,6 +777,27 @@ def test_gain():  # Depends on test_setup
     assert torch.allclose(gain(global_waveform), torch.ones(5) * 2.0)
 ```
 
+## Performance-regression gates
+
+`tests/test_perf_regression.py` guards the headline performance wins against silent
+regressions, and **runs in ordinary CI** (no separate workflow or GPU needed). Because
+shared CI runners are noisy, it does **not** compare absolute wall-times against a stored
+baseline (which is flaky); it asserts the *deterministic* invariants those wins depend on:
+
+- **Fusion collapses dispatches.** A depth-`K` IIR cascade `wave | (f1 | ... | fK)` must
+  execute as exactly **one** native SOS dispatch (the unfused reference issues `K`), and a
+  static `Gain` folded between sections must not add one. Dispatches are counted by
+  wrapping the `torchfx._ops` entry points — the same mechanism as
+  `tools/count_kernel_launches.py`. If the planner ever stops fusing, the count jumps and
+  the test fails.
+- **A relative wall-time smoke.** With both modules pre-built (so planning cost is
+  excluded), the fused *forward* must not be slower than `K` separate forwards. This is a
+  ratio on the same machine, so it is speed-independent, and the margin is generous
+  (`< 1.1×`) so it only trips on a catastrophic regression.
+
+When you add a new fused or kernel-level fast path, add a deterministic invariant here
+(dispatch/launch count, or a same-machine ratio) rather than an absolute timing budget.
+
 ## Related Resources
 
 - {doc}`/guides/developer/project-structure` - Project organization

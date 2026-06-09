@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Developer Documentation &#8212; TorchFX 1 documentation</title>
+    <title>Profiling pipelines &#8212; TorchFX 1 documentation</title>
   
   
   
@@ -43,12 +43,12 @@
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/index';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/profiling';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Project Structure" href="project-structure.html" />
-    <link rel="prev" title="Migration Guide" href="../migration_guide.html" /> 
+    <link rel="next" title="Documentation" href="documentation.html" />
+    <link rel="prev" title="Benchmarking" href="benchmarking.html" /> 
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -394,11 +394,11 @@
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="../api_stability.html">API Stability and Backward Compatibility</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">Migration Guide</a></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Developer Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="project-structure.html">Project Structure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
-<li class="toctree-l2"><a class="reference internal" href="profiling.html">Profiling pipelines</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Profiling pipelines</a></li>
 <li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="style_guide.html">Style Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="releasing.html">Releasing</a></li>
@@ -448,7 +448,10 @@
     
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Guides</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Developer Documentation</span></li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Developer Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Profiling pipelines</span></li>
   </ul>
 </nav>
 </div>
@@ -464,134 +467,132 @@
                 
 <div id="searchbox"></div>
                 <article class="bd-article">
-                   <section id="developer-documentation">
-<h1>Developer Documentation<a class="headerlink" href="#developer-documentation" title="Link to this heading">#</a></h1>
-<p>Resources and guidelines for TorchFX contributors and developers.</p>
-<section id="contents">
-<h2>Contents<a class="headerlink" href="#contents" title="Link to this heading">#</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="project-structure.html">Project Structure</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#repository-layout">Repository Layout</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#source-package-structure">Source Package Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#core-modules">Core Modules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#module-dependencies">Module Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#import-patterns">Import Patterns</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#supporting-infrastructure">Supporting Infrastructure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#configuration-files">Configuration Files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#package-distribution">Package Distribution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#best-practices">Best Practices</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project-structure.html#related-resources">Related Resources</a></li>
+                   <section id="profiling-pipelines">
+<h1>Profiling pipelines<a class="headerlink" href="#profiling-pipelines" title="Link to this heading">#</a></h1>
+<p>How to find where time goes in a TorchFX pipeline, and the usual fixes. For <em>comparative</em>
+measurement against a baseline see <a class="reference internal" href="benchmarking.html"><span class="doc">Benchmarking</span></a>; this guide is
+about diagnosing a single pipeline.</p>
+<section id="time-it-correctly-first">
+<h2>Time it correctly first<a class="headerlink" href="#time-it-correctly-first" title="Link to this heading">#</a></h2>
+<p>Three things will give you wrong numbers if you skip them:</p>
+<ul class="simple">
+<li><p><strong>Warm up.</strong> Filters compute their coefficients lazily on the <em>first</em> <code class="docutils literal notranslate"><span class="pre">forward</span></code>, and the
+native extension’s first call pays one-time setup. Run the pipeline a few times before
+timing.</p></li>
+<li><p><strong>Synchronise CUDA.</strong> Kernel launches are asynchronous, so <code class="docutils literal notranslate"><span class="pre">perf_counter</span></code> around a GPU
+call measures only the <em>launch</em>, not the work. Call <code class="docutils literal notranslate"><span class="pre">torch.cuda.synchronize()</span></code> before
+reading the clock.</p></li>
+<li><p><strong>Use the median</strong>, not a single sample — the OS scheduler adds multi-millisecond
+outliers (see the realtime tail discussion in the benchmarking guide).</p></li>
 </ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#test-infrastructure-configuration">Test Infrastructure Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#test-organization">Test Organization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#test-execution-flow">Test Execution Flow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#running-tests">Running Tests</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#test-types-and-patterns">Test Types and Patterns</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#assertion-patterns">Assertion Patterns</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#writing-new-tests">Writing New Tests</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#coverage-requirements">Coverage Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#id1">Common Test Patterns</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#ci-testing">CI Testing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#best-practices">Best Practices</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#performance-regression-gates">Performance-regression gates</a></li>
-<li class="toctree-l2"><a class="reference internal" href="testing.html#related-resources">Related Resources</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="benchmarking.html">Benchmarking</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#benchmark-suite-structure">Benchmark Suite Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#benchmark-architecture">Benchmark Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#common-infrastructure">Common Infrastructure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#api-benchmark">API Benchmark</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#fir-filter-benchmark">FIR Filter Benchmark</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#iir-filter-benchmark">IIR Filter Benchmark</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#interpreting-results">Interpreting Results</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#visualization">Visualization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#running-all-benchmarks">Running All Benchmarks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#benchmark-maintenance">Benchmark Maintenance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#best-practices">Best Practices</a></li>
-<li class="toctree-l2"><a class="reference internal" href="benchmarking.html#related-resources">Related Resources</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="profiling.html">Profiling pipelines</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="profiling.html#time-it-correctly-first">Time it correctly first</a></li>
-<li class="toctree-l2"><a class="reference internal" href="profiling.html#the-kernel-timeline-with-torch-profiler">The kernel timeline with <code class="docutils literal notranslate"><span class="pre">torch.profiler</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="profiling.html#counting-native-dispatches">Counting native dispatches</a></li>
-<li class="toctree-l2"><a class="reference internal" href="profiling.html#common-bottlenecks-and-fixes">Common bottlenecks and fixes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="profiling.html#see-also">See also</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="documentation.html">Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#documentation-system-architecture">Documentation System Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#documentation-structure">Documentation Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#building-documentation-locally">Building Documentation Locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#docstring-style-guide">Docstring Style Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#writing-myst-markdown">Writing MyST Markdown</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#adding-mermaid-diagrams">Adding Mermaid Diagrams</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#api-documentation">API Documentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#documentation-testing">Documentation Testing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#github-actions-deployment">GitHub Actions Deployment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#contributing-to-documentation">Contributing to Documentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#best-practices">Best Practices</a></li>
-<li class="toctree-l2"><a class="reference internal" href="documentation.html#related-resources">Related Resources</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="style_guide.html">Style Guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="style_guide.html#naming-conventions">Naming Conventions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="style_guide.html#unit-conventions">Unit Conventions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="style_guide.html#code-organization-patterns">Code Organization Patterns</a></li>
-<li class="toctree-l2"><a class="reference internal" href="style_guide.html#validation-patterns">Validation Patterns</a></li>
-<li class="toctree-l2"><a class="reference internal" href="style_guide.html#documentation-standards">Documentation Standards</a></li>
-<li class="toctree-l2"><a class="reference internal" href="style_guide.html#testing-standards">Testing Standards</a></li>
-<li class="toctree-l2"><a class="reference internal" href="style_guide.html#code-quality-tools">Code Quality Tools</a></li>
-<li class="toctree-l2"><a class="reference internal" href="style_guide.html#deprecation-guidelines">Deprecation Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="style_guide.html#questions">Questions?</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="releasing.html">Releasing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="releasing.html#day-to-day-flow">Day-to-day flow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="releasing.html#one-time-setup">One-time setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="releasing.html#manual-out-of-band-tagging">Manual / out-of-band tagging</a></li>
-<li class="toctree-l2"><a class="reference internal" href="releasing.html#troubleshooting">Troubleshooting</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap to v1.0.0</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#vision">Vision</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#current-state">Current State</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#epic-1-core-library-stabilization">Epic 1: Core Library Stabilization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#epic-2-real-time-audio-processing">Epic 2: Real-Time Audio Processing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#epic-3-cli-application">Epic 3: CLI Application</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#epic-4-performance-optimization-cuda">Epic 4: Performance Optimization &amp; CUDA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#epic-5-comprehensive-documentation">Epic 5: Comprehensive Documentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#epic-6-testing-quality-assurance">Epic 6: Testing &amp; Quality Assurance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#epic-7-additional-effects">Epic 7: Additional Effects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#implementation-phases">Implementation Phases</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#success-metrics-for-v1-0-0">Success Metrics for v1.0.0</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#code-quality-standards">Code Quality Standards</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#future-considerations-post-v1-0">Future Considerations (Post-v1.0)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="roadmap.html#contributing">Contributing</a></li>
-</ul>
-</li>
-</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">wave</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">Wave</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">480_000</span><span class="p">),</span> <span class="mi">48_000</span><span class="p">)</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">HiButterworth</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">LoButterworth</span><span class="p">(</span><span class="mi">12_000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>                      <span class="c1"># warm up (lazy coeffs + first-call setup)</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">chain</span>
+
+<span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span> <span class="k">if</span> <span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">is_cuda</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter_ns</span><span class="p">()</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">chain</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span> <span class="k">if</span> <span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">is_cuda</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter_ns</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span>
+<span class="n">samples</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;median </span><span class="si">{</span><span class="n">samples</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+</pre></div>
 </div>
 </section>
-<section id="quick-links">
-<h2>Quick Links<a class="headerlink" href="#quick-links" title="Link to this heading">#</a></h2>
+<section id="the-kernel-timeline-with-torch-profiler">
+<h2>The kernel timeline with <code class="docutils literal notranslate"><span class="pre">torch.profiler</span></code><a class="headerlink" href="#the-kernel-timeline-with-torch-profiler" title="Link to this heading">#</a></h2>
+<p>To see <em>which</em> operations dominate (and, on CUDA, the launch vs. compute split):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch.profiler</span><span class="w"> </span><span class="kn">import</span> <span class="n">profile</span><span class="p">,</span> <span class="n">ProfilerActivity</span>
+
+<span class="n">acts</span> <span class="o">=</span> <span class="p">[</span><span class="n">ProfilerActivity</span><span class="o">.</span><span class="n">CPU</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">wave</span><span class="o">.</span><span class="n">ys</span><span class="o">.</span><span class="n">is_cuda</span><span class="p">:</span>
+    <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ProfilerActivity</span><span class="o">.</span><span class="n">CUDA</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">profile</span><span class="p">(</span><span class="n">activities</span><span class="o">=</span><span class="n">acts</span><span class="p">,</span> <span class="n">record_shapes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">prof</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">chain</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">prof</span><span class="o">.</span><span class="n">key_averages</span><span class="p">()</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">sort_by</span><span class="o">=</span><span class="s2">&quot;self_cuda_time_total&quot;</span><span class="p">,</span> <span class="n">row_limit</span><span class="o">=</span><span class="mi">15</span><span class="p">))</span>
+<span class="c1"># CPU-only: sort_by=&quot;self_cpu_time_total&quot;</span>
+</pre></div>
+</div>
+<p>Look for the <code class="docutils literal notranslate"><span class="pre">torchfx_ext::</span></code> entries (<code class="docutils literal notranslate"><span class="pre">sos_forward</span></code>, <code class="docutils literal notranslate"><span class="pre">biquad_forward</span></code>, …) — those are the
+native kernels. A long tail of many short native calls usually means the chain <strong>didn’t
+fuse</strong> (see below). Export a Chrome trace with <code class="docutils literal notranslate"><span class="pre">prof.export_chrome_trace(&quot;trace.json&quot;)</span></code>
+and open it in <code class="docutils literal notranslate"><span class="pre">chrome://tracing</span></code> for a visual timeline.</p>
+</section>
+<section id="counting-native-dispatches">
+<h2>Counting native dispatches<a class="headerlink" href="#counting-native-dispatches" title="Link to this heading">#</a></h2>
+<p>The single most useful TorchFX-specific check: how many times does the pipeline cross into
+the native extension? A fused IIR cascade should be <strong>one</strong> dispatch regardless of depth.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>tools/count_kernel_launches.py<span class="w"> </span>--depths<span class="w"> </span><span class="m">2</span>,5,10,20
+</pre></div>
+</div>
+<p>It reports <code class="docutils literal notranslate"><span class="pre">native_calls</span></code> (Python→C++ dispatches) and <code class="docutils literal notranslate"><span class="pre">cuda_launches</span></code> for the fused vs.
+unfused paths. In your own code, wrap the dispatch to count it (the mechanism
+<code class="docutils literal notranslate"><span class="pre">tests/test_perf_regression.py</span></code> uses):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ops</span>
+
+<span class="n">orig</span> <span class="o">=</span> <span class="n">_ops</span><span class="o">.</span><span class="n">parallel_iir_forward</span>
+<span class="n">calls</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">counted</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">k</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">calls</span><span class="p">;</span> <span class="n">calls</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">orig</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">k</span><span class="p">)</span>
+<span class="n">_ops</span><span class="o">.</span><span class="n">parallel_iir_forward</span> <span class="o">=</span> <span class="n">counted</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">wave</span> <span class="o">|</span> <span class="n">chain</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SOS dispatches:&quot;</span><span class="p">,</span> <span class="n">calls</span><span class="p">)</span>   <span class="c1"># 1 if the cascade fused</span>
+<span class="n">_ops</span><span class="o">.</span><span class="n">parallel_iir_forward</span> <span class="o">=</span> <span class="n">orig</span>
+</pre></div>
+</div>
+</section>
+<section id="common-bottlenecks-and-fixes">
+<h2>Common bottlenecks and fixes<a class="headerlink" href="#common-bottlenecks-and-fixes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Symptom</p></th>
+<th class="head"><p>Likely cause</p></th>
+<th class="head"><p>Fix</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Many short <code class="docutils literal notranslate"><span class="pre">sos_forward</span></code> calls</p></td>
+<td><p>IIR filters applied one at a time</p></td>
+<td><p>Build the chain with <code class="docutils literal notranslate"><span class="pre">|</span></code> so the deferred planner <strong>fuses</strong> consecutive IIR/biquads into one <code class="docutils literal notranslate"><span class="pre">FusedSOSCascade</span></code>; avoid forcing materialisation between them.</p></td>
+</tr>
+<tr class="row-odd"><td><p>GPU slower than expected on float32 in</p></td>
+<td><p>Input upcast to float64</p></td>
+<td><p>Pass float32 tensors — the kernels dispatch on dtype and run the FP32 path (≈3× on consumer GPUs).</p></td>
+</tr>
+<tr class="row-even"><td><p>High per-chunk latency on short GPU chunks</p></td>
+<td><p>Per-section launch overhead dominates</p></td>
+<td><p>Use <code class="docutils literal notranslate"><span class="pre">torchfx.realtime.CudaGraphRunner</span></code> to replay a fixed-shape forward as one graph launch.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Throughput-bound over many short files</p></td>
+<td><p>One launch per file, low occupancy</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torchfx.batch_process(waves,</span> <span class="pre">effect)</span></code> runs them in a single launch.</p></td>
+</tr>
+<tr class="row-even"><td><p>Sequential vs. parallel scan crossover</p></td>
+<td><p>Signal length near <code class="docutils literal notranslate"><span class="pre">PARALLEL_SCAN_THRESHOLD</span></code></p></td>
+<td><p>Tune the <code class="docutils literal notranslate"><span class="pre">threshold=</span></code> argument (dtype-aware default); <code class="docutils literal notranslate"><span class="pre">benchmarks/bench_threshold_sweep.py</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="see-also">
+<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="project-structure.html"><span class="std std-doc">Project Structure</span></a> - Repository organization and module architecture</p></li>
-<li><p><a class="reference internal" href="testing.html"><span class="std std-doc">Testing</span></a> - Test infrastructure, patterns, and coverage</p></li>
-<li><p><a class="reference internal" href="benchmarking.html"><span class="std std-doc">Benchmarking</span></a> - Performance measurement and comparison</p></li>
-<li><p><a class="reference internal" href="profiling.html"><span class="std std-doc">Profiling</span></a> - Diagnosing where time goes in a pipeline, and the usual fixes</p></li>
-<li><p><a class="reference internal" href="documentation.html"><span class="std std-doc">Documentation</span></a> - Documentation build system and writing guide</p></li>
-<li><p><a class="reference internal" href="style_guide.html"><span class="std std-doc">Style Guide</span></a> - Coding standards and best practices</p></li>
-<li><p><a class="reference internal" href="releasing.html"><span class="std std-doc">Releasing</span></a> - How a version bump becomes a published release</p></li>
-<li><p><a class="reference internal" href="roadmap.html"><span class="std std-doc">Roadmap</span></a> - Project roadmap and development plans</p></li>
+<li><p><a class="reference internal" href="benchmarking.html"><span class="doc">Benchmarking</span></a> — comparative benchmarking and the suite layout.</p></li>
+<li><p><a class="reference internal" href="testing.html"><span class="doc">Testing</span></a> — the deterministic perf-regression gates that keep
+fusion from silently breaking.</p></li>
 </ul>
 </section>
 </section>
@@ -610,20 +611,20 @@
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../migration_guide.html"
+       href="benchmarking.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Migration Guide</p>
+        <p class="prev-next-title">Benchmarking</p>
       </div>
     </a>
     <a class="right-next"
-       href="project-structure.html"
+       href="documentation.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Project Structure</p>
+        <p class="prev-next-title">Documentation</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -646,8 +647,11 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contents">Contents</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-links">Quick Links</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#time-it-correctly-first">Time it correctly first</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-kernel-timeline-with-torch-profiler">The kernel timeline with <code class="docutils literal notranslate"><span class="pre">torch.profiler</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#counting-native-dispatches">Counting native dispatches</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-bottlenecks-and-fixes">Common bottlenecks and fixes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#see-also">See also</a></li>
 </ul>
   </nav></div>
 
@@ -655,7 +659,7 @@
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/developer/index.md">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/guides/developer/profiling.md">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -670,7 +674,7 @@
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../../_sources/guides/developer/index.md.txt">
+    <a href="../../_sources/guides/developer/profiling.md.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

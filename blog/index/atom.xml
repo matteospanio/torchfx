@@ -2,10 +2,148 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
   <id>https://matteospanio.github.io/torchfx/</id>
   <title>TorchFX Blog</title>
-  <updated>2026-06-04T11:05:33.640989+00:00</updated>
+  <updated>2026-06-09T15:51:28.501545+00:00</updated>
   <link href="https://matteospanio.github.io/torchfx/"/>
   <link href="https://matteospanio.github.io/torchfx/blog/index/atom.xml" rel="self"/>
   <generator uri="https://ablog.readthedocs.io/" version="0.11.12">ABlog</generator>
+  <entry>
+    <id>https://matteospanio.github.io/torchfx/blog/2026-06-09-release-070.html</id>
+    <title>TorchFX 0.7.0: A Dynamics Suite, a Real Reverb, and the Edge</title>
+    <updated>2026-06-09T00:00:00+00:00</updated>
+    <author>
+      <name>Matteo Spanio</name>
+    </author>
+    <content type="html">&lt;section id="torchfx-0-7-0-a-dynamics-suite-a-real-reverb-and-the-edge"&gt;
+
+&lt;p&gt;&lt;strong&gt;TorchFX 0.7.0&lt;/strong&gt; delivers exactly what 0.6.0’s “what’s next” promised — the single-pass GPU scan, a cache-blocked CPU SIMD path for edge devices, and a full dynamics toolkit — and then some. The headline is &lt;strong&gt;dynamics&lt;/strong&gt;: a &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Compressor&lt;/span&gt;&lt;/code&gt;, an &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Expander&lt;/span&gt;&lt;/code&gt;/&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Gate&lt;/span&gt;&lt;/code&gt;, and a look-ahead brick-wall &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Limiter&lt;/span&gt;&lt;/code&gt;, each a native per-channel C++/CUDA kernel. Alongside them the old toy &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Reverb&lt;/span&gt;&lt;/code&gt; is replaced by a proper &lt;strong&gt;Freeverb-style&lt;/strong&gt; algorithmic reverb, many short signals can now be processed in a &lt;strong&gt;single batched launch&lt;/strong&gt;, and the whole release ships itself: tagging, PyPI, and these very release notes are now automated.&lt;/p&gt;
+&lt;p&gt;One breaking change: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Reverb&lt;/span&gt;&lt;/code&gt;’s constructor changed (see below). Everything else from 0.6.x runs unchanged.&lt;/p&gt;
+&lt;section id="a-full-dynamics-toolkit"&gt;
+&lt;h2&gt;A full dynamics toolkit&lt;/h2&gt;
+&lt;p&gt;Four new dynamics processors, all built on the same high-quality decoupled peak detector (release max-hold + attack one-pole; Giannoulis, Massberg &amp;amp; Reiss, 2012) running one channel per thread in C++/CUDA:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Compressor&lt;/span&gt;&lt;/code&gt;&lt;/strong&gt; — threshold/ratio/attack/release, soft knee, makeup gain, peak or RMS detection, and a &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;ratio=inf&lt;/span&gt;&lt;/code&gt; limiter mode.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Expander&lt;/span&gt;&lt;/code&gt; / &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Gate&lt;/span&gt;&lt;/code&gt;&lt;/strong&gt; — the mirror of the compressor: attenuate &lt;em&gt;below&lt;/em&gt; the threshold. &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Gate&lt;/span&gt;&lt;/code&gt; is the infinite-ratio convenience (a hard noise gate) with an optional &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;floor&lt;/span&gt;&lt;/code&gt; (range).&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Limiter&lt;/span&gt;&lt;/code&gt;&lt;/strong&gt; — a &lt;strong&gt;look-ahead brick-wall&lt;/strong&gt; peak limiter. A vectorised forward max-pool computes the look-ahead window, the gain is attack/release-smoothed, and a per-sample clamp &lt;strong&gt;guarantees &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;|y|&lt;/span&gt; &lt;span class="pre"&gt;≤&lt;/span&gt; &lt;span class="pre"&gt;threshold&lt;/span&gt;&lt;/code&gt;&lt;/strong&gt; — so unlike &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Compressor(ratio=inf)&lt;/span&gt;&lt;/code&gt;, it can never overshoot a single sample.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;as&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;fx&lt;/span&gt;
+
+&lt;span class="n"&gt;mastered&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+    &lt;span class="n"&gt;wave&lt;/span&gt;
+    &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;fx&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;effect&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Compressor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threshold&lt;/span&gt;&lt;span class="o"&gt;=-&lt;/span&gt;&lt;span class="mi"&gt;18&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ratio&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;attack&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.005&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;release&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.08&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;fx&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;effect&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Limiter&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;threshold&lt;/span&gt;&lt;span class="o"&gt;=-&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;lookahead&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.005&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="a-reverb-worth-the-name"&gt;
+&lt;h2&gt;A reverb worth the name&lt;/h2&gt;
+&lt;p&gt;The old &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;Reverb&lt;/span&gt;&lt;/code&gt; was a single feedforward comb — barely a reverb. 0.7.0 replaces it with the classic &lt;strong&gt;Schroeder/Moorer (Freeverb) structure&lt;/strong&gt;: per channel, &lt;strong&gt;8 parallel low-pass-feedback comb filters&lt;/strong&gt; summed through &lt;strong&gt;4 series all-pass diffusers&lt;/strong&gt;, in a fused native kernel (ring buffers in per-channel scratch, tunings scaled to the sample rate) for a dense, natural decay.&lt;/p&gt;
+&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# Breaking change: room_size / damping / mix (was delay / decay / mix)&lt;/span&gt;
+&lt;span class="n"&gt;hall&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;fx&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;effect&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Reverb&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;room_size&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.85&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;damping&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;mix&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0.25&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="performance-the-gpu-scan-and-the-edge"&gt;
+&lt;h2&gt;Performance: the GPU scan, and the edge&lt;/h2&gt;
+&lt;p&gt;Two kernel-level wins close out the 0.6.0 roadmap, plus a new batching path.&lt;/p&gt;
+&lt;section id="single-pass-sos-scan-gpu"&gt;
+&lt;h3&gt;Single-pass SOS scan (GPU)&lt;/h3&gt;
+&lt;p&gt;The fused cascade’s forcing pass and the three-phase Blelloch scan are folded into &lt;strong&gt;one decoupled-look-back kernel&lt;/strong&gt; (Merrill–Garland / CUB style, with an atomic per-section tile dispenser for deadlock-free forward progress). Per fused section drops from ~8 CUDA launches to &lt;strong&gt;2&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;K=50 cascade (RTX 3070)&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;3-phase&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;single-pass&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;CUDA launches&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;600&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;102&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;5.9× fewer&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;Fused cascade time&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;18.9 ms&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;9.9 ms&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;~1.9×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;It’s now the default GPU path (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TORCHFX_FUSED_SCAN=0&lt;/span&gt;&lt;/code&gt; for the legacy oracle), bit-exact to it on sm_86 and sm_89.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="cache-blocked-cross-channel-cpu-simd-the-edge"&gt;
+&lt;h3&gt;Cache-blocked cross-channel CPU SIMD (the edge)&lt;/h3&gt;
+&lt;p&gt;When channels outnumber CPU cores, the scalar kernel runs them serially. A new path packs a SIMD vector of channels using &lt;strong&gt;L1-resident tile transposes&lt;/strong&gt; (the fix for an earlier full-transpose attempt that went memory-bound), gated to &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;C&lt;/span&gt; &lt;span class="pre"&gt;&amp;gt;&lt;/span&gt; &lt;span class="pre"&gt;cores&lt;/span&gt;&lt;/code&gt;. Validated on a &lt;strong&gt;Raspberry Pi 5&lt;/strong&gt; (Cortex-A76 ×4) — the edge target:&lt;/p&gt;
+&lt;div class="pst-scrollable-table-container"&gt;&lt;table class="table"&gt;
+&lt;thead&gt;
+&lt;tr class="row-odd"&gt;&lt;th class="head"&gt;&lt;p&gt;4-section SOS, float32&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;Pi 5&lt;/p&gt;&lt;/th&gt;
+&lt;th class="head text-right"&gt;&lt;p&gt;12-core x86&lt;/p&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;C=8&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;1.8×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;scalar (≤ cores)&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-odd"&gt;&lt;td&gt;&lt;p&gt;C=16&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;2.6×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;1.3×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class="row-even"&gt;&lt;td&gt;&lt;p&gt;C=32&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;2.6×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;td class="text-right"&gt;&lt;p&gt;&lt;strong&gt;2.4×&lt;/strong&gt;&lt;/p&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;No regression below the gate — a win on both the edge device and the desktop.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="batched-multi-signal-processing"&gt;
+&lt;h3&gt;Batched multi-signal processing&lt;/h3&gt;
+&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.batch_process(waves,&lt;/span&gt; &lt;span class="pre"&gt;effect)&lt;/span&gt;&lt;/code&gt; pads many signals to a common length, concatenates them on the channel dimension, and runs the effect in a &lt;strong&gt;single&lt;/strong&gt; kernel launch — numerically identical to per-file, but filling the GPU and amortising dispatch overhead. &lt;strong&gt;~2.5–7× faster on CPU and ~3–4× on GPU&lt;/strong&gt; for 8–512 stereo files. Ideal for the CLI batch/watch modes.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+&lt;section id="tooling-that-ships-itself"&gt;
+&lt;h2&gt;Tooling that ships itself&lt;/h2&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Automated releases.&lt;/strong&gt; A version bump on &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;master&lt;/span&gt;&lt;/code&gt; now tags &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;vX.Y.Z&lt;/span&gt;&lt;/code&gt;, publishes the wheels to PyPI and the CUDA index, &lt;strong&gt;and&lt;/strong&gt; opens a GitHub Release whose notes are the CHANGELOG section for that version. (This post’s release ran through it.)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Performance-regression gates&lt;/strong&gt; in ordinary CI — deterministic dispatch-count invariants (a depth-K cascade must fuse to &lt;em&gt;one&lt;/em&gt; native call) plus a same-machine relative-time smoke, so fusion can’t silently regress.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Codecov&lt;/strong&gt; project/patch status, a &lt;strong&gt;profiling guide&lt;/strong&gt; for diagnosing pipelines, and a fix for the flaky CUDA-wheel disk-space failures.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section id="installation"&gt;
+&lt;h2&gt;Installation&lt;/h2&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;==&lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.7.0
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;CUDA wheels from the GitHub Pages index:&lt;/p&gt;
+&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torch&lt;span class="w"&gt; &lt;/span&gt;--index-url&lt;span class="w"&gt; &lt;/span&gt;https://download.pytorch.org/whl/cu128
+pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nv"&gt;torchfx&lt;/span&gt;&lt;span class="o"&gt;==&lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;.7.0&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;--index-url&lt;span class="w"&gt; &lt;/span&gt;https://matteospanio.github.io/torchfx/wheels/cu128/&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;--extra-index-url&lt;span class="w"&gt; &lt;/span&gt;https://pypi.org/simple
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+&lt;section id="whats-next"&gt;
+&lt;h2&gt;What’s next&lt;/h2&gt;
+&lt;p&gt;With dynamics and the headline kernel work landed, the focus turns to the &lt;strong&gt;v0.8.0 realtime milestone&lt;/strong&gt; — PipeWire/JACK integration and a GPU realtime path — plus production effects (chorus, flanger, phaser) on the road to v1.0. The full list of changes is in the &lt;a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/CHANGELOG"&gt;CHANGELOG&lt;/a&gt;; issues and feature requests are welcome on &lt;a class="reference external" href="https://github.com/matteospanio/torchfx"&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+</content>
+    <link href="https://matteospanio.github.io/torchfx/blog/2026-06-09-release-070.html"/>
+    <summary>TorchFX 0.7.0 delivers exactly what 0.6.0’s “what’s next” promised — the single-pass GPU scan, a cache-blocked CPU SIMD path for edge devices, and a full dynamics toolkit — and then some. The headline is dynamics: a Compressor, an Expander/Gate, and a look-ahead brick-wall Limiter, each a native per-channel C++/CUDA kernel. Alongside them the old toy Reverb is replaced by a proper Freeverb-style algorithmic reverb, many short signals can now be processed in a single batched launch, and the whole release ships itself: tagging, PyPI, and these very release notes are now automated.</summary>
+    <category term="dynamics" label="dynamics"/>
+    <category term="edge" label="edge"/>
+    <category term="performance" label="performance"/>
+    <category term="release" label="release"/>
+    <category term="reverb" label="reverb"/>
+    <category term="simd" label="simd"/>
+    <category term="tooling" label="tooling"/>
+    <published>2026-06-09T00:00:00+00:00</published>
+  </entry>
   <entry>
     <id>https://matteospanio.github.io/torchfx/blog/2026-06-04-release-060.html</id>
     <title>TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path</title>
@@ -1363,456 +1501,6 @@ torchfx&lt;span class="w"&gt; &lt;/span&gt;--help
     <category term="cli" label="cli"/>
     <category term="tools" label="tools"/>
     <category term="workflow" label="workflow"/>
-    <published>2026-02-15T00:00:00+00:00</published>
-  </entry>
-  <entry>
-    <id>https://matteospanio.github.io/torchfx/blog/2026-02-15-release-040.html</id>
-    <title>TorchFX 0.4.0: Production-Ready Audio DSP 🚀</title>
-    <updated>2026-02-15T00:00:00+00:00</updated>
-    <author>
-      <name>Matteo Spanio</name>
-    </author>
-    <content type="html">&lt;section id="torchfx-0-4-0-production-ready-audio-dsp"&gt;
-
-&lt;p&gt;I’m thrilled to announce &lt;strong&gt;TorchFX 0.4.0&lt;/strong&gt;, the biggest release yet. This version transforms TorchFX from a research library into a &lt;strong&gt;audio DSP toolkit&lt;/strong&gt; with real-time processing, and a powerful CLI interface.&lt;/p&gt;
-&lt;p&gt;This release represents months of work implementing the core features needed for v1.0.0. Let’s dive into what’s new!&lt;/p&gt;
-&lt;section id="release-highlights"&gt;
-&lt;h2&gt;🎯 Release Highlights&lt;/h2&gt;
-&lt;section id="full-featured-cli-application"&gt;
-&lt;h3&gt;1. Full-Featured CLI Application&lt;/h3&gt;
-&lt;p&gt;The crown jewel of 0.4.0 is a &lt;strong&gt;complete command-line interface&lt;/strong&gt; that brings GPU-accelerated audio processing to your terminal:&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;11 Commands:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;process&lt;/span&gt;&lt;/code&gt; — Apply effects to audio (single/batch/pipes)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;info&lt;/span&gt;&lt;/code&gt; — Display file metadata&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;play&lt;/span&gt;&lt;/code&gt; — Play audio with effects&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;record&lt;/span&gt;&lt;/code&gt; — Record from microphone&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;convert&lt;/span&gt;&lt;/code&gt; — Format/rate/channel conversion (sox-compatible)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;trim&lt;/span&gt;&lt;/code&gt; — Extract time ranges (sox-compatible)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;concat&lt;/span&gt;&lt;/code&gt; — Join multiple files (sox-compatible)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;stats&lt;/span&gt;&lt;/code&gt; — Signal statistics (sox-compatible)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;preset&lt;/span&gt;&lt;/code&gt; — Manage reusable effect chains (save/load/list/show/delete/apply)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;interactive&lt;/span&gt;&lt;/code&gt; — Launch the REPL&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;watch&lt;/span&gt;&lt;/code&gt; — Monitor directories for auto-processing&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;Example workflows:&lt;/strong&gt;&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# Batch processing on GPU&lt;/span&gt;
-torchfx&lt;span class="w"&gt; &lt;/span&gt;--device&lt;span class="w"&gt; &lt;/span&gt;cuda&lt;span class="w"&gt; &lt;/span&gt;process&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;*.wav&amp;quot;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;-O&lt;span class="w"&gt; &lt;/span&gt;./processed/&lt;span class="w"&gt; &lt;/span&gt;-e&lt;span class="w"&gt; &lt;/span&gt;normalize
-
-&lt;span class="c1"&gt;# Unix pipes&lt;/span&gt;
-cat&lt;span class="w"&gt; &lt;/span&gt;input.wav&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="w"&gt; &lt;/span&gt;process&lt;span class="w"&gt; &lt;/span&gt;-&lt;span class="w"&gt; &lt;/span&gt;-&lt;span class="w"&gt; &lt;/span&gt;-e&lt;span class="w"&gt; &lt;/span&gt;normalize&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;|&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;aplay
-
-&lt;span class="c1"&gt;# Watch DAW export folder&lt;/span&gt;
-torchfx&lt;span class="w"&gt; &lt;/span&gt;watch&lt;span class="w"&gt; &lt;/span&gt;./bounces/&lt;span class="w"&gt; &lt;/span&gt;./mastered/&lt;span class="w"&gt; &lt;/span&gt;--preset&lt;span class="w"&gt; &lt;/span&gt;mastering
-
-&lt;span class="c1"&gt;# Interactive mode with live performance&lt;/span&gt;
-torchfx&lt;span class="w"&gt; &lt;/span&gt;interactive
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;See the &lt;a class="reference internal" href="2026-02-15-cli-interface.html"&gt;&lt;span class="std std-doc"&gt;CLI blog post&lt;/span&gt;&lt;/a&gt; for full details.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="interactive-repl-with-live-performance-mode"&gt;
-&lt;h3&gt;2. Interactive REPL with Live Performance Mode&lt;/h3&gt;
-&lt;p&gt;The REPL enables &lt;strong&gt;real-time audio manipulation&lt;/strong&gt; with instant effect changes:&lt;/p&gt;
-&lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&amp;gt; load song.wav
-torchfx&amp;gt; live
-▶ Live playback started (looping)
-
-torchfx&amp;gt; add reverb:decay=0.8,mix=0.5
-✓ [1] Added reverb:decay=0.8,mix=0.5
-# ← Effect applies while playing
-
-torchfx&amp;gt; preset load mastering
-✓ Loaded preset &amp;#39;mastering&amp;#39; (3 effects)
-# ← Entire chain switches in real-time
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;&lt;strong&gt;Key features:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Lock-free circular buffer for glitch-free playback&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Effect hot-swapping at buffer boundaries (~46ms latency)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;prompt_toolkit with tab completion and persistent history&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Perfect for sound design, education, and live performance&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Read the &lt;a class="reference internal" href="2026-02-15-repl-live-performance.html"&gt;&lt;span class="std std-doc"&gt;REPL blog post&lt;/span&gt;&lt;/a&gt; for the full story.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="input-validation-layer-torchfx-validation"&gt;
-&lt;h3&gt;3. Input Validation Layer (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.validation&lt;/span&gt;&lt;/code&gt;)&lt;/h3&gt;
-&lt;p&gt;Error handling with context-aware messages:&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Exception hierarchy:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TorchFXError&lt;/span&gt;&lt;/code&gt; (base — catch all library errors)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidParameterError&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidSampleRateError&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidRangeError&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidShapeError&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidTypeError&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;AudioProcessingError&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;CoefficientComputationError&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;FilterInstabilityError&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;Validator functions:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_sample_rate()&lt;/span&gt;&lt;/code&gt; — Ensure valid sampling rates&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_positive()&lt;/span&gt;&lt;/code&gt; — Check positive numbers&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_range()&lt;/span&gt;&lt;/code&gt; — Verify parameter bounds&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_in_set()&lt;/span&gt;&lt;/code&gt; — Enum-like validation&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_tensor_ndim()&lt;/span&gt;&lt;/code&gt; — Tensor shape checking&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_audio_tensor()&lt;/span&gt;&lt;/code&gt; — Audio-specific validation&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_type()&lt;/span&gt;&lt;/code&gt; — Type checking with suggestions&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_cutoff_frequency()&lt;/span&gt;&lt;/code&gt; — Filter cutoff validation&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_filter_order()&lt;/span&gt;&lt;/code&gt; — Order constraints&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;validate_q_factor()&lt;/span&gt;&lt;/code&gt; — Q parameter validation&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;Example:&lt;/strong&gt;&lt;/p&gt;
-&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.validation&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;validate_sample_rate&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;InvalidSampleRateError&lt;/span&gt;
-
-&lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
-    &lt;span class="n"&gt;validate_sample_rate&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;48000&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;  &lt;span class="c1"&gt;# OK&lt;/span&gt;
-    &lt;span class="n"&gt;validate_sample_rate&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;   &lt;span class="c1"&gt;# Raises with helpful message&lt;/span&gt;
-&lt;span class="k"&gt;except&lt;/span&gt; &lt;span class="n"&gt;InvalidSampleRateError&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
-    &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;  &lt;span class="c1"&gt;# &amp;quot;Invalid sample rate: -100 (must be positive)&amp;quot;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;All exceptions include:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Parameter name&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Actual value&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Expected value/range&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Suggestion for fixing&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="logging-infrastructure-torchfx-logging"&gt;
-&lt;h3&gt;4. Logging Infrastructure (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.logging&lt;/span&gt;&lt;/code&gt;)&lt;/h3&gt;
-&lt;p&gt;Production-grade logging following Python best practices:&lt;/p&gt;
-&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.logging&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;as&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;tfx_log&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Enable logging (NullHandler by default)&lt;/span&gt;
-&lt;span class="n"&gt;tfx_log&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;enable_logging&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;        &lt;span class="c1"&gt;# INFO level&lt;/span&gt;
-&lt;span class="n"&gt;tfx_log&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;enable_debug_logging&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;  &lt;span class="c1"&gt;# DEBUG level&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Get module-specific loggers&lt;/span&gt;
-&lt;span class="n"&gt;logger&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;tfx_log&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_logger&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;torchfx.filter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Performance profiling&lt;/span&gt;
-&lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;tfx_log&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;log_performance&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Heavy operation&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
-    &lt;span class="c1"&gt;# ... code ...&lt;/span&gt;
-    &lt;span class="k"&gt;pass&lt;/span&gt;  &lt;span class="c1"&gt;# Logs execution time at INFO level&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Or as decorator&lt;/span&gt;
-&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.logging&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;LogPerformance&lt;/span&gt;
-
-&lt;span class="nd"&gt;@LogPerformance&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;My function&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;span class="k"&gt;def&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nf"&gt;process_audio&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
-    &lt;span class="k"&gt;pass&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;&lt;strong&gt;Features:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Hierarchical loggers: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.performance&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.&amp;lt;module&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Opt-in by default (follows Python logging conventions)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Performance utilities for profiling&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;DEBUG logs include detailed parameter info&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="real-time-processing-module-torchfx-realtime"&gt;
-&lt;h3&gt;5. Real-Time Processing Module (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.realtime&lt;/span&gt;&lt;/code&gt;)&lt;/h3&gt;
-&lt;p&gt;Complete real-time audio infrastructure:&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Core classes:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;RealtimeProcessor&lt;/span&gt;&lt;/code&gt; — Orchestrates backend + effect chain&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;StreamProcessor&lt;/span&gt;&lt;/code&gt; — Chunk-based file processing&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TensorRingBuffer&lt;/span&gt;&lt;/code&gt; — Lock-free SPSC ring buffer&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;SoundDeviceBackend&lt;/span&gt;&lt;/code&gt; — PortAudio integration&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;StreamConfig&lt;/span&gt;&lt;/code&gt; — Stream configuration&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;AudioBackend&lt;/span&gt;&lt;/code&gt; — Abstract backend interface&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;Example:&lt;/strong&gt;&lt;/p&gt;
-&lt;div class="highlight-python notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.realtime&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;RealtimeProcessor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;StreamConfig&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;SoundDeviceBackend&lt;/span&gt;
-&lt;span class="kn"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nn"&gt;torchfx.effect&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Gain&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Reverb&lt;/span&gt;
-
-&lt;span class="n"&gt;config&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;StreamConfig&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
-    &lt;span class="n"&gt;sample_rate&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;48000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-    &lt;span class="n"&gt;buffer_size&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;512&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-    &lt;span class="n"&gt;channels_in&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-    &lt;span class="n"&gt;channels_out&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;span class="p"&gt;)&lt;/span&gt;
-
-&lt;span class="n"&gt;processor&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;RealtimeProcessor&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
-    &lt;span class="n"&gt;effects&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;Gain&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;0.8&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;Reverb&lt;/span&gt;&lt;span class="p"&gt;()],&lt;/span&gt;
-    &lt;span class="n"&gt;backend&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;SoundDeviceBackend&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt;
-    &lt;span class="n"&gt;config&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;config&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;span class="p"&gt;)&lt;/span&gt;
-
-&lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;processor&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
-    &lt;span class="c1"&gt;# Real-time processing active&lt;/span&gt;
-    &lt;span class="n"&gt;processor&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;set_parameter&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;0.gain&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mf"&gt;0.5&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;  &lt;span class="c1"&gt;# Thread-safe parameter update&lt;/span&gt;
-    &lt;span class="c1"&gt;# ... processing continues ...&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;&lt;strong&gt;Features:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&amp;lt;10ms latency at 48kHz, 512 buffer&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Thread-safe parameter updates at buffer boundaries&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;GPU/CPU hybrid processing&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Ring buffer for smooth I/O&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Automatic &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;fs&lt;/span&gt;&lt;/code&gt; propagation to effects&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="biquad-filter-suite"&gt;
-&lt;h3&gt;6. Biquad Filter Suite&lt;/h3&gt;
-&lt;p&gt;Six new biquad implementations with Audio EQ Cookbook formulas:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadLPF&lt;/span&gt;&lt;/code&gt; — Lowpass filter&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadHPF&lt;/span&gt;&lt;/code&gt; — Highpass filter&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadBPF&lt;/span&gt;&lt;/code&gt; — Bandpass filter (constant skirt gain)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadBPFPeak&lt;/span&gt;&lt;/code&gt; — Bandpass filter (constant 0 dB peak gain)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadNotch&lt;/span&gt;&lt;/code&gt; — Notch filter&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadAllPass&lt;/span&gt;&lt;/code&gt; — All-pass filter&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;All support:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Stateful processing (IIR state management)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Stateless processing (for one-shot operations)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Device transfer (CPU ↔ GPU)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Standard &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;cutoff&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;q&lt;/span&gt;&lt;/code&gt; parameters&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="toml-configuration-preset-system"&gt;
-&lt;h3&gt;7. TOML Configuration &amp;amp; Preset System&lt;/h3&gt;
-&lt;p&gt;Reproducible effect chains with TOML:&lt;/p&gt;
-&lt;div class="highlight-toml notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# mastering.toml&lt;/span&gt;
-&lt;span class="n"&gt;device&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;cuda&amp;quot;&lt;/span&gt;
-&lt;span class="n"&gt;chunk_size&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;131072&lt;/span&gt;
-
-&lt;span class="k"&gt;[[effects]]&lt;/span&gt;
-&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;normalize&amp;quot;&lt;/span&gt;
-&lt;span class="n"&gt;peak&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;0.9&lt;/span&gt;
-
-&lt;span class="k"&gt;[[effects]]&lt;/span&gt;
-&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;parametriceq&amp;quot;&lt;/span&gt;
-&lt;span class="n"&gt;frequency&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;2000&lt;/span&gt;
-&lt;span class="n"&gt;q&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1.5&lt;/span&gt;
-&lt;span class="n"&gt;gain&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;
-
-&lt;span class="k"&gt;[[effects]]&lt;/span&gt;
-&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;reverb&amp;quot;&lt;/span&gt;
-&lt;span class="n"&gt;decay&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;0.5&lt;/span&gt;
-&lt;span class="n"&gt;mix&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;0.2&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Use with CLI:&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&lt;span class="w"&gt; &lt;/span&gt;process&lt;span class="w"&gt; &lt;/span&gt;input.wav&lt;span class="w"&gt; &lt;/span&gt;output.wav&lt;span class="w"&gt; &lt;/span&gt;--config&lt;span class="w"&gt; &lt;/span&gt;mastering.toml
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Or save as preset:&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;torchfx&lt;span class="w"&gt; &lt;/span&gt;preset&lt;span class="w"&gt; &lt;/span&gt;save&lt;span class="w"&gt; &lt;/span&gt;mastering&lt;span class="w"&gt; &lt;/span&gt;--from&lt;span class="w"&gt; &lt;/span&gt;mastering.toml
-torchfx&lt;span class="w"&gt; &lt;/span&gt;preset&lt;span class="w"&gt; &lt;/span&gt;apply&lt;span class="w"&gt; &lt;/span&gt;mastering&lt;span class="w"&gt; &lt;/span&gt;input.wav&lt;span class="w"&gt; &lt;/span&gt;output.wav
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Presets stored in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;~/.config/torchfx/presets/&lt;/span&gt;&lt;/code&gt; for easy sharing.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="effect-chain-parser"&gt;
-&lt;h3&gt;8. Effect Chain Parser&lt;/h3&gt;
-&lt;p&gt;30+ effects/filters registered with intuitive CLI syntax:&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# Simple effect&lt;/span&gt;
--e&lt;span class="w"&gt; &lt;/span&gt;normalize
-
-&lt;span class="c1"&gt;# Positional parameter&lt;/span&gt;
--e&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;gain:0.5&amp;quot;&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Keyword parameters&lt;/span&gt;
--e&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;reverb:decay=0.6,mix=0.3&amp;quot;&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Mixed&lt;/span&gt;
--e&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;parametriceq:frequency=2000,q=1.5,gain=6&amp;quot;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Registered effects include:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Effects: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;gain&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;normalize&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;reverb&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;delay&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Biquad filters: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;lowpass&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;highpass&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;bandpass&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;notch&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;allpass&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;IIR filters: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;lobutterworth&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;hibutterworth&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;butterworth&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;lochebyshev1&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;hichebyshev1&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;chebyshev1&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;lochebyshev2&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;hichebyshev2&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;chebyshev2&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;loelliptic&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;hielliptic&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;elliptic&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Shelving/EQ: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;loshelving&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;hishelving&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;parametriceq&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;peaking&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section id="test-coverage"&gt;
-&lt;h2&gt;📊 Test Coverage&lt;/h2&gt;
-&lt;p&gt;&lt;strong&gt;393 tests&lt;/strong&gt; across the codebase with &amp;gt;90% coverage:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Wave class: 72 tests&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Filters (IIR/FIR/Biquad): 85+ tests&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Effects: 43 tests&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Real-time processing: 62 tests&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Validation: 76 tests&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Logging: 25 tests&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;CLI: 71 tests&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;All tests pass on Linux, macOS, and Windows with Python 3.10-3.13.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="documentation-updates"&gt;
-&lt;h2&gt;📚 Documentation Updates&lt;/h2&gt;
-&lt;p&gt;Complete overhaul of documentation:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;CLI Guide&lt;/strong&gt;: Comprehensive tutorial with examples for all commands&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;API Reference&lt;/strong&gt;: Complete docstrings with examples&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Developer Guides&lt;/strong&gt;: Roadmap, style guide, contributing guide&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="installation"&gt;
-&lt;h2&gt;🔧 Installation&lt;/h2&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# Core library&lt;/span&gt;
-pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx
-
-&lt;span class="c1"&gt;# With CLI tools&lt;/span&gt;
-pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="o"&gt;[&lt;/span&gt;cli&lt;span class="o"&gt;]&lt;/span&gt;
-
-&lt;span class="c1"&gt;# With real-time audio (for play/record/REPL live mode)&lt;/span&gt;
-pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="o"&gt;[&lt;/span&gt;realtime&lt;span class="o"&gt;]&lt;/span&gt;
-
-&lt;span class="c1"&gt;# Everything&lt;/span&gt;
-pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="o"&gt;[&lt;/span&gt;cli,realtime&lt;span class="o"&gt;]&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/section&gt;
-&lt;section id="project-status"&gt;
-&lt;h2&gt;📈 Project Status&lt;/h2&gt;
-&lt;p&gt;With 0.4.0, we’ve completed &lt;strong&gt;Phase 1 and Phase 2&lt;/strong&gt; of the roadmap to v1.0.0:&lt;/p&gt;
-&lt;p&gt;✅ &lt;strong&gt;Phase 1 (Foundation)&lt;/strong&gt;: Core stabilization, API stability, error handling, testing&lt;br /&gt;
-✅ &lt;strong&gt;Phase 2 (Major Features)&lt;/strong&gt;: Real-time processing, CLI application, documentation&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Next up — Phase 3 (Optimization):&lt;/strong&gt;&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Custom CUDA kernels for IIR filters&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Batch processing optimizations&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Additional effects (compressor, phaser, pitch shift)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;We’re now &lt;strong&gt;~85% complete&lt;/strong&gt; toward v1.0.0!&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="try-it-now"&gt;
-&lt;h2&gt;🚀 Try It Now&lt;/h2&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="o"&gt;[&lt;/span&gt;cli,realtime&lt;span class="o"&gt;]&lt;/span&gt;
-torchfx&lt;span class="w"&gt; &lt;/span&gt;interactive
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Load a file, type &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;live&lt;/span&gt;&lt;/code&gt;, and experience real-time audio magic.&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="complete-changelog"&gt;
-&lt;h2&gt;📝 Complete Changelog&lt;/h2&gt;
-&lt;section id="added"&gt;
-&lt;h3&gt;Added&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Input validation layer with custom exception hierarchy (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.validation&lt;/span&gt;&lt;/code&gt; module)&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Base exception &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TorchFXError&lt;/span&gt;&lt;/code&gt; for catching all library errors&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Specific exceptions: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidParameterError&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidSampleRateError&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidRangeError&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidShapeError&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;InvalidTypeError&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;AudioProcessingError&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;CoefficientComputationError&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;FilterInstabilityError&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Validator functions for sample rates, parameter ranges, tensor shapes, types, and audio-specific validation&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Logging infrastructure (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.logging&lt;/span&gt;&lt;/code&gt; module)&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Structured logging following Python best practices (NullHandler by default)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Convenience functions: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;enable_logging()&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;enable_debug_logging()&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;disable_logging()&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;get_logger()&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Performance profiling: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;log_performance()&lt;/span&gt;&lt;/code&gt; context manager and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;LogPerformance&lt;/span&gt;&lt;/code&gt; decorator&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Hierarchical logger support for fine-grained control&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Realtime processing module (&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx.realtime&lt;/span&gt;&lt;/code&gt;)&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;RealtimeProcessor&lt;/span&gt;&lt;/code&gt; with thread-safe parameter updates&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;StreamProcessor&lt;/span&gt;&lt;/code&gt; for chunk-based file processing&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;TensorRingBuffer&lt;/span&gt;&lt;/code&gt; with lock-free SPSC pattern&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;SoundDeviceBackend&lt;/span&gt;&lt;/code&gt; for PortAudio integration&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;StreamConfig&lt;/span&gt;&lt;/code&gt; and &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;AudioBackend&lt;/span&gt;&lt;/code&gt; abstractions&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Biquad filter implementations&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadLPF&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadHPF&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadBPF&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadBPFPeak&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadNotch&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;BiquadAllPass&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Stateful and stateless processing paths&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Audio EQ Cookbook formulas&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;CLI application (Epic 3 — Phase 1)&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;process&lt;/span&gt;&lt;/code&gt;: single-file, batch (glob + progress bar), and Unix pipe processing&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;info&lt;/span&gt;&lt;/code&gt;: display audio file metadata in Rich tables&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;play&lt;/span&gt;&lt;/code&gt;: play audio through speakers with optional effects&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;record&lt;/span&gt;&lt;/code&gt;: record from microphone&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;convert&lt;/span&gt;&lt;/code&gt;: format/rate/channel conversion (sox-compatible)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;trim&lt;/span&gt;&lt;/code&gt;: extract time ranges (sox-compatible)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;concat&lt;/span&gt;&lt;/code&gt;: join multiple files (sox-compatible)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;stats&lt;/span&gt;&lt;/code&gt;: signal statistics (sox-compatible)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;preset&lt;/span&gt;&lt;/code&gt;: save/load/list/show/delete/apply presets&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;interactive&lt;/span&gt;&lt;/code&gt;: launch REPL with live performance mode&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;torchfx&lt;/span&gt; &lt;span class="pre"&gt;watch&lt;/span&gt;&lt;/code&gt;: monitor directories for auto-processing&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Effect-chain parser with 30+ registered effects/filters&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;TOML configuration file support&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Preset management in &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;~/.config/torchfx/presets/&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;GPU acceleration via &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;--device&lt;/span&gt; &lt;span class="pre"&gt;cuda&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="changed"&gt;
-&lt;h3&gt;Changed&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Improved error messages throughout library with context and suggestions&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Enhanced logging with performance profiling capabilities&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Real-time processing now uses ring buffers for smooth I/O&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="technical-details"&gt;
-&lt;h3&gt;Technical Details&lt;/h3&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Lines of Code&lt;/strong&gt;: ~12,000 (including tests and docs)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Test Count&lt;/strong&gt;: 393 (up from 95 in v0.2.1)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Coverage&lt;/strong&gt;: &amp;gt;90% (up from ~70%)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Documentation Pages&lt;/strong&gt;: 50+ (up from ~20)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Supported Python&lt;/strong&gt;: 3.10, 3.11, 3.12, 3.13&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Optional Dependencies&lt;/strong&gt;: &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;sounddevice&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;typer&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;rich&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;prompt_toolkit&lt;/span&gt;&lt;/code&gt;, &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;watchdog&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section id="whats-next"&gt;
-&lt;h2&gt;🔮 What’s Next?&lt;/h2&gt;
-&lt;p&gt;&lt;strong&gt;v1.0.0 Release Candidate&lt;/strong&gt; is the immediate goal. After community testing and final polish, we’ll ship v1.0.0 with:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Semantic versioning guarantees&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Long-term API stability&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Custom CUDA kernels for 2-3x speedup&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;Post-1.0&lt;/strong&gt; roadmap includes:&lt;/p&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;Advanced effects (compressor, phaser, pitch shift)&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;VST3 wrapper (long-term)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section id="get-involved"&gt;
-&lt;h2&gt;💬 Get Involved&lt;/h2&gt;
-&lt;ul class="simple"&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;GitHub&lt;/strong&gt;: &lt;a class="reference external" href="https://github.com/matteospanio/torchfx"&gt;matteospanio/torchfx&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Issues&lt;/strong&gt;: Report bugs, request features&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Discussions&lt;/strong&gt;: Ask questions, share workflows&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Contributing&lt;/strong&gt;: See &lt;a class="reference external" href="https://github.com/matteospanio/torchfx/blob/dev/CONTRIBUTING.md"&gt;CONTRIBUTING.md&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;hr class="docutils" /&gt;
-&lt;p&gt;&lt;strong&gt;TorchFX 0.4.0 is available now. Install it, explore the CLI, try the REPL, and let us know what you think!&lt;/strong&gt;&lt;/p&gt;
-&lt;div class="highlight-bash notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;torchfx&lt;span class="o"&gt;[&lt;/span&gt;cli,realtime&lt;span class="o"&gt;]&lt;/span&gt;
-torchfx&lt;span class="w"&gt; &lt;/span&gt;--help
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;&lt;em&gt;Happy audio processing! 🎵&lt;/em&gt;&lt;/p&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-</content>
-    <link href="https://matteospanio.github.io/torchfx/blog/2026-02-15-release-040.html"/>
-    <summary>I’m thrilled to announce TorchFX 0.4.0, the biggest release yet. This version transforms TorchFX from a research library into a audio DSP toolkit with real-time processing, and a powerful CLI interface.</summary>
-    <category term="cli" label="cli"/>
-    <category term="logging" label="logging"/>
-    <category term="real-time" label="real-time"/>
-    <category term="release" label="release"/>
-    <category term="validation" label="validation"/>
     <published>2026-02-15T00:00:00+00:00</published>
   </entry>
 </feed>

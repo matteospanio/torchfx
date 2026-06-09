@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>TorchFX 0.5.4: Native Filter Design &amp; Goodbye scipy &#8212; TorchFX 1 documentation</title>
+    <title>TorchFX 0.7.0: A Dynamics Suite, a Real Reverb, and the Edge &#8212; TorchFX 1 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-05-26-release-054';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'blog/2026-06-09-release-070';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -359,7 +359,7 @@
      
     <i class="fa fa-calendar"></i>
     
-    <span>26 May 2026</span>
+    <span>09 June 2026</span>
     
   </h2>
   <ul>
@@ -396,13 +396,17 @@
      
     <a href="index/tag/release.html">release</a>
         
-    <a href="index/tag/scipy.html">scipy</a>
+    <a href="index/tag/dynamics.html">dynamics</a>
         
-    <a href="index/tag/filter-design.html">filter-design</a>
+    <a href="index/tag/reverb.html">reverb</a>
+        
+    <a href="index/tag/simd.html">simd</a>
         
     <a href="index/tag/performance.html">performance</a>
         
-    <a href="index/tag/validation.html">validation</a>
+    <a href="index/tag/edge.html">edge</a>
+        
+    <a href="index/tag/tooling.html">tooling</a>
       
   </li>
    
@@ -417,12 +421,6 @@
   </h3>
   <ul>
      
-    <li>
-      <a href="2026-06-09-release-070.html">
-        09 June - TorchFX 0.7.0: A Dynamics Suite, a Real Reverb, and the Edge
-      </a>
-    </li>
-    
     <li>
       <a href="2026-06-04-release-060.html">
         04 June - TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path
@@ -444,6 +442,12 @@
     <li>
       <a href="2026-06-04-realtime-streaming.html">
         04 June - A Hardened Realtime Path: Worker Threads, Allocation-Free Streaming, and Dtype-Aware Dispatch
+      </a>
+    </li>
+    
+    <li>
+      <a href="2026-05-26-release-054.html">
+        26 May - TorchFX 0.5.4: Native Filter Design & Goodbye scipy
       </a>
     </li>
     
@@ -714,7 +718,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX 0.5.4: Native Filter Design &amp; Goodbye scipy</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">TorchFX 0.7.0: A Dynamics Suite, a Real Reverb, and the Edge</span></li>
   </ul>
 </nav>
 </div>
@@ -730,117 +734,123 @@
                 
 <div id="searchbox"></div>
                 <article class="bd-article">
-                   <section id="torchfx-0-5-4-native-filter-design-goodbye-scipy">
-<h1>TorchFX 0.5.4: Native Filter Design &amp; Goodbye scipy<a class="headerlink" href="#torchfx-0-5-4-native-filter-design-goodbye-scipy" title="Link to this heading">#</a></h1>
-<p><strong>TorchFX 0.5.4</strong> drops <code class="docutils literal notranslate"><span class="pre">scipy</span></code> as a runtime dependency. Every filter-design call that used to go through <code class="docutils literal notranslate"><span class="pre">scipy.signal</span></code> — Butterworth, Chebyshev I/II, Elliptic, Linkwitz-Riley, and <code class="docutils literal notranslate"><span class="pre">DesignableFIR</span></code> — is now performed by a native pure-PyTorch design module. The library is leaner, the dependency tree is shorter, and the design step itself is <strong>14–50× faster</strong> than scipy on the parameter ranges we ship.</p>
-<p>If your code worked on 0.5.3, it works on 0.5.4 unchanged. The only thing you might notice is that <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torchfx</span></code> no longer pulls down ~30 MB of scientific Python you weren’t using.</p>
-<section id="torchfx-filter-design">
-<h2><code class="docutils literal notranslate"><span class="pre">torchfx.filter._design</span></code><a class="headerlink" href="#torchfx-filter-design" title="Link to this heading">#</a></h2>
-<p>The new <a class="reference external" href="https://github.com/matteospanio/torchfx"><code class="docutils literal notranslate"><span class="pre">torchfx.filter._design</span></code></a> module is a faithful, drop-in replacement for the handful of scipy entry points TorchFX actually used:</p>
+                   <section id="torchfx-0-7-0-a-dynamics-suite-a-real-reverb-and-the-edge">
+<h1>TorchFX 0.7.0: A Dynamics Suite, a Real Reverb, and the Edge<a class="headerlink" href="#torchfx-0-7-0-a-dynamics-suite-a-real-reverb-and-the-edge" title="Link to this heading">#</a></h1>
+<p><strong>TorchFX 0.7.0</strong> delivers exactly what 0.6.0’s “what’s next” promised — the single-pass GPU scan, a cache-blocked CPU SIMD path for edge devices, and a full dynamics toolkit — and then some. The headline is <strong>dynamics</strong>: a <code class="docutils literal notranslate"><span class="pre">Compressor</span></code>, an <code class="docutils literal notranslate"><span class="pre">Expander</span></code>/<code class="docutils literal notranslate"><span class="pre">Gate</span></code>, and a look-ahead brick-wall <code class="docutils literal notranslate"><span class="pre">Limiter</span></code>, each a native per-channel C++/CUDA kernel. Alongside them the old toy <code class="docutils literal notranslate"><span class="pre">Reverb</span></code> is replaced by a proper <strong>Freeverb-style</strong> algorithmic reverb, many short signals can now be processed in a <strong>single batched launch</strong>, and the whole release ships itself: tagging, PyPI, and these very release notes are now automated.</p>
+<p>One breaking change: <code class="docutils literal notranslate"><span class="pre">Reverb</span></code>’s constructor changed (see below). Everything else from 0.6.x runs unchanged.</p>
+<section id="a-full-dynamics-toolkit">
+<h2>A full dynamics toolkit<a class="headerlink" href="#a-full-dynamics-toolkit" title="Link to this heading">#</a></h2>
+<p>Four new dynamics processors, all built on the same high-quality decoupled peak detector (release max-hold + attack one-pole; Giannoulis, Massberg &amp; Reiss, 2012) running one channel per thread in C++/CUDA:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">design_butterworth_sos</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">design_cheby1_sos</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">design_cheby2_sos</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">design_ellip_sos</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">design_firwin</span></code> (multi-band capable)</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">Compressor</span></code></strong> — threshold/ratio/attack/release, soft knee, makeup gain, peak or RMS detection, and a <code class="docutils literal notranslate"><span class="pre">ratio=inf</span></code> limiter mode.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">Expander</span></code> / <code class="docutils literal notranslate"><span class="pre">Gate</span></code></strong> — the mirror of the compressor: attenuate <em>below</em> the threshold. <code class="docutils literal notranslate"><span class="pre">Gate</span></code> is the infinite-ratio convenience (a hard noise gate) with an optional <code class="docutils literal notranslate"><span class="pre">floor</span></code> (range).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">Limiter</span></code></strong> — a <strong>look-ahead brick-wall</strong> peak limiter. A vectorised forward max-pool computes the look-ahead window, the gain is attack/release-smoothed, and a per-sample clamp <strong>guarantees <code class="docutils literal notranslate"><span class="pre">|y|</span> <span class="pre">≤</span> <span class="pre">threshold</span></code></strong> — so unlike <code class="docutils literal notranslate"><span class="pre">Compressor(ratio=inf)</span></code>, it can never overshoot a single sample.</p></li>
 </ul>
-<p>All five return canonical CPU <code class="docutils literal notranslate"><span class="pre">float64</span></code> SOS (or FIR) tensors that plug straight into the existing C++/CUDA kernels — no changes to the dispatch layer, no changes to user code, no changes to the SOS cascade. The implementation follows the standard analog-prototype + bilinear-transform pipeline. The elliptic design is a port of scipy’s algorithm, cross-referenced against Orfanidis’s <em>Lecture Notes on Elliptic Filter Design</em>.</p>
-<p>Numerical equivalence to scipy is verified by <a class="reference external" href="https://github.com/matteospanio/torchfx"><code class="docutils literal notranslate"><span class="pre">tests/test_native_design.py</span></code></a> — 509 tests sweeping orders 1–16, lowpass and highpass, the major FIR windows, and the full Rp/Rs grid for Chebyshev and Elliptic. Tolerances are tight: <code class="docutils literal notranslate"><span class="pre">1e-12</span></code> for Butterworth and FIR, <code class="docutils literal notranslate"><span class="pre">1e-9</span></code> for Chebyshev, <code class="docutils literal notranslate"><span class="pre">1e-7</span></code> for Elliptic up to N=8, and <code class="docutils literal notranslate"><span class="pre">1e-5</span></code> for Elliptic at N=12–16. scipy remains a dev-only dependency precisely so we can keep running these equivalence checks; downstream installs never see it.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torchfx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fx</span>
+
+<span class="n">mastered</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">wave</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Compressor</span><span class="p">(</span><span class="n">threshold</span><span class="o">=-</span><span class="mi">18</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">attack</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">release</span><span class="o">=</span><span class="mf">0.08</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Limiter</span><span class="p">(</span><span class="n">threshold</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lookahead</span><span class="o">=</span><span class="mf">0.005</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 </section>
-<section id="faster-than-scipy">
-<h2>14–50× faster than scipy<a class="headerlink" href="#faster-than-scipy" title="Link to this heading">#</a></h2>
-<p>The benchmark numbers from <a class="reference external" href="https://github.com/matteospanio/torchfx"><code class="docutils literal notranslate"><span class="pre">benchmarks/test_design_benchmarks.py</span></code></a> are where this lands. Paired side-by-side timings, single core, Python 3.12:</p>
+<section id="a-reverb-worth-the-name">
+<h2>A reverb worth the name<a class="headerlink" href="#a-reverb-worth-the-name" title="Link to this heading">#</a></h2>
+<p>The old <code class="docutils literal notranslate"><span class="pre">Reverb</span></code> was a single feedforward comb — barely a reverb. 0.7.0 replaces it with the classic <strong>Schroeder/Moorer (Freeverb) structure</strong>: per channel, <strong>8 parallel low-pass-feedback comb filters</strong> summed through <strong>4 series all-pass diffusers</strong>, in a fused native kernel (ring buffers in per-channel scratch, tunings scaled to the sample rate) for a dense, natural decay.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Breaking change: room_size / damping / mix (was delay / decay / mix)</span>
+<span class="n">hall</span> <span class="o">=</span> <span class="n">fx</span><span class="o">.</span><span class="n">effect</span><span class="o">.</span><span class="n">Reverb</span><span class="p">(</span><span class="n">room_size</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span> <span class="n">damping</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">mix</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-the-gpu-scan-and-the-edge">
+<h2>Performance: the GPU scan, and the edge<a class="headerlink" href="#performance-the-gpu-scan-and-the-edge" title="Link to this heading">#</a></h2>
+<p>Two kernel-level wins close out the 0.6.0 roadmap, plus a new batching path.</p>
+<section id="single-pass-sos-scan-gpu">
+<h3>Single-pass SOS scan (GPU)<a class="headerlink" href="#single-pass-sos-scan-gpu" title="Link to this heading">#</a></h3>
+<p>The fused cascade’s forcing pass and the three-phase Blelloch scan are folded into <strong>one decoupled-look-back kernel</strong> (Merrill–Garland / CUB style, with an atomic per-section tile dispenser for deadlock-free forward progress). Per fused section drops from ~8 CUDA launches to <strong>2</strong>:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>Filter type</p></th>
-<th class="head text-right"><p>Order</p></th>
-<th class="head text-right"><p>scipy</p></th>
-<th class="head text-right"><p>TorchFX native</p></th>
-<th class="head text-right"><p>Speedup</p></th>
+<tr class="row-odd"><th class="head"><p>K=50 cascade (RTX 3070)</p></th>
+<th class="head text-right"><p>3-phase</p></th>
+<th class="head text-right"><p>single-pass</p></th>
+<th class="head text-right"><p></p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Butterworth</p></td>
-<td class="text-right"><p>16</p></td>
-<td class="text-right"><p>470 µs</p></td>
-<td class="text-right"><p>26 µs</p></td>
-<td class="text-right"><p><strong>18×</strong></p></td>
+<tr class="row-even"><td><p>CUDA launches</p></td>
+<td class="text-right"><p>600</p></td>
+<td class="text-right"><p><strong>102</strong></p></td>
+<td class="text-right"><p><strong>5.9× fewer</strong></p></td>
 </tr>
-<tr class="row-odd"><td><p>Chebyshev I</p></td>
-<td class="text-right"><p>16</p></td>
-<td class="text-right"><p>480 µs</p></td>
-<td class="text-right"><p>32 µs</p></td>
-<td class="text-right"><p><strong>15×</strong></p></td>
-</tr>
-<tr class="row-even"><td><p>Chebyshev II</p></td>
-<td class="text-right"><p>16</p></td>
-<td class="text-right"><p>490 µs</p></td>
-<td class="text-right"><p>37 µs</p></td>
-<td class="text-right"><p><strong>13×</strong></p></td>
-</tr>
-<tr class="row-odd"><td><p>Elliptic</p></td>
-<td class="text-right"><p>16</p></td>
-<td class="text-right"><p>670 µs</p></td>
-<td class="text-right"><p>92 µs</p></td>
-<td class="text-right"><p><strong>7×</strong></p></td>
+<tr class="row-odd"><td><p>Fused cascade time</p></td>
+<td class="text-right"><p>18.9 ms</p></td>
+<td class="text-right"><p><strong>9.9 ms</strong></p></td>
+<td class="text-right"><p><strong>~1.9×</strong></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>Across the parameter sweep, native design is <strong>14–50× faster</strong> for Butterworth and Chebyshev I/II, and <strong>7–20× faster</strong> for Elliptic. Run the benchmarks yourself:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>benchmarks/test_design_benchmarks.py<span class="w"> </span>--benchmark-enable
-</pre></div>
+<p>It’s now the default GPU path (<code class="docutils literal notranslate"><span class="pre">TORCHFX_FUSED_SCAN=0</span></code> for the legacy oracle), bit-exact to it on sm_86 and sm_89.</p>
+</section>
+<section id="cache-blocked-cross-channel-cpu-simd-the-edge">
+<h3>Cache-blocked cross-channel CPU SIMD (the edge)<a class="headerlink" href="#cache-blocked-cross-channel-cpu-simd-the-edge" title="Link to this heading">#</a></h3>
+<p>When channels outnumber CPU cores, the scalar kernel runs them serially. A new path packs a SIMD vector of channels using <strong>L1-resident tile transposes</strong> (the fix for an earlier full-transpose attempt that went memory-bound), gated to <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">&gt;</span> <span class="pre">cores</span></code>. Validated on a <strong>Raspberry Pi 5</strong> (Cortex-A76 ×4) — the edge target:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>4-section SOS, float32</p></th>
+<th class="head text-right"><p>Pi 5</p></th>
+<th class="head text-right"><p>12-core x86</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>C=8</p></td>
+<td class="text-right"><p><strong>1.8×</strong></p></td>
+<td class="text-right"><p>scalar (≤ cores)</p></td>
+</tr>
+<tr class="row-odd"><td><p>C=16</p></td>
+<td class="text-right"><p><strong>2.6×</strong></p></td>
+<td class="text-right"><p><strong>1.3×</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>C=32</p></td>
+<td class="text-right"><p><strong>2.6×</strong></p></td>
+<td class="text-right"><p><strong>2.4×</strong></p></td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>The interesting implementation note: the IIR design pipeline runs on Python <code class="docutils literal notranslate"><span class="pre">complex</span></code> scalars rather than <code class="docutils literal notranslate"><span class="pre">torch</span></code> tensors. For small problems (N≤16, which covers every realistic order), per-op tensor dispatch dominates the actual arithmetic, so a vectorized tensor implementation is <em>slower</em>, not faster. <code class="docutils literal notranslate"><span class="pre">firwin</span></code> stays in torch because windows are length-N (~31…1024) where vectorization wins. Knowing which path to take here is what unlocked the speedup.</p>
-<p>A small but symbolic side effect: <code class="docutils literal notranslate"><span class="pre">LinkwitzRiley.compute_coefficients</span></code> replaced its last <code class="docutils literal notranslate"><span class="pre">np.vstack</span></code> call with <code class="docutils literal notranslate"><span class="pre">torch.cat</span></code>. After this release, <code class="docutils literal notranslate"><span class="pre">numpy</span></code> is used only at the I/O boundary (<code class="docutils literal notranslate"><span class="pre">soundfile</span></code>, <code class="docutils literal notranslate"><span class="pre">sounddevice</span></code>) — never for signal-processing math in <code class="docutils literal notranslate"><span class="pre">src/torchfx/</span></code> itself.</p>
+<p>No regression below the gate — a win on both the edge device and the desktop.</p>
 </section>
-<section id="cpu-float32-fast-path">
-<h2>CPU float32 Fast Path<a class="headerlink" href="#cpu-float32-fast-path" title="Link to this heading">#</a></h2>
-<p>CPU IIR kernels in <a class="reference external" href="https://github.com/matteospanio/torchfx"><code class="docutils literal notranslate"><span class="pre">_csrc/cpu/iir_cpu.cpp</span></code></a> previously upcast every input to <code class="docutils literal notranslate"><span class="pre">float64</span></code> before running the cascade. Many realtime and ML pipelines pass <code class="docutils literal notranslate"><span class="pre">float32</span></code> audio — forcing them through <code class="docutils literal notranslate"><span class="pre">float64</span></code> doubled the memory traffic for no accuracy gain at the orders TorchFX targets.</p>
-<p>0.5.4 makes the CPU kernels <strong>dtype-aware</strong>: <code class="docutils literal notranslate"><span class="pre">float32</span></code> inputs run in <code class="docutils literal notranslate"><span class="pre">float32</span></code>, <code class="docutils literal notranslate"><span class="pre">float64</span></code> inputs run in <code class="docutils literal notranslate"><span class="pre">float64</span></code>, no conversion either way. The <code class="docutils literal notranslate"><span class="pre">_ops</span></code> dispatch and the shared SOS forward path were updated to match. CUDA stays on <code class="docutils literal notranslate"><span class="pre">float64</span></code> for now — the kernel generation hasn’t been retuned for mixed precision yet, and that’s a follow-up.</p>
-<p>The net effect on a typical <code class="docutils literal notranslate"><span class="pre">float32</span></code> IIR chain is a meaningful drop in CPU time and memory bandwidth, with bit-for-bit-equivalent output to within the standard <code class="docutils literal notranslate"><span class="pre">float32</span></code> rounding.</p>
+<section id="batched-multi-signal-processing">
+<h3>Batched multi-signal processing<a class="headerlink" href="#batched-multi-signal-processing" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">torchfx.batch_process(waves,</span> <span class="pre">effect)</span></code> pads many signals to a common length, concatenates them on the channel dimension, and runs the effect in a <strong>single</strong> kernel launch — numerically identical to per-file, but filling the GPU and amortising dispatch overhead. <strong>~2.5–7× faster on CPU and ~3–4× on GPU</strong> for 8–512 stereo files. Ideal for the CLI batch/watch modes.</p>
 </section>
-<section id="code-hygiene-six-biquad-subclasses-slimmed-down">
-<h2>Code Hygiene: Six Biquad Subclasses Slimmed Down<a class="headerlink" href="#code-hygiene-six-biquad-subclasses-slimmed-down" title="Link to this heading">#</a></h2>
-<p>Six biquad subclasses (<code class="docutils literal notranslate"><span class="pre">BiquadLPF</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadHPF</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadNotch</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadBPF</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadBPFPeak</span></code>, <code class="docutils literal notranslate"><span class="pre">BiquadAllPass</span></code>) plus <code class="docutils literal notranslate"><span class="pre">Shelving</span></code>, <code class="docutils literal notranslate"><span class="pre">ParametricEQ</span></code>, <code class="docutils literal notranslate"><span class="pre">Notch</span></code>, and <code class="docutils literal notranslate"><span class="pre">AllPass</span></code> in <code class="docutils literal notranslate"><span class="pre">iir.py</span></code> all expressed RBJ cookbook coefficients with an explicit <code class="docutils literal notranslate"><span class="pre">a0_inv</span></code> divide-and-assign block. About 50 lines of duplicated normalization plumbing.</p>
-<p>0.5.4 replaces that with a single <code class="docutils literal notranslate"><span class="pre">_finalize_coeffs(b0,</span> <span class="pre">b1,</span> <span class="pre">b2,</span> <span class="pre">a0,</span> <span class="pre">a1,</span> <span class="pre">a2)</span></code> helper that performs the <code class="docutils literal notranslate"><span class="pre">a0</span></code> normalization centrally. Subclasses now read like the RBJ cookbook itself — compute the six raw coefficients, hand them off, done. The old per-class <code class="docutils literal notranslate"><span class="pre">_set_coefficients</span></code> helper is gone, along with <code class="docutils literal notranslate"><span class="pre">_gain_db</span></code> and <code class="docutils literal notranslate"><span class="pre">Delay._extend_waveform</span></code> (each was called from exactly one site).</p>
-<p>This is purely refactoring — behavior is identical, but the filter implementations are noticeably easier to read.</p>
 </section>
-<section id="wave-realtime-hardening">
-<h2>Wave &amp; Realtime Hardening<a class="headerlink" href="#wave-realtime-hardening" title="Link to this heading">#</a></h2>
-<p>A wave of validation and contract-tightening changes landed alongside the design work:</p>
+<section id="tooling-that-ships-itself">
+<h2>Tooling that ships itself<a class="headerlink" href="#tooling-that-ships-itself" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">Wave</span></code></strong> now enforces internal <code class="docutils literal notranslate"><span class="pre">(channels,</span> <span class="pre">samples)</span></code> shape invariants on every input. 1D mono inputs are normalized to <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">T)</span></code>. <code class="docutils literal notranslate"><span class="pre">Wave.get_channel()</span></code> no longer returns flattened 1D tensors that broke downstream <code class="docutils literal notranslate"><span class="pre">len()</span></code> semantics. <code class="docutils literal notranslate"><span class="pre">Wave.merge</span></code> is explicit about behaviour: split-channel mode zero-pads to the longest input length, while mix mode requires matching channel counts and raises clearly when they don’t.</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">Delay</span></code></strong> and <strong><code class="docutils literal notranslate"><span class="pre">Gain</span></code></strong> consistently raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> for invalid user parameters. BPM-synced <code class="docutils literal notranslate"><span class="pre">Delay</span></code> now recomputes <code class="docutils literal notranslate"><span class="pre">delay_samples</span></code> when <code class="docutils literal notranslate"><span class="pre">fs</span></code> changes after initialization — so reusing a delay across files with different sample rates stays sample-accurate.</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">_ops.delay_line_forward</span></code></strong> validates rank and dtype, supports tensors with arbitrary leading batch dimensions by flattening and restoring <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">T)</span></code>, and round-trips non-native float dtypes through the extension’s supported <code class="docutils literal notranslate"><span class="pre">float32</span></code>/<code class="docutils literal notranslate"><span class="pre">float64</span></code> execution path.</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">DesignableFIR</span></code></strong> initializes its <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> state even when <code class="docutils literal notranslate"><span class="pre">fs=None</span></code>, then updates kernel coefficients in <code class="docutils literal notranslate"><span class="pre">compute_coefficients()</span></code> once the sample rate is available. This brings it in line with the lazy-<code class="docutils literal notranslate"><span class="pre">fs</span></code> pattern that every other filter follows.</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">StreamProcessor</span></code></strong> now resets stateful effects at file and chunk boundaries, and rejects effects that change chunk length up front instead of producing garbled output mid-stream.</p></li>
-<li><p><strong>CLI processing</strong> surfaces config/effect parse failures (including invalid constructor parameters) as user-facing messages instead of raw tracebacks.</p></li>
+<li><p><strong>Automated releases.</strong> A version bump on <code class="docutils literal notranslate"><span class="pre">master</span></code> now tags <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code>, publishes the wheels to PyPI and the CUDA index, <strong>and</strong> opens a GitHub Release whose notes are the CHANGELOG section for that version. (This post’s release ran through it.)</p></li>
+<li><p><strong>Performance-regression gates</strong> in ordinary CI — deterministic dispatch-count invariants (a depth-K cascade must fuse to <em>one</em> native call) plus a same-machine relative-time smoke, so fusion can’t silently regress.</p></li>
+<li><p><strong>Codecov</strong> project/patch status, a <strong>profiling guide</strong> for diagnosing pipelines, and a fix for the flaky CUDA-wheel disk-space failures.</p></li>
 </ul>
-<p>None of these are flashy on their own, but together they close the regression gaps that turned up while validating the design module against the rest of the pipeline. New tests in <code class="docutils literal notranslate"><span class="pre">tests/test_wave.py</span></code>, <code class="docutils literal notranslate"><span class="pre">tests/test_effects.py</span></code>, <code class="docutils literal notranslate"><span class="pre">tests/test_fir.py</span></code>, <code class="docutils literal notranslate"><span class="pre">tests/test_realtime.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">tests/test_cli.py</span></code> lock the new contracts in place.</p>
-</section>
-<section id="what-hasnt-changed">
-<h2>What Hasn’t Changed<a class="headerlink" href="#what-hasnt-changed" title="Link to this heading">#</a></h2>
-<p>Everything from 0.5.3 still applies: prebuilt wheels, scikit-build-core build, no pure-PyTorch fallback, native CPU/CUDA kernels. The user-facing API is identical. Filter coefficients computed by 0.5.4’s native design match scipy to within the tolerances above, so any code that depended on specific coefficient values continues to work.</p>
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torchfx</span><span class="o">==</span><span class="m">0</span>.5.4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torchfx</span><span class="o">==</span><span class="m">0</span>.7.0
 </pre></div>
 </div>
-<p>CUDA wheels remain available from the GitHub Pages index:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu124
-pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torchfx</span><span class="o">==</span><span class="m">0</span>.5.4<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--index-url<span class="w"> </span>https://matteospanio.github.io/torchfx/wheels/cu124/<span class="w"> </span><span class="se">\</span>
+<p>CUDA wheels from the GitHub Pages index:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu128
+pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torchfx</span><span class="o">==</span><span class="m">0</span>.7.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--index-url<span class="w"> </span>https://matteospanio.github.io/torchfx/wheels/cu128/<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--extra-index-url<span class="w"> </span>https://pypi.org/simple
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">scipy</span></code> is no longer in your transitive dependency closure.</p>
 </section>
 <section id="whats-next">
-<h2>What’s Next<a class="headerlink" href="#whats-next" title="Link to this heading">#</a></h2>
-<p>With scipy out of the runtime and the design path running on native code, the next round of optimization work returns to the GPU side: retuning the CUDA SOS kernel for mixed precision so <code class="docutils literal notranslate"><span class="pre">float32</span></code> gets the same fast path on GPU that it now has on CPU, and folding the design step into the deferred pipeline so coefficient computation happens once per chain rather than once per filter.</p>
-<p>As always, file issues and feature requests on <a class="reference external" href="https://github.com/matteospanio/torchfx">GitHub</a>.</p>
+<h2>What’s next<a class="headerlink" href="#whats-next" title="Link to this heading">#</a></h2>
+<p>With dynamics and the headline kernel work landed, the focus turns to the <strong>v0.8.0 realtime milestone</strong> — PipeWire/JACK integration and a GPU realtime path — plus production effects (chorus, flanger, phaser) on the road to v1.0. The full list of changes is in the <a class="reference external" href="https://github.com/matteospanio/torchfx/blob/master/CHANGELOG">CHANGELOG</a>; issues and feature requests are welcome on <a class="reference external" href="https://github.com/matteospanio/torchfx">GitHub</a>.</p>
 </section>
 </section>
 
@@ -849,23 +859,16 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torch
 <div class="section ablog__prev-next">
   <span class="ablog__prev">
      
-    <a href="2026-05-03-release-053.html">
+    <a href="2026-06-04-release-060.html">
       
       <i class="fa fa-arrow-circle-left"></i>
       
-      <span>TorchFX 0.5.3: Build System Overhaul & Prebuilt Wheels</span>
+      <span>TorchFX 0.6.0: FP32 on the GPU, CUDA Graphs, and a Hardened Realtime Path</span>
     </a>
     
   </span>
   <span class="ablog__spacer">&nbsp;</span>
   <span class="ablog__next">
-     
-    <a href="2026-06-04-realtime-streaming.html">
-      <span>A Hardened Realtime Path: Worker Threads, Allocation-Free Streaming, and Dtype-Aware Dispatch</span>
-      
-      <i class="fa fa-arrow-circle-right"></i>
-      
-    </a>
     
   </span>
 </div>
@@ -900,14 +903,17 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torch
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx-filter-design"><code class="docutils literal notranslate"><span class="pre">torchfx.filter._design</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#faster-than-scipy">14–50× faster than scipy</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-float32-fast-path">CPU float32 Fast Path</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#code-hygiene-six-biquad-subclasses-slimmed-down">Code Hygiene: Six Biquad Subclasses Slimmed Down</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#wave-realtime-hardening">Wave &amp; Realtime Hardening</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-hasnt-changed">What Hasn’t Changed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-full-dynamics-toolkit">A full dynamics toolkit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-reverb-worth-the-name">A reverb worth the name</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance-the-gpu-scan-and-the-edge">Performance: the GPU scan, and the edge</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#single-pass-sos-scan-gpu">Single-pass SOS scan (GPU)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cache-blocked-cross-channel-cpu-simd-the-edge">Cache-blocked cross-channel CPU SIMD (the edge)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-multi-signal-processing">Batched multi-signal processing</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tooling-that-ships-itself">Tooling that ships itself</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whats-next">What’s Next</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whats-next">What’s next</a></li>
 </ul>
   </nav></div>
 
@@ -915,7 +921,7 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torch
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-05-26-release-054.md">
+    <a href="https://github.com/matteospanio/torchfx/edit/main/docs/source/blog/2026-06-09-release-070.md">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -930,7 +936,7 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torch
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../_sources/blog/2026-05-26-release-054.md.txt">
+    <a href="../_sources/blog/2026-06-09-release-070.md.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
