@@ -688,9 +688,12 @@ Each item lists its difficulty and expected impact; none block a release.
 
 ### 7.1 Dynamics Processing
 
-- [ ] Compressor (threshold, ratio, attack, release, knee)
+- [x] Compressor (threshold, ratio, attack, release, knee) — `Compressor` (#30), native
+  per-channel C++/CUDA detector, peak/RMS, soft knee, `ratio=inf` limiter mode.
 - [ ] Limiter (brickwall, true peak, look-ahead)
-- [ ] Expander / Gate
+- [x] Expander / Gate — `Expander` (downward expansion below threshold) + `Gate`
+  (infinite-ratio convenience) (#32), mirroring the compressor detector with an
+  optional `floor` (range); native CPU + CUDA.
 
 ### 7.2 Modulation Effects
 

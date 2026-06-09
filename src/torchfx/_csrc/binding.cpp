@@ -4,6 +4,7 @@
 #include "torchfx/biquad_kernel.h"
 #include "torchfx/delay_kernel.h"
 #include "torchfx/compressor_kernel.h"
+#include "torchfx/expander_kernel.h"
 #endif
 
 // CPU implementation declarations
@@ -33,6 +34,17 @@ torch::Tensor compressor_forward_cpu(
     double inv_ratio,
     double knee_db,
     double makeup_db,
+    double attack_coeff,
+    double release_coeff,
+    double rms_coeff,
+    int detector);
+
+torch::Tensor expander_forward_cpu(
+    const torch::Tensor& x,
+    double threshold_db,
+    double slope,
+    double knee_db,
+    double floor_db,
     double attack_coeff,
     double release_coeff,
     double rms_coeff,
@@ -124,6 +136,32 @@ torch::Tensor compressor_forward(
                                 attack_coeff, release_coeff, rms_coeff, detector);
 }
 
+// Expander / gate dispatch. `slope` = ratio-1 (a large finite value for a gate, so the
+// kernel never does inf arithmetic); `floor_db` is the deepest attenuation; `detector`
+// is 0=peak, 1=rms. Coefficients are precomputed by the Python layer.
+torch::Tensor expander_forward(
+    const torch::Tensor& x,
+    double threshold_db,
+    double slope,
+    double knee_db,
+    double floor_db,
+    double attack_coeff,
+    double release_coeff,
+    double rms_coeff,
+    int detector) {
+#ifdef WITH_CUDA
+  if (x.is_cuda()) {
+    return torchfx::expander_forward_cuda(x, threshold_db, slope, knee_db,
+                                          floor_db, attack_coeff, release_coeff,
+                                          rms_coeff, detector);
+  }
+#else
+  TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
+#endif
+  return expander_forward_cpu(x, threshold_db, slope, knee_db, floor_db,
+                              attack_coeff, release_coeff, rms_coeff, detector);
+}
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("biquad_forward", &biquad_forward,
         "Biquad filter forward (CUDA/CPU)",
@@ -141,5 +179,10 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         "Compressor forward (CUDA/CPU)",
         py::arg("x"), py::arg("threshold"), py::arg("inv_ratio"), py::arg("knee"),
         py::arg("makeup_db"), py::arg("attack_coeff"), py::arg("release_coeff"),
+        py::arg("rms_coeff"), py::arg("detector"));
+  m.def("expander_forward", &expander_forward,
+        "Expander / gate forward (CUDA/CPU)",
+        py::arg("x"), py::arg("threshold"), py::arg("slope"), py::arg("knee"),
+        py::arg("floor_db"), py::arg("attack_coeff"), py::arg("release_coeff"),
         py::arg("rms_coeff"), py::arg("detector"));
 }

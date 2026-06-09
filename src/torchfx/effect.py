@@ -1751,3 +1751,255 @@ class Compressor(FX):
             self._aRMS,
             1 if self.detector == "rms" else 0,
         )
+
+
+class Expander(FX):
+    r"""Downward expander / noise gate with a decoupled peak detector.
+
+    The mirror image of :class:`Compressor`: levels **below** ``threshold`` are turned
+    *down* (their dynamic range is expanded), which pushes quiet passages and noise
+    toward silence while leaving louder signal untouched. With a high ``ratio`` (or
+    ``ratio=inf``) it acts as a **noise gate**.
+
+    The side-chain level uses the same *decoupled* peak detector as the compressor (a
+    release max-hold followed by an attack one-pole; Giannoulis, Massberg & Reiss,
+    2012). Detection runs in native C++/CUDA, one channel per thread.
+
+    Parameters
+    ----------
+    threshold : float, default=-40.0
+        Level below which downward expansion begins, in **dBFS**.
+    ratio : float, default=2.0
+        Expansion ratio below the threshold (``>= 1.0``). ``2.0`` means a signal 1 dB
+        below threshold is pushed a further 1 dB down. ``float("inf")`` is a hard gate.
+    attack : float, default=0.005
+        Attack time in **seconds** (how fast the gate opens as level rises). ``0`` is
+        instantaneous.
+    release : float, default=0.05
+        Release time in **seconds** (how fast the gate closes as level falls). ``0`` is
+        instantaneous.
+    knee : float, default=6.0
+        Full width of the soft knee in **dB**, centred on the threshold. ``0`` gives a
+        hard knee.
+    floor : float or None, default=None
+        Deepest attenuation in **dB** (a negative number), limiting how far the signal
+        is pushed down — i.e. an expander/gate *range*. ``None`` applies no floor (full
+        downward expansion; with ``ratio=inf`` this gates to near-silence).
+    detector : {"peak", "rms"}, default="peak"
+        Side-chain level detection. ``"peak"`` follows ``|x|``; ``"rms"`` follows a
+        smoothed root-mean-square (averaging window tied to ``attack``).
+    fs : int or None, default=None
+        Sampling rate in Hz. May be left ``None`` and supplied lazily by a ``Wave``
+        pipeline (``wave | expander``).
+
+    Returns
+    -------
+    Tensor
+        The expanded waveform, same shape and dtype as the input.
+
+    Raises
+    ------
+    ValueError
+        If ``ratio < 1``, ``attack``/``release``/``knee`` is negative, ``floor`` is
+        positive, ``detector`` is not ``"peak"``/``"rms"``, ``fs`` is non-positive, or
+        ``forward`` is called before ``fs`` is known.
+
+    See Also
+    --------
+    Compressor : Reduces dynamic range *above* the threshold.
+    Gate : Convenience subclass with an infinite ratio (a hard noise gate).
+
+    Notes
+    -----
+    The detector is identical to :class:`Compressor`; only the static curve differs.
+    Per channel, with linear detector level :math:`L = 20\log_{10}(\max(y_L, \epsilon))`,
+    over-threshold amount :math:`o = L - T`, slope :math:`s = r - 1`, and soft knee of
+    width :math:`W`:
+
+    .. math::
+
+        g_{dB} =
+        \begin{cases}
+        -s\,(o - W/2)^2 / (2W) & |2o| \le W \quad (\text{knee}) \\
+        s\,o & o < 0 \quad (\text{below threshold}) \\
+        0 & \text{otherwise}
+        \end{cases}
+
+    clamped to ``floor`` (``g_{dB} \ge`` floor), and :math:`y[n] = 10^{g_{dB}/20}\,x[n]`.
+
+    This is a **zero-latency feed-forward** design (no look-ahead). The ballistics state
+    is reset on each ``forward`` call, so block-wise streaming is *not* state-continuous
+    across chunks (see the compressor streaming follow-up).
+
+    Examples
+    --------
+    Gently expand a signal 2:1 below -40 dBFS:
+
+    >>> import torch
+    >>> from torchfx.effect import Expander
+    >>> x = torch.randn(2, 48000) * 0.5  # (channels, samples)
+    >>> exp = Expander(threshold=-40.0, ratio=2.0, attack=0.005, release=0.1, fs=48000)
+    >>> y = exp(x)
+    >>> y.shape
+    torch.Size([2, 48000])
+
+    A noise gate (infinite ratio) with an 80 dB range:
+
+    >>> gate = Expander(threshold=-50.0, ratio=float("inf"), floor=-80.0, fs=48000)
+
+    References
+    ----------
+    D. Giannoulis, M. Massberg, J. D. Reiss, "Digital Dynamic Range Compressor
+    Design — A Tutorial and Analysis," J. Audio Eng. Soc., 60(6), 2012.
+
+    """
+
+    # Stands in for ``ratio=inf`` so the kernel never does inf arithmetic: a slope this
+    # steep drives any below-threshold sample straight to the floor (i.e. a hard gate).
+    _GATE_SLOPE = 1.0e6
+    # Applied when ``floor`` is None — far below any real signal, so effectively no floor.
+    _NO_FLOOR_DB = -240.0
+
+    def __init__(
+        self,
+        threshold: float = -40.0,
+        ratio: float = 2.0,
+        attack: float = 0.005,
+        release: float = 0.05,
+        knee: float = 6.0,
+        floor: float | None = None,
+        detector: str = "peak",
+        fs: int | None = None,
+    ) -> None:
+        super().__init__()
+        valid_detectors = {"peak", "rms"}
+        if detector not in valid_detectors:
+            raise ValueError(
+                f"detector must be one of {sorted(valid_detectors)}, got {detector!r}."
+            )
+        if ratio < 1.0:
+            raise ValueError(f"ratio must be >= 1.0, got {ratio}.")
+        if attack < 0:
+            raise ValueError(f"attack must be non-negative (seconds), got {attack}.")
+        if release < 0:
+            raise ValueError(f"release must be non-negative (seconds), got {release}.")
+        if knee < 0:
+            raise ValueError(f"knee must be non-negative (dB), got {knee}.")
+        if floor is not None and floor > 0:
+            raise ValueError(f"floor must be non-positive (dB of attenuation), got {floor}.")
+        if fs is not None and fs <= 0:
+            raise ValueError(f"Sample rate (fs) must be positive, got {fs}.")
+
+        self.threshold = float(threshold)
+        self.ratio = float(ratio)
+        self.attack = float(attack)
+        self.release = float(release)
+        self.knee = float(knee)
+        self.floor = None if floor is None else float(floor)
+        self.detector = detector
+        self.fs = fs
+
+        # slope = ratio - 1 (a large finite value for an infinite-ratio gate).
+        self._slope = self._GATE_SLOPE if math.isinf(self.ratio) else self.ratio - 1.0
+        self._floor_db = self._NO_FLOOR_DB if self.floor is None else self.floor
+        self._aA = 0.0
+        self._aR = 0.0
+        self._aRMS = 0.0
+        self._last_fs: int | None = None
+        self._needs_calculation = True
+
+    def _compute_coeffs(self) -> None:
+        """Derive attack/release/RMS coefficients from the times and ``fs``."""
+        assert self.fs is not None
+        fs = self.fs
+        self._aA = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
+        self._aR = 0.0 if self.release == 0 else math.exp(-1.0 / (self.release * fs))
+        # The RMS averaging window defaults to the attack time.
+        self._aRMS = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
+        self._last_fs = fs
+        self._needs_calculation = False
+
+    @override
+    @torch.no_grad()
+    def forward(self, waveform: Tensor) -> Tensor:
+        if self._needs_calculation or self._last_fs != self.fs:
+            if self.fs is None:
+                raise ValueError(
+                    "Sample rate (fs) is required for the expander. Use it in a "
+                    "Wave pipeline (wave | expander) or pass fs at construction."
+                )
+            if self.fs <= 0:
+                raise ValueError("Sample rate (fs) must be positive.")
+            self._compute_coeffs()
+
+        from torchfx._ops import expander_forward
+
+        return expander_forward(
+            waveform,
+            self.threshold,
+            self._slope,
+            self.knee,
+            self._floor_db,
+            self._aA,
+            self._aR,
+            self._aRMS,
+            1 if self.detector == "rms" else 0,
+        )
+
+
+class Gate(Expander):
+    r"""Noise gate — an :class:`Expander` with an infinite ratio (hard gating).
+
+    Below ``threshold`` the signal is attenuated to the ``floor`` (a hard downward
+    expansion); above it the signal passes unchanged. This is a basic gate without
+    hysteresis or a hold time (a possible future refinement).
+
+    Parameters
+    ----------
+    threshold : float, default=-50.0
+        Level below which the gate closes, in **dBFS**.
+    attack : float, default=0.001
+        How fast the gate opens as level rises, in **seconds**.
+    release : float, default=0.05
+        How fast the gate closes as level falls, in **seconds**.
+    floor : float or None, default=-80.0
+        Attenuation applied when the gate is closed, in **dB**. ``None`` gates to
+        near-silence.
+    knee : float, default=3.0
+        Soft-knee width in **dB** around the threshold.
+    detector : {"peak", "rms"}, default="peak"
+        Side-chain level detection.
+    fs : int or None, default=None
+        Sampling rate in Hz (may be supplied lazily by a ``Wave`` pipeline).
+
+    Examples
+    --------
+    >>> import torch
+    >>> from torchfx.effect import Gate
+    >>> x = torch.randn(1, 48000) * 0.5
+    >>> y = Gate(threshold=-45.0, floor=-90.0, fs=48000)(x)
+    >>> y.shape
+    torch.Size([1, 48000])
+
+    """
+
+    def __init__(
+        self,
+        threshold: float = -50.0,
+        attack: float = 0.001,
+        release: float = 0.05,
+        floor: float | None = -80.0,
+        knee: float = 3.0,
+        detector: str = "peak",
+        fs: int | None = None,
+    ) -> None:
+        super().__init__(
+            threshold=threshold,
+            ratio=float("inf"),
+            attack=attack,
+            release=release,
+            knee=knee,
+            floor=floor,
+            detector=detector,
+            fs=fs,
+        )

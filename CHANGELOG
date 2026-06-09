@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Expander` / `Gate` dynamics effects.** A downward expander — the mirror of the
+  compressor, attenuating *below* the threshold — with `ratio`/`knee`/`attack`/`release`,
+  an optional `floor` (range), and peak or RMS detection. `Gate` is the infinite-ratio
+  convenience (a hard noise gate). Detection runs in the same native per-channel
+  C++/CUDA kernel style as the compressor (`expander_forward`). Usage:
+  `wave | Expander(threshold=-40, ratio=2)` or `wave | Gate(threshold=-50, floor=-80)`.
+  (Resolves #32.)
 - **`Compressor` dynamics effect.** A feed-forward dynamic-range compressor with a
   decoupled peak detector (release max-hold + attack one-pole), a soft-knee dB gain
   curve (`threshold`/`ratio`/`knee`), `makeup_gain`, peak or RMS detection, and a
