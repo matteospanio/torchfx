@@ -1,0 +1,25 @@
+# Codecov configuration.
+#
+# CI (.github/workflows/ci.yml) runs the suite under coverage and uploads coverage.xml,
+# which measures `src/torchfx` (see [tool.coverage] in pyproject.toml). The absolute level
+# is gated in CI by coverage's own `fail_under = 87`; the statuses below add per-PR signal
+# on top of that — guard against drops and keep new code covered — without being flaky.
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto        # don't drop below the base branch...
+        threshold: 1%       # ...by more than 1% (run-to-run noise margin)
+    patch:
+      default:
+        target: 80%         # changed lines in a PR should be well covered
+        threshold: 5%
+
+comment:
+  layout: "reach, diff, files"
+  require_changes: true     # only comment when coverage actually changes
+
+# Mirror coverage's `omit`: the sounddevice backend is unreachable on the CPU-only CI box.
+ignore:
+  - "src/torchfx/realtime/sounddevice_backend.py"
