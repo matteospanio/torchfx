@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`torchfx.batch_process(waves, effect)` — batched multi-signal processing.** Applies an
+  effect to many `Wave` signals in a **single** native kernel launch by padding them to a
+  common length and concatenating on the channel dimension (the causal per-channel kernels
+  make this numerically identical to processing each signal separately). Fills the GPU and
+  amortises Python dispatch + OpenMP setup — measured **~2.5–7× faster on CPU** and
+  **~3–4× on GPU** for 8–512 stereo files (8th-order Butterworth). For
+  per-channel-independent effects (filters, `Gain`, dynamics); see
+  `benchmarks/bench_batch.py`. (Resolves #19.)
 - **`Limiter` — look-ahead brick-wall peak limiter.** Guarantees `|y| <= threshold` (a
   true brick wall) while staying transparent: a short `lookahead` reduces the gain
   *before* a peak (a vectorised forward max-pool computes the look-ahead window), the gain

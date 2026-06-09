@@ -420,9 +420,12 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
   - ✅ Reverb op fusion (5 tensor ops → 2)
   - ✅ Delay wet/dry mix via `torch.lerp` (3 ops → 1)
 
-- [ ] **Multi-file batch processing**
-  - Process multiple files in single kernel launch
-  - Maximize GPU occupancy
+- [x] **Multi-file batch processing** (#19) — `torchfx.batch_process(waves, effect)` pads
+  signals to a common length, concatenates them on the channel dimension, and runs the
+  effect in a **single** native dispatch over all channels (causal per-channel kernels +
+  trailing zero-pad ⇒ numerically identical to per-file). Measured **~2.5–7× on CPU and
+  ~3–4× on GPU** for 8–512 stereo files (8th-order Butterworth). See
+  `benchmarks/bench_batch.py`.
 
 ### 4.5 Performance Benchmarking ✅
 
