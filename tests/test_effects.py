@@ -15,7 +15,6 @@ from torchfx.effect import (
     PercentileNormalizationStrategy,
     PerChannelNormalizationStrategy,
     PingPongDelayStrategy,
-    Reverb,
     RMSNormalizationStrategy,
 )
 
@@ -200,93 +199,7 @@ def test_per_channel_normalization_strategy_zero():
     torch.testing.assert_close(out, waveform)
 
 
-def test_reverb_basic():
-    # Simple waveform, delay=2, decay=0.5, mix=1.0 (fully wet)
-    waveform = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0])
-    reverb = Reverb(delay=2, decay=0.5, mix=1.0)
-    # Expected: y[n] = x[n] + 0.5 * x[n-2] for n >= 2, else x[n]
-    expected = torch.tensor(
-        [
-            1.0,  # n=0: no delay
-            2.0,  # n=1: no delay
-            3.0 + 0.5 * 1.0,  # n=2
-            4.0 + 0.5 * 2.0,  # n=3
-            5.0 + 0.5 * 3.0,  # n=4
-        ]
-    )
-    out = reverb(waveform)
-    torch.testing.assert_close(out, expected)
-
-
-def test_reverb_mix_zero():
-    # mix=0 should return the original waveform
-    waveform = torch.randn(10)
-    reverb = Reverb(delay=3, decay=0.7, mix=0.0)
-    out = reverb(waveform)
-    torch.testing.assert_close(out, waveform)
-
-
-def test_reverb_short_waveform():
-    # If waveform shorter than delay, should return unchanged
-    waveform = torch.tensor([1.0, 2.0])
-    reverb = Reverb(delay=3, decay=0.5, mix=1.0)
-    out = reverb(waveform)
-    torch.testing.assert_close(out, waveform)
-
-
-def test_reverb_multichannel():
-    # Test with 2D waveform (channels, time)
-    waveform = torch.tensor([[1.0, 2.0, 3.0, 4.0], [0.5, 1.5, 2.5, 3.5]])
-    reverb = Reverb(delay=2, decay=0.5, mix=1.0)
-    expected = torch.empty_like(waveform)
-    # Channel 0
-    expected[0, 0] = 1.0
-    expected[0, 1] = 2.0
-    expected[0, 2] = 3.0 + 0.5 * 1.0
-    expected[0, 3] = 4.0 + 0.5 * 2.0
-    # Channel 1
-    expected[1, 0] = 0.5
-    expected[1, 1] = 1.5
-    expected[1, 2] = 2.5 + 0.5 * 0.5
-    expected[1, 3] = 3.5 + 0.5 * 1.5
-    out = reverb(waveform)
-    torch.testing.assert_close(out, expected)
-
-
-def test_reverb_batched_3d_input():
-    waveform = torch.randn(2, 3, 128)
-    reverb = Reverb(delay=4, decay=0.4, mix=0.5)
-    out = reverb(waveform)
-
-    assert out.shape == waveform.shape
-    assert torch.isfinite(out).all()
-
-
-def test_reverb_float16_input_supported():
-    waveform = torch.randn(1, 64, dtype=torch.float16)
-    reverb = Reverb(delay=3, decay=0.2, mix=0.5)
-    out = reverb(waveform)
-
-    assert out.dtype == torch.float16
-    assert out.shape == waveform.shape
-
-
-@pytest.mark.parametrize("delay", [0, -1])
-def test_reverb_invalid_delay(delay):
-    with pytest.raises(AssertionError):
-        Reverb(delay=delay, decay=0.5, mix=0.5)
-
-
-@pytest.mark.parametrize("decay", [0.0, 1.0, -0.1, 1.1])
-def test_reverb_invalid_decay(decay):
-    with pytest.raises(AssertionError):
-        Reverb(delay=2, decay=decay, mix=0.5)
-
-
-@pytest.mark.parametrize("mix", [-0.1, 1.1])
-def test_reverb_invalid_mix(mix):
-    with pytest.raises(AssertionError):
-        Reverb(delay=2, decay=0.5, mix=mix)
+# Reverb tests live in tests/test_reverb.py (Freeverb-style, issue #18).
 
 
 # Delay tests

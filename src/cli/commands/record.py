@@ -50,7 +50,7 @@ def record_cmd(
     --------
       torchfx record out.wav --duration 10
       torchfx record out.wav -t 5 -r 48000 -C 2
-      torchfx record out.wav -t 10 -e normalize -e "reverb:decay=0.3"
+      torchfx record out.wav -t 10 -e normalize -e "reverb:room_size=0.3"
 
     """
     import torch

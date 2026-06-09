@@ -85,7 +85,8 @@ Python_add_library(torchfx_ext MODULE WITH_SOABI
   "${CSRC_DIR}/cpu/delay_cpu.cpp"
   "${CSRC_DIR}/cpu/compressor_cpu.cpp"
   "${CSRC_DIR}/cpu/expander_cpu.cpp"
-  "${CSRC_DIR}/cpu/limiter_cpu.cpp")
+  "${CSRC_DIR}/cpu/limiter_cpu.cpp"
+  "${CSRC_DIR}/cpu/reverb_cpu.cpp")
 
 if(TORCHFX_USE_CUDA)
   target_sources(torchfx_ext PRIVATE
@@ -94,7 +95,8 @@ if(TORCHFX_USE_CUDA)
     "${CSRC_DIR}/cuda/delay_forward.cu"
     "${CSRC_DIR}/cuda/compressor_forward.cu"
     "${CSRC_DIR}/cuda/expander_forward.cu"
-    "${CSRC_DIR}/cuda/limiter_forward.cu")
+    "${CSRC_DIR}/cuda/limiter_forward.cu"
+    "${CSRC_DIR}/cuda/reverb_forward.cu")
   target_compile_definitions(torchfx_ext PRIVATE WITH_CUDA)
   set_target_properties(torchfx_ext PROPERTIES CUDA_ARCHITECTURES "${TORCHFX_CUDA_ARCHS}")
 endif()
