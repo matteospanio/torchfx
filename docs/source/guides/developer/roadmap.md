@@ -680,9 +680,10 @@ Each item lists its difficulty and expected impact; none block a release.
   - Self-hosted or cloud GPU
   - CUDA tests and benchmarks
 
-- [ ] **Automated releases**
-  - PyPI publishing on tag
-  - Changelog generation
+- [x] **Automated releases** (#29) — `release.yml` already auto-tags on a `pyproject.toml`
+  version bump and the wheel workflows publish to PyPI / the CUDA index on the tag. Now it
+  also publishes a **GitHub Release** whose notes are the `## [<version>]` CHANGELOG
+  section (`tools/extract_changelog.py`). See the developer releasing guide.
 
 ---
 

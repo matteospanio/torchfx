@@ -64,6 +64,23 @@ jobs:
           git tag -a "$tag" -m "Release $tag"
           git push origin "$tag"
 
+      # Publish a GitHub Release whose notes are the CHANGELOG section for this
+      # version (tools/extract_changelog.py). Falls back to a placeholder if the
+      # CHANGELOG has no matching `## [X.Y.Z]` header yet.
+      - name: Create GitHub Release with CHANGELOG notes
+        if: steps.check.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="v${{ steps.ver.outputs.version }}"
+          if python tools/extract_changelog.py "${{ steps.ver.outputs.version }}" > release-notes.md; then
+            echo "Using the CHANGELOG section for ${{ steps.ver.outputs.version }}."
+          else
+            echo "::warning::No CHANGELOG section for ${{ steps.ver.outputs.version }}; using a placeholder."
+            printf 'Release %s. See the CHANGELOG for details.\n' "$tag" > release-notes.md
+          fi
+          gh release create "$tag" --title "$tag" --notes-file release-notes.md --verify-tag
+
       # Tag pushes from GITHUB_TOKEN do not retrigger workflows, so kick the
       # wheel builds off explicitly. Each runs with --ref pointing at the
       # new tag, so github.ref inside wheels.yml/wheels-cuda.yml is
