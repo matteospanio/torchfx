@@ -28,7 +28,7 @@ def _design():
 
 def _bench(device: str, n_files: int, channels: int, samples: int, reps: int = 5):
     waves = [
-        fx.Wave(torch.randn(channels, samples, dtype=torch.float32, device=device), FS)
+        fx.Wave(torch.randn(channels, samples, dtype=torch.float32), FS, device=device)
         for _ in range(n_files)
     ]
 

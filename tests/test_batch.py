@@ -127,7 +127,7 @@ def test_exported_at_top_level():
 def test_batch_gpu_matches_cpu():
     specs = [(1, 4000), (2, 6000), (2, 5000)]
     waves_cpu = [_wave(c, t, i) for i, (c, t) in enumerate(specs)]
-    waves_gpu = [Wave(w.ys.cuda(), FS) for w in waves_cpu]
+    waves_gpu = [Wave(w.ys, FS, device="cuda") for w in waves_cpu]
     out_cpu = batch_process(waves_cpu, LoButterworth(4000, order=8))
     out_gpu = batch_process(waves_gpu, LoButterworth(4000, order=8))
     for oc, og in zip(out_cpu, out_gpu, strict=True):
