@@ -97,6 +97,19 @@ jobs:
         --exclude 'libnvJitLink.so*'
 
     steps:
+      # The CUDA wheel build installs the CUDA toolkit (dnf) plus a multi-GB CUDA
+      # torch wheel (pip) inside the manylinux container, whose writable layer lives
+      # on the runner's root filesystem. With the runner's default ~14 GB free that
+      # intermittently exhausts disk ("No space left on device"). Reclaim the
+      # preinstalled toolchains we don't use (~25 GB) first. See #74.
+      - name: Free up runner disk space
+        run: |
+          echo "disk before:"; df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android \
+                      /opt/hostedtoolcache /usr/local/share/boost /usr/lib/jvm \
+                      /usr/share/swift || true
+          echo "disk after:"; df -h /
+
       - uses: actions/checkout@v4
 
       - name: Build wheels
