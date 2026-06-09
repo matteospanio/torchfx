@@ -332,3 +332,60 @@ def compressor_forward(
     if len(original_shape) == 2:
         return result_2d
     return result_2d.reshape(original_shape)
+
+
+def expander_forward(
+    x: Tensor,
+    threshold_db: float,
+    slope: float,
+    knee_db: float,
+    floor_db: float,
+    attack_coeff: float,
+    release_coeff: float,
+    rms_coeff: float,
+    detector: int,
+) -> Tensor:
+    """Dispatch the downward expander / gate to the native kernel (CUDA or CPU).
+
+    Ballistics coefficients are precomputed by the caller. ``detector`` is 0 (peak)
+    or 1 (rms); ``slope`` is ``ratio - 1`` (a large finite value stands in for an
+    infinite-ratio gate, so the kernel never does ``inf`` arithmetic); ``floor_db`` is
+    the deepest attenuation in dB. Returns the processed tensor with the input shape
+    and dtype preserved.
+
+    """
+    if x.ndim < 1:
+        raise ValueError("Input tensor must have at least 1 dimension.")
+    if not x.is_floating_point():
+        raise TypeError("Input tensor must use a floating-point dtype.")
+
+    original_shape = x.shape
+    if x.ndim == 1:
+        x_2d = x.unsqueeze(0)
+    elif x.ndim == 2:
+        x_2d = x
+    else:
+        x_2d = x.reshape(-1, x.size(-1))
+
+    # Keep native kernels on their supported dtypes (float16/bfloat16 -> float32).
+    native_dtype = torch.float64 if x_2d.dtype == torch.float64 else torch.float32
+    x_native = x_2d if x_2d.dtype == native_dtype else x_2d.to(dtype=native_dtype)
+
+    result_native: Tensor = _ext.expander_forward(
+        x_native,
+        threshold_db,
+        slope,
+        knee_db,
+        floor_db,
+        attack_coeff,
+        release_coeff,
+        rms_coeff,
+        detector,
+    )
+    result_2d = result_native if result_native.dtype == x.dtype else result_native.to(dtype=x.dtype)
+
+    if len(original_shape) == 1:
+        return result_2d.squeeze(0)
+    if len(original_shape) == 2:
+        return result_2d
+    return result_2d.reshape(original_shape)
