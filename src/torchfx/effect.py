@@ -2003,3 +2003,143 @@ class Gate(Expander):
             detector=detector,
             fs=fs,
         )
+
+
+class Limiter(FX):
+    r"""Look-ahead brick-wall peak limiter.
+
+    Guarantees the output magnitude never exceeds ``threshold`` (a true brick wall) while
+    staying transparent: a short ``lookahead`` lets the gain reduce *before* a peak
+    arrives, so there is no transient overshoot and none of the distortion an
+    instantaneous gain change would cause. The gain then recovers over ``release``.
+
+    The look-ahead windowed peak of ``|x|`` is computed with a vectorised max-pool, and the
+    sequential gain recurrence runs in a native C++/CUDA kernel (one channel per thread).
+
+    Parameters
+    ----------
+    threshold : float, default=-1.0
+        Output ceiling in **dBFS**. The output magnitude never exceeds this.
+    lookahead : float, default=0.005
+        Look-ahead time in **seconds**: the gain is reduced over this window ahead of a
+        peak so the limiter never overshoots. ``0`` is a zero-look-ahead limiter.
+    release : float, default=0.05
+        Release time in **seconds** — how fast the gain recovers after a peak. ``0`` is
+        instantaneous.
+    fs : int or None, default=None
+        Sampling rate in Hz. May be left ``None`` and supplied lazily by a ``Wave``
+        pipeline (``wave | limiter``).
+
+    Returns
+    -------
+    Tensor
+        The limited waveform, same shape and dtype as the input, with
+        ``|y| <= 10**(threshold/20)`` everywhere.
+
+    Raises
+    ------
+    ValueError
+        If ``lookahead`` or ``release`` is negative, ``fs`` is non-positive, or ``forward``
+        is called before ``fs`` is known.
+
+    See Also
+    --------
+    Compressor : ``Compressor(ratio=inf)`` is a zero-look-ahead feed-forward limiter that
+        can overshoot on a single sample before its gain reacts; ``Limiter`` cannot.
+
+    Notes
+    -----
+    For each sample the applied gain is
+
+    .. math::
+
+        g[n] = \min\!\Big(\tfrac{T_\text{lin}}{\max(p[n], \epsilon)},\ a_R\,g[n-1] + (1-a_R)\Big),
+        \qquad p[n] = \max_{0 \le k \le L} |x[n+k]|
+
+    with linear ceiling :math:`T_\text{lin} = 10^{\text{threshold}/20}`, release coefficient
+    :math:`a_R = e^{-1/(\text{release}\cdot f_s)}`, and look-ahead :math:`L`. Since
+    :math:`|x[n]| \le p[n]`, the output :math:`y[n] = g[n]\,x[n]` satisfies
+    :math:`|y[n]| \le T_\text{lin}` — a guaranteed brick wall.
+
+    This is a **peak** (not true-peak / oversampled) limiter, so inter-sample peaks may
+    slightly exceed the ceiling after conversion to analog (true-peak limiting is a possible
+    follow-up). The output is time-aligned with the input (no net latency). Ballistics state
+    is reset per ``forward`` call (not state-continuous across streaming chunks).
+
+    Examples
+    --------
+    Brick-wall a signal that exceeds full scale to a -1 dBFS ceiling:
+
+    >>> import torch
+    >>> from torchfx.effect import Limiter
+    >>> x = torch.randn(2, 48000) * 3.0  # well over +/-1
+    >>> lim = Limiter(threshold=-1.0, lookahead=0.005, release=0.05, fs=48000)
+    >>> y = lim(x)
+    >>> bool(y.abs().max() <= 10 ** (-1.0 / 20) + 1e-4)
+    True
+
+    """
+
+    def __init__(
+        self,
+        threshold: float = -1.0,
+        lookahead: float = 0.005,
+        release: float = 0.05,
+        fs: int | None = None,
+    ) -> None:
+        super().__init__()
+        if lookahead < 0:
+            raise ValueError(f"lookahead must be non-negative (seconds), got {lookahead}.")
+        if release < 0:
+            raise ValueError(f"release must be non-negative (seconds), got {release}.")
+        if fs is not None and fs <= 0:
+            raise ValueError(f"Sample rate (fs) must be positive, got {fs}.")
+
+        self.threshold = float(threshold)
+        self.lookahead = float(lookahead)
+        self.release = float(release)
+        self.fs = fs
+
+        self._thr_lin = 10.0 ** (self.threshold / 20.0)
+        self._attack_coeff = 0.0
+        self._release_coeff = 0.0
+        self._lookahead_samples = 0
+        self._last_fs: int | None = None
+        self._needs_calculation = True
+
+    def _compute_coeffs(self) -> None:
+        """Derive ceiling, attack/release coefficients and look-ahead samples from
+        ``fs``."""
+        assert self.fs is not None
+        fs = self.fs
+        self._thr_lin = 10.0 ** (self.threshold / 20.0)
+        # Ramp the gain down over the look-ahead window so it is already low when the peak
+        # arrives (the per-sample clamp guarantees the brick wall regardless).
+        self._attack_coeff = 0.0 if self.lookahead == 0 else math.exp(-1.0 / (self.lookahead * fs))
+        self._release_coeff = 0.0 if self.release == 0 else math.exp(-1.0 / (self.release * fs))
+        self._lookahead_samples = int(round(self.lookahead * fs))
+        self._last_fs = fs
+        self._needs_calculation = False
+
+    @override
+    @torch.no_grad()
+    def forward(self, waveform: Tensor) -> Tensor:
+        if self._needs_calculation or self._last_fs != self.fs:
+            if self.fs is None:
+                raise ValueError(
+                    "Sample rate (fs) is required for the limiter. Use it in a "
+                    "Wave pipeline (wave | limiter) or pass fs at construction."
+                )
+            if self.fs <= 0:
+                raise ValueError("Sample rate (fs) must be positive.")
+            self._compute_coeffs()
+
+        from torchfx._ops import limiter_forward
+
+        return limiter_forward(
+            waveform,
+            self._thr_lin,
+            self._attack_coeff,
+            self._release_coeff,
+            self._lookahead_samples,
+        )

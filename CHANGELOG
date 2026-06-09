@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Limiter` — look-ahead brick-wall peak limiter.** Guarantees `|y| <= threshold` (a
+  true brick wall) while staying transparent: a short `lookahead` reduces the gain
+  *before* a peak (a vectorised forward max-pool computes the look-ahead window), the gain
+  is attack/release-smoothed toward that target, and a per-sample clamp enforces the
+  ceiling exactly. Unlike `Compressor(ratio=inf)` — a zero-look-ahead limiter that can
+  overshoot a single sample before its gain reacts — this never exceeds the ceiling.
+  Native `limiter_forward` kernel (CPU + CUDA, FP32/FP64). Usage:
+  `wave | Limiter(threshold=-1.0, lookahead=0.005)`. (Resolves #31.)
 - **`Expander` / `Gate` dynamics effects.** A downward expander — the mirror of the
   compressor, attenuating *below* the threshold — with `ratio`/`knee`/`attack`/`release`,
   an optional `floor` (range), and peak or RMS detection. `Gate` is the infinite-ratio

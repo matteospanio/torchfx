@@ -5,6 +5,7 @@
 #include "torchfx/delay_kernel.h"
 #include "torchfx/compressor_kernel.h"
 #include "torchfx/expander_kernel.h"
+#include "torchfx/limiter_kernel.h"
 #endif
 
 // CPU implementation declarations
@@ -49,6 +50,13 @@ torch::Tensor expander_forward_cpu(
     double release_coeff,
     double rms_coeff,
     int detector);
+
+torch::Tensor limiter_forward_cpu(
+    const torch::Tensor& x,
+    const torch::Tensor& peak_env,
+    double threshold_lin,
+    double attack_coeff,
+    double release_coeff);
 
 // Dispatch: select CUDA or CPU implementation based on tensor device.
 // `threshold` is the sequential-vs-parallel-scan boundary used by the CUDA path
@@ -162,6 +170,24 @@ torch::Tensor expander_forward(
                               attack_coeff, release_coeff, rms_coeff, detector);
 }
 
+// Look-ahead brick-wall limiter dispatch. `peak_env` is the precomputed look-ahead
+// windowed peak of |x|; `threshold_lin` is the linear ceiling.
+torch::Tensor limiter_forward(
+    const torch::Tensor& x,
+    const torch::Tensor& peak_env,
+    double threshold_lin,
+    double attack_coeff,
+    double release_coeff) {
+#ifdef WITH_CUDA
+  if (x.is_cuda()) {
+    return torchfx::limiter_forward_cuda(x, peak_env, threshold_lin, attack_coeff, release_coeff);
+  }
+#else
+  TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
+#endif
+  return limiter_forward_cpu(x, peak_env, threshold_lin, attack_coeff, release_coeff);
+}
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("biquad_forward", &biquad_forward,
         "Biquad filter forward (CUDA/CPU)",
@@ -185,4 +211,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         py::arg("x"), py::arg("threshold"), py::arg("slope"), py::arg("knee"),
         py::arg("floor_db"), py::arg("attack_coeff"), py::arg("release_coeff"),
         py::arg("rms_coeff"), py::arg("detector"));
+  m.def("limiter_forward", &limiter_forward,
+        "Look-ahead brick-wall limiter forward (CUDA/CPU)",
+        py::arg("x"), py::arg("peak_env"), py::arg("threshold_lin"),
+        py::arg("attack_coeff"), py::arg("release_coeff"));
 }
