@@ -11,6 +11,7 @@ When the merge commit lands on `master`, [`release.yml`](https://github.com/matt
 
 - Reads the new version out of `pyproject.toml`.
 - If a tag `v<version>` doesn't exist yet, it creates and pushes one (`v0.5.4`, `v0.6.0`, ...).
+- Creates a **GitHub Release** for the tag whose notes are the `## [<version>]` section of the `CHANGELOG`, extracted by [`tools/extract_changelog.py`](https://github.com/matteospanio/torchfx/blob/master/tools/extract_changelog.py). So the CHANGELOG entry you write in step 1 *is* the release notes — make sure it has a matching `## [<version>]` header (a placeholder is used if it doesn't).
 - Dispatches [`wheels.yml`](https://github.com/matteospanio/torchfx/blob/master/.github/workflows/wheels.yml) and [`wheels-cuda.yml`](https://github.com/matteospanio/torchfx/blob/master/.github/workflows/wheels-cuda.yml) against the new tag.
 
 The wheel workflows then:
@@ -24,6 +25,7 @@ If you re-merge to `master` without changing the version, `release.yml` is a no-
 flowchart LR
     PR["Version-bump PR"] --> Merge["Merge to master"]
     Merge --> Release["release.yml<br/>(detects bump,<br/>tags vX.Y.Z)"]
+    Release --> Notes["GitHub Release<br/>(CHANGELOG section)"]
     Release -->|workflow_dispatch| CPU["wheels.yml<br/>cibuildwheel × 4 OSes"]
     Release -->|workflow_dispatch| GPU["wheels-cuda.yml<br/>cu124 + cu128"]
     CPU --> PyPI["PyPI<br/>(trusted publishing)"]
