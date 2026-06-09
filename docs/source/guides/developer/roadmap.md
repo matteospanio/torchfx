@@ -437,9 +437,11 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
   - ✅ CPU `torch.profiler` findings captured
   - ✅ Coverage gate `fail_under = 87` enforced in CI
 
-- [ ] **Performance regression testing**
-  - Automated benchmarks in CI
-  - Alert on >5% regression
+- [x] **Performance regression testing** (#21) — `tests/test_perf_regression.py` runs in
+  ordinary CI and gates on *deterministic* invariants (fusion collapses a depth-K cascade
+  to one native dispatch; a static `Gain` folds without adding one) plus a same-machine
+  relative wall-time smoke. Avoids flaky absolute-timing baselines on shared runners; see
+  the developer testing guide. (Absolute wall-time budgets would need a dedicated runner.)
 
 - [ ] **Profiling guides**
   - Documentation for profiling pipelines
