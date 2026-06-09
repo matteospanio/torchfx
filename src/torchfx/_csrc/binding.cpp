@@ -6,6 +6,7 @@
 #include "torchfx/compressor_kernel.h"
 #include "torchfx/expander_kernel.h"
 #include "torchfx/limiter_kernel.h"
+#include "torchfx/reverb_kernel.h"
 #endif
 
 // CPU implementation declarations
@@ -57,6 +58,16 @@ torch::Tensor limiter_forward_cpu(
     double threshold_lin,
     double attack_coeff,
     double release_coeff);
+
+torch::Tensor reverb_forward_cpu(
+    const torch::Tensor& x,
+    int fs,
+    double feedback,
+    double damp,
+    double input_gain,
+    double allpass_fb,
+    double wet,
+    double dry);
 
 // Dispatch: select CUDA or CPU implementation based on tensor device.
 // `threshold` is the sequential-vs-parallel-scan boundary used by the CUDA path
@@ -188,6 +199,27 @@ torch::Tensor limiter_forward(
   return limiter_forward_cpu(x, peak_env, threshold_lin, attack_coeff, release_coeff);
 }
 
+// Freeverb-style reverb dispatch. Comb/all-pass tunings scale with `fs`; `feedback`,
+// `damp`, `wet`, `dry` come from the Python layer's room-size/damping/mix parameters.
+torch::Tensor reverb_forward(
+    const torch::Tensor& x,
+    int fs,
+    double feedback,
+    double damp,
+    double input_gain,
+    double allpass_fb,
+    double wet,
+    double dry) {
+#ifdef WITH_CUDA
+  if (x.is_cuda()) {
+    return torchfx::reverb_forward_cuda(x, fs, feedback, damp, input_gain, allpass_fb, wet, dry);
+  }
+#else
+  TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
+#endif
+  return reverb_forward_cpu(x, fs, feedback, damp, input_gain, allpass_fb, wet, dry);
+}
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("biquad_forward", &biquad_forward,
         "Biquad filter forward (CUDA/CPU)",
@@ -215,4 +247,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         "Look-ahead brick-wall limiter forward (CUDA/CPU)",
         py::arg("x"), py::arg("peak_env"), py::arg("threshold_lin"),
         py::arg("attack_coeff"), py::arg("release_coeff"));
+  m.def("reverb_forward", &reverb_forward,
+        "Freeverb-style reverb forward (CUDA/CPU)",
+        py::arg("x"), py::arg("fs"), py::arg("feedback"), py::arg("damp"),
+        py::arg("input_gain"), py::arg("allpass_fb"), py::arg("wet"), py::arg("dry"));
 }

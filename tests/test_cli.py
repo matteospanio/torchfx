@@ -99,11 +99,11 @@ class TestParseEffectString:
         assert fx.gain == pytest.approx(0.5)
 
     def test_keyword_params(self) -> None:
-        fx = parse_effect_string("reverb:decay=0.6,mix=0.3")
+        fx = parse_effect_string("reverb:room_size=0.6,mix=0.3")
         from torchfx.effect import Reverb
 
         assert isinstance(fx, Reverb)
-        assert fx.decay == pytest.approx(0.6)
+        assert fx.room_size == pytest.approx(0.6)
         assert fx.mix == pytest.approx(0.3)
 
     def test_mixed_positional_and_keyword(self) -> None:

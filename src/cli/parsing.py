@@ -13,7 +13,7 @@ String format
 Examples::
 
     gain:0.5
-    reverb:decay=0.6,mix=0.3
+    reverb:room_size=0.6,mix=0.3
     normalize
     lowpass:cutoff=1000,order=4
     parametriceq:frequency=2000,q=1.5,gain=6,gain_scale=db
@@ -24,7 +24,7 @@ TOML configuration
 
     [[effects]]
     name = "reverb"
-    decay = 0.6
+    room_size = 0.6
     mix = 0.3
 
     [[effects]]
@@ -79,7 +79,7 @@ EFFECT_REGISTRY: dict[str, tuple[type[FX], list[str]]] = {
     # ── effects ──────────────────────────────────────────────
     "gain": (Gain, ["gain"]),
     "normalize": (Normalize, ["peak"]),
-    "reverb": (Reverb, ["delay", "decay", "mix"]),
+    "reverb": (Reverb, ["room_size", "damping", "mix"]),
     "delay": (Delay, ["delay_samples", "feedback", "mix"]),
     # ── biquad filters ──────────────────────────────────────
     "lowpass": (BiquadLPF, ["cutoff", "q"]),
@@ -251,7 +251,7 @@ def load_effects_from_config(path: str | Path) -> list[FX]:
 
         [[effects]]
         name = "reverb"
-        decay = 0.6
+        room_size = 0.6
         mix = 0.3
 
         [[effects]]

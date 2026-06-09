@@ -85,7 +85,7 @@ def preset_save_cmd(
     \b
     Examples
     --------
-      torchfx preset save mastering -e normalize -e "reverb:decay=0.4,mix=0.2"
+      torchfx preset save mastering -e normalize -e "reverb:room_size=0.4,mix=0.2"
       torchfx preset save loud --from my_chain.toml
 
     """

@@ -812,148 +812,118 @@ class PerChannelNormalizationStrategy(NormalizationStrategy):
 
 
 class Reverb(FX):
-    r"""Apply reverb effect using a feedback delay network for spatial ambiance.
+    r"""Freeverb-style algorithmic reverb (parallel combs + series all-passes).
 
-    The Reverb effect creates spatial ambiance by simulating sound reflections
-    in an acoustic space. It uses a simple feedback comb filter (feedback delay
-    network) to produce reverb-like effects with controllable decay time and
-    wet/dry mix.
-
-    This is a basic reverb implementation suitable for adding spatial depth to
-    audio signals. For more complex reverb algorithms, consider using convolution
-    reverbs with impulse responses.
+    Replaces the original single-comb reverb with the classic Schroeder/Moorer structure:
+    per channel, **8 parallel low-pass-feedback comb filters** are summed and fed through
+    **4 series all-pass diffusers**, producing a dense, natural decay. The comb/all-pass
+    delay tunings scale with the sampling rate so the character is consistent across
+    ``fs``. The network runs in a native per-channel C++/CUDA kernel.
 
     Parameters
     ----------
-    delay : int, optional
-        Delay time in samples for the feedback comb filter. Determines the
-        apparent size of the simulated space. Default is 4410 samples, which
-        corresponds to approximately 100ms at 44.1kHz sample rate.
-    decay : float, optional
-        Feedback decay factor controlling how quickly the reverb tail fades.
-        Must be in the range (0, 1). Higher values create longer reverb tails.
-        Default is 0.5.
-    mix : float, optional
-        Wet/dry mix controlling the balance between processed (wet) and
-        original (dry) signals. Range is [0, 1] where:
+    room_size : float, default=0.5
+        Apparent room size in ``[0, 1]`` — sets the comb feedback (decay length). Larger
+        values give a longer reverb tail.
+    damping : float, default=0.5
+        High-frequency damping in ``[0, 1]``. Larger values absorb highs faster, for a
+        warmer/darker tail.
+    mix : float, default=0.3
+        Wet/dry balance in ``[0, 1]`` (``0`` = dry, ``1`` = fully wet).
+    fs : int or None, default=None
+        Sampling rate in Hz, used to scale the delay tunings. May be left ``None`` and
+        supplied lazily by a ``Wave`` pipeline (``wave | reverb``).
 
-        - 0.0 = fully dry (no reverb)
-        - 1.0 = fully wet (only reverb)
-        - 0.5 = equal mix
-
-        Default is 0.5.
+    Returns
+    -------
+    Tensor
+        The reverberated waveform, same shape and dtype as the input.
 
     Raises
     ------
-    AssertionError
-        If delay is not positive, decay is not in (0, 1), or mix is not in [0, 1].
+    ValueError
+        If ``room_size``/``damping``/``mix`` are outside ``[0, 1]``, ``fs`` is
+        non-positive, or ``forward`` is called before ``fs`` is known.
 
     See Also
     --------
-    Delay : Multi-tap delay effect with BPM synchronization
-    Gain : Volume adjustment effect
+    Delay : Multi-tap delay effect with BPM synchronisation.
 
     Notes
     -----
-    **Algorithm:**
-
-    The reverb is computed using a feedback comb filter:
-
-    .. math::
-
-        y[n] = (1 - mix) \cdot x[n] + mix \cdot (x[n] + decay \cdot x[n - delay])
-
-    where:
-        - :math:`x[n]` is the input signal
-        - :math:`y[n]` is the output signal
-        - :math:`delay` is the delay time in samples
-        - :math:`decay` is the feedback decay factor
-        - :math:`mix` is the wet/dry mix parameter
-
-    **Processing Details:**
-
-    - If the input waveform is shorter than the delay time, the input is returned
-      unchanged.
-    - The effect processes tensors of arbitrary shape (..., time).
-    - Uses @torch.no_grad() decorator for efficient inference-only operation.
-    - Padding is applied using torch.nn.functional.pad for the delay buffer.
-
-    **Delay Time Calculation:**
-
-    To convert time in milliseconds to samples:
-
-    .. math::
-
-        delay_{samples} = \frac{time_{ms}}{1000} \cdot sample\_rate
-
-    For example, at 44.1kHz:
-        - 50ms = 2205 samples
-        - 100ms = 4410 samples (default)
-        - 200ms = 8820 samples
+    Each channel is processed independently with identical tunings (no stereo-width spread
+    — a possible follow-up). State is reset per ``forward`` call, so block-wise streaming
+    is not state-continuous across chunks. This is a **breaking change** from the pre-0.7
+    ``Reverb(delay, decay, mix)`` API.
 
     Examples
     --------
-    Basic reverb with default parameters:
+    >>> import torch
+    >>> from torchfx.effect import Reverb
+    >>> x = torch.randn(2, 48000)
+    >>> y = Reverb(room_size=0.7, damping=0.4, mix=0.3, fs=48000)(x)
+    >>> y.shape
+    torch.Size([2, 48000])
+
+    In a ``Wave`` pipeline (``fs`` supplied automatically):
 
     >>> import torchfx as fx
-    >>> wave = fx.Wave.from_file("audio.wav")
-    >>> reverb = fx.Reverb()
-    >>> processed = wave | reverb
-
-    Short room reverb (50ms delay):
-
-    >>> reverb = fx.Reverb(delay=2205, decay=0.4, mix=0.3)
-    >>> processed = wave | reverb
-
-    Long hall reverb (200ms delay):
-
-    >>> reverb = fx.Reverb(delay=8820, decay=0.7, mix=0.4)
-    >>> processed = wave | reverb
-
-    Subtle reverb with low mix:
-
-    >>> reverb = fx.Reverb(delay=4410, decay=0.5, mix=0.2)
-    >>> processed = wave | reverb
-
-    Direct tensor processing:
-
-    >>> import torch
-    >>> waveform = torch.randn(2, 44100)  # (channels, samples)
-    >>> reverb = fx.Reverb(delay=4410, decay=0.6, mix=0.3)
-    >>> reverberated = reverb(waveform)
-
-    Chain with other effects:
-
-    >>> processed = wave | fx.Gain(0.8) | fx.Reverb(delay=4410, decay=0.5, mix=0.3)
-
-    GPU processing:
-
-    >>> wave = wave.to("cuda")
-    >>> reverb = fx.Reverb(delay=4410, decay=0.6, mix=0.3).to("cuda")
-    >>> processed = wave | reverb
+    >>> processed = wave | fx.Reverb(room_size=0.8, mix=0.25)  # doctest: +SKIP
 
     """
 
-    def __init__(self, delay: int = 4410, decay: float = 0.5, mix: float = 0.5) -> None:
-        super().__init__()
-        assert delay > 0, "Delay must be positive."
-        assert 0 < decay < 1, "Decay must be between 0 and 1."
-        assert 0 <= mix <= 1, "Mix must be between 0 and 1."
+    # Freeverb fixed constants (input gain into the comb bank; all-pass feedback).
+    _INPUT_GAIN = 0.015
+    _ALLPASS_FB = 0.5
 
-        self.delay = delay
-        self.decay = decay
-        self.mix = mix
+    def __init__(
+        self,
+        room_size: float = 0.5,
+        damping: float = 0.5,
+        mix: float = 0.3,
+        fs: int | None = None,
+    ) -> None:
+        super().__init__()
+        if not 0 <= room_size <= 1:
+            raise ValueError(f"room_size must be in [0, 1], got {room_size}.")
+        if not 0 <= damping <= 1:
+            raise ValueError(f"damping must be in [0, 1], got {damping}.")
+        if not 0 <= mix <= 1:
+            raise ValueError(f"mix must be in [0, 1], got {mix}.")
+        if fs is not None and fs <= 0:
+            raise ValueError(f"Sample rate (fs) must be positive, got {fs}.")
+
+        self.room_size = float(room_size)
+        self.damping = float(damping)
+        self.mix = float(mix)
+        self.fs = fs
 
     @override
     @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
-        # waveform: (..., time)
-        if waveform.size(-1) <= self.delay:
-            return waveform
+        if self.fs is None:
+            raise ValueError(
+                "Sample rate (fs) is required for the reverb. Use it in a Wave "
+                "pipeline (wave | reverb) or pass fs at construction."
+            )
+        if self.fs <= 0:
+            raise ValueError("Sample rate (fs) must be positive.")
 
-        from torchfx._ops import delay_line_forward
+        from torchfx._ops import reverb_forward
 
-        return delay_line_forward(waveform, self.delay, self.decay, self.mix)
+        # Freeverb parameter mapping: room_size -> comb feedback, damping -> LP coefficient.
+        feedback = self.room_size * 0.28 + 0.7
+        damp = self.damping * 0.4
+        return reverb_forward(
+            waveform,
+            self.fs,
+            feedback,
+            damp,
+            self._INPUT_GAIN,
+            self._ALLPASS_FB,
+            self.mix,  # wet
+            1.0 - self.mix,  # dry
+        )
 
 
 class DelayStrategy(abc.ABC):

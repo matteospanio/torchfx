@@ -67,7 +67,7 @@ _HELP_TEXT = """\
 [bold cyan]TorchFX Interactive REPL[/bold cyan]
 
   [green]load[/green] <file>                     Load an audio file
-  [green]add[/green] <effect-spec>               Add an effect (e.g. reverb:decay=0.5)
+  [green]add[/green] <effect-spec>               Add an effect (e.g. reverb:room_size=0.5)
   [green]remove[/green] <index>                  Remove effect at index (1-based)
   [green]list[/green]                            Show current effect chain
   [green]effects[/green]                         List all available effects

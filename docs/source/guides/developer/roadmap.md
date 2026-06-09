@@ -393,9 +393,10 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
 - [x] **Optimized delay line**
   - ✅ CUDA delay forward kernel
 
-- [ ] **Reverb optimization**
-  - Parallel all-pass filters
-  - Fused feedback delay network
+- [x] **Reverb optimization** (#18) — `Reverb` reworked into a Freeverb-style network: 8
+  parallel low-pass-feedback comb filters + 4 series all-pass diffusers per channel, in a
+  fused native per-channel C++/CUDA kernel (ring buffers in per-channel scratch). Replaces
+  the single feedforward comb; breaking API (`room_size`/`damping`/`mix`/`fs`).
 
 ### 4.4 Batch Processing Optimizations
 

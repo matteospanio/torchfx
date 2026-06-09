@@ -446,3 +446,49 @@ def limiter_forward(
     if len(original_shape) == 2:
         return result_2d
     return result_2d.reshape(original_shape)
+
+
+def reverb_forward(
+    x: Tensor,
+    fs: int,
+    feedback: float,
+    damp: float,
+    input_gain: float,
+    allpass_fb: float,
+    wet: float,
+    dry: float,
+) -> Tensor:
+    """Dispatch the Freeverb-style reverb to the native kernel (CUDA or CPU).
+
+    Eight parallel low-pass-feedback comb filters and four series all-pass diffusers per
+    channel, with comb/all-pass tunings scaled to ``fs``. ``feedback`` and ``damp`` set the
+    decay length and high-frequency damping; ``wet``/``dry`` mix the result. Returns the
+    processed tensor with the input shape and dtype preserved.
+
+    """
+    if x.ndim < 1:
+        raise ValueError("Input tensor must have at least 1 dimension.")
+    if not x.is_floating_point():
+        raise TypeError("Input tensor must use a floating-point dtype.")
+
+    original_shape = x.shape
+    if x.ndim == 1:
+        x_2d = x.unsqueeze(0)
+    elif x.ndim == 2:
+        x_2d = x
+    else:
+        x_2d = x.reshape(-1, x.size(-1))
+
+    native_dtype = torch.float64 if x_2d.dtype == torch.float64 else torch.float32
+    x_native = x_2d if x_2d.dtype == native_dtype else x_2d.to(dtype=native_dtype)
+
+    result_native: Tensor = _ext.reverb_forward(
+        x_native, int(fs), feedback, damp, input_gain, allpass_fb, wet, dry
+    )
+    result_2d = result_native if result_native.dtype == x.dtype else result_native.to(dtype=x.dtype)
+
+    if len(original_shape) == 1:
+        return result_2d.squeeze(0)
+    if len(original_shape) == 2:
+        return result_2d
+    return result_2d.reshape(original_shape)

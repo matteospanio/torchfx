@@ -33,7 +33,7 @@ def play_cmd(
     Examples
     --------
       torchfx play song.wav
-      torchfx play recording.wav -e normalize -e "reverb:decay=0.4"
+      torchfx play recording.wav -e normalize -e "reverb:room_size=0.4"
 
     """
     import numpy as np

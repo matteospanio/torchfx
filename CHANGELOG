@@ -65,6 +65,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   path on both sm_86 (RTX 3070) and sm_89 (L40S); the decoupled look-back's forward
   progress is validated across 46–142 SMs.
 
+### Changed
+
+- **`Reverb` reworked into a Freeverb-style algorithmic reverb.** The single feedforward
+  comb is replaced by the classic Schroeder/Moorer structure — 8 parallel
+  low-pass-feedback comb filters summed through 4 series all-pass diffusers per channel —
+  for a dense, natural decay, in a native per-channel C++/CUDA kernel. **Breaking:** the
+  constructor is now `Reverb(room_size, damping, mix, fs)` (was `Reverb(delay, decay,
+  mix)`); it needs `fs` (supplied by a `Wave` pipeline) to scale the delay tunings. CLI
+  `reverb:room_size=…,damping=…,mix=…`. (Resolves #18.)
+
 ## [0.6.0] - 2026-06-04
 
 ### Added
