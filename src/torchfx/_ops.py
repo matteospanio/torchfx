@@ -389,3 +389,60 @@ def expander_forward(
     if len(original_shape) == 2:
         return result_2d
     return result_2d.reshape(original_shape)
+
+
+def limiter_forward(
+    x: Tensor,
+    threshold_lin: float,
+    attack_coeff: float,
+    release_coeff: float,
+    lookahead_samples: int,
+) -> Tensor:
+    """Dispatch the look-ahead brick-wall limiter to the native kernel (CUDA or CPU).
+
+    The look-ahead windowed peak ``peak_env[n] = max(|x[n .. n+L]|)`` is computed here
+    with a vectorised forward max-pool (so the gain is reduced *before* a peak arrives);
+    the native kernel then runs only the sequential gain recurrence (attack/release
+    smoothing plus a per-sample brick-wall clamp). ``threshold_lin`` is the linear
+    ceiling, ``lookahead_samples`` is ``L``. Returns the processed tensor with the input
+    shape and dtype preserved.
+
+    """
+    if x.ndim < 1:
+        raise ValueError("Input tensor must have at least 1 dimension.")
+    if not x.is_floating_point():
+        raise TypeError("Input tensor must use a floating-point dtype.")
+
+    original_shape = x.shape
+    if x.ndim == 1:
+        x_2d = x.unsqueeze(0)
+    elif x.ndim == 2:
+        x_2d = x
+    else:
+        x_2d = x.reshape(-1, x.size(-1))
+
+    native_dtype = torch.float64 if x_2d.dtype == torch.float64 else torch.float32
+    x_native = x_2d if x_2d.dtype == native_dtype else x_2d.to(dtype=native_dtype)
+
+    # Forward look-ahead windowed peak: max of |x| over [n, n+L]. Zero-pad the tail so the
+    # window shrinks gracefully at the end (zeros never raise the max).
+    abs_x = x_native.abs()
+    lookahead = max(0, int(lookahead_samples))
+    if lookahead > 0:
+        padded = torch.nn.functional.pad(abs_x, (0, lookahead))
+        peak_env = torch.nn.functional.max_pool1d(
+            padded.unsqueeze(0), kernel_size=lookahead + 1, stride=1
+        ).squeeze(0)
+    else:
+        peak_env = abs_x
+
+    result_native: Tensor = _ext.limiter_forward(
+        x_native, peak_env.contiguous(), threshold_lin, attack_coeff, release_coeff
+    )
+    result_2d = result_native if result_native.dtype == x.dtype else result_native.to(dtype=x.dtype)
+
+    if len(original_shape) == 1:
+        return result_2d.squeeze(0)
+    if len(original_shape) == 2:
+        return result_2d
+    return result_2d.reshape(original_shape)
