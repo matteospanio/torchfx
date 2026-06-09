@@ -472,14 +472,17 @@ Each item lists its difficulty and expected impact; none block a release.
 - [ ] **Pinned host buffers + async H2D/D2H for GPU streaming** — *medium.* Overlap chunk
   transfers with compute. Only pays off once a **GPU realtime/streaming I/O path** exists
   (the live path is CPU-only today), so deferred until that lands.
-- [ ] **Cache-blocked cross-channel CPU SIMD** — *medium, edge-focused.* A naive
-  full-transpose SIMD kernel was tried in 0.6.0 and **measured a 4–8× regression** on a
-  10-core desktop: the transpose moves as much memory as the streaming-light recurrence
-  computes, and the scalar OpenMP-over-channels path already saturates the cores. A
-  cache-blocked transpose (tiles that stay in L1/L2, state carried across time blocks)
-  could win, but the payoff is concentrated on **few-core edge devices (Raspberry Pi 5)**
-  and needs that hardware to validate. The scalar path is already near-optimal on
-  multi-core (8-ch, 10 s @ 48 kHz ≈ 3.5 ms).
+- [x] **Cache-blocked cross-channel CPU SIMD** — *done (#24).* A naive full-transpose
+  SIMD kernel (F1) regressed 4–8× on a 10-core desktop — the whole-`[C,T]` transpose
+  moved as much memory as the streaming-light recurrence computes. The fix: transpose
+  only small `[W=4, B=256]` tiles that stay in **L1**, auto-vectorise the per-time-step
+  channel loop (NEON/SSE/AVX), and **gate the path to `C > num_threads`** so the
+  scalar kernel stays for `C ≤ cores`. Validated on a **Raspberry Pi 5** (Cortex-A76
+  ×4): **1.8× at C=8, 2.6× at C=16/32**; and on **x86 (12 cores)**: 1.3–2.4× for
+  `C > cores`, **no regression** below. Correct vs scalar + `scipy.signal.sosfilt`
+  (full suite green with `TORCHFX_FORCE_SIMD=1`). `TORCHFX_NO_SIMD=1` forces scalar.
+  Source: `sos_forward_cpu_simd_impl` in
+  [iir_cpu.cpp](src/torchfx/_csrc/cpu/iir_cpu.cpp).
 - [ ] **CPU runtime feature dispatch (function multiversioning)** — *small.* Ship AVX2/AVX-512
   CPU paths without `-march=native` breaking wheel portability (paired with the SIMD work above).
 
