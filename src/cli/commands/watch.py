@@ -52,7 +52,7 @@ def watch_cmd(
     \b
     Examples
     --------
-      torchfx watch ./input/ ./output/ -e normalize -e "reverb:decay=0.4"
+      torchfx watch ./input/ ./output/ -e normalize -e "reverb:room_size=0.4"
       torchfx watch ./bounces/ ./mastered/ --config master.toml
       torchfx watch ./raw/ ./processed/ --preset vocal-cleanup --recursive
 

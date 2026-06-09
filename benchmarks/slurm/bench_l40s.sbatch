@@ -36,6 +36,9 @@ export PATH="/usr/local/cuda/bin:$PATH"
 export CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
 export CUDACXX="${CUDACXX:-/usr/local/cuda/bin/nvcc}"
 export UV_LINK_MODE=copy
+# Keep uv's cache + build temp off the (quota-limited) home filesystem.
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${SLURM_SUBMIT_DIR:-$PWD}/.uvcache}"
+mkdir -p "$UV_CACHE_DIR"
 
 module load GCC >/dev/null 2>&1 || true
 module load CUDA >/dev/null 2>&1 || true
@@ -50,7 +53,10 @@ echo ">>> SLURM_JOB_ID=$SLURM_JOB_ID hostname=$(hostname)"
 
 # ---- Dependency sync ---------------------------------------------------------
 echo ">>> Syncing dependencies (clean cache)"
-uv sync --all-groups --no-cache
+# --reinstall-package forces a rebuild of the editable extension; plain `uv sync`
+# (even with --no-cache) treats an installed torchfx as satisfied and skips the
+# rebuild after a `git pull`, leaving a STALE .so that runs the OLD kernels.
+uv sync --all-groups --reinstall-package torchfx
 
 
 # ---- CUDA preflight ----------------------------------------------------------

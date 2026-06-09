@@ -812,148 +812,118 @@ class PerChannelNormalizationStrategy(NormalizationStrategy):
 
 
 class Reverb(FX):
-    r"""Apply reverb effect using a feedback delay network for spatial ambiance.
+    r"""Freeverb-style algorithmic reverb (parallel combs + series all-passes).
 
-    The Reverb effect creates spatial ambiance by simulating sound reflections
-    in an acoustic space. It uses a simple feedback comb filter (feedback delay
-    network) to produce reverb-like effects with controllable decay time and
-    wet/dry mix.
-
-    This is a basic reverb implementation suitable for adding spatial depth to
-    audio signals. For more complex reverb algorithms, consider using convolution
-    reverbs with impulse responses.
+    Replaces the original single-comb reverb with the classic Schroeder/Moorer structure:
+    per channel, **8 parallel low-pass-feedback comb filters** are summed and fed through
+    **4 series all-pass diffusers**, producing a dense, natural decay. The comb/all-pass
+    delay tunings scale with the sampling rate so the character is consistent across
+    ``fs``. The network runs in a native per-channel C++/CUDA kernel.
 
     Parameters
     ----------
-    delay : int, optional
-        Delay time in samples for the feedback comb filter. Determines the
-        apparent size of the simulated space. Default is 4410 samples, which
-        corresponds to approximately 100ms at 44.1kHz sample rate.
-    decay : float, optional
-        Feedback decay factor controlling how quickly the reverb tail fades.
-        Must be in the range (0, 1). Higher values create longer reverb tails.
-        Default is 0.5.
-    mix : float, optional
-        Wet/dry mix controlling the balance between processed (wet) and
-        original (dry) signals. Range is [0, 1] where:
+    room_size : float, default=0.5
+        Apparent room size in ``[0, 1]`` — sets the comb feedback (decay length). Larger
+        values give a longer reverb tail.
+    damping : float, default=0.5
+        High-frequency damping in ``[0, 1]``. Larger values absorb highs faster, for a
+        warmer/darker tail.
+    mix : float, default=0.3
+        Wet/dry balance in ``[0, 1]`` (``0`` = dry, ``1`` = fully wet).
+    fs : int or None, default=None
+        Sampling rate in Hz, used to scale the delay tunings. May be left ``None`` and
+        supplied lazily by a ``Wave`` pipeline (``wave | reverb``).
 
-        - 0.0 = fully dry (no reverb)
-        - 1.0 = fully wet (only reverb)
-        - 0.5 = equal mix
-
-        Default is 0.5.
+    Returns
+    -------
+    Tensor
+        The reverberated waveform, same shape and dtype as the input.
 
     Raises
     ------
-    AssertionError
-        If delay is not positive, decay is not in (0, 1), or mix is not in [0, 1].
+    ValueError
+        If ``room_size``/``damping``/``mix`` are outside ``[0, 1]``, ``fs`` is
+        non-positive, or ``forward`` is called before ``fs`` is known.
 
     See Also
     --------
-    Delay : Multi-tap delay effect with BPM synchronization
-    Gain : Volume adjustment effect
+    Delay : Multi-tap delay effect with BPM synchronisation.
 
     Notes
     -----
-    **Algorithm:**
-
-    The reverb is computed using a feedback comb filter:
-
-    .. math::
-
-        y[n] = (1 - mix) \cdot x[n] + mix \cdot (x[n] + decay \cdot x[n - delay])
-
-    where:
-        - :math:`x[n]` is the input signal
-        - :math:`y[n]` is the output signal
-        - :math:`delay` is the delay time in samples
-        - :math:`decay` is the feedback decay factor
-        - :math:`mix` is the wet/dry mix parameter
-
-    **Processing Details:**
-
-    - If the input waveform is shorter than the delay time, the input is returned
-      unchanged.
-    - The effect processes tensors of arbitrary shape (..., time).
-    - Uses @torch.no_grad() decorator for efficient inference-only operation.
-    - Padding is applied using torch.nn.functional.pad for the delay buffer.
-
-    **Delay Time Calculation:**
-
-    To convert time in milliseconds to samples:
-
-    .. math::
-
-        delay_{samples} = \frac{time_{ms}}{1000} \cdot sample\_rate
-
-    For example, at 44.1kHz:
-        - 50ms = 2205 samples
-        - 100ms = 4410 samples (default)
-        - 200ms = 8820 samples
+    Each channel is processed independently with identical tunings (no stereo-width spread
+    — a possible follow-up). State is reset per ``forward`` call, so block-wise streaming
+    is not state-continuous across chunks. This is a **breaking change** from the pre-0.7
+    ``Reverb(delay, decay, mix)`` API.
 
     Examples
     --------
-    Basic reverb with default parameters:
+    >>> import torch
+    >>> from torchfx.effect import Reverb
+    >>> x = torch.randn(2, 48000)
+    >>> y = Reverb(room_size=0.7, damping=0.4, mix=0.3, fs=48000)(x)
+    >>> y.shape
+    torch.Size([2, 48000])
+
+    In a ``Wave`` pipeline (``fs`` supplied automatically):
 
     >>> import torchfx as fx
-    >>> wave = fx.Wave.from_file("audio.wav")
-    >>> reverb = fx.Reverb()
-    >>> processed = wave | reverb
-
-    Short room reverb (50ms delay):
-
-    >>> reverb = fx.Reverb(delay=2205, decay=0.4, mix=0.3)
-    >>> processed = wave | reverb
-
-    Long hall reverb (200ms delay):
-
-    >>> reverb = fx.Reverb(delay=8820, decay=0.7, mix=0.4)
-    >>> processed = wave | reverb
-
-    Subtle reverb with low mix:
-
-    >>> reverb = fx.Reverb(delay=4410, decay=0.5, mix=0.2)
-    >>> processed = wave | reverb
-
-    Direct tensor processing:
-
-    >>> import torch
-    >>> waveform = torch.randn(2, 44100)  # (channels, samples)
-    >>> reverb = fx.Reverb(delay=4410, decay=0.6, mix=0.3)
-    >>> reverberated = reverb(waveform)
-
-    Chain with other effects:
-
-    >>> processed = wave | fx.Gain(0.8) | fx.Reverb(delay=4410, decay=0.5, mix=0.3)
-
-    GPU processing:
-
-    >>> wave = wave.to("cuda")
-    >>> reverb = fx.Reverb(delay=4410, decay=0.6, mix=0.3).to("cuda")
-    >>> processed = wave | reverb
+    >>> processed = wave | fx.Reverb(room_size=0.8, mix=0.25)  # doctest: +SKIP
 
     """
 
-    def __init__(self, delay: int = 4410, decay: float = 0.5, mix: float = 0.5) -> None:
-        super().__init__()
-        assert delay > 0, "Delay must be positive."
-        assert 0 < decay < 1, "Decay must be between 0 and 1."
-        assert 0 <= mix <= 1, "Mix must be between 0 and 1."
+    # Freeverb fixed constants (input gain into the comb bank; all-pass feedback).
+    _INPUT_GAIN = 0.015
+    _ALLPASS_FB = 0.5
 
-        self.delay = delay
-        self.decay = decay
-        self.mix = mix
+    def __init__(
+        self,
+        room_size: float = 0.5,
+        damping: float = 0.5,
+        mix: float = 0.3,
+        fs: int | None = None,
+    ) -> None:
+        super().__init__()
+        if not 0 <= room_size <= 1:
+            raise ValueError(f"room_size must be in [0, 1], got {room_size}.")
+        if not 0 <= damping <= 1:
+            raise ValueError(f"damping must be in [0, 1], got {damping}.")
+        if not 0 <= mix <= 1:
+            raise ValueError(f"mix must be in [0, 1], got {mix}.")
+        if fs is not None and fs <= 0:
+            raise ValueError(f"Sample rate (fs) must be positive, got {fs}.")
+
+        self.room_size = float(room_size)
+        self.damping = float(damping)
+        self.mix = float(mix)
+        self.fs = fs
 
     @override
     @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
-        # waveform: (..., time)
-        if waveform.size(-1) <= self.delay:
-            return waveform
+        if self.fs is None:
+            raise ValueError(
+                "Sample rate (fs) is required for the reverb. Use it in a Wave "
+                "pipeline (wave | reverb) or pass fs at construction."
+            )
+        if self.fs <= 0:
+            raise ValueError("Sample rate (fs) must be positive.")
 
-        from torchfx._ops import delay_line_forward
+        from torchfx._ops import reverb_forward
 
-        return delay_line_forward(waveform, self.delay, self.decay, self.mix)
+        # Freeverb parameter mapping: room_size -> comb feedback, damping -> LP coefficient.
+        feedback = self.room_size * 0.28 + 0.7
+        damp = self.damping * 0.4
+        return reverb_forward(
+            waveform,
+            self.fs,
+            feedback,
+            damp,
+            self._INPUT_GAIN,
+            self._ALLPASS_FB,
+            self.mix,  # wet
+            1.0 - self.mix,  # dry
+        )
 
 
 class DelayStrategy(abc.ABC):
@@ -1560,3 +1530,586 @@ class Delay(FX):
 
         # Wet/dry mix — fused via lerp (single kernel, avoids intermediates).
         return torch.lerp(waveform, delayed, self.mix)
+
+
+class Compressor(FX):
+    r"""Feed-forward dynamic-range compressor with a decoupled peak detector.
+
+    Reduces the dynamic range of a signal: levels above ``threshold`` are turned
+    down according to ``ratio``, with a soft ``knee`` around the threshold and
+    attack/release ballistics that control how quickly the gain reacts. An optional
+    ``makeup_gain`` restores overall loudness.
+
+    The side-chain level is tracked with a *decoupled* peak detector (a release
+    max-hold followed by an attack one-pole), the standard high-quality topology
+    (Giannoulis, Massberg & Reiss, 2012). Detection runs in native C++/CUDA, one
+    channel per thread.
+
+    Parameters
+    ----------
+    threshold : float, default=-20.0
+        Level above which compression begins, in **dBFS** (decibels relative to a
+        full-scale amplitude of 1.0).
+    ratio : float, default=4.0
+        Input/output ratio above the threshold (``>= 1.0``). ``4.0`` means 4 dB in
+        yields 1 dB out over threshold. ``float("inf")`` is a brick-wall limiter.
+    attack : float, default=0.005
+        Attack time in **seconds** (how fast gain reduction engages). ``0`` is
+        instantaneous.
+    release : float, default=0.05
+        Release time in **seconds** (how fast gain recovers). ``0`` is instantaneous.
+    knee : float, default=6.0
+        Full width of the soft knee in **dB**, centred on the threshold. ``0`` gives
+        a hard knee.
+    makeup_gain : float, default=0.0
+        Output gain applied after compression, in **dB**.
+    detector : {"peak", "rms"}, default="peak"
+        Side-chain level detection. ``"peak"`` follows ``|x|``; ``"rms"`` follows a
+        smoothed root-mean-square (averaging window tied to ``attack``).
+    fs : int or None, default=None
+        Sampling rate in Hz. May be left ``None`` and supplied lazily by a ``Wave``
+        pipeline (``wave | compressor``); the ballistics coefficients are then
+        derived from the times and ``fs`` on first ``forward``.
+
+    Returns
+    -------
+    Tensor
+        The compressed waveform, same shape and dtype as the input.
+
+    Raises
+    ------
+    ValueError
+        If ``ratio < 1``, ``attack``/``release``/``knee`` is negative, ``detector``
+        is not ``"peak"``/``"rms"``, ``fs`` is non-positive, or ``forward`` is called
+        before ``fs`` is known.
+
+    See Also
+    --------
+    Gain : Static volume adjustment.
+    Normalize : Amplitude normalization.
+
+    Notes
+    -----
+    Per channel, sequentially over samples :math:`n` (linear detector level, then
+    the gain computed in dB):
+
+    .. math::
+
+        \text{rect}[n] &= |x[n]| \quad (\text{peak}) \\
+        y_1[n] &= \max(\text{rect}[n],\ a_R\, y_1[n-1]) \\
+        y_L[n] &= a_A\, y_L[n-1] + (1 - a_A)\, y_1[n] \\
+        L &= 20 \log_{10}(\max(y_L[n], \epsilon))
+
+    with attack/release coefficients :math:`a_A = e^{-1/(\text{attack}\cdot f_s)}`,
+    :math:`a_R = e^{-1/(\text{release}\cdot f_s)}`. The static curve (soft knee of
+    width :math:`W` centred on threshold :math:`T`, ``r`` = ratio) maps :math:`L` to
+    :math:`L_{sc}`, and the per-sample gain is
+    :math:`g[n] = 10^{(L_{sc} - L + \text{makeup})/20}`, applied as
+    :math:`y[n] = g[n]\, x[n]`.
+
+    This is a **zero-latency feed-forward** design (no look-ahead). The ballistics
+    state is reset on each ``forward`` call, so block-wise streaming is *not*
+    state-continuous across chunks (a follow-up could thread the state in/out).
+
+    Examples
+    --------
+    Compress a signal 4:1 above -12 dBFS:
+
+    >>> import torch
+    >>> from torchfx.effect import Compressor
+    >>> x = torch.randn(2, 48000) * 0.5  # (channels, samples)
+    >>> comp = Compressor(threshold=-12.0, ratio=4.0, attack=0.005, release=0.08, fs=48000)
+    >>> y = comp(x)
+    >>> y.shape
+    torch.Size([2, 48000])
+
+    Use in a ``Wave`` pipeline (``fs`` is supplied automatically):
+
+    >>> import torchfx as fx
+    >>> processed = wave | fx.effect.Compressor(threshold=-18.0, ratio=3.0)  # doctest: +SKIP
+
+    Brick-wall limiting at -1 dBFS with makeup gain:
+
+    >>> limiter = Compressor(threshold=-1.0, ratio=float("inf"), makeup_gain=1.0, fs=48000)
+
+    References
+    ----------
+    D. Giannoulis, M. Massberg, J. D. Reiss, "Digital Dynamic Range Compressor
+    Design — A Tutorial and Analysis," J. Audio Eng. Soc., 60(6), 2012.
+
+    """
+
+    def __init__(
+        self,
+        threshold: float = -20.0,
+        ratio: float = 4.0,
+        attack: float = 0.005,
+        release: float = 0.05,
+        knee: float = 6.0,
+        makeup_gain: float = 0.0,
+        detector: str = "peak",
+        fs: int | None = None,
+    ) -> None:
+        super().__init__()
+        valid_detectors = {"peak", "rms"}
+        if detector not in valid_detectors:
+            raise ValueError(
+                f"detector must be one of {sorted(valid_detectors)}, got {detector!r}."
+            )
+        if ratio < 1.0:
+            raise ValueError(f"ratio must be >= 1.0, got {ratio}.")
+        if attack < 0:
+            raise ValueError(f"attack must be non-negative (seconds), got {attack}.")
+        if release < 0:
+            raise ValueError(f"release must be non-negative (seconds), got {release}.")
+        if knee < 0:
+            raise ValueError(f"knee must be non-negative (dB), got {knee}.")
+        if fs is not None and fs <= 0:
+            raise ValueError(f"Sample rate (fs) must be positive, got {fs}.")
+
+        self.threshold = float(threshold)
+        self.ratio = float(ratio)
+        self.attack = float(attack)
+        self.release = float(release)
+        self.knee = float(knee)
+        self.makeup_gain = float(makeup_gain)
+        self.detector = detector
+        self.fs = fs
+
+        # 1/ratio (0 for an inf-ratio limiter) so the kernel never does inf math.
+        self._inv_ratio = 0.0 if math.isinf(self.ratio) else 1.0 / self.ratio
+        self._aA = 0.0
+        self._aR = 0.0
+        self._aRMS = 0.0
+        self._last_fs: int | None = None
+        self._needs_calculation = True
+
+    def _compute_coeffs(self) -> None:
+        """Derive attack/release/RMS coefficients from the times and ``fs``."""
+        assert self.fs is not None
+        fs = self.fs
+        self._aA = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
+        self._aR = 0.0 if self.release == 0 else math.exp(-1.0 / (self.release * fs))
+        # The RMS averaging window defaults to the attack time.
+        self._aRMS = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
+        self._last_fs = fs
+        self._needs_calculation = False
+
+    @override
+    @torch.no_grad()
+    def forward(self, waveform: Tensor) -> Tensor:
+        if self._needs_calculation or self._last_fs != self.fs:
+            if self.fs is None:
+                raise ValueError(
+                    "Sample rate (fs) is required for the compressor. Use it in a "
+                    "Wave pipeline (wave | compressor) or pass fs at construction."
+                )
+            if self.fs <= 0:
+                raise ValueError("Sample rate (fs) must be positive.")
+            self._compute_coeffs()
+
+        from torchfx._ops import compressor_forward
+
+        return compressor_forward(
+            waveform,
+            self.threshold,
+            self._inv_ratio,
+            self.knee,
+            self.makeup_gain,
+            self._aA,
+            self._aR,
+            self._aRMS,
+            1 if self.detector == "rms" else 0,
+        )
+
+
+class Expander(FX):
+    r"""Downward expander / noise gate with a decoupled peak detector.
+
+    The mirror image of :class:`Compressor`: levels **below** ``threshold`` are turned
+    *down* (their dynamic range is expanded), which pushes quiet passages and noise
+    toward silence while leaving louder signal untouched. With a high ``ratio`` (or
+    ``ratio=inf``) it acts as a **noise gate**.
+
+    The side-chain level uses the same *decoupled* peak detector as the compressor (a
+    release max-hold followed by an attack one-pole; Giannoulis, Massberg & Reiss,
+    2012). Detection runs in native C++/CUDA, one channel per thread.
+
+    Parameters
+    ----------
+    threshold : float, default=-40.0
+        Level below which downward expansion begins, in **dBFS**.
+    ratio : float, default=2.0
+        Expansion ratio below the threshold (``>= 1.0``). ``2.0`` means a signal 1 dB
+        below threshold is pushed a further 1 dB down. ``float("inf")`` is a hard gate.
+    attack : float, default=0.005
+        Attack time in **seconds** (how fast the gate opens as level rises). ``0`` is
+        instantaneous.
+    release : float, default=0.05
+        Release time in **seconds** (how fast the gate closes as level falls). ``0`` is
+        instantaneous.
+    knee : float, default=6.0
+        Full width of the soft knee in **dB**, centred on the threshold. ``0`` gives a
+        hard knee.
+    floor : float or None, default=None
+        Deepest attenuation in **dB** (a negative number), limiting how far the signal
+        is pushed down — i.e. an expander/gate *range*. ``None`` applies no floor (full
+        downward expansion; with ``ratio=inf`` this gates to near-silence).
+    detector : {"peak", "rms"}, default="peak"
+        Side-chain level detection. ``"peak"`` follows ``|x|``; ``"rms"`` follows a
+        smoothed root-mean-square (averaging window tied to ``attack``).
+    fs : int or None, default=None
+        Sampling rate in Hz. May be left ``None`` and supplied lazily by a ``Wave``
+        pipeline (``wave | expander``).
+
+    Returns
+    -------
+    Tensor
+        The expanded waveform, same shape and dtype as the input.
+
+    Raises
+    ------
+    ValueError
+        If ``ratio < 1``, ``attack``/``release``/``knee`` is negative, ``floor`` is
+        positive, ``detector`` is not ``"peak"``/``"rms"``, ``fs`` is non-positive, or
+        ``forward`` is called before ``fs`` is known.
+
+    See Also
+    --------
+    Compressor : Reduces dynamic range *above* the threshold.
+    Gate : Convenience subclass with an infinite ratio (a hard noise gate).
+
+    Notes
+    -----
+    The detector is identical to :class:`Compressor`; only the static curve differs.
+    Per channel, with linear detector level :math:`L = 20\log_{10}(\max(y_L, \epsilon))`,
+    over-threshold amount :math:`o = L - T`, slope :math:`s = r - 1`, and soft knee of
+    width :math:`W`:
+
+    .. math::
+
+        g_{dB} =
+        \begin{cases}
+        -s\,(o - W/2)^2 / (2W) & |2o| \le W \quad (\text{knee}) \\
+        s\,o & o < 0 \quad (\text{below threshold}) \\
+        0 & \text{otherwise}
+        \end{cases}
+
+    clamped to ``floor`` (``g_{dB} \ge`` floor), and :math:`y[n] = 10^{g_{dB}/20}\,x[n]`.
+
+    This is a **zero-latency feed-forward** design (no look-ahead). The ballistics state
+    is reset on each ``forward`` call, so block-wise streaming is *not* state-continuous
+    across chunks (see the compressor streaming follow-up).
+
+    Examples
+    --------
+    Gently expand a signal 2:1 below -40 dBFS:
+
+    >>> import torch
+    >>> from torchfx.effect import Expander
+    >>> x = torch.randn(2, 48000) * 0.5  # (channels, samples)
+    >>> exp = Expander(threshold=-40.0, ratio=2.0, attack=0.005, release=0.1, fs=48000)
+    >>> y = exp(x)
+    >>> y.shape
+    torch.Size([2, 48000])
+
+    A noise gate (infinite ratio) with an 80 dB range:
+
+    >>> gate = Expander(threshold=-50.0, ratio=float("inf"), floor=-80.0, fs=48000)
+
+    References
+    ----------
+    D. Giannoulis, M. Massberg, J. D. Reiss, "Digital Dynamic Range Compressor
+    Design — A Tutorial and Analysis," J. Audio Eng. Soc., 60(6), 2012.
+
+    """
+
+    # Stands in for ``ratio=inf`` so the kernel never does inf arithmetic: a slope this
+    # steep drives any below-threshold sample straight to the floor (i.e. a hard gate).
+    _GATE_SLOPE = 1.0e6
+    # Applied when ``floor`` is None — far below any real signal, so effectively no floor.
+    _NO_FLOOR_DB = -240.0
+
+    def __init__(
+        self,
+        threshold: float = -40.0,
+        ratio: float = 2.0,
+        attack: float = 0.005,
+        release: float = 0.05,
+        knee: float = 6.0,
+        floor: float | None = None,
+        detector: str = "peak",
+        fs: int | None = None,
+    ) -> None:
+        super().__init__()
+        valid_detectors = {"peak", "rms"}
+        if detector not in valid_detectors:
+            raise ValueError(
+                f"detector must be one of {sorted(valid_detectors)}, got {detector!r}."
+            )
+        if ratio < 1.0:
+            raise ValueError(f"ratio must be >= 1.0, got {ratio}.")
+        if attack < 0:
+            raise ValueError(f"attack must be non-negative (seconds), got {attack}.")
+        if release < 0:
+            raise ValueError(f"release must be non-negative (seconds), got {release}.")
+        if knee < 0:
+            raise ValueError(f"knee must be non-negative (dB), got {knee}.")
+        if floor is not None and floor > 0:
+            raise ValueError(f"floor must be non-positive (dB of attenuation), got {floor}.")
+        if fs is not None and fs <= 0:
+            raise ValueError(f"Sample rate (fs) must be positive, got {fs}.")
+
+        self.threshold = float(threshold)
+        self.ratio = float(ratio)
+        self.attack = float(attack)
+        self.release = float(release)
+        self.knee = float(knee)
+        self.floor = None if floor is None else float(floor)
+        self.detector = detector
+        self.fs = fs
+
+        # slope = ratio - 1 (a large finite value for an infinite-ratio gate).
+        self._slope = self._GATE_SLOPE if math.isinf(self.ratio) else self.ratio - 1.0
+        self._floor_db = self._NO_FLOOR_DB if self.floor is None else self.floor
+        self._aA = 0.0
+        self._aR = 0.0
+        self._aRMS = 0.0
+        self._last_fs: int | None = None
+        self._needs_calculation = True
+
+    def _compute_coeffs(self) -> None:
+        """Derive attack/release/RMS coefficients from the times and ``fs``."""
+        assert self.fs is not None
+        fs = self.fs
+        self._aA = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
+        self._aR = 0.0 if self.release == 0 else math.exp(-1.0 / (self.release * fs))
+        # The RMS averaging window defaults to the attack time.
+        self._aRMS = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
+        self._last_fs = fs
+        self._needs_calculation = False
+
+    @override
+    @torch.no_grad()
+    def forward(self, waveform: Tensor) -> Tensor:
+        if self._needs_calculation or self._last_fs != self.fs:
+            if self.fs is None:
+                raise ValueError(
+                    "Sample rate (fs) is required for the expander. Use it in a "
+                    "Wave pipeline (wave | expander) or pass fs at construction."
+                )
+            if self.fs <= 0:
+                raise ValueError("Sample rate (fs) must be positive.")
+            self._compute_coeffs()
+
+        from torchfx._ops import expander_forward
+
+        return expander_forward(
+            waveform,
+            self.threshold,
+            self._slope,
+            self.knee,
+            self._floor_db,
+            self._aA,
+            self._aR,
+            self._aRMS,
+            1 if self.detector == "rms" else 0,
+        )
+
+
+class Gate(Expander):
+    r"""Noise gate — an :class:`Expander` with an infinite ratio (hard gating).
+
+    Below ``threshold`` the signal is attenuated to the ``floor`` (a hard downward
+    expansion); above it the signal passes unchanged. This is a basic gate without
+    hysteresis or a hold time (a possible future refinement).
+
+    Parameters
+    ----------
+    threshold : float, default=-50.0
+        Level below which the gate closes, in **dBFS**.
+    attack : float, default=0.001
+        How fast the gate opens as level rises, in **seconds**.
+    release : float, default=0.05
+        How fast the gate closes as level falls, in **seconds**.
+    floor : float or None, default=-80.0
+        Attenuation applied when the gate is closed, in **dB**. ``None`` gates to
+        near-silence.
+    knee : float, default=3.0
+        Soft-knee width in **dB** around the threshold.
+    detector : {"peak", "rms"}, default="peak"
+        Side-chain level detection.
+    fs : int or None, default=None
+        Sampling rate in Hz (may be supplied lazily by a ``Wave`` pipeline).
+
+    Examples
+    --------
+    >>> import torch
+    >>> from torchfx.effect import Gate
+    >>> x = torch.randn(1, 48000) * 0.5
+    >>> y = Gate(threshold=-45.0, floor=-90.0, fs=48000)(x)
+    >>> y.shape
+    torch.Size([1, 48000])
+
+    """
+
+    def __init__(
+        self,
+        threshold: float = -50.0,
+        attack: float = 0.001,
+        release: float = 0.05,
+        floor: float | None = -80.0,
+        knee: float = 3.0,
+        detector: str = "peak",
+        fs: int | None = None,
+    ) -> None:
+        super().__init__(
+            threshold=threshold,
+            ratio=float("inf"),
+            attack=attack,
+            release=release,
+            knee=knee,
+            floor=floor,
+            detector=detector,
+            fs=fs,
+        )
+
+
+class Limiter(FX):
+    r"""Look-ahead brick-wall peak limiter.
+
+    Guarantees the output magnitude never exceeds ``threshold`` (a true brick wall) while
+    staying transparent: a short ``lookahead`` lets the gain reduce *before* a peak
+    arrives, so there is no transient overshoot and none of the distortion an
+    instantaneous gain change would cause. The gain then recovers over ``release``.
+
+    The look-ahead windowed peak of ``|x|`` is computed with a vectorised max-pool, and the
+    sequential gain recurrence runs in a native C++/CUDA kernel (one channel per thread).
+
+    Parameters
+    ----------
+    threshold : float, default=-1.0
+        Output ceiling in **dBFS**. The output magnitude never exceeds this.
+    lookahead : float, default=0.005
+        Look-ahead time in **seconds**: the gain is reduced over this window ahead of a
+        peak so the limiter never overshoots. ``0`` is a zero-look-ahead limiter.
+    release : float, default=0.05
+        Release time in **seconds** — how fast the gain recovers after a peak. ``0`` is
+        instantaneous.
+    fs : int or None, default=None
+        Sampling rate in Hz. May be left ``None`` and supplied lazily by a ``Wave``
+        pipeline (``wave | limiter``).
+
+    Returns
+    -------
+    Tensor
+        The limited waveform, same shape and dtype as the input, with
+        ``|y| <= 10**(threshold/20)`` everywhere.
+
+    Raises
+    ------
+    ValueError
+        If ``lookahead`` or ``release`` is negative, ``fs`` is non-positive, or ``forward``
+        is called before ``fs`` is known.
+
+    See Also
+    --------
+    Compressor : ``Compressor(ratio=inf)`` is a zero-look-ahead feed-forward limiter that
+        can overshoot on a single sample before its gain reacts; ``Limiter`` cannot.
+
+    Notes
+    -----
+    For each sample the applied gain is
+
+    .. math::
+
+        g[n] = \min\!\Big(\tfrac{T_\text{lin}}{\max(p[n], \epsilon)},\ a_R\,g[n-1] + (1-a_R)\Big),
+        \qquad p[n] = \max_{0 \le k \le L} |x[n+k]|
+
+    with linear ceiling :math:`T_\text{lin} = 10^{\text{threshold}/20}`, release coefficient
+    :math:`a_R = e^{-1/(\text{release}\cdot f_s)}`, and look-ahead :math:`L`. Since
+    :math:`|x[n]| \le p[n]`, the output :math:`y[n] = g[n]\,x[n]` satisfies
+    :math:`|y[n]| \le T_\text{lin}` — a guaranteed brick wall.
+
+    This is a **peak** (not true-peak / oversampled) limiter, so inter-sample peaks may
+    slightly exceed the ceiling after conversion to analog (true-peak limiting is a possible
+    follow-up). The output is time-aligned with the input (no net latency). Ballistics state
+    is reset per ``forward`` call (not state-continuous across streaming chunks).
+
+    Examples
+    --------
+    Brick-wall a signal that exceeds full scale to a -1 dBFS ceiling:
+
+    >>> import torch
+    >>> from torchfx.effect import Limiter
+    >>> x = torch.randn(2, 48000) * 3.0  # well over +/-1
+    >>> lim = Limiter(threshold=-1.0, lookahead=0.005, release=0.05, fs=48000)
+    >>> y = lim(x)
+    >>> bool(y.abs().max() <= 10 ** (-1.0 / 20) + 1e-4)
+    True
+
+    """
+
+    def __init__(
+        self,
+        threshold: float = -1.0,
+        lookahead: float = 0.005,
+        release: float = 0.05,
+        fs: int | None = None,
+    ) -> None:
+        super().__init__()
+        if lookahead < 0:
+            raise ValueError(f"lookahead must be non-negative (seconds), got {lookahead}.")
+        if release < 0:
+            raise ValueError(f"release must be non-negative (seconds), got {release}.")
+        if fs is not None and fs <= 0:
+            raise ValueError(f"Sample rate (fs) must be positive, got {fs}.")
+
+        self.threshold = float(threshold)
+        self.lookahead = float(lookahead)
+        self.release = float(release)
+        self.fs = fs
+
+        self._thr_lin = 10.0 ** (self.threshold / 20.0)
+        self._attack_coeff = 0.0
+        self._release_coeff = 0.0
+        self._lookahead_samples = 0
+        self._last_fs: int | None = None
+        self._needs_calculation = True
+
+    def _compute_coeffs(self) -> None:
+        """Derive ceiling, attack/release coefficients and look-ahead samples from
+        ``fs``."""
+        assert self.fs is not None
+        fs = self.fs
+        self._thr_lin = 10.0 ** (self.threshold / 20.0)
+        # Ramp the gain down over the look-ahead window so it is already low when the peak
+        # arrives (the per-sample clamp guarantees the brick wall regardless).
+        self._attack_coeff = 0.0 if self.lookahead == 0 else math.exp(-1.0 / (self.lookahead * fs))
+        self._release_coeff = 0.0 if self.release == 0 else math.exp(-1.0 / (self.release * fs))
+        self._lookahead_samples = int(round(self.lookahead * fs))
+        self._last_fs = fs
+        self._needs_calculation = False
+
+    @override
+    @torch.no_grad()
+    def forward(self, waveform: Tensor) -> Tensor:
+        if self._needs_calculation or self._last_fs != self.fs:
+            if self.fs is None:
+                raise ValueError(
+                    "Sample rate (fs) is required for the limiter. Use it in a "
+                    "Wave pipeline (wave | limiter) or pass fs at construction."
+                )
+            if self.fs <= 0:
+                raise ValueError("Sample rate (fs) must be positive.")
+            self._compute_coeffs()
+
+        from torchfx._ops import limiter_forward
+
+        return limiter_forward(
+            waveform,
+            self._thr_lin,
+            self._attack_coeff,
+            self._release_coeff,
+            self._lookahead_samples,
+        )

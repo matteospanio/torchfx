@@ -193,7 +193,7 @@ def process_cmd(
     \b
     Examples
     --------
-      torchfx process in.wav out.wav -e normalize -e "reverb:decay=0.6"
+      torchfx process in.wav out.wav -e normalize -e "reverb:room_size=0.6"
       torchfx process "*.wav" -O ./processed/ -e gain:0.5
       cat in.wav | torchfx process - - -e normalize | aplay
       torchfx process in.wav out.wav --config chain.toml

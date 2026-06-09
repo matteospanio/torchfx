@@ -7,6 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > The *Unreleased* section is for changes that are not yet released, but are going to be released in the next version.
 
+## [Unreleased]
+
+## [0.7.0] - 2026-06-09
+
+### Added
+
+- **`torchfx.batch_process(waves, effect)` — batched multi-signal processing.** Applies an
+  effect to many `Wave` signals in a **single** native kernel launch by padding them to a
+  common length and concatenating on the channel dimension (the causal per-channel kernels
+  make this numerically identical to processing each signal separately). Fills the GPU and
+  amortises Python dispatch + OpenMP setup — measured **~2.5–7× faster on CPU** and
+  **~3–4× on GPU** for 8–512 stereo files (8th-order Butterworth). For
+  per-channel-independent effects (filters, `Gain`, dynamics); see
+  `benchmarks/bench_batch.py`. (Resolves #19.)
+- **`Limiter` — look-ahead brick-wall peak limiter.** Guarantees `|y| <= threshold` (a
+  true brick wall) while staying transparent: a short `lookahead` reduces the gain
+  *before* a peak (a vectorised forward max-pool computes the look-ahead window), the gain
+  is attack/release-smoothed toward that target, and a per-sample clamp enforces the
+  ceiling exactly. Unlike `Compressor(ratio=inf)` — a zero-look-ahead limiter that can
+  overshoot a single sample before its gain reacts — this never exceeds the ceiling.
+  Native `limiter_forward` kernel (CPU + CUDA, FP32/FP64). Usage:
+  `wave | Limiter(threshold=-1.0, lookahead=0.005)`. (Resolves #31.)
+- **`Expander` / `Gate` dynamics effects.** A downward expander — the mirror of the
+  compressor, attenuating *below* the threshold — with `ratio`/`knee`/`attack`/`release`,
+  an optional `floor` (range), and peak or RMS detection. `Gate` is the infinite-ratio
+  convenience (a hard noise gate). Detection runs in the same native per-channel
+  C++/CUDA kernel style as the compressor (`expander_forward`). Usage:
+  `wave | Expander(threshold=-40, ratio=2)` or `wave | Gate(threshold=-50, floor=-80)`.
+  (Resolves #32.)
+- **`Compressor` dynamics effect.** A feed-forward dynamic-range compressor with a
+  decoupled peak detector (release max-hold + attack one-pole), a soft-knee dB gain
+  curve (`threshold`/`ratio`/`knee`), `makeup_gain`, peak or RMS detection, and a
+  `ratio=inf` brick-wall limiter mode. Detection runs in a native per-channel
+  C++/CUDA kernel (`compressor_forward`). Usage: `wave | Compressor(threshold=-18,
+  ratio=4)`. (Resolves #30.)
+- **Cache-blocked cross-channel CPU SIMD for SOS cascades.** When channels outnumber
+  CPU cores, the scalar per-channel kernel runs several channels serially on each core.
+  A new path packs a SIMD vector of channels: it transposes small `[W, B]` tiles to
+  channel-contiguous layout that stays in L1 (so the recurrence's per-time-step channel
+  loop auto-vectorises to NEON/SSE/AVX), and engages automatically once
+  `C > num_threads`. Measured on a 4-section SOS cascade (float32): **1.8–2.6× on a
+  Raspberry Pi 5** (Cortex-A76 ×4, the edge target) and **1.3–2.4× on a 12-core x86**
+  for `C` ≥ 8/16 — with **no regression** below that, since `C ≤ cores` keeps the
+  optimal scalar path. `TORCHFX_NO_SIMD=1` forces the scalar kernel. (Resolves #24.)
+- **Single-pass SOS scan (kernel-level fusion).** A new GPU path folds each cascade
+  section's forcing pass and the three-phase Blelloch scan into a **single
+  decoupled-look-back kernel** (Merrill–Garland / CUB style, with an atomic
+  per-section tile dispenser for deadlock-free forward progress), and folds the
+  per-section DF1 state update into one more kernel. Per fused section drops from
+  ~8 CUDA launches (forcing + 3 scan phases + 4 state copies) to **2**, and the
+  phase-3 recompute is gone. Measured on an RTX 3070, vs the 3-phase path:
+  **5.9× fewer CUDA launches** (600 → 102 at K=50) and **~1.9× faster** fused
+  cascades (K=50 18.9 → 9.9 ms); the fused launch count now sits **below** the
+  unfused baseline (102 vs 400). This is now the **default** GPU path for SOS
+  cascades; set `TORCHFX_FUSED_SCAN=0` to force the legacy 3-phase oracle. Equivalence
+  to that oracle and to `scipy.signal.sosfilt` is gated by
+  `tests/test_fused_scan_equivalence.py`, and the full suite passes through the fused
+  path on both sm_86 (RTX 3070) and sm_89 (L40S); the decoupled look-back's forward
+  progress is validated across 46–142 SMs.
+
+### Changed
+
+- **`Reverb` reworked into a Freeverb-style algorithmic reverb.** The single feedforward
+  comb is replaced by the classic Schroeder/Moorer structure — 8 parallel
+  low-pass-feedback comb filters summed through 4 series all-pass diffusers per channel —
+  for a dense, natural decay, in a native per-channel C++/CUDA kernel. **Breaking:** the
+  constructor is now `Reverb(room_size, damping, mix, fs)` (was `Reverb(delay, decay,
+  mix)`); it needs `fs` (supplied by a `Wave` pipeline) to scale the delay tunings. CLI
+  `reverb:room_size=…,damping=…,mix=…`. (Resolves #18.)
+
 ## [0.6.0] - 2026-06-04
 
 ### Added
