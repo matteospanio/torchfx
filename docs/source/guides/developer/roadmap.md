@@ -446,8 +446,9 @@ TorchFX v1.0.0 will be a production-ready, GPU-accelerated audio DSP library wit
   relative wall-time smoke. Avoids flaky absolute-timing baselines on shared runners; see
   the developer testing guide. (Absolute wall-time budgets would need a dedicated runner.)
 
-- [ ] **Profiling guides**
-  - Documentation for profiling pipelines
+- [x] **Profiling guides** (#22) — developer guide on diagnosing a pipeline: correct
+  warm-up/CUDA-sync timing, `torch.profiler` timelines, counting native dispatches to spot
+  un-fused chains, and a bottleneck→fix table. See the developer profiling guide.
 
 ### 4.6 Advanced Kernel Optimizations (Future)
 
@@ -668,7 +669,9 @@ Each item lists its difficulty and expected impact; none block a release.
 - [x] **Coverage reporting**
   - ✅ HTML coverage CI job on Python 3.12
   - ✅ `fail_under = 87` coverage gate enforced
-  - [ ] Codecov integration
+  - ✅ Codecov integration (#26) — CI uploads `coverage.xml` via `codecov-action`, README
+    badge, and a `codecov.yml` with project/patch status targets (ignoring the
+    CPU-unreachable sounddevice backend)
   - [ ] Coverage badge
 
 - [ ] **Multi-platform testing**
