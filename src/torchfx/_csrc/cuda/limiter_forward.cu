@@ -15,6 +15,7 @@ __global__ void limiter_kernel(
     const scalar_t* __restrict__ input,
     const scalar_t* __restrict__ peak_env,
     scalar_t* __restrict__ output,
+    scalar_t* __restrict__ state,  // [C, 1] = (g), in/out
     scalar_t threshold_lin,
     scalar_t attack_coeff,
     scalar_t release_coeff,
@@ -31,7 +32,7 @@ __global__ void limiter_kernel(
   const scalar_t eps = static_cast<scalar_t>(1e-12);
   const scalar_t one = static_cast<scalar_t>(1);
 
-  scalar_t g = one;
+  scalar_t g = state[channel];
   for (int n = 0; n < T; ++n) {
     const scalar_t gr = fmin(one, threshold_lin / fmax(peak_c[n], eps));
     if (gr < g) {
@@ -43,14 +44,16 @@ __global__ void limiter_kernel(
     const scalar_t g_out = fmin(g, clamp);
     out_c[n] = g_out * in_c[n];
   }
+  state[channel] = g;
 }
 
-torch::Tensor limiter_forward_cuda(
+std::tuple<torch::Tensor, torch::Tensor> limiter_forward_cuda(
     const torch::Tensor& x,
     const torch::Tensor& peak_env,
     double threshold_lin,
     double attack_coeff,
-    double release_coeff) {
+    double release_coeff,
+    const torch::Tensor& state) {
 
   TORCH_CHECK(x.is_cuda(), "limiter_forward_cuda: input must be on CUDA");
   TORCH_CHECK(x.sizes() == peak_env.sizes(), "limiter_forward_cuda: x and peak_env must match");
@@ -70,6 +73,17 @@ torch::Tensor limiter_forward_cuda(
 
   auto output = torch::empty_like(x_cont);
 
+  // Gain state per channel: fresh unity gain when not supplied, otherwise
+  // updated in place for chunk-to-chunk streaming continuity.
+  torch::Tensor st = state;
+  if (!st.defined()) {
+    st = torch::ones({C, 1}, x_cont.options());
+  } else {
+    TORCH_CHECK(st.size(0) == C && st.size(1) == 1 && st.dtype() == x_cont.dtype() && st.is_cuda(),
+                "limiter_forward_cuda: state must be CUDA [C, 1] with the input dtype");
+    st = st.contiguous();
+  }
+
   const int threads = 128;
   const int blocks = (static_cast<int>(C) + threads - 1) / threads;
   const auto stream = c10::cuda::getCurrentCUDAStream();
@@ -77,14 +91,15 @@ torch::Tensor limiter_forward_cuda(
   AT_DISPATCH_FLOATING_TYPES(x_cont.scalar_type(), "limiter_forward_cuda", [&] {
     limiter_kernel<scalar_t><<<blocks, threads, 0, stream>>>(
         x_cont.data_ptr<scalar_t>(), peak_cont.data_ptr<scalar_t>(), output.data_ptr<scalar_t>(),
+        st.data_ptr<scalar_t>(),
         static_cast<scalar_t>(threshold_lin), static_cast<scalar_t>(attack_coeff),
         static_cast<scalar_t>(release_coeff), static_cast<int>(C), static_cast<int>(T));
   });
 
   if (x.dim() == 1) {
-    return output.squeeze(0);
+    return {output.squeeze(0), st};
   }
-  return output;
+  return {output, st};
 }
 
 }  // namespace torchfx

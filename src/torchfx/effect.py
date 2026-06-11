@@ -123,6 +123,7 @@ from __future__ import annotations
 import abc
 import math
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch import Tensor, nn
@@ -855,8 +856,10 @@ class Reverb(FX):
     Notes
     -----
     Each channel is processed independently with identical tunings (no stereo-width spread
-    — a possible follow-up). State is reset per ``forward`` call, so block-wise streaming
-    is not state-continuous across chunks. This is a **breaking change** from the pre-0.7
+    — a possible follow-up). The comb/all-pass delay-line state is carried across
+    ``forward`` calls, so block-wise streaming is state-continuous (the tail flows across
+    chunk boundaries); call :meth:`reset_state` to cut the tail when switching sources.
+    The constructor signature is a **breaking change** from the pre-0.7
     ``Reverb(delay, decay, mix)`` API.
 
     Examples
@@ -900,6 +903,19 @@ class Reverb(FX):
         self.damping = float(damping)
         self.mix = float(mix)
         self.fs = fs
+        # Comb/all-pass delay lines, damping state, and ring positions, carried
+        # across forward calls so the reverb tail flows across chunk boundaries.
+        # See reset_state().
+        self._stream_state: dict[str, Any] = {}
+
+    def reset_state(self) -> None:
+        """Clear the accumulated delay-line state (cut the reverb tail).
+
+        Call when switching audio sources or seeking; ``Wave`` materialisation and
+        ``StreamProcessor`` file boundaries call this automatically.
+
+        """
+        self._stream_state.clear()
 
     @override
     @torch.no_grad()
@@ -926,6 +942,7 @@ class Reverb(FX):
             self._ALLPASS_FB,
             self.mix,  # wet
             1.0 - self.mix,  # dry
+            state=self._stream_state,
         )
 
 
@@ -1611,8 +1628,8 @@ class Compressor(FX):
     :math:`y[n] = g[n]\, x[n]`.
 
     This is a **zero-latency feed-forward** design (no look-ahead). The ballistics
-    state is reset on each ``forward`` call, so block-wise streaming is *not*
-    state-continuous across chunks (a follow-up could thread the state in/out).
+    state is carried across ``forward`` calls, so block-wise streaming is
+    state-continuous across chunks; call :meth:`reset_state` when switching sources.
 
     Examples
     --------
@@ -1686,6 +1703,9 @@ class Compressor(FX):
         self._aRMS = 0.0
         self._last_fs: int | None = None
         self._needs_calculation = True
+        # Per-channel detector state (y1, yL, ms), carried across forward calls so
+        # block-wise streaming is state-continuous. See reset_state().
+        self._stream_state: dict[str, Tensor] = {}
 
     def _compute_coeffs(self) -> None:
         """Derive attack/release/RMS coefficients from the times and ``fs``."""
@@ -1697,6 +1717,15 @@ class Compressor(FX):
         self._aRMS = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
         self._last_fs = fs
         self._needs_calculation = False
+
+    def reset_state(self) -> None:
+        """Clear the accumulated detector state.
+
+        Call when switching audio sources or seeking; ``Wave`` materialisation and
+        ``StreamProcessor`` file boundaries call this automatically.
+
+        """
+        self._stream_state.clear()
 
     @override
     @torch.no_grad()
@@ -1710,6 +1739,7 @@ class Compressor(FX):
             if self.fs <= 0:
                 raise ValueError("Sample rate (fs) must be positive.")
             self._compute_coeffs()
+            self.reset_state()  # ballistics changed: old detector state is invalid
 
         from torchfx._ops import compressor_forward
 
@@ -1723,6 +1753,7 @@ class Compressor(FX):
             self._aR,
             self._aRMS,
             1 if self.detector == "rms" else 0,
+            state=self._stream_state,
         )
 
 
@@ -1801,8 +1832,8 @@ class Expander(FX):
     clamped to ``floor`` (``g_{dB} \ge`` floor), and :math:`y[n] = 10^{g_{dB}/20}\,x[n]`.
 
     This is a **zero-latency feed-forward** design (no look-ahead). The ballistics state
-    is reset on each ``forward`` call, so block-wise streaming is *not* state-continuous
-    across chunks (see the compressor streaming follow-up).
+    is carried across ``forward`` calls, so block-wise streaming is state-continuous
+    across chunks (call :meth:`reset_state` when switching sources) (see the compressor streaming follow-up).
 
     Examples
     --------
@@ -1880,6 +1911,9 @@ class Expander(FX):
         self._aRMS = 0.0
         self._last_fs: int | None = None
         self._needs_calculation = True
+        # Per-channel detector state (y1, yL, ms), carried across forward calls so
+        # block-wise streaming is state-continuous. See reset_state().
+        self._stream_state: dict[str, Tensor] = {}
 
     def _compute_coeffs(self) -> None:
         """Derive attack/release/RMS coefficients from the times and ``fs``."""
@@ -1891,6 +1925,15 @@ class Expander(FX):
         self._aRMS = 0.0 if self.attack == 0 else math.exp(-1.0 / (self.attack * fs))
         self._last_fs = fs
         self._needs_calculation = False
+
+    def reset_state(self) -> None:
+        """Clear the accumulated detector state.
+
+        Call when switching audio sources or seeking; ``Wave`` materialisation and
+        ``StreamProcessor`` file boundaries call this automatically.
+
+        """
+        self._stream_state.clear()
 
     @override
     @torch.no_grad()
@@ -1904,6 +1947,7 @@ class Expander(FX):
             if self.fs <= 0:
                 raise ValueError("Sample rate (fs) must be positive.")
             self._compute_coeffs()
+            self.reset_state()  # ballistics changed: old detector state is invalid
 
         from torchfx._ops import expander_forward
 
@@ -1917,6 +1961,7 @@ class Expander(FX):
             self._aR,
             self._aRMS,
             1 if self.detector == "rms" else 0,
+            state=self._stream_state,
         )
 
 
@@ -2036,8 +2081,11 @@ class Limiter(FX):
 
     This is a **peak** (not true-peak / oversampled) limiter, so inter-sample peaks may
     slightly exceed the ceiling after conversion to analog (true-peak limiting is a possible
-    follow-up). The output is time-aligned with the input (no net latency). Ballistics state
-    is reset per ``forward`` call (not state-continuous across streaming chunks).
+    follow-up). The output is time-aligned with the input (no net latency). The smoothed
+    gain is carried across ``forward`` calls for release continuity in block-wise
+    streaming; the look-ahead window itself does not cross chunk boundaries (the
+    per-sample clamp guarantees the ceiling regardless). Call :meth:`reset_state` when
+    switching sources.
 
     Examples
     --------
@@ -2079,6 +2127,9 @@ class Limiter(FX):
         self._lookahead_samples = 0
         self._last_fs: int | None = None
         self._needs_calculation = True
+        # Per-channel smoothed gain g, carried across forward calls so block-wise
+        # streaming has release continuity. See reset_state().
+        self._stream_state: dict[str, Tensor] = {}
 
     def _compute_coeffs(self) -> None:
         """Derive ceiling, attack/release coefficients and look-ahead samples from
@@ -2094,6 +2145,15 @@ class Limiter(FX):
         self._last_fs = fs
         self._needs_calculation = False
 
+    def reset_state(self) -> None:
+        """Clear the accumulated gain state.
+
+        Call when switching audio sources or seeking; ``Wave`` materialisation and
+        ``StreamProcessor`` file boundaries call this automatically.
+
+        """
+        self._stream_state.clear()
+
     @override
     @torch.no_grad()
     def forward(self, waveform: Tensor) -> Tensor:
@@ -2106,6 +2166,7 @@ class Limiter(FX):
             if self.fs <= 0:
                 raise ValueError("Sample rate (fs) must be positive.")
             self._compute_coeffs()
+            self.reset_state()  # ballistics changed: old gain state is invalid
 
         from torchfx._ops import limiter_forward
 
@@ -2115,4 +2176,5 @@ class Limiter(FX):
             self._attack_coeff,
             self._release_coeff,
             self._lookahead_samples,
+            state=self._stream_state,
         )

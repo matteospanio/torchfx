@@ -1,6 +1,7 @@
 #pragma once
 
 #include <torch/types.h>
+#include <tuple>
 
 namespace torchfx {
 
@@ -16,7 +17,10 @@ namespace torchfx {
 //   g    = 10^((Lsc - L + makeup_db)/20);  y[n] = g * x[n]
 //
 // `inv_ratio` is 1/ratio (0 for an infinite-ratio limiter, avoiding inf math).
-torch::Tensor compressor_forward_cuda(
+// `state` is an optional [C, 3] = (y1, yL, ms) detector-state tensor, updated in
+// place for chunk-to-chunk streaming continuity (allocated fresh when undefined);
+// the (possibly allocated) state is returned alongside the output.
+std::tuple<torch::Tensor, torch::Tensor> compressor_forward_cuda(
     const torch::Tensor& x,
     double threshold_db,
     double inv_ratio,
@@ -25,6 +29,7 @@ torch::Tensor compressor_forward_cuda(
     double attack_coeff,
     double release_coeff,
     double rms_coeff,
-    int detector);
+    int detector,
+    const torch::Tensor& state = {});
 
 }  // namespace torchfx

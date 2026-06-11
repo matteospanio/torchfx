@@ -1,6 +1,7 @@
 #pragma once
 
 #include <torch/types.h>
+#include <tuple>
 
 namespace torchfx {
 
@@ -13,8 +14,10 @@ namespace torchfx {
 // y[n] = x[n]*dry + acc*wet
 //
 // The classic Schroeder/Moorer comb tunings (at 44.1 kHz) scaled to the signal's `fs`;
-// ring buffers live in a zero-initialised scratch tensor, one contiguous block per
-// channel. State is per-call (not carried across forward() calls).
+// ring buffers live in a scratch tensor, one contiguous block per channel. The
+// scratch / damping (`fstore`) / ring-position (`idx`) tensors are optional state:
+// when supplied they are updated in place so block-wise streaming is state-continuous
+// across forward() calls; when undefined they are allocated zeroed (one-shot use).
 
 // Comb / all-pass delay tunings in samples at 44.1 kHz (Freeverb defaults).
 constexpr int kReverbNumCombs = 8;
@@ -24,7 +27,7 @@ constexpr int kReverbCombTuning[kReverbNumCombs] = {1116, 1188, 1277, 1356,
 constexpr int kReverbAllpassTuning[kReverbNumAllpass] = {556, 441, 341, 225};
 constexpr double kReverbTuningFs = 44100.0;
 
-torch::Tensor reverb_forward_cuda(
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> reverb_forward_cuda(
     const torch::Tensor& x,
     int fs,
     double feedback,
@@ -32,6 +35,9 @@ torch::Tensor reverb_forward_cuda(
     double input_gain,
     double allpass_fb,
     double wet,
-    double dry);
+    double dry,
+    const torch::Tensor& scratch = {},
+    const torch::Tensor& fstore = {},
+    const torch::Tensor& idx = {});
 
 }  // namespace torchfx

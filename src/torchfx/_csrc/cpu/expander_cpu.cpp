@@ -16,6 +16,7 @@ template <typename scalar_t>
 static void expander_loop(
     const scalar_t* TORCHFX_RESTRICT in_ptr,
     scalar_t* TORCHFX_RESTRICT out_ptr,
+    scalar_t* TORCHFX_RESTRICT state_ptr,  // [C, 3] = (y1, yL, ms), in/out
     int64_t C,
     int64_t T,
     scalar_t threshold_db,
@@ -37,7 +38,9 @@ static void expander_loop(
     const scalar_t* in_c = in_ptr + c * T;
     scalar_t* out_c = out_ptr + c * T;
 
-    scalar_t y1 = 0, yL = 0, ms = 0;
+    scalar_t y1 = state_ptr[c * 3 + 0];
+    scalar_t yL = state_ptr[c * 3 + 1];
+    scalar_t ms = state_ptr[c * 3 + 2];
     for (int64_t n = 0; n < T; ++n) {
       const scalar_t xn = in_c[n];
 
@@ -68,10 +71,13 @@ static void expander_loop(
       const scalar_t g = std::pow(static_cast<scalar_t>(10), gdb / twenty);
       out_c[n] = g * xn;
     }
+    state_ptr[c * 3 + 0] = y1;
+    state_ptr[c * 3 + 1] = yL;
+    state_ptr[c * 3 + 2] = ms;
   }
 }
 
-torch::Tensor expander_forward_cpu(
+std::tuple<torch::Tensor, torch::Tensor> expander_forward_cpu(
     const torch::Tensor& x,
     double threshold_db,
     double slope,
@@ -80,7 +86,8 @@ torch::Tensor expander_forward_cpu(
     double attack_coeff,
     double release_coeff,
     double rms_coeff,
-    int detector) {
+    int detector,
+    const torch::Tensor& state) {
 
   TORCH_CHECK(!x.is_cuda(), "expander_forward_cpu: input must be on CPU");
 
@@ -94,22 +101,33 @@ torch::Tensor expander_forward_cpu(
   const int64_t T = x_cont.size(1);
   auto output = torch::empty_like(x_cont);
 
+  // Detector state (y1, yL, ms) per channel: fresh zeros when not supplied,
+  // otherwise updated in place for chunk-to-chunk streaming continuity.
+  torch::Tensor st = state;
+  if (!st.defined()) {
+    st = torch::zeros({C, 3}, x_cont.options());
+  } else {
+    TORCH_CHECK(st.size(0) == C && st.size(1) == 3 && st.dtype() == x_cont.dtype(),
+                "expander_forward_cpu: state must be [C, 3] with the input dtype");
+    st = st.contiguous();
+  }
+
   if (x_cont.dtype() == torch::kFloat32) {
     expander_loop<float>(
-        x_cont.data_ptr<float>(), output.data_ptr<float>(), C, T,
+        x_cont.data_ptr<float>(), output.data_ptr<float>(), st.data_ptr<float>(), C, T,
         static_cast<float>(threshold_db), static_cast<float>(slope),
         static_cast<float>(knee_db), static_cast<float>(floor_db),
         static_cast<float>(attack_coeff), static_cast<float>(release_coeff),
         static_cast<float>(rms_coeff), detector);
   } else {
     expander_loop<double>(
-        x_cont.data_ptr<double>(), output.data_ptr<double>(), C, T,
+        x_cont.data_ptr<double>(), output.data_ptr<double>(), st.data_ptr<double>(), C, T,
         threshold_db, slope, knee_db, floor_db,
         attack_coeff, release_coeff, rms_coeff, detector);
   }
 
   if (orig_dim == 1) {
-    return output.squeeze(0);
+    return {output.squeeze(0), st};
   }
-  return output;
+  return {output, st};
 }

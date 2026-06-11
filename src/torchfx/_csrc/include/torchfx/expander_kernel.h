@@ -1,6 +1,7 @@
 #pragma once
 
 #include <torch/types.h>
+#include <tuple>
 
 namespace torchfx {
 
@@ -23,7 +24,9 @@ namespace torchfx {
 //
 // `slope` is ratio-1 (a large finite value stands in for an infinite-ratio gate, so the
 // kernel never does inf arithmetic); `floor_db` is the deepest attenuation in dB.
-torch::Tensor expander_forward_cuda(
+// `state` is an optional [C, 3] = (y1, yL, ms) detector-state tensor, updated in
+// place for chunk-to-chunk streaming continuity (allocated fresh when undefined).
+std::tuple<torch::Tensor, torch::Tensor> expander_forward_cuda(
     const torch::Tensor& x,
     double threshold_db,
     double slope,
@@ -32,6 +35,7 @@ torch::Tensor expander_forward_cuda(
     double attack_coeff,
     double release_coeff,
     double rms_coeff,
-    int detector);
+    int detector,
+    const torch::Tensor& state = {});
 
 }  // namespace torchfx
