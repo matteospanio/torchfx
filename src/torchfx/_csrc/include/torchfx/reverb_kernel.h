@@ -36,8 +36,8 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> reverb_fo
     double allpass_fb,
     double wet,
     double dry,
-    const torch::Tensor& scratch = {},
-    const torch::Tensor& fstore = {},
-    const torch::Tensor& idx = {});
+    const torch::Tensor& scratch = torch::Tensor(),
+    const torch::Tensor& fstore = torch::Tensor(),
+    const torch::Tensor& idx = torch::Tensor());
 
 }  // namespace torchfx

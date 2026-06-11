@@ -30,6 +30,6 @@ std::tuple<torch::Tensor, torch::Tensor> compressor_forward_cuda(
     double release_coeff,
     double rms_coeff,
     int detector,
-    const torch::Tensor& state = {});
+    const torch::Tensor& state = torch::Tensor());
 
 }  // namespace torchfx

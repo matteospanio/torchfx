@@ -95,7 +95,7 @@ std::tuple<torch::Tensor, torch::Tensor> limiter_forward_cpu(
   }
 
   if (orig_dim == 1) {
-    return {output.squeeze(0), st};
+    return std::make_tuple(output.squeeze(0), st);
   }
-  return {output, st};
+  return std::make_tuple(output, st);
 }

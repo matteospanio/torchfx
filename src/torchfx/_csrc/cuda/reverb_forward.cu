@@ -180,9 +180,9 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> reverb_fo
   });
 
   if (x.dim() == 1) {
-    return {output.squeeze(0), scratch, fstore, idx};
+    return std::make_tuple(output.squeeze(0), scratch, fstore, idx);
   }
-  return {output, scratch, fstore, idx};
+  return std::make_tuple(output, scratch, fstore, idx);
 }
 
 }  // namespace torchfx

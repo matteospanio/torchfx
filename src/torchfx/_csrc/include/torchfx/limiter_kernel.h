@@ -29,6 +29,6 @@ std::tuple<torch::Tensor, torch::Tensor> limiter_forward_cuda(
     double threshold_lin,
     double attack_coeff,
     double release_coeff,
-    const torch::Tensor& state = {});
+    const torch::Tensor& state = torch::Tensor());
 
 }  // namespace torchfx

@@ -1,6 +1,7 @@
 #include <torch/torch.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <limits>
 #include <c10/cuda/CUDAStream.h>
 #include "torchfx/delay_kernel.h"
 
