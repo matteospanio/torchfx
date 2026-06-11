@@ -98,7 +98,7 @@ def test_reverb_effect(cuda_sync_benchmark, device):
         pytest.skip("CUDA not available")
 
     x = create_signal_torch(2, 1.0, device)
-    reverb = Reverb(delay=2048, decay=0.5, mix=0.3)
+    reverb = Reverb(room_size=0.5, damping=0.5, mix=0.3, fs=SAMPLE_RATE)
     if device == "cuda":
         reverb = reverb.to("cuda")
 
