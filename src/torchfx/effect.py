@@ -543,12 +543,15 @@ class Normalize(FX):
         assert peak > 0, "Peak value must be positive."
         self.peak = peak
 
-        if callable(strategy):
+        # Wrap only plain callables: NormalizationStrategy instances are themselves
+        # callable, and wrapping them in CustomNormalizationStrategy would erase
+        # their type (PerChannel vs global matters to e.g. batch_process).
+        if strategy is not None and not isinstance(strategy, NormalizationStrategy):
+            if not callable(strategy):
+                raise TypeError("Strategy must be an instance of NormalizationStrategy.")
             strategy = CustomNormalizationStrategy(strategy)
 
         self.strategy = strategy or PeakNormalizationStrategy()
-        if not isinstance(self.strategy, NormalizationStrategy):
-            raise TypeError("Strategy must be an instance of NormalizationStrategy.")
 
     @override
     @torch.no_grad()

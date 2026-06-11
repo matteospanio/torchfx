@@ -129,7 +129,7 @@ def fft_conv1d(
     # FFT convolution via element-wise complex multiply (cross-correlation).
     frames_z = torch.fft.rfft(frames, dim=-1)  # [B, C, F, freq_bins]
     out_z = frames_z * kernel_z.conj()  # broadcast over B, C, F
-    out = torch.fft.irfft(out_z, n=block_size, dim=-1)  # [B, C, F, block_size]
+    out: Tensor = torch.fft.irfft(out_z, n=block_size, dim=-1)  # [B, C, F, block_size]
 
     # Discard circular convolution artifacts (last kernel_size - 1 samples).
     out = out[..., :fold_stride]
@@ -137,5 +137,4 @@ def fft_conv1d(
 
     # Trim to exact target length.
     target_length = length - kernel_size + 1
-    out = out[..., :target_length]
-    return Tensor(out)
+    return out[..., :target_length]

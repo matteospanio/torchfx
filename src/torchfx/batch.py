@@ -32,6 +32,30 @@ from torchfx.wave import Wave
 __all__ = ["batch_process"]
 
 
+def _reject_channel_coupled(effect: nn.Module) -> None:
+    """Raise if ``effect`` (or any submodule) aggregates across channels.
+
+    Batched processing concatenates independent signals on the channel axis, so an
+    effect that couples channels — a global-peak/RMS/percentile ``Normalize`` —
+    would mix statistics across signals and silently produce wrong output.
+    Per-channel strategies are safe and pass.
+
+    """
+    from torchfx.effect import Normalize, PerChannelNormalizationStrategy
+
+    for module in effect.modules():
+        if isinstance(module, Normalize) and not isinstance(
+            module.strategy, PerChannelNormalizationStrategy
+        ):
+            raise ValueError(
+                f"batch_process cannot apply a channel-coupled effect: "
+                f"{type(module).__name__} with {type(module.strategy).__name__} "
+                "aggregates across all channels, so batched signals would leak into "
+                "each other. Use PerChannelNormalizationStrategy or apply the effect "
+                "per signal."
+            )
+
+
 def batch_process(waves: Sequence[Wave], effect: nn.Module) -> list[Wave]:
     """Apply ``effect`` to many :class:`~torchfx.Wave` signals in one batched launch.
 
@@ -80,6 +104,8 @@ def batch_process(waves: Sequence[Wave], effect: nn.Module) -> list[Wave]:
     """
     if len(waves) == 0:
         raise ValueError("batch_process requires at least one Wave.")
+
+    _reject_channel_coupled(effect)
 
     fs = waves[0].fs
     device = waves[0].ys.device

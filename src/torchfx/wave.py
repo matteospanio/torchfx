@@ -771,10 +771,12 @@ class Wave:
 
         if isinstance(f, AbstractFilter) and (fs_changed or not f._has_computed_coeff):
             f.compute_coefficients()
-            # Record the fs the coefficients were designed for so a subsequent
-            # direct forward() does not needlessly recompute (and so a genuine
-            # fs change is still detected on the direct-call path).
+            # Record the fs and design-parameter snapshot the coefficients were
+            # designed for so a subsequent direct forward() does not needlessly
+            # recompute (and so a genuine fs/parameter change is still detected
+            # on the direct-call path).
             f._coeff_fs = getattr(f, "fs", None)
+            f._coeff_fingerprint = f._design_fingerprint()
 
     def __len__(self) -> int:
         """Return the length, in samples, of the wave."""
@@ -1082,11 +1084,17 @@ class Wave:
             raise ValueError("No waves to merge. Provide at least one wave.")
 
         fs = waves[0].fs
+        device = waves[0].device
         for w in waves:
             if w.fs != fs:
                 raise ValueError(
                     f"Sampling frequency mismatch: {w.fs} != {fs}. "
                     "All waves must have the same sampling frequency."
+                )
+            if w.device != device:
+                raise ValueError(
+                    f"Device mismatch: {w.device} != {device}. "
+                    "All waves must be on the same device; move them with Wave.to() first."
                 )
 
         if split_channels:

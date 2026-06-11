@@ -92,11 +92,17 @@ torch::Tensor delay_line_forward_cuda(
     return x;
   }
 
+  // The kernels index with 32-bit ints (channel * T + n).
+  TORCH_CHECK(C * T <= std::numeric_limits<int>::max(),
+              "delay_line_forward_cuda: signal too large for 32-bit indexing (C*T = ",
+              C * T, ")");
+  const int T_i = static_cast<int>(T);
+
   auto output = torch::empty_like(x_cont);
 
   const int threads = 256;
-  const int blocks_t = (T + threads - 1) / threads;
-  dim3 grid(blocks_t, C);
+  const int blocks_t = (T_i + threads - 1) / threads;
+  dim3 grid(blocks_t, static_cast<unsigned int>(C));
 
   // Launch on the current stream (not the default stream) for graph-capture safety.
   const auto stream = c10::cuda::getCurrentCUDAStream();
@@ -108,7 +114,7 @@ torch::Tensor delay_line_forward_cuda(
         delay_samples,
         static_cast<float>(decay),
         static_cast<float>(mix),
-        T);
+        T_i);
   } else {
     delay_line_kernel_f64<<<grid, threads, 0, stream>>>(
         x_cont.data_ptr<double>(),
@@ -116,7 +122,7 @@ torch::Tensor delay_line_forward_cuda(
         delay_samples,
         decay,
         mix,
-        T);
+        T_i);
   }
 
   // Restore original shape
