@@ -99,6 +99,19 @@ if(TORCHFX_USE_CUDA)
     "${CSRC_DIR}/cuda/reverb_forward.cu")
   target_compile_definitions(torchfx_ext PRIVATE WITH_CUDA)
   set_target_properties(torchfx_ext PROPERTIES CUDA_ARCHITECTURES "${TORCHFX_CUDA_ARCHS}")
+
+  # nvcc >= 13.3 rejects torch 2.10's own headers (ATen/core/List_inl.h:
+  # "need 'typename' before 'decltype'") as a hard error under its stricter
+  # host-compiler invocation; 12.x / 13.2 accept them. Relax the CUDA host
+  # compile (GCC only, .cu sources only) so the toolkit-vs-torch mismatch is a
+  # warning, not a build failure. Scoped to the affected nvcc line so known-good
+  # toolchains (CI cu124, workstation 12.4) are untouched. Remove once torch
+  # ships conformant headers.
+  if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 13.3)
+    message(STATUS "nvcc ${CMAKE_CUDA_COMPILER_VERSION}: adding -Xcompiler=-fpermissive for torch-header compat")
+    target_compile_options(torchfx_ext PRIVATE
+      $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fpermissive>)
+  endif()
 endif()
 
 target_include_directories(torchfx_ext PRIVATE
