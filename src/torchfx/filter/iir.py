@@ -250,12 +250,18 @@ class IIR(AbstractFilter):
         if self.fs is None:
             raise ValueError(NONE_FS_ERR)
 
-        # Recompute when coefficients are missing or were designed for a
-        # different sampling rate. Without the fs check, a filter reused across
-        # sample rates would silently apply stale coefficients.
-        if self._sos is None or self.fs != self._coeff_fs:
+        # Recompute when coefficients are missing, were designed for a
+        # different sampling rate, or a design parameter (cutoff, order, ...)
+        # was mutated after the last design. Without these checks, a reused or
+        # mutated filter would silently apply stale coefficients.
+        if (
+            self._sos is None
+            or self.fs != self._coeff_fs
+            or self._design_fingerprint() != self._coeff_fingerprint
+        ):
             self.compute_coefficients()
             self._coeff_fs = self.fs
+            self._coeff_fingerprint = self._design_fingerprint()
             self._sos_device_cache = None  # invalidate after recomputation
             # Coefficients changed: accumulated DF1 state no longer matches.
             self._state_x = None

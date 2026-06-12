@@ -1,14 +1,22 @@
-"""Lock-free SPSC ring buffer for real-time audio tensor transfer.
+"""Lockless SPSC ring buffer for real-time audio tensor transfer.
 
 This module provides a single-producer single-consumer (SPSC) ring buffer
 backed by pre-allocated PyTorch tensors. It is designed for real-time audio
 processing where an audio callback thread produces data and a processing
 thread consumes it.
 
+.. note::
+   The buffer takes no explicit locks, but it is **not** lock-free in the
+   formal sense: index updates are plain Python integer assignments whose
+   atomicity and ordering are guaranteed only by CPython's GIL. Under the
+   GIL the SPSC discipline (producer writes ``_write_idx`` only, consumer
+   writes ``_read_idx`` only) is safe. On a free-threaded (PEP 703 / nogil)
+   interpreter these accesses would need real atomics or explicit fences.
+
 Classes
 -------
 TensorRingBuffer
-    Lock-free SPSC ring buffer operating on PyTorch tensors.
+    Lockless SPSC ring buffer operating on PyTorch tensors.
 
 Examples
 --------
@@ -30,11 +38,13 @@ from torch import Tensor
 
 
 class TensorRingBuffer:
-    """Lock-free SPSC ring buffer for real-time audio tensor transfer.
+    """Lockless SPSC ring buffer for real-time audio tensor transfer.
 
     Uses separate read/write indices with a pre-allocated tensor backing
     store. In the SPSC model, only the producer writes ``_write_idx`` and
-    only the consumer writes ``_read_idx``, so no locks are needed.
+    only the consumer writes ``_read_idx``, so no explicit locks are taken.
+    Index updates rely on CPython's GIL for atomicity/ordering (see the
+    module docstring); this is not a formally lock-free structure.
 
     The capacity must be a power of 2 for efficient modular arithmetic
     (bitwise AND instead of modulo). If a non-power-of-2 value is provided,

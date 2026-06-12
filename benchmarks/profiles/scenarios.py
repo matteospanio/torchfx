@@ -134,7 +134,7 @@ def _build_realtime_gpu(device: str) -> nn.Module:
     chain = nn.Sequential(
         BiquadBPF(cutoff=1_000, q=1.2, fs=SAMPLE_RATE),
         Delay(delay_samples=int(SAMPLE_RATE * 0.25), feedback=0.3, mix=0.4, fs=SAMPLE_RATE),
-        Reverb(decay=0.5, mix=0.3, delay=int(SAMPLE_RATE * 0.05)),
+        Reverb(room_size=0.5, damping=0.5, mix=0.3, fs=SAMPLE_RATE),
     )
     for m in chain:
         if hasattr(m, "compute_coefficients"):

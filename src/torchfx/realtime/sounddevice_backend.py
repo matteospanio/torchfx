@@ -262,9 +262,13 @@ class SoundDeviceBackend(AudioBackend):
             torch.zeros(ch_out, buf, dtype=torch.float32) if ch_out > 0 else torch.empty(0)
         )
 
-        # Pre-allocate numpy view for output copy-back (channels, frames) order.
-        # We'll transpose into outdata at the end.
+        # Pre-allocate numpy views once — .numpy() creates a new ndarray object
+        # each call, which would be a per-callback allocation on the audio thread.
+        # Input view (channels, frames) for copy-in, output view for copy-back.
+        _in_np = _input_tensor.numpy() if ch_in > 0 else None
         _out_np = _output_tensor.numpy() if ch_out > 0 else None
+        # Reused empty tensor for the missing-side argument (no per-callback alloc).
+        _empty = torch.empty(0)
 
         def sd_callback(
             indata: NDArray[Any] | None,
@@ -287,19 +291,19 @@ class SoundDeviceBackend(AudioBackend):
                 )
 
             # Convert input: numpy (frames, channels) -> pre-allocated tensor (channels, frames)
-            if indata is not None:
+            if indata is not None and _in_np is not None:
                 if mono_in:
                     # Mono fast-path: no transpose needed, just copy the column
-                    np.copyto(_input_tensor.numpy()[0], indata[:, 0])
+                    np.copyto(_in_np[0], indata[:, 0])
                 else:
-                    np.copyto(_input_tensor.numpy(), indata.T)
+                    np.copyto(_in_np, indata.T)
 
             # Zero the output tensor in-place (no allocation)
             if outdata is not None:
                 _output_tensor.zero_()
 
-            in_t = _input_tensor if indata is not None else torch.empty(0)
-            out_t = _output_tensor if outdata is not None else torch.empty(0)
+            in_t = _input_tensor if indata is not None else _empty
+            out_t = _output_tensor if outdata is not None else _empty
             if accepts_status:
                 callback(in_t, out_t, frames, backend_status)
             else:

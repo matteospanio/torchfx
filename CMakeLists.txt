@@ -99,6 +99,15 @@ if(TORCHFX_USE_CUDA)
     "${CSRC_DIR}/cuda/reverb_forward.cu")
   target_compile_definitions(torchfx_ext PRIVATE WITH_CUDA)
   set_target_properties(torchfx_ext PROPERTIES CUDA_ARCHITECTURES "${TORCHFX_CUDA_ARCHS}")
+
+  # Compatibility note: nvcc 13.3 fails to compile torch 2.10's own headers
+  # (ATen/core/List_inl.h:202 "need 'typename' before 'decltype'"); nvcc <= 13.2
+  # and the cu124/cu128 toolkits accept them. This is a torch-vs-toolkit version
+  # issue, not a flag we can paper over: a probe on the affected node confirmed
+  # neither -Xcompiler=-fpermissive (host pass) nor -Xcudafe --diag_suppress
+  # (device front-end) suppresses the hard parse error. Build with an nvcc whose
+  # CUDA version matches torch's (here 12.8 / cu128), i.e. nvcc <= 13.2. The
+  # cluster sbatch scripts select a matching toolkit; see benchmarks/slurm/.
 endif()
 
 target_include_directories(torchfx_ext PRIVATE

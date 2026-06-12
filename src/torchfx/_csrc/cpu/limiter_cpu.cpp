@@ -17,6 +17,7 @@ static void limiter_loop(
     const scalar_t* TORCHFX_RESTRICT in_ptr,
     const scalar_t* TORCHFX_RESTRICT peak_ptr,
     scalar_t* TORCHFX_RESTRICT out_ptr,
+    scalar_t* TORCHFX_RESTRICT state_ptr,  // [C, 1] = (g), in/out
     int64_t C,
     int64_t T,
     scalar_t threshold_lin,
@@ -32,7 +33,7 @@ static void limiter_loop(
     const scalar_t* peak_c = peak_ptr + c * T;
     scalar_t* out_c = out_ptr + c * T;
 
-    scalar_t g = one;
+    scalar_t g = state_ptr[c];
     for (int64_t n = 0; n < T; ++n) {
       const scalar_t gr = std::min(one, threshold_lin / std::max(peak_c[n], eps));
       if (gr < g) {
@@ -44,15 +45,17 @@ static void limiter_loop(
       const scalar_t g_out = std::min(g, clamp);
       out_c[n] = g_out * in_c[n];
     }
+    state_ptr[c] = g;
   }
 }
 
-torch::Tensor limiter_forward_cpu(
+std::tuple<torch::Tensor, torch::Tensor> limiter_forward_cpu(
     const torch::Tensor& x,
     const torch::Tensor& peak_env,
     double threshold_lin,
     double attack_coeff,
-    double release_coeff) {
+    double release_coeff,
+    const torch::Tensor& state) {
 
   TORCH_CHECK(!x.is_cuda(), "limiter_forward_cpu: input must be on CPU");
   TORCH_CHECK(x.sizes() == peak_env.sizes(), "limiter_forward_cpu: x and peak_env must match");
@@ -69,19 +72,30 @@ torch::Tensor limiter_forward_cpu(
   const int64_t T = x_cont.size(1);
   auto output = torch::empty_like(x_cont);
 
+  // Gain state per channel: fresh unity gain when not supplied, otherwise
+  // updated in place for chunk-to-chunk streaming continuity.
+  torch::Tensor st = state;
+  if (!st.defined()) {
+    st = torch::ones({C, 1}, x_cont.options());
+  } else {
+    TORCH_CHECK(st.size(0) == C && st.size(1) == 1 && st.dtype() == x_cont.dtype(),
+                "limiter_forward_cpu: state must be [C, 1] with the input dtype");
+    st = st.contiguous();
+  }
+
   if (x_cont.dtype() == torch::kFloat32) {
     limiter_loop<float>(
         x_cont.data_ptr<float>(), peak_cont.data_ptr<float>(), output.data_ptr<float>(),
-        C, T, static_cast<float>(threshold_lin), static_cast<float>(attack_coeff),
-        static_cast<float>(release_coeff));
+        st.data_ptr<float>(), C, T, static_cast<float>(threshold_lin),
+        static_cast<float>(attack_coeff), static_cast<float>(release_coeff));
   } else {
     limiter_loop<double>(
         x_cont.data_ptr<double>(), peak_cont.data_ptr<double>(), output.data_ptr<double>(),
-        C, T, threshold_lin, attack_coeff, release_coeff);
+        st.data_ptr<double>(), C, T, threshold_lin, attack_coeff, release_coeff);
   }
 
   if (orig_dim == 1) {
-    return output.squeeze(0);
+    return std::make_tuple(output.squeeze(0), st);
   }
-  return output;
+  return std::make_tuple(output, st);
 }

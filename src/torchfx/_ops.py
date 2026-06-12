@@ -18,7 +18,7 @@ cascades.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import torch
 
@@ -278,6 +278,24 @@ def delay_line_forward(
     return result_2d.reshape(original_shape)
 
 
+def _cached_state(holder: dict[str, Any] | None, key: str, x_native: Tensor) -> Tensor | None:
+    """Fetch a cached per-channel state tensor compatible with ``x_native``.
+
+    Returns ``None`` (fresh start) when there is no holder, no cached entry, or the
+    cached entry no longer matches the input's channel count / dtype / device —
+    self-healing when the caller's input shape changes between chunks.
+
+    """
+    if holder is None:
+        return None
+    st = holder.get(key)
+    if not isinstance(st, torch.Tensor):
+        return None
+    if st.size(0) != x_native.size(0) or st.dtype != x_native.dtype or st.device != x_native.device:
+        return None
+    return st
+
+
 def compressor_forward(
     x: Tensor,
     threshold_db: float,
@@ -288,13 +306,17 @@ def compressor_forward(
     release_coeff: float,
     rms_coeff: float,
     detector: int,
+    state: dict[str, Tensor] | None = None,
 ) -> Tensor:
     """Dispatch the compressor to the native kernel (CUDA or CPU).
 
     Ballistics coefficients are precomputed by the caller. ``detector`` is 0 (peak)
     or 1 (rms); ``inv_ratio`` is ``1 / ratio`` (0 for an infinite-ratio limiter, so
-    the kernel never does ``inf`` arithmetic). Returns the processed tensor with the
-    input shape and dtype preserved.
+    the kernel never does ``inf`` arithmetic). ``state`` is an optional mutable
+    holder owned by the effect: the kernel's per-channel detector state
+    ``(y1, yL, ms)`` is read from and stored back into it so block-wise streaming
+    is state-continuous across calls. Returns the processed tensor with the input
+    shape and dtype preserved.
 
     """
     if x.ndim < 1:
@@ -314,17 +336,35 @@ def compressor_forward(
     native_dtype = torch.float64 if x_2d.dtype == torch.float64 else torch.float32
     x_native = x_2d if x_2d.dtype == native_dtype else x_2d.to(dtype=native_dtype)
 
-    result_native: Tensor = _ext.compressor_forward(
-        x_native,
-        threshold_db,
-        inv_ratio,
-        knee_db,
-        makeup_db,
-        attack_coeff,
-        release_coeff,
-        rms_coeff,
-        detector,
-    )
+    st = _cached_state(state, "detector", x_native)
+    result_native: Tensor
+    if st is None:
+        result_native, st_out = _ext.compressor_forward(
+            x_native,
+            threshold_db,
+            inv_ratio,
+            knee_db,
+            makeup_db,
+            attack_coeff,
+            release_coeff,
+            rms_coeff,
+            detector,
+        )
+    else:
+        result_native, st_out = _ext.compressor_forward(
+            x_native,
+            threshold_db,
+            inv_ratio,
+            knee_db,
+            makeup_db,
+            attack_coeff,
+            release_coeff,
+            rms_coeff,
+            detector,
+            st,
+        )
+    if state is not None:
+        state["detector"] = st_out
     result_2d = result_native if result_native.dtype == x.dtype else result_native.to(dtype=x.dtype)
 
     if len(original_shape) == 1:
@@ -344,14 +384,17 @@ def expander_forward(
     release_coeff: float,
     rms_coeff: float,
     detector: int,
+    state: dict[str, Tensor] | None = None,
 ) -> Tensor:
     """Dispatch the downward expander / gate to the native kernel (CUDA or CPU).
 
     Ballistics coefficients are precomputed by the caller. ``detector`` is 0 (peak)
     or 1 (rms); ``slope`` is ``ratio - 1`` (a large finite value stands in for an
     infinite-ratio gate, so the kernel never does ``inf`` arithmetic); ``floor_db`` is
-    the deepest attenuation in dB. Returns the processed tensor with the input shape
-    and dtype preserved.
+    the deepest attenuation in dB. ``state`` is an optional mutable holder owned by
+    the effect: the kernel's per-channel detector state ``(y1, yL, ms)`` is read from
+    and stored back into it so block-wise streaming is state-continuous across calls.
+    Returns the processed tensor with the input shape and dtype preserved.
 
     """
     if x.ndim < 1:
@@ -371,17 +414,35 @@ def expander_forward(
     native_dtype = torch.float64 if x_2d.dtype == torch.float64 else torch.float32
     x_native = x_2d if x_2d.dtype == native_dtype else x_2d.to(dtype=native_dtype)
 
-    result_native: Tensor = _ext.expander_forward(
-        x_native,
-        threshold_db,
-        slope,
-        knee_db,
-        floor_db,
-        attack_coeff,
-        release_coeff,
-        rms_coeff,
-        detector,
-    )
+    st = _cached_state(state, "detector", x_native)
+    result_native: Tensor
+    if st is None:
+        result_native, st_out = _ext.expander_forward(
+            x_native,
+            threshold_db,
+            slope,
+            knee_db,
+            floor_db,
+            attack_coeff,
+            release_coeff,
+            rms_coeff,
+            detector,
+        )
+    else:
+        result_native, st_out = _ext.expander_forward(
+            x_native,
+            threshold_db,
+            slope,
+            knee_db,
+            floor_db,
+            attack_coeff,
+            release_coeff,
+            rms_coeff,
+            detector,
+            st,
+        )
+    if state is not None:
+        state["detector"] = st_out
     result_2d = result_native if result_native.dtype == x.dtype else result_native.to(dtype=x.dtype)
 
     if len(original_shape) == 1:
@@ -397,6 +458,7 @@ def limiter_forward(
     attack_coeff: float,
     release_coeff: float,
     lookahead_samples: int,
+    state: dict[str, Tensor] | None = None,
 ) -> Tensor:
     """Dispatch the look-ahead brick-wall limiter to the native kernel (CUDA or CPU).
 
@@ -404,8 +466,11 @@ def limiter_forward(
     with a vectorised forward max-pool (so the gain is reduced *before* a peak arrives);
     the native kernel then runs only the sequential gain recurrence (attack/release
     smoothing plus a per-sample brick-wall clamp). ``threshold_lin`` is the linear
-    ceiling, ``lookahead_samples`` is ``L``. Returns the processed tensor with the input
-    shape and dtype preserved.
+    ceiling, ``lookahead_samples`` is ``L``. ``state`` is an optional mutable holder
+    owned by the effect: the per-channel smoothed gain ``g`` is carried across calls so
+    block-wise streaming has release continuity. The look-ahead window itself does not
+    cross chunk boundaries (the per-sample clamp guarantees the ceiling regardless).
+    Returns the processed tensor with the input shape and dtype preserved.
 
     """
     if x.ndim < 1:
@@ -436,9 +501,18 @@ def limiter_forward(
     else:
         peak_env = abs_x
 
-    result_native: Tensor = _ext.limiter_forward(
-        x_native, peak_env.contiguous(), threshold_lin, attack_coeff, release_coeff
-    )
+    st = _cached_state(state, "gain", x_native)
+    result_native: Tensor
+    if st is None:
+        result_native, st_out = _ext.limiter_forward(
+            x_native, peak_env.contiguous(), threshold_lin, attack_coeff, release_coeff
+        )
+    else:
+        result_native, st_out = _ext.limiter_forward(
+            x_native, peak_env.contiguous(), threshold_lin, attack_coeff, release_coeff, st
+        )
+    if state is not None:
+        state["gain"] = st_out
     result_2d = result_native if result_native.dtype == x.dtype else result_native.to(dtype=x.dtype)
 
     if len(original_shape) == 1:
@@ -457,12 +531,16 @@ def reverb_forward(
     allpass_fb: float,
     wet: float,
     dry: float,
+    state: dict[str, Any] | None = None,
 ) -> Tensor:
     """Dispatch the Freeverb-style reverb to the native kernel (CUDA or CPU).
 
     Eight parallel low-pass-feedback comb filters and four series all-pass diffusers per
     channel, with comb/all-pass tunings scaled to ``fs``. ``feedback`` and ``damp`` set the
-    decay length and high-frequency damping; ``wet``/``dry`` mix the result. Returns the
+    decay length and high-frequency damping; ``wet``/``dry`` mix the result. ``state`` is
+    an optional mutable holder owned by the effect: the comb/all-pass delay lines,
+    damping state, and ring positions are carried across calls so block-wise streaming
+    is state-continuous (the reverb tail flows across chunk boundaries). Returns the
     processed tensor with the input shape and dtype preserved.
 
     """
@@ -482,9 +560,36 @@ def reverb_forward(
     native_dtype = torch.float64 if x_2d.dtype == torch.float64 else torch.float32
     x_native = x_2d if x_2d.dtype == native_dtype else x_2d.to(dtype=native_dtype)
 
-    result_native: Tensor = _ext.reverb_forward(
-        x_native, int(fs), feedback, damp, input_gain, allpass_fb, wet, dry
-    )
+    # Cached delay-line state is only reusable for the same fs (the scratch width is
+    # fs-dependent); a stale-fs cache is dropped here, the C++ TORCH_CHECK backstops.
+    scratch = _cached_state(state, "scratch", x_native)
+    fstore = _cached_state(state, "fstore", x_native)
+    idx = state.get("idx") if state is not None else None
+    same_fs = state is not None and state.get("_fs_marker") == int(fs)
+    result_native: Tensor
+    if scratch is None or fstore is None or idx is None or not same_fs:
+        result_native, scratch_out, fstore_out, idx_out = _ext.reverb_forward(
+            x_native, int(fs), feedback, damp, input_gain, allpass_fb, wet, dry
+        )
+    else:
+        result_native, scratch_out, fstore_out, idx_out = _ext.reverb_forward(
+            x_native,
+            int(fs),
+            feedback,
+            damp,
+            input_gain,
+            allpass_fb,
+            wet,
+            dry,
+            scratch,
+            fstore,
+            idx,
+        )
+    if state is not None:
+        state["scratch"] = scratch_out
+        state["fstore"] = fstore_out
+        state["idx"] = idx_out
+        state["_fs_marker"] = int(fs)
     result_2d = result_native if result_native.dtype == x.dtype else result_native.to(dtype=x.dtype)
 
     if len(original_shape) == 1:
