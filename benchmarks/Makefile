@@ -52,17 +52,25 @@
 #   gpu7-L40S, gpu5-A40, gpu2-RTX-3090, Alienware-RTX-3070, my-laptop
 # Falls back to plain hostname on CPU-only nodes.
 #
-# Some HPC nodes return platform tags (e.g. x86_64-conda-linux-gnu)
-# instead of real hostnames from `hostname -s` when run inside a
-# conda activation script; appending the GPU model keeps the tag
-# meaningful even when the hostname is uninformative.
-HOST           ?= $(shell \
+# Host tag for result filenames = "<hostname>-<gpu-model>".
+#
+# IMPORTANT: do NOT use `?=` here. conda-forge's compiler activation exports
+# HOST=x86_64-conda-linux-gnu into the environment; with `?=` Make would defer
+# to that, so (a) the tag is a useless compiler triple and (b) it is IDENTICAL
+# on every node, collapsing results from different GPUs into one file (an A40
+# and an RTX 3090 run would overwrite each other). We therefore compute the tag
+# unconditionally and honour only a HOST set on the make command line
+# (`make HOST=custom`, origin "command line"), ignoring any environment HOST.
+_HOST_DEFAULT  := $(shell \
                     h=$$(hostname -s 2>/dev/null || echo host); \
                     g=$$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null \
                           | head -1 \
                           | sed -E 's/^NVIDIA //; s/^GeForce //; s/[[:space:]]+/-/g'); \
                     if [ -n "$$g" ]; then echo "$${h}-$${g}"; else echo "$$h"; fi \
                   )
+ifneq ($(origin HOST),command line)
+HOST           := $(_HOST_DEFAULT)
+endif
 ROOT           := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PROJECT        := $(abspath $(ROOT)/..)
 RESULTS        ?= $(ROOT)/results
