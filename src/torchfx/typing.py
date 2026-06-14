@@ -122,7 +122,8 @@ class MusicalTime:
             If BPM is not positive.
 
         """
-        assert bpm > 0, "BPM must be positive"
+        if bpm <= 0:
+            raise ValueError("BPM must be positive")
         beat_duration = 60.0 / bpm
         bar_duration = beat_duration * beats_per_bar
         return self.fraction() * bar_duration

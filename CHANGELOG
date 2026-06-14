@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `MusicalTime.duration_seconds` now raises `ValueError` on non-positive BPM as its
+  docstring promises, instead of asserting. The `assert` was silently stripped under
+  `python -O`, letting `bpm=0` reach the `60.0 / bpm` division (`ZeroDivisionError`).
+
 ## [0.7.0] - 2026-06-09
 
 ### Added
