@@ -50,16 +50,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Realtime callback no longer allocates (#87).** The input numpy view and
   the empty placeholder tensor are pre-allocated outside the PortAudio
   callback.
-- `MusicalTime.duration_seconds` raises `ValueError` (not `assert`) on
-  non-positive BPM (#91); `validate_q_factor` dead condition removed (#95);
+- `validate_q_factor` dead condition removed (#95);
   `Wave.merge` validates same-device like it validates `fs` (#93);
   `batch_process` rejects channel-coupled effects such as a global-peak
   `Normalize` (#92); `Normalize` no longer type-erases strategy instances
-  by wrapping them in `CustomNormalizationStrategy`.
+  by wrapping them in `CustomNormalizationStrategy`. (The `MusicalTime`
+  non-positive-BPM `ValueError`, #91, shipped in 0.7.1 below.)
 - CUDA hardening: explicit `int` casts + 32-bit indexing guard in
   `delay_forward.cu`, epoch-tag wrap guard in the fused-scan path (#89,
   #96). Ring-buffer docs now state the GIL-dependence of the lockless SPSC
   design (#94).
+
+## [0.7.1] - 2026-06-14
+
+### Fixed
+
+- `MusicalTime.duration_seconds` now raises `ValueError` on non-positive BPM as its
+  docstring promises, instead of asserting. The `assert` was silently stripped under
+  `python -O`, letting `bpm=0` reach the `60.0 / bpm` division (`ZeroDivisionError`).
+
+### Contributors
+
+- Thanks to [@SAY-5](https://github.com/SAY-5) for their first contribution to TorchFX —
+  the non-positive-BPM fix above (#98, resolving #91). 🎉
 
 ## [0.7.0] - 2026-06-09
 

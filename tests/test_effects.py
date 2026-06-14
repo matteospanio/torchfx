@@ -527,6 +527,16 @@ def test_musical_time_duration_calculation(time_str, bpm, expected_duration):
     assert mt.duration_seconds(bpm) == pytest.approx(expected_duration)
 
 
+@pytest.mark.parametrize("bpm", [0, -120])
+def test_musical_time_invalid_bpm(bpm):
+    """Test MusicalTime rejects non-positive BPM."""
+    from torchfx.typing import MusicalTime
+
+    mt = MusicalTime.from_string("1/4")
+    with pytest.raises(ValueError, match="BPM must be positive"):
+        mt.duration_seconds(bpm)
+
+
 @pytest.mark.parametrize(
     "invalid_string",
     [
