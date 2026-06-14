@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-06-14
+
 ### Fixed
 
 - `MusicalTime.duration_seconds` now raises `ValueError` on non-positive BPM as its
   docstring promises, instead of asserting. The `assert` was silently stripped under
   `python -O`, letting `bpm=0` reach the `60.0 / bpm` division (`ZeroDivisionError`).
+
+### Contributors
+
+- Thanks to [@SAY-5](https://github.com/SAY-5) for their first contribution to TorchFX —
+  the non-positive-BPM fix above (#98, resolving #91). 🎉
 
 ## [0.7.0] - 2026-06-09
 
