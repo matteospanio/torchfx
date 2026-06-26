@@ -44,17 +44,20 @@ class BiquadFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx: Any, x: Tensor, b: Tensor, a: Tensor) -> Tensor:
-        x2 = x if x.dim() >= 2 else x.unsqueeze(0)
+        # The native kernel wants 2D [C, T]; flatten any leading dims ([B, C, T] etc.)
+        # to [N, T] and restore the shape on the way out — same convention as the other
+        # dispatchers in torchfx._ops.
+        x2 = x.reshape(-1, x.shape[-1])
         with torch.no_grad():
             y2, _, _ = biquad_forward(x2, b, a, None, None)
         ctx.save_for_backward(x2, y2, b, a)
-        ctx.x_ndim = x.dim()
-        return y2 if x.dim() >= 2 else y2.squeeze(0)
+        ctx.x_shape = x.shape
+        return y2.reshape(x.shape)
 
     @staticmethod
     def backward(ctx: Any, grad_y: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         x2, y2, b, a = ctx.saved_tensors
-        gy2 = grad_y if grad_y.dim() >= 2 else grad_y.unsqueeze(0)
+        gy2 = grad_y.reshape(-1, grad_y.shape[-1])
         ones = torch.tensor([1.0, 0.0, 0.0], dtype=b.dtype, device=b.device)
         with torch.no_grad():
             mu, _, _ = biquad_forward(gy2.flip(-1), ones, a, None, None)  # all-pole adjoint
@@ -71,7 +74,7 @@ class BiquadFunction(torch.autograd.Function):
                 -(mu * _shift(y2, 2)).sum().to(a.dtype),
             ]
         )
-        grad_x = gx if ctx.x_ndim >= 2 else gx.squeeze(0)
+        grad_x = gx.reshape(ctx.x_shape)
         return grad_x.to(x2.dtype), grad_b, grad_a
 
 

@@ -78,6 +78,22 @@ class TestVJP:
         assert a.grad is not None
         assert a.grad[0].item() == 0.0
 
+    def test_batched_input_matches_per_channel(self):
+        """[B, C, T] input filters each row independently and is differentiable."""
+        torch.manual_seed(5)
+        sos = torch.tensor(
+            [[0.5, 0.3, 0.1, 1.0, -0.4, 0.2]], dtype=torch.float64, requires_grad=True
+        )
+        x = torch.randn(2, 3, 64, dtype=torch.float64, requires_grad=True)
+        y = differentiable_sos_cascade(x, sos)
+        assert y.shape == x.shape
+        # Each [C, T] slice must match running the 2D cascade on it alone.
+        for b_idx in range(x.shape[0]):
+            ref = differentiable_sos_cascade(x[b_idx].detach(), sos.detach())
+            torch.testing.assert_close(y[b_idx], ref, atol=1e-9, rtol=1e-6)
+        y.sum().backward()  # gradients flow through the flattened path
+        assert x.grad is not None and sos.grad is not None
+
     def test_matches_naive_autograd_reference(self):
         """Hand-derived VJP matches autograd-through-the-recursion."""
         torch.manual_seed(2)

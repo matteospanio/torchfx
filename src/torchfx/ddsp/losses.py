@@ -27,7 +27,7 @@ def multires_stft_loss(x: Tensor, y: Tensor, sizes: tuple[int, ...] = (512, 1024
     """
     loss = x.new_zeros(())
     for n_fft in sizes:
-        win = torch.hann_window(n_fft, device=x.device)
+        win = torch.hann_window(n_fft, device=x.device, dtype=x.dtype)
         x_mag = torch.stft(x, n_fft, n_fft // 4, window=win, return_complex=True).abs()
         y_mag = torch.stft(y, n_fft, n_fft // 4, window=win, return_complex=True).abs()
         loss = loss + torch.norm(x_mag - y_mag) / (torch.norm(y_mag) + 1e-8)
