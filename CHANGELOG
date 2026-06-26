@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **PipeWire realtime backend (#55).** `torchfx.realtime.PipeWireBackend` targets
+  PortAudio's PipeWire host (falling back to its PulseAudio host, which PipeWire
+  also serves), reusing the `SoundDeviceBackend` callback path — native low-latency
+  realtime on any modern Linux desktop with no new dependency beyond the `realtime`
+  group's `sounddevice`. Example: `examples/realtime_pipewire.py`.
+
 ## [0.8.0] - 2026-06-26
 
 ### Added
