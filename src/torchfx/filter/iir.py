@@ -253,12 +253,14 @@ class IIR(AbstractFilter):
         # Recompute when coefficients are missing, were designed for a
         # different sampling rate, or a design parameter (cutoff, order, ...)
         # was mutated after the last design. Without these checks, a reused or
-        # mutated filter would silently apply stale coefficients.
-        if (
-            self._sos is None
-            or self.fs != self._coeff_fs
-            or self._design_fingerprint() != self._coeff_fingerprint
-        ):
+        # mutated filter would silently apply stale coefficients. When frozen
+        # (FX.freeze) the fs/fingerprint check is skipped — coefficients are
+        # treated as final — but a never-designed filter is still designed once.
+        need_recompute = self._sos is None or (
+            not self._frozen
+            and (self.fs != self._coeff_fs or self._design_fingerprint() != self._coeff_fingerprint)
+        )
+        if need_recompute:
             self.compute_coefficients()
             self._coeff_fs = self.fs
             self._coeff_fingerprint = self._design_fingerprint()

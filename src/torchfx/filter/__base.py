@@ -419,6 +419,11 @@ class AbstractFilter(FX, abc.ABC):
     # (see ``_design_fingerprint``); compared on forward so mutating e.g.
     # ``cutoff`` or ``order`` after the first call triggers a redesign.
     _coeff_fingerprint: tuple[tuple[str, object], ...] | None = None
+    # Set by ``FX.freeze()``. When True the forward guard skips the (per-call)
+    # fs/fingerprint recompute check: coefficients are treated as final, which
+    # makes the module export/``torch.compile`` friendly. Coefficients are still
+    # designed once if they were never computed.
+    _frozen: bool = False
 
     def _design_fingerprint(self) -> tuple[tuple[str, object], ...]:
         """Snapshot the public scalar design parameters of this filter.
@@ -793,7 +798,7 @@ class ParallelFilterCombination(AbstractFilter):
                │    ┌──────────┐   │
         input──┼───→│ Filter 2 │───┼──→ sum ──→ output
                │    └──────────┘   │
-               │         ...        │
+               │         ...       │
                │    ┌──────────┐   │
                └───→│ Filter N │───┘
                     └──────────┘

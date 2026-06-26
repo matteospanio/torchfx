@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import typer
 
-from cli.commands import info, play, preset, process, record, sox, watch
+from cli.commands import compile as compile_mod
+from cli.commands import info, pipeline, play, preset, process, record, sox, watch
 from cli.repl import interactive_cmd
 
 # ---------------------------------------------------------------------------
@@ -68,6 +69,14 @@ def get_state() -> dict[str, object]:
 # ---------------------------------------------------------------------------
 
 app.command(name="process", help="Apply effects to audio files.")(process.process_cmd)
+app.command(
+    name="pipe",
+    help="Apply a SoX-style positional effect pipeline to a file.",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)(pipeline.pipe_cmd)
+app.command(name="compile", help="Freeze an effect pipeline into a portable .fxg artifact.")(
+    compile_mod.compile_cmd
+)
 app.command(name="info", help="Display audio file metadata.")(info.info_cmd)
 app.command(name="play", help="Play an audio file through speakers.")(play.play_cmd)
 app.command(name="record", help="Record audio from a microphone.")(record.record_cmd)

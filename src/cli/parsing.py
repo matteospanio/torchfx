@@ -37,9 +37,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from torchfx.effect import FX, Delay, Gain, Normalize, Reverb
+
+if TYPE_CHECKING:
+    from torchfx.chain import FilterChain
 from torchfx.filter.biquad import (
     BiquadAllPass,
     BiquadBPF,
@@ -201,6 +204,140 @@ def parse_effect_string(spec: str) -> FX:
 def parse_effect_list(specs: list[str]) -> list[FX]:
     """Parse a list of ``--effect`` strings into a list of ``FX`` instances."""
     return [parse_effect_string(s) for s in specs]
+
+
+# ---------------------------------------------------------------------------
+# SoX-style positional pipeline parser
+# ---------------------------------------------------------------------------
+
+
+def _tokens_to_kwargs(name: str, tokens: list[str]) -> dict[str, Any]:
+    """Turn one effect's ``--flag value`` / positional tokens into kwargs."""
+    _, positional = EFFECT_REGISTRY[name]
+    kwargs: dict[str, Any] = {}
+    pos_idx = 0
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok.startswith("--"):
+            body = tok[2:]
+            if "=" in body:
+                key, _, val = body.partition("=")
+                kwargs[key.replace("-", "_")] = _coerce_value(val)
+                i += 1
+            elif i + 1 < len(tokens) and not tokens[i + 1].startswith("--"):
+                kwargs[body.replace("-", "_")] = _coerce_value(tokens[i + 1])
+                i += 2
+            else:  # valueless flag -> boolean
+                kwargs[body.replace("-", "_")] = True
+                i += 1
+        else:
+            if pos_idx >= len(positional):
+                raise ValueError(
+                    f"Too many positional parameters for '{name}'. "
+                    f"Expected at most {len(positional)}: {positional}"
+                )
+            kwargs[positional[pos_idx]] = _coerce_value(tok)
+            pos_idx += 1
+            i += 1
+    return kwargs
+
+
+def _group_tokens(tokens: list[str]) -> list[list[str]]:
+    """Split a flat token list into ``[name, *args]`` groups on registry names.
+
+    A ``--flag``'s value is consumed with it, so a value that happens to be an effect
+    name (e.g. ``--btype lowpass``) does not start a new effect. A *bare positional*
+    value equal to an effect name is ambiguous — use the ``--flag`` form there.
+
+    """
+    groups: list[list[str]] = []
+    i, n = 0, len(tokens)
+    while i < n:
+        name = tokens[i].lower()
+        if name not in EFFECT_REGISTRY:
+            available = ", ".join(sorted(EFFECT_REGISTRY))
+            raise ValueError(f"Expected an effect name, got '{tokens[i]}'. Available: {available}")
+        group = [name]
+        i += 1
+        while i < n and tokens[i].lower() not in EFFECT_REGISTRY:
+            tok = tokens[i]
+            group.append(tok)
+            if (
+                tok.startswith("--")
+                and "=" not in tok
+                and i + 1 < n
+                and not tokens[i + 1].startswith("--")
+            ):
+                group.append(tokens[i + 1])
+                i += 2
+            else:
+                i += 1
+        groups.append(group)
+    return groups
+
+
+def _segments(spec: str | list[str]) -> list[list[str]]:
+    """Normalise a pipeline spec into ``[name, *args]`` segments.
+
+    Accepts a token list, a ``|``-separated string (``"lowpass --cutoff 800 | reverb"``),
+    or a SoX-style positional string (``"lowpass --cutoff 800 reverb"``).
+
+    """
+    import shlex
+
+    if isinstance(spec, list):
+        return _group_tokens(spec)
+    if "|" in spec:
+        return [shlex.split(seg.strip()) for seg in spec.split("|") if seg.strip()]
+    return _group_tokens(shlex.split(spec))
+
+
+def parse_pipeline_specs(spec: str | list[str]) -> list[tuple[str, dict[str, Any]]]:
+    """Parse a pipeline into ``(registry_name, kwargs)`` pairs (no instantiation)."""
+    out: list[tuple[str, dict[str, Any]]] = []
+    for group in _segments(spec):
+        if not group:
+            continue
+        name = group[0].lower()
+        if name not in EFFECT_REGISTRY:
+            available = ", ".join(sorted(EFFECT_REGISTRY))
+            raise ValueError(f"Unknown effect '{name}'. Available effects: {available}")
+        out.append((name, _tokens_to_kwargs(name, group[1:])))
+    if not out:
+        raise ValueError("Empty effect pipeline.")
+    return out
+
+
+def parse_pipeline(spec: str | list[str]) -> FilterChain:
+    """Parse a SoX-style pipeline into a :class:`~torchfx.chain.FilterChain`.
+
+    Parameters
+    ----------
+    spec : str | list[str]
+        Either a token list (CLI argv), a ``|``-separated string, or a SoX-style
+        positional string. Examples::
+
+            "lowpass --cutoff 800 reverb --mix 0.4"
+            "lowpass --cutoff 800 | reverb --mix 0.4"
+            ["lowpass", "--cutoff", "800", "reverb", "--mix", "0.4"]
+
+    Returns
+    -------
+    FilterChain
+        The chained effects (use ``wave | chain`` or ``chain.compile(fs)``).
+
+    """
+    from torchfx.chain import FilterChain
+
+    effects: list[FX] = []
+    for name, kwargs in parse_pipeline_specs(spec):
+        cls, _ = EFFECT_REGISTRY[name]
+        try:
+            effects.append(cls(**kwargs))
+        except TypeError as exc:
+            raise ValueError(f"Invalid parameters for effect '{name}': {exc}") from exc
+    return FilterChain(*effects)
 
 
 # ---------------------------------------------------------------------------

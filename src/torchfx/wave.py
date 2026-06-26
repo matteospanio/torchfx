@@ -52,8 +52,6 @@ from numpy.typing import ArrayLike
 from torch import Tensor, nn
 from typing_extensions import Self
 
-from torchfx.effect import FX
-from torchfx.filter.__base import AbstractFilter
 from torchfx.typing import BitRate, Device, Millisecond, Second
 
 
@@ -245,48 +243,13 @@ class Wave:
     def _build_plan(pipeline: list[nn.Module]) -> list[nn.Module]:
         """Group a pipeline into the executable plan, fusing contiguous SOS stages.
 
-        Contiguous ``IIR``/``Biquad`` runs are merged into a single
-        ``FusedSOSCascade``. A static linear ``Gain`` (``clamp=False``) does **not**
-        break a run: its scalar is folded into the fused cascade's numerator (a
-        scalar commutes through a linear filter), so ``IIR | Gain | IIR`` becomes one
-        cascade instead of three stages. A dynamic ``Normalize`` or a clamping
-        ``Gain`` is non-linear and is kept as its own stage.
+        Thin wrapper over :func:`torchfx.filter.fused.build_fused_plan`, shared with
+        the ``FX.compile()`` lowering path.
 
         """
-        from torchfx.effect import Gain
-        from torchfx.filter.biquad import Biquad
-        from torchfx.filter.fused import FusedSOSCascade
-        from torchfx.filter.iir import IIR
+        from torchfx.filter.fused import build_fused_plan
 
-        plan: list[nn.Module] = []
-        iir_run: list[IIR | Biquad] = []
-        pending_gain = 1.0  # product of foldable gains to apply to the current run
-
-        def flush() -> None:
-            nonlocal iir_run, pending_gain
-            if iir_run:
-                if len(iir_run) >= 2 or pending_gain != 1.0:
-                    plan.append(FusedSOSCascade(*iir_run, gain=pending_gain))
-                else:
-                    plan.append(iir_run[0])
-            elif pending_gain != 1.0:
-                # A foldable gain with no SOS filter to fold into — keep it as an op.
-                plan.append(Gain(pending_gain))
-            iir_run = []
-            pending_gain = 1.0
-
-        for module in pipeline:
-            if isinstance(module, (IIR, Biquad)):
-                iir_run.append(module)
-            else:
-                factor = module._linear_gain() if isinstance(module, Gain) else None
-                if factor is not None:
-                    pending_gain *= factor  # fold into the current/next fused run
-                else:
-                    flush()
-                    plan.append(module)
-        flush()
-        return plan
+        return build_fused_plan(pipeline)
 
     @classmethod
     def _deferred(
@@ -739,10 +702,11 @@ class Wave:
             raise TypeError(f"Expected nn.Module, but got {type(f).__name__} instead.")
 
         # Walk all submodules (including f itself) so that arbitrarily nested
-        # Sequential / ModuleList structures get their fs configured.
-        for m in f.modules():
-            if isinstance(m, FX):
-                self.__update_config(m)
+        # Sequential / ModuleList structures get their fs configured. Shared with
+        # the explicit FX.compile() path via apply_fs.
+        from torchfx._config import apply_fs
+
+        apply_fs(f, self.fs)
 
         # Flatten Sequential into individual steps so consecutive IIR filters
         # are visible for fusion at materialization time.
@@ -755,28 +719,6 @@ class Wave:
             self.metadata,
             self._pipeline + new_steps,
         )
-
-    def __update_config(self, f: FX) -> None:
-        """Update the configuration of the filter with the wave's sampling frequency."""
-        fs_changed = False
-        current_fs = getattr(f, "fs", None)
-        if current_fs != self.fs:
-            tp.cast(tp.Any, f).fs = self.fs
-            fs_changed = True
-
-        if fs_changed:
-            reset_state = getattr(f, "reset_state", None)
-            if callable(reset_state):
-                reset_state()
-
-        if isinstance(f, AbstractFilter) and (fs_changed or not f._has_computed_coeff):
-            f.compute_coefficients()
-            # Record the fs and design-parameter snapshot the coefficients were
-            # designed for so a subsequent direct forward() does not needlessly
-            # recompute (and so a genuine fs/parameter change is still detected
-            # on the direct-call path).
-            f._coeff_fs = getattr(f, "fs", None)
-            f._coeff_fingerprint = f._design_fingerprint()
 
     def __len__(self) -> int:
         """Return the length, in samples, of the wave."""
