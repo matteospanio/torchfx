@@ -51,6 +51,7 @@ Examples
 from __future__ import annotations
 
 import collections
+import math
 import threading
 import time
 from collections.abc import Iterable, Sequence
@@ -163,9 +164,12 @@ class RealtimeProcessor:
         self._input_buffer = TensorRingBuffer(capacity, ch_in)
         self._output_buffer = TensorRingBuffer(capacity, ch_out)
 
-        # Thread-safe parameter updates: pending dict drained at each
-        # DSP worker iteration.
+        # Thread-safe parameter updates: pending dicts drained at each DSP worker
+        # iteration. ``_pending_params`` are instant; ``_pending_ramps`` request a
+        # smoothed change. ``_active_ramps`` is worker-owned (no lock needed).
         self._pending_params: dict[str, Any] = {}
+        self._pending_ramps: dict[str, tuple[float, float]] = {}  # name -> (target, ramp_ms)
+        self._active_ramps: dict[str, dict[str, float]] = {}
         self._param_lock = threading.Lock()
 
         # Worker thread coordination.
@@ -343,62 +347,132 @@ class RealtimeProcessor:
     # Parameter updates
     # ------------------------------------------------------------------
 
-    def set_parameter(self, name: str, value: Any) -> None:
-        """Thread-safe parameter update.
+    def set_parameter(self, name: str, value: Any, ramp_ms: float = 0.0) -> None:
+        """Thread-safe parameter update, optionally smoothed over ``ramp_ms``.
 
-        Parameters are staged in a pending dict and applied at the
-        next DSP worker iteration boundary, *not* in the audio
-        callback. This keeps the callback allocation-free.
+        Parameters are staged and applied at the next DSP worker iteration
+        boundary, *not* in the audio callback (keeping the callback alloc-free).
+        With ``ramp_ms > 0`` a numeric parameter is linearly ramped from its
+        current value to ``value`` over that many milliseconds (at block
+        granularity), avoiding the zipper noise of a discrete jump. Filter
+        coefficients are recomputed each block during the ramp **without**
+        resetting DF1 state, so a cutoff sweep stays continuous.
 
         Parameters
         ----------
         name : str
-            Dot-separated parameter path, e.g., ``"0.cutoff"`` for
-            effect index 0, attribute ``cutoff``.
+            Dot-separated parameter path, e.g., ``"0.cutoff"`` for effect
+            index 0, attribute ``cutoff``.
         value : Any
             New parameter value.
+        ramp_ms : float, optional
+            Ramp duration in milliseconds (default ``0`` = instant).
 
         Examples
         --------
         >>> # processor.set_parameter("0.cutoff", 2000)
-        >>> # processor.set_parameter("1.gain", 0.8)
+        >>> # processor.set_parameter("1.gain", 0.8, ramp_ms=20)
 
         """
         with self._param_lock:
-            self._pending_params[name] = value
+            if ramp_ms and ramp_ms > 0:
+                self._pending_ramps[name] = (float(value), float(ramp_ms))
+                self._pending_params.pop(name, None)  # ramp supersedes a pending instant set
+            else:
+                self._pending_params[name] = value
+                self._pending_ramps.pop(name, None)
+
+    def _resolve_effect_attr(self, key: str) -> tuple[FX, str] | None:
+        """Resolve a ``"<idx>.<attr>"`` key to ``(effect, attr)`` or ``None``."""
+        parts = key.split(".", 1)
+        try:
+            idx = int(parts[0])
+        except ValueError:
+            _logger.warning("Invalid effect index in parameter key: %r", key)
+            return None
+        if idx < 0 or idx >= len(self._effects):
+            _logger.warning("Invalid effect index: %d", idx)
+            return None
+        if len(parts) < 2 or not parts[1]:
+            _logger.warning("No attribute specified for effect %d", idx)
+            return None
+        return self._effects[idx], parts[1]
+
+    def _set_effect_attr(self, effect: FX, attr: str, value: Any, *, reset: bool) -> None:
+        """Set ``effect.attr`` and (for filters) recompute coefficients.
+
+        ``reset=True`` clears DF1 state (a deliberate one-off change); ``reset=False``
+        preserves it (a ramp step) so a swept filter does not restart each block.
+
+        """
+        setattr(effect, attr, value)
+        if isinstance(effect, AbstractFilter):
+            effect.compute_coefficients()
+            effect._coeff_fs = getattr(effect, "fs", None)
+            effect._coeff_fingerprint = effect._design_fingerprint()
+            # _sos_device_cache lives on the IIR/Biquad subclasses (not AbstractFilter);
+            # invalidate it so the next forward re-caches the recomputed coefficients.
+            cast(Any, effect)._sos_device_cache = None
+            if reset:
+                reset_state = getattr(effect, "reset_state", None)
+                if callable(reset_state):
+                    reset_state()
 
     def _apply_pending_params(self) -> None:
-        """Swap pending parameters into active effects (worker thread)."""
-        if not self._pending_params:
+        """Swap pending parameters into active effects, stepping ramps (worker
+        thread)."""
+        params: dict[str, Any] = {}
+        ramps: dict[str, tuple[float, float]] = {}
+        if self._pending_params or self._pending_ramps:
+            with self._param_lock:
+                params, self._pending_params = self._pending_params, {}
+                ramps, self._pending_ramps = self._pending_ramps, {}
+        elif not self._active_ramps:
             return
 
-        with self._param_lock:
-            params = self._pending_params.copy()
-            self._pending_params.clear()
-
+        # Instant updates (reset filter state, the existing one-off semantics).
         for key, value in params.items():
-            parts = key.split(".", 1)
+            res = self._resolve_effect_attr(key)
+            if res is None:
+                continue
+            self._set_effect_attr(*res, value, reset=True)
+            self._active_ramps.pop(key, None)  # an instant set cancels any ramp
+
+        # Start new ramps, capturing the current value as the ramp origin.
+        block_ms = self._config.buffer_size / self._config.sample_rate * 1000.0
+        for key, (target, ramp_ms) in ramps.items():
+            res = self._resolve_effect_attr(key)
+            if res is None:
+                continue
+            effect, attr = res
             try:
-                effect_idx = int(parts[0])
-            except ValueError:
-                _logger.warning("Invalid effect index in parameter key: %r", key)
+                start = float(getattr(effect, attr))
+            except (TypeError, ValueError):
+                self._set_effect_attr(effect, attr, target, reset=True)  # non-numeric: instant
                 continue
-            attr_name = parts[1] if len(parts) > 1 else None
+            total = max(1, math.ceil(ramp_ms / block_ms))
+            self._active_ramps[key] = {"start": start, "target": target, "total": total, "block": 0}
 
-            if effect_idx < 0 or effect_idx >= len(self._effects):
-                _logger.warning("Invalid effect index: %d", effect_idx)
+        # Advance active ramps by one block.
+        # ponytail: block-rate ramp (coeffs recomputed per block). Per-sample gain
+        # interpolation is the upgrade path if block-rate audibly steps.
+        finished: list[str] = []
+        for key, r in self._active_ramps.items():
+            res = self._resolve_effect_attr(key)
+            if res is None:
+                finished.append(key)
                 continue
-
-            effect = self._effects[effect_idx]
-            if attr_name:
-                setattr(effect, attr_name, value)
-                if isinstance(effect, AbstractFilter):
-                    reset_state = getattr(effect, "reset_state", None)
-                    if callable(reset_state):
-                        reset_state()
-                    effect.compute_coefficients()
+            effect, attr = res
+            r["block"] += 1
+            if r["block"] >= r["total"]:
+                self._set_effect_attr(effect, attr, r["target"], reset=False)
+                finished.append(key)
             else:
-                _logger.warning("No attribute specified for effect %d", effect_idx)
+                t = r["block"] / r["total"]
+                value = r["start"] + (r["target"] - r["start"]) * t
+                self._set_effect_attr(effect, attr, value, reset=False)
+        for key in finished:
+            self._active_ramps.pop(key, None)
 
     # ------------------------------------------------------------------
     # Audio callback (runs in backend thread)

@@ -11,6 +11,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Explicit `.compile()` / `.freeze()` for filters and chains.** Coefficient
+  computation stays lazy by default; `FX.compile(fs)` (and `FilterChain.compile`)
+  now eagerly designs coefficients ahead of `forward()` so the module no longer
+  mutates on its first call — useful for deployment, reproducibility, and as a
+  prerequisite for graph capture (`torch.compile` works, graph-breaking around the
+  native kernel). `freeze(fs=None)` additionally locks coefficients (skips the
+  per-forward fs/fingerprint recompute). Works on a lone deterministic filter
+  (`LoButterworth(...).compile(48000)`) as well as a chain. `FilterChain.summary()`
+  renders the topology and the fused SOS plan. (Note: full `torch.export` of the
+  forward still requires registering the native SOS kernel as a custom op — a
+  follow-up; the kernel is currently opaque to the exporter.)
+- **`torchfx.ddsp` — opt-in differentiable filters.** The differentiable cascade
+  (`ddsp.differentiable_sos_cascade`, `ddsp.BiquadFunction`) wraps the native forward
+  kernel in a `torch.autograd.Function` with a hand-derived analytic backward (the
+  adjoint of an LTI filter reuses the same forward kernel), avoiding the ~30× cost of
+  unrolling the IIR recursion under autograd. The deterministic filters are unchanged
+  (still `@torch.no_grad()`), so non-DDSP users pay no overhead.
+  - **Extension point:** `ddsp.LearnableFilter` is an abstract base that mirrors the
+    deterministic `filter.AbstractFilter` — subclass it, declare design params as
+    `nn.Parameter`, and implement `sos()` (returning a differentiable `[K, 6]` stack)
+    to get a differentiable `forward` and a `freeze()` bridge for free.
+  - **Ready-made subclasses:** `LearnableLowpass`, `LearnableHighpass`,
+    `LearnablePeaking`, and `LearnableParametricEQ`. `freeze()` bakes trained params
+    into a deterministic `filter.SOSFilter` for fast inference.
+  - **Learnable effects:** `ddsp.LearnableGain` shows that pointwise effects are
+    trainable with plain autograd (`freeze()` → `effect.Gain`). Recursive/native-kernel
+    effects (Delay, Reverb, dynamics) instead each need their own analytic-backward
+    `autograd.Function` (the `BiquadFunction` pattern) and are not covered automatically.
+  - The `examples/ddsp_graphic_eq.py` PoC now uses this package (time-domain cascade)
+    instead of its frequency-domain workaround. References: RBJ cookbook, torchlpc,
+    "Differentiable All-Pole Filters".
+- **`filter.SOSFilter`.** A deterministic filter wrapping a precomputed `[K, 6]`
+  SOS matrix (the inference-side target of `LearnableFilter.freeze()`).
+- **CLI: SoX-style positional pipeline and a `compile` artifact.** `torchfx pipe
+  IN OUT lowpass --cutoff 800 reverb --mix 0.4` applies a positional effect
+  pipeline; `torchfx compile "<pipeline>" --fs 48000 -o chain.fxg` freezes a
+  pipeline into a portable `.fxg` artifact (filters stored as precomputed SOS,
+  other effects as re-instantiable specs), and `torchfx process --compiled
+  chain.fxg` applies it without re-designing coefficients. New `parse_pipeline`
+  parser reuses the existing effect registry.
+- **Realtime smoothed parameter automation.** `RealtimeProcessor.set_parameter`
+  gained a `ramp_ms` argument: a numeric parameter is linearly ramped to its target
+  over that many milliseconds (at block granularity) instead of jumping, removing
+  zipper noise. Filter coefficients are recomputed each block during a ramp without
+  resetting DF1 state, so cutoff/Q sweeps stay continuous.
 - **PipeWire realtime backend (#55).** `torchfx.realtime.PipeWireBackend` targets
   PortAudio's PipeWire host (falling back to its PulseAudio host, which PipeWire
   also serves), reusing the `SoundDeviceBackend` callback path — native low-latency

@@ -251,6 +251,69 @@ class FX(nn.Module, abc.ABC):
 
         return FilterChain(self, other)
 
+    def compile(self, fs: int) -> FX:  # type: ignore[override]
+        """Eagerly resolve sampling rate and design coefficients before ``forward``.
+
+        Lazy coefficient computation is preserved as the default; ``compile`` is an
+        optional, additive step. After it runs, every ``FX`` submodule has ``fs`` set
+        and (for filters) coefficients designed, so the module no longer mutates on
+        its first ``forward`` — useful for deployment, reproducibility, and as a
+        prerequisite for graph capture. Idempotent.
+
+        Notes
+        -----
+        This intentionally overrides ``nn.Module.compile`` (the in-place
+        ``torch.compile`` sugar) with coefficient-design semantics. Use the
+        ``torch.compile(module)`` *function* if you want graph compilation — it works
+        but graph-breaks around the opaque native SOS kernel. Full ``torch.export``
+        of the forward additionally needs that kernel registered as a custom op.
+
+        Parameters
+        ----------
+        fs : int
+            Sampling rate in Hz to design coefficients for.
+
+        Returns
+        -------
+        FX
+            ``self`` (now eager), for chaining.
+
+        Examples
+        --------
+        >>> from torchfx.filter.iir import LoButterworth
+        >>> filt = LoButterworth(cutoff=800, order=4).compile(48000)
+        >>> filt._has_computed_coeff
+        True
+
+        """
+        from torchfx._config import apply_fs
+
+        apply_fs(self, fs)
+        return self
+
+    def freeze(self, fs: int | None = None) -> FX:
+        """Freeze coefficients for deployment (implies :meth:`compile`).
+
+        Designs coefficients (run :meth:`compile` first, or pass ``fs``) and marks
+        every filter so the per-forward fs/fingerprint recompute check is skipped.
+        Use once the sampling rate and parameters are final.
+
+        Parameters
+        ----------
+        fs : int, optional
+            If given, design coefficients for this rate first.
+
+        Returns
+        -------
+        FX
+            ``self``, with coefficients locked.
+
+        """
+        from torchfx._config import freeze_fx
+
+        freeze_fx(self, fs)
+        return self
+
 
 class Gain(FX):
     r"""Adjust volume of audio waveforms with multiple gain modes and optional clamping.
