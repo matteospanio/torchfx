@@ -884,13 +884,17 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">filters</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;FusedSOSCascade requires at least one IIR filter&quot;</span><span class="p">)</span>
 
-        <span class="n">sos_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">fs_val</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;_sos&quot;</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected filter with SOS coefficients, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
+        <span class="c1"># Keep the source filters (plain list — not registered as submodules) so</span>
+        <span class="c1"># the cascade can re-derive its SOS matrix when the sampling rate changes.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IIR</span> <span class="o">|</span> <span class="n">Biquad</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">gain</span>
+
+        <span class="n">fs_val</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
             <span class="c1"># Ensure coefficients are computed.</span>
             <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -899,9 +903,8 @@ window.runMermaid = runMermaid;</script>
                         <span class="s2">&quot;Set fs before fusing.&quot;</span>
                     <span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
-
-            <span class="k">assert</span> <span class="n">f</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="n">sos_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">_sos</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">_coeff_fs</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">fs</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">_coeff_fingerprint</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">_design_fingerprint</span><span class="p">()</span>
 
             <span class="c1"># Validate consistent sampling frequency.</span>
             <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -912,17 +915,11 @@ window.runMermaid = runMermaid;</script>
                         <span class="sa">f</span><span class="s2">&quot;Cannot fuse filters with different sample rates: </span><span class="si">{</span><span class="n">fs_val</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">fs</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="p">)</span>
 
-        <span class="c1"># Concatenate all SOS sections: [K_total, 6]. torch.cat copies, so the</span>
-        <span class="c1"># source filters&#39; coefficients are never mutated by the gain fold below.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sos_parts</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="c1"># Fold a static scalar gain (e.g. a `Gain` between fused filters) into the</span>
-        <span class="c1"># LAST section&#39;s numerator. A scalar commutes through the linear cascade, so</span>
-        <span class="c1"># this is exact; folding into the last section scales only the final output,</span>
-        <span class="c1"># avoiding any intermediate over/underflow the gain might otherwise cause.</span>
-        <span class="k">if</span> <span class="n">gain</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">*=</span> <span class="n">gain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_sos</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_sections</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">fs_val</span>
+        <span class="c1"># Sampling rate the fused SOS matrix was built for (see forward).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">fs_val</span>
 
         <span class="c1"># Cached device-matched copy — avoids per-forward .to() calls.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sos_device_cache</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -931,6 +928,50 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_stateful</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_sos</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Concatenate the source filters&#39; SOS rows and fold the static gain.</span>
+
+<span class="sd">        ``torch.cat`` copies, so the source filters&#39; coefficients are never mutated</span>
+<span class="sd">        by the gain fold below.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sos_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filters</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">f</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">sos_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">_sos</span><span class="p">)</span>
+        <span class="n">sos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sos_parts</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="c1"># Fold a static scalar gain (e.g. a `Gain` between fused filters) into the</span>
+        <span class="c1"># LAST section&#39;s numerator. A scalar commutes through the linear cascade, so</span>
+        <span class="c1"># this is exact; folding into the last section scales only the final output,</span>
+        <span class="c1"># avoiding any intermediate over/underflow the gain might otherwise cause.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gain</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="n">sos</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gain</span>
+        <span class="k">return</span> <span class="n">sos</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_recompute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Re-derive the fused SOS matrix for the current ``fs``.</span>
+
+<span class="sd">        Propagates ``fs`` to the source filters, recomputes their coefficients, and</span>
+<span class="sd">        rebuilds the concatenated matrix. Accumulated DF1 state and the device cache</span>
+<span class="sd">        no longer match the new coefficients, so both are dropped.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filters</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">_coeff_fs</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">fs</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">_coeff_fingerprint</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">_design_fingerprint</span><span class="p">()</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">_sos_device_cache</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_sos</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_sections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sos_device_cache</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="FusedSOSCascade.from_chain">
 <a class="viewcode-back" href="../../../api/filters.html#torchfx.filter.FusedSOSCascade.from_chain">[docs]</a>
@@ -984,6 +1025,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        carry state across chunks.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Recompute when the sampling rate changed after construction (e.g. a</span>
+        <span class="c1"># RealtimeProcessor assigning `effect.fs = config.sample_rate`). Without</span>
+        <span class="c1"># this guard the cascade would silently keep coefficients designed for</span>
+        <span class="c1"># the old rate — same contract as IIR.forward / Biquad.forward.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recompute</span><span class="p">()</span>
+
         <span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos_device_cache</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span> <span class="o">=</span> <span class="n">_sos_cascade_forward</span><span class="p">(</span>
             <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos_device_cache</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_y</span>
         <span class="p">)</span>

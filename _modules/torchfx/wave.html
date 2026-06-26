@@ -1624,10 +1624,12 @@ window.runMermaid = runMermaid;</script>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">AbstractFilter</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">fs_changed</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">_has_computed_coeff</span><span class="p">):</span>
             <span class="n">f</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
-            <span class="c1"># Record the fs the coefficients were designed for so a subsequent</span>
-            <span class="c1"># direct forward() does not needlessly recompute (and so a genuine</span>
-            <span class="c1"># fs change is still detected on the direct-call path).</span>
+            <span class="c1"># Record the fs and design-parameter snapshot the coefficients were</span>
+            <span class="c1"># designed for so a subsequent direct forward() does not needlessly</span>
+            <span class="c1"># recompute (and so a genuine fs/parameter change is still detected</span>
+            <span class="c1"># on the direct-call path).</span>
             <span class="n">f</span><span class="o">.</span><span class="n">_coeff_fs</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;fs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">_coeff_fingerprint</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">_design_fingerprint</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the length, in samples, of the wave.&quot;&quot;&quot;</span>
@@ -1946,11 +1948,17 @@ window.runMermaid = runMermaid;</script>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No waves to merge. Provide at least one wave.&quot;</span><span class="p">)</span>
 
         <span class="n">fs</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fs</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span>
         <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">waves</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">fs</span> <span class="o">!=</span> <span class="n">fs</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Sampling frequency mismatch: </span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">fs</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">fs</span><span class="si">}</span><span class="s2">. &quot;</span>
                     <span class="s2">&quot;All waves must have the same sampling frequency.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="n">device</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Device mismatch: </span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">. &quot;</span>
+                    <span class="s2">&quot;All waves must be on the same device; move them with Wave.to() first.&quot;</span>
                 <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">split_channels</span><span class="p">:</span>

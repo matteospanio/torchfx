@@ -1112,9 +1112,13 @@ window.runMermaid = runMermaid;</script>
             <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ch_out</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="k">if</span> <span class="n">ch_out</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="c1"># Pre-allocate numpy view for output copy-back (channels, frames) order.</span>
-        <span class="c1"># We&#39;ll transpose into outdata at the end.</span>
+        <span class="c1"># Pre-allocate numpy views once — .numpy() creates a new ndarray object</span>
+        <span class="c1"># each call, which would be a per-callback allocation on the audio thread.</span>
+        <span class="c1"># Input view (channels, frames) for copy-in, output view for copy-back.</span>
+        <span class="n">_in_np</span> <span class="o">=</span> <span class="n">_input_tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">if</span> <span class="n">ch_in</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="n">_out_np</span> <span class="o">=</span> <span class="n">_output_tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">if</span> <span class="n">ch_out</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="c1"># Reused empty tensor for the missing-side argument (no per-callback alloc).</span>
+        <span class="n">_empty</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">sd_callback</span><span class="p">(</span>
             <span class="n">indata</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -1137,19 +1141,19 @@ window.runMermaid = runMermaid;</script>
                 <span class="p">)</span>
 
             <span class="c1"># Convert input: numpy (frames, channels) -&gt; pre-allocated tensor (channels, frames)</span>
-            <span class="k">if</span> <span class="n">indata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">indata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_in_np</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">mono_in</span><span class="p">:</span>
                     <span class="c1"># Mono fast-path: no transpose needed, just copy the column</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">_input_tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">indata</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">_in_np</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">indata</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">_input_tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">indata</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">_in_np</span><span class="p">,</span> <span class="n">indata</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
             <span class="c1"># Zero the output tensor in-place (no allocation)</span>
             <span class="k">if</span> <span class="n">outdata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">_output_tensor</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
 
-            <span class="n">in_t</span> <span class="o">=</span> <span class="n">_input_tensor</span> <span class="k">if</span> <span class="n">indata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="n">out_t</span> <span class="o">=</span> <span class="n">_output_tensor</span> <span class="k">if</span> <span class="n">outdata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">in_t</span> <span class="o">=</span> <span class="n">_input_tensor</span> <span class="k">if</span> <span class="n">indata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_empty</span>
+            <span class="n">out_t</span> <span class="o">=</span> <span class="n">_output_tensor</span> <span class="k">if</span> <span class="n">outdata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_empty</span>
             <span class="k">if</span> <span class="n">accepts_status</span><span class="p">:</span>
                 <span class="n">callback</span><span class="p">(</span><span class="n">in_t</span><span class="p">,</span> <span class="n">out_t</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">backend_status</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>

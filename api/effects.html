@@ -971,8 +971,10 @@ supplied lazily by a <code class="docutils literal notranslate"><span class="pre
 </div>
 <p class="rubric">Notes</p>
 <p>Each channel is processed independently with identical tunings (no stereo-width spread
-— a possible follow-up). State is reset per <code class="docutils literal notranslate"><span class="pre">forward</span></code> call, so block-wise streaming
-is not state-continuous across chunks. This is a <strong>breaking change</strong> from the pre-0.7
+— a possible follow-up). The comb/all-pass delay-line state is carried across
+<code class="docutils literal notranslate"><span class="pre">forward</span></code> calls, so block-wise streaming is state-continuous (the tail flows across
+chunk boundaries); call <a class="reference internal" href="#torchfx.effect.Reverb.reset_state" title="torchfx.effect.Reverb.reset_state"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reset_state()</span></code></a> to cut the tail when switching sources.
+The constructor signature is a <strong>breaking change</strong> from the pre-0.7
 <code class="docutils literal notranslate"><span class="pre">Reverb(delay,</span> <span class="pre">decay,</span> <span class="pre">mix)</span></code> API.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
@@ -1006,6 +1008,19 @@ registered hooks while the latter silently ignores them.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><em>Tensor</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchfx.effect.Reverb.reset_state">
+<span class="sig-name descname"><span class="pre">reset_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/effect.html#Reverb.reset_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.Reverb.reset_state" title="Link to this definition">#</a></dt>
+<dd><p>Clear the accumulated delay-line state (cut the reverb tail).</p>
+<p>Call when switching audio sources or seeking; <code class="docutils literal notranslate"><span class="pre">Wave</span></code> materialisation and
+<code class="docutils literal notranslate"><span class="pre">StreamProcessor</span></code> file boundaries call this automatically.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1496,6 +1511,7 @@ extended time dimension.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reverb">Reverb</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Reverb"><code class="docutils literal notranslate"><span class="pre">Reverb</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Reverb.forward"><code class="docutils literal notranslate"><span class="pre">Reverb.forward()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#torchfx.effect.Reverb.reset_state"><code class="docutils literal notranslate"><span class="pre">Reverb.reset_state()</span></code></a></li>
 </ul>
 </li>
 </ul>

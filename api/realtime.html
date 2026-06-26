@@ -894,10 +894,12 @@ and blocking APIs.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.realtime.TensorRingBuffer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.realtime.</span></span><span class="sig-name descname"><span class="pre">TensorRingBuffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchfx/realtime/ring_buffer.html#TensorRingBuffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.realtime.TensorRingBuffer" title="Link to this definition">#</a></dt>
-<dd><p>Lock-free SPSC ring buffer for real-time audio tensor transfer.</p>
+<dd><p>Lockless SPSC ring buffer for real-time audio tensor transfer.</p>
 <p>Uses separate read/write indices with a pre-allocated tensor backing
 store. In the SPSC model, only the producer writes <code class="docutils literal notranslate"><span class="pre">_write_idx</span></code> and
-only the consumer writes <code class="docutils literal notranslate"><span class="pre">_read_idx</span></code>, so no locks are needed.</p>
+only the consumer writes <code class="docutils literal notranslate"><span class="pre">_read_idx</span></code>, so no explicit locks are taken.
+Index updates rely on CPython’s GIL for atomicity/ordering (see the
+module docstring); this is not a formally lock-free structure.</p>
 <p>The capacity must be a power of 2 for efficient modular arithmetic
 (bitwise AND instead of modulo). If a non-power-of-2 value is provided,
 it is rounded up to the next power of 2.</p>

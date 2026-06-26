@@ -1093,12 +1093,18 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">NONE_FS_ERR</span><span class="p">)</span>
 
-        <span class="c1"># Recompute when coefficients are missing or were designed for a</span>
-        <span class="c1"># different sampling rate. Without the fs check, a filter reused across</span>
-        <span class="c1"># sample rates would silently apply stale coefficients.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fs</span><span class="p">:</span>
+        <span class="c1"># Recompute when coefficients are missing, were designed for a</span>
+        <span class="c1"># different sampling rate, or a design parameter (cutoff, order, ...)</span>
+        <span class="c1"># was mutated after the last design. Without these checks, a reused or</span>
+        <span class="c1"># mutated filter would silently apply stale coefficients.</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sos</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fs</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_design_fingerprint</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fingerprint</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_coefficients</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_coeff_fingerprint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_design_fingerprint</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sos_device_cache</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># invalidate after recomputation</span>
             <span class="c1"># Coefficients changed: accumulated DF1 state no longer matches.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state_x</span> <span class="o">=</span> <span class="kc">None</span>

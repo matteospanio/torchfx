@@ -962,6 +962,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
@@ -1396,12 +1397,15 @@ window.runMermaid = runMermaid;</script>
         <span class="k">assert</span> <span class="n">peak</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Peak value must be positive.&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">peak</span> <span class="o">=</span> <span class="n">peak</span>
 
-        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">strategy</span><span class="p">):</span>
+        <span class="c1"># Wrap only plain callables: NormalizationStrategy instances are themselves</span>
+        <span class="c1"># callable, and wrapping them in CustomNormalizationStrategy would erase</span>
+        <span class="c1"># their type (PerChannel vs global matters to e.g. batch_process).</span>
+        <span class="k">if</span> <span class="n">strategy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">NormalizationStrategy</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">strategy</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Strategy must be an instance of NormalizationStrategy.&quot;</span><span class="p">)</span>
             <span class="n">strategy</span> <span class="o">=</span> <span class="n">CustomNormalizationStrategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="n">PeakNormalizationStrategy</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="p">,</span> <span class="n">NormalizationStrategy</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Strategy must be an instance of NormalizationStrategy.&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Normalize.forward">
 <a class="viewcode-back" href="../../api/effects.html#torchfx.Normalize.forward">[docs]</a>
@@ -1732,8 +1736,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
 <span class="sd">    Each channel is processed independently with identical tunings (no stereo-width spread</span>
-<span class="sd">    — a possible follow-up). State is reset per ``forward`` call, so block-wise streaming</span>
-<span class="sd">    is not state-continuous across chunks. This is a **breaking change** from the pre-0.7</span>
+<span class="sd">    — a possible follow-up). The comb/all-pass delay-line state is carried across</span>
+<span class="sd">    ``forward`` calls, so block-wise streaming is state-continuous (the tail flows across</span>
+<span class="sd">    chunk boundaries); call :meth:`reset_state` to cut the tail when switching sources.</span>
+<span class="sd">    The constructor signature is a **breaking change** from the pre-0.7</span>
 <span class="sd">    ``Reverb(delay, decay, mix)`` API.</span>
 
 <span class="sd">    Examples</span>
@@ -1777,6 +1783,22 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">damping</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">damping</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="c1"># Comb/all-pass delay lines, damping state, and ring positions, carried</span>
+        <span class="c1"># across forward calls so the reverb tail flows across chunk boundaries.</span>
+        <span class="c1"># See reset_state().</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="Reverb.reset_state">
+<a class="viewcode-back" href="../../api/effects.html#torchfx.Reverb.reset_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the accumulated delay-line state (cut the reverb tail).</span>
+
+<span class="sd">        Call when switching audio sources or seeking; ``Wave`` materialisation and</span>
+<span class="sd">        ``StreamProcessor`` file boundaries call this automatically.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
 
 <div class="viewcode-block" id="Reverb.forward">
 <a class="viewcode-back" href="../../api/effects.html#torchfx.Reverb.forward">[docs]</a>
@@ -1805,6 +1827,7 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">_ALLPASS_FB</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">,</span>  <span class="c1"># wet</span>
             <span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mix</span><span class="p">,</span>  <span class="c1"># dry</span>
+            <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 
@@ -2516,8 +2539,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    :math:`y[n] = g[n]\, x[n]`.</span>
 
 <span class="sd">    This is a **zero-latency feed-forward** design (no look-ahead). The ballistics</span>
-<span class="sd">    state is reset on each ``forward`` call, so block-wise streaming is *not*</span>
-<span class="sd">    state-continuous across chunks (a follow-up could thread the state in/out).</span>
+<span class="sd">    state is carried across ``forward`` calls, so block-wise streaming is</span>
+<span class="sd">    state-continuous across chunks; call :meth:`reset_state` when switching sources.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -2591,6 +2614,9 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># Per-channel detector state (y1, yL, ms), carried across forward calls so</span>
+        <span class="c1"># block-wise streaming is state-continuous. See reset_state().</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_coeffs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Derive attack/release/RMS coefficients from the times and ``fs``.&quot;&quot;&quot;</span>
@@ -2602,6 +2628,15 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span> <span class="o">=</span> <span class="n">fs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the accumulated detector state.</span>
+
+<span class="sd">        Call when switching audio sources or seeking; ``Wave`` materialisation and</span>
+<span class="sd">        ``StreamProcessor`` file boundaries call this automatically.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="nd">@override</span>
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
@@ -2615,6 +2650,7 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_compute_coeffs</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_state</span><span class="p">()</span>  <span class="c1"># ballistics changed: old detector state is invalid</span>
 
         <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">compressor_forward</span>
 
@@ -2628,6 +2664,7 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">_aR</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span><span class="p">,</span>
             <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="o">==</span> <span class="s2">&quot;rms&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="p">,</span>
         <span class="p">)</span>
 
 
@@ -2706,8 +2743,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    clamped to ``floor`` (``g_{dB} \ge`` floor), and :math:`y[n] = 10^{g_{dB}/20}\,x[n]`.</span>
 
 <span class="sd">    This is a **zero-latency feed-forward** design (no look-ahead). The ballistics state</span>
-<span class="sd">    is reset on each ``forward`` call, so block-wise streaming is *not* state-continuous</span>
-<span class="sd">    across chunks (see the compressor streaming follow-up).</span>
+<span class="sd">    is carried across ``forward`` calls, so block-wise streaming is state-continuous</span>
+<span class="sd">    across chunks (call :meth:`reset_state` when switching sources) (see the compressor streaming follow-up).</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -2785,6 +2822,9 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># Per-channel detector state (y1, yL, ms), carried across forward calls so</span>
+        <span class="c1"># block-wise streaming is state-continuous. See reset_state().</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_coeffs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Derive attack/release/RMS coefficients from the times and ``fs``.&quot;&quot;&quot;</span>
@@ -2796,6 +2836,15 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span> <span class="o">=</span> <span class="n">fs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the accumulated detector state.</span>
+
+<span class="sd">        Call when switching audio sources or seeking; ``Wave`` materialisation and</span>
+<span class="sd">        ``StreamProcessor`` file boundaries call this automatically.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="nd">@override</span>
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
@@ -2809,6 +2858,7 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_compute_coeffs</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_state</span><span class="p">()</span>  <span class="c1"># ballistics changed: old detector state is invalid</span>
 
         <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">expander_forward</span>
 
@@ -2822,6 +2872,7 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">_aR</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_aRMS</span><span class="p">,</span>
             <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="o">==</span> <span class="s2">&quot;rms&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="p">,</span>
         <span class="p">)</span>
 
 
@@ -2941,8 +2992,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    This is a **peak** (not true-peak / oversampled) limiter, so inter-sample peaks may</span>
 <span class="sd">    slightly exceed the ceiling after conversion to analog (true-peak limiting is a possible</span>
-<span class="sd">    follow-up). The output is time-aligned with the input (no net latency). Ballistics state</span>
-<span class="sd">    is reset per ``forward`` call (not state-continuous across streaming chunks).</span>
+<span class="sd">    follow-up). The output is time-aligned with the input (no net latency). The smoothed</span>
+<span class="sd">    gain is carried across ``forward`` calls for release continuity in block-wise</span>
+<span class="sd">    streaming; the look-ahead window itself does not cross chunk boundaries (the</span>
+<span class="sd">    per-sample clamp guarantees the ceiling regardless). Call :meth:`reset_state` when</span>
+<span class="sd">    switching sources.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -2984,6 +3038,9 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_lookahead_samples</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># Per-channel smoothed gain g, carried across forward calls so block-wise</span>
+        <span class="c1"># streaming has release continuity. See reset_state().</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_coeffs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Derive ceiling, attack/release coefficients and look-ahead samples from</span>
@@ -2999,6 +3056,15 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_fs</span> <span class="o">=</span> <span class="n">fs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_needs_calculation</span> <span class="o">=</span> <span class="kc">False</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the accumulated gain state.</span>
+
+<span class="sd">        Call when switching audio sources or seeking; ``Wave`` materialisation and</span>
+<span class="sd">        ``StreamProcessor`` file boundaries call this automatically.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
     <span class="nd">@override</span>
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -3011,6 +3077,7 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample rate (fs) must be positive.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_compute_coeffs</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_state</span><span class="p">()</span>  <span class="c1"># ballistics changed: old gain state is invalid</span>
 
         <span class="kn">from</span><span class="w"> </span><span class="nn">torchfx._ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">limiter_forward</span>
 
@@ -3020,6 +3087,7 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">_attack_coeff</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_release_coeff</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_lookahead_samples</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_stream_state</span><span class="p">,</span>
         <span class="p">)</span>
 </pre></div>
 <div class="section ablog__blog_comments">
