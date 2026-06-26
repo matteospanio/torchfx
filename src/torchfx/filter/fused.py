@@ -43,13 +43,17 @@ class FusedSOSCascade(nn.Module):
         if not filters:
             raise ValueError("FusedSOSCascade requires at least one IIR filter")
 
-        sos_parts: list[Tensor] = []
-        fs_val: int | None = None
-
         for f in filters:
             if not hasattr(f, "_sos"):
                 raise TypeError(f"Expected filter with SOS coefficients, got {type(f).__name__}")
 
+        # Keep the source filters (plain list — not registered as submodules) so
+        # the cascade can re-derive its SOS matrix when the sampling rate changes.
+        self._filters: list[IIR | Biquad] = list(filters)
+        self._gain: float = gain
+
+        fs_val: int | None = None
+        for f in filters:
             # Ensure coefficients are computed.
             if f._sos is None:
                 if f.fs is None:
@@ -58,9 +62,8 @@ class FusedSOSCascade(nn.Module):
                         "Set fs before fusing."
                     )
                 f.compute_coefficients()
-
-            assert f._sos is not None
-            sos_parts.append(f._sos)
+                f._coeff_fs = f.fs
+                f._coeff_fingerprint = f._design_fingerprint()
 
             # Validate consistent sampling frequency.
             if f.fs is not None:
@@ -71,17 +74,11 @@ class FusedSOSCascade(nn.Module):
                         f"Cannot fuse filters with different sample rates: {fs_val} vs {f.fs}"
                     )
 
-        # Concatenate all SOS sections: [K_total, 6]. torch.cat copies, so the
-        # source filters' coefficients are never mutated by the gain fold below.
-        self._sos: Tensor = torch.cat(sos_parts, dim=0).to(dtype=torch.float64)
-        # Fold a static scalar gain (e.g. a `Gain` between fused filters) into the
-        # LAST section's numerator. A scalar commutes through the linear cascade, so
-        # this is exact; folding into the last section scales only the final output,
-        # avoiding any intermediate over/underflow the gain might otherwise cause.
-        if gain != 1.0:
-            self._sos[-1, :3] *= gain
+        self._sos: Tensor = self._build_sos()
         self._num_sections: int = self._sos.shape[0]
         self.fs: int | None = fs_val
+        # Sampling rate the fused SOS matrix was built for (see forward).
+        self._coeff_fs: int | None = fs_val
 
         # Cached device-matched copy — avoids per-forward .to() calls.
         self._sos_device_cache: Tensor | None = None
@@ -90,6 +87,50 @@ class FusedSOSCascade(nn.Module):
         self._state_x: Tensor | None = None
         self._state_y: Tensor | None = None
         self._stateful: bool = False
+
+    def _build_sos(self) -> Tensor:
+        """Concatenate the source filters' SOS rows and fold the static gain.
+
+        ``torch.cat`` copies, so the source filters' coefficients are never mutated
+        by the gain fold below.
+
+        """
+        sos_parts: list[Tensor] = []
+        for f in self._filters:
+            assert f._sos is not None
+            sos_parts.append(f._sos)
+        sos = torch.cat(sos_parts, dim=0).to(dtype=torch.float64)
+        # Fold a static scalar gain (e.g. a `Gain` between fused filters) into the
+        # LAST section's numerator. A scalar commutes through the linear cascade, so
+        # this is exact; folding into the last section scales only the final output,
+        # avoiding any intermediate over/underflow the gain might otherwise cause.
+        if self._gain != 1.0:
+            sos[-1, :3] *= self._gain
+        return sos
+
+    def _recompute(self) -> None:
+        """Re-derive the fused SOS matrix for the current ``fs``.
+
+        Propagates ``fs`` to the source filters, recomputes their coefficients, and
+        rebuilds the concatenated matrix. Accumulated DF1 state and the device cache
+        no longer match the new coefficients, so both are dropped.
+
+        """
+        assert self.fs is not None
+        for f in self._filters:
+            f.fs = self.fs
+            f.compute_coefficients()
+            f._coeff_fs = f.fs
+            f._coeff_fingerprint = f._design_fingerprint()
+            f._sos_device_cache = None
+            f._state_x = None
+            f._state_y = None
+        self._sos = self._build_sos()
+        self._num_sections = self._sos.shape[0]
+        self._coeff_fs = self.fs
+        self._sos_device_cache = None
+        self._state_x = None
+        self._state_y = None
 
     @classmethod
     def from_chain(cls, chain: nn.Sequential | nn.Module) -> FusedSOSCascade:
@@ -132,6 +173,13 @@ class FusedSOSCascade(nn.Module):
         carry state across chunks.
 
         """
+        # Recompute when the sampling rate changed after construction (e.g. a
+        # RealtimeProcessor assigning `effect.fs = config.sample_rate`). Without
+        # this guard the cascade would silently keep coefficients designed for
+        # the old rate — same contract as IIR.forward / Biquad.forward.
+        if self.fs is not None and self.fs != self._coeff_fs:
+            self._recompute()
+
         result, self._sos_device_cache, self._state_x, self._state_y = _sos_cascade_forward(
             x, self._sos, self._sos_device_cache, self._state_x, self._state_y
         )

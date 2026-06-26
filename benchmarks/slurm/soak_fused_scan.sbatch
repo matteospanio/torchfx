@@ -22,9 +22,19 @@
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
 
-export PATH="/usr/local/cuda/bin:$PATH"
+# Prefer a known-good CUDA toolkit over the /usr/local/cuda symlink: the gpu7
+# upgrade to nvcc 13.3 (2026-06) broke compilation of torch 2.10's own headers
+# (ATen/core/List_inl.h: "need 'typename' before 'decltype'"); 13.2 builds
+# cleanly. Fall back to the symlink only when no pinned version exists.
+for _cuda_v in 13.2 12.9 12.8 12.6 12.4; do
+  if [ -x "/usr/local/cuda-${_cuda_v}/bin/nvcc" ]; then
+    export CUDA_HOME="/usr/local/cuda-${_cuda_v}"
+    break
+  fi
+done
 export CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
-export CUDACXX="${CUDACXX:-/usr/local/cuda/bin/nvcc}"
+export CUDACXX="${CUDACXX:-$CUDA_HOME/bin/nvcc}"
+export PATH="$CUDA_HOME/bin:$PATH"
 export UV_LINK_MODE=copy
 # Keep uv's cache + build temp off the (quota-limited) home filesystem.
 export UV_CACHE_DIR="${UV_CACHE_DIR:-${SLURM_SUBMIT_DIR:-$PWD}/.uvcache}"

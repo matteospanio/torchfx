@@ -415,6 +415,32 @@ class AbstractFilter(FX, abc.ABC):
     # against ``fs`` on every forward so a filter reused across sample rates
     # recomputes its coefficients instead of silently applying stale ones.
     _coeff_fs: int | None = None
+    # Design-parameter snapshot the current coefficients were computed from
+    # (see ``_design_fingerprint``); compared on forward so mutating e.g.
+    # ``cutoff`` or ``order`` after the first call triggers a redesign.
+    _coeff_fingerprint: tuple[tuple[str, object], ...] | None = None
+
+    def _design_fingerprint(self) -> tuple[tuple[str, object], ...]:
+        """Snapshot the public scalar design parameters of this filter.
+
+        Collects plain-value public attributes (``cutoff``, ``order``, ``q``,
+        ``btype``, ...) so the forward guard can detect post-design mutation.
+        Tensors, modules, and private attributes are excluded. ``fs`` is part
+        of the snapshot but is also tracked separately via ``_coeff_fs``.
+
+        """
+        items: list[tuple[str, object]] = []
+        for k in sorted(self.__dict__):
+            if k.startswith("_"):
+                continue
+            v = self.__dict__[k]
+            if isinstance(v, (int, float, complex, str, bool, type(None))):
+                items.append((k, v))
+            elif isinstance(v, (tuple, list)) and all(
+                isinstance(e, (int, float, str, bool)) for e in v
+            ):
+                items.append((k, tuple(v)))
+        return tuple(items)
 
     @property
     def _has_computed_coeff(self) -> bool:

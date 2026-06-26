@@ -1020,3 +1020,26 @@ class DesignableFIR(FIR):
         )
         assert self.b is not None, "Filter coefficients (b) must be computed."
         self.kernel = torch.as_tensor(self.b, dtype=torch.float32).clone().flip(0)[None, None, :]
+        self._coeff_fs = self.fs
+
+    @override
+    @torch.no_grad()
+    def forward(self, x: Tensor) -> Tensor:
+        if self.fs is None:
+            raise ValueError(
+                "Sampling frequency (fs) must be set before filtering. Set fs "
+                "explicitly or use the filter in a Wave pipeline (wave | filter)."
+            )
+
+        # Redesign when coefficients are missing, were designed for a different
+        # sampling rate, or a design parameter (cutoff, num_taps, window, ...)
+        # was mutated after the last design — same contract as IIR.forward /
+        # Biquad.forward.
+        if (
+            self.b is None
+            or self.fs != self._coeff_fs
+            or self._design_fingerprint() != self._coeff_fingerprint
+        ):
+            self.compute_coefficients()
+
+        return super().forward(x)

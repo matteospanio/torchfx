@@ -9,6 +9,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-26
+
+### Added
+
+- **Streaming state for the dynamics effects and the reverb (#72, #86).**
+  `Compressor`, `Expander`/`Gate`, `Limiter`, and `Reverb` now carry their
+  per-channel recurrence state across `forward()` calls: the native kernels
+  (CPU + CUDA) thread detector ballistics `(y1, yL, ms)`, the limiter's
+  smoothed gain, and the reverb's comb/all-pass delay lines + ring positions
+  through optional state tensors. Block-wise/chunked processing is now
+  bit-identical to one-shot processing (limiter: exact for `lookahead=0`;
+  the look-ahead window does not cross chunk boundaries, the per-sample
+  clamp still guarantees the ceiling). All four effects gained
+  `reset_state()`; `Wave` materialisation and `StreamProcessor` boundaries
+  reset automatically, so offline use is unchanged.
+- **Differentiable-DSP proof of concept** (`examples/ddsp_graphic_eq.py`):
+  a learnable RBJ parametric EQ (per-band cutoff/Q/gain as `nn.Parameter`)
+  applied in the frequency domain and trained with a multi-resolution STFT
+  loss to invert an unknown coloration — gradients flow end-to-end through
+  the SOS parameterisation with plain autograd (the fast `no_grad` inference
+  kernels are untouched). Converges to a 0.04 dB mean-abs residual inverse
+  in ~120 Adam steps on CPU.
+- Regression tests: `tests/test_streaming_state.py` (chunked-vs-oneshot
+  equality, tail continuity, reset/self-heal semantics, Wave isolation) and
+  `tests/test_review_fixes.py` (IS²-review fixes #84–#96).
+
+### Fixed
+
+- **`FusedSOSCascade` recomputes on `fs` change (#84).** The fused cascade
+  now tracks `_coeff_fs`, keeps its source filters, and rebuilds the
+  concatenated SOS matrix (re-applying the folded gain) when the sampling
+  rate changes after construction — previously a `RealtimeProcessor`-style
+  `effect.fs = ...` assignment silently kept coefficients designed for the
+  old rate.
+- **`DesignableFIR` redesigns on the direct path (#85).** `forward()` now
+  redesigns when `fs` or a design parameter changed and raises instead of
+  silently passing audio through its placeholder kernel when `fs` is unset.
+- **Post-design parameter mutation detected (#88).** `IIR`, `Biquad`, and
+  `DesignableFIR` snapshot their design parameters and redesign when e.g.
+  `cutoff`/`order`/`q` are mutated after the first forward.
+- **Realtime callback no longer allocates (#87).** The input numpy view and
+  the empty placeholder tensor are pre-allocated outside the PortAudio
+  callback.
+- `validate_q_factor` dead condition removed (#95);
+  `Wave.merge` validates same-device like it validates `fs` (#93);
+  `batch_process` rejects channel-coupled effects such as a global-peak
+  `Normalize` (#92); `Normalize` no longer type-erases strategy instances
+  by wrapping them in `CustomNormalizationStrategy`. (The `MusicalTime`
+  non-positive-BPM `ValueError`, #91, shipped in 0.7.1 below.)
+- CUDA hardening: explicit `int` casts + 32-bit indexing guard in
+  `delay_forward.cu`, epoch-tag wrap guard in the fused-scan path (#89,
+  #96). Ring-buffer docs now state the GIL-dependence of the lockless SPSC
+  design (#94).
+
 ## [0.7.1] - 2026-06-14
 
 ### Fixed

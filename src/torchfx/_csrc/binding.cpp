@@ -30,7 +30,7 @@ torch::Tensor delay_line_forward_cpu(
     double decay,
     double mix);
 
-torch::Tensor compressor_forward_cpu(
+std::tuple<torch::Tensor, torch::Tensor> compressor_forward_cpu(
     const torch::Tensor& x,
     double threshold_db,
     double inv_ratio,
@@ -39,9 +39,10 @@ torch::Tensor compressor_forward_cpu(
     double attack_coeff,
     double release_coeff,
     double rms_coeff,
-    int detector);
+    int detector,
+    const torch::Tensor& state);
 
-torch::Tensor expander_forward_cpu(
+std::tuple<torch::Tensor, torch::Tensor> expander_forward_cpu(
     const torch::Tensor& x,
     double threshold_db,
     double slope,
@@ -50,16 +51,18 @@ torch::Tensor expander_forward_cpu(
     double attack_coeff,
     double release_coeff,
     double rms_coeff,
-    int detector);
+    int detector,
+    const torch::Tensor& state);
 
-torch::Tensor limiter_forward_cpu(
+std::tuple<torch::Tensor, torch::Tensor> limiter_forward_cpu(
     const torch::Tensor& x,
     const torch::Tensor& peak_env,
     double threshold_lin,
     double attack_coeff,
-    double release_coeff);
+    double release_coeff,
+    const torch::Tensor& state);
 
-torch::Tensor reverb_forward_cpu(
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> reverb_forward_cpu(
     const torch::Tensor& x,
     int fs,
     double feedback,
@@ -67,7 +70,10 @@ torch::Tensor reverb_forward_cpu(
     double input_gain,
     double allpass_fb,
     double wet,
-    double dry);
+    double dry,
+    const torch::Tensor& scratch,
+    const torch::Tensor& fstore,
+    const torch::Tensor& idx);
 
 // Dispatch: select CUDA or CPU implementation based on tensor device.
 // `threshold` is the sequential-vs-parallel-scan boundary used by the CUDA path
@@ -132,7 +138,7 @@ torch::Tensor delay_line_forward(
 // Compressor dispatch. `inv_ratio` = 1/ratio (0 for an infinite-ratio limiter);
 // `detector` is 0=peak, 1=rms. Coefficients are precomputed by the Python layer
 // from attack/release/rms times and fs.
-torch::Tensor compressor_forward(
+std::tuple<torch::Tensor, torch::Tensor> compressor_forward(
     const torch::Tensor& x,
     double threshold_db,
     double inv_ratio,
@@ -141,24 +147,26 @@ torch::Tensor compressor_forward(
     double attack_coeff,
     double release_coeff,
     double rms_coeff,
-    int detector) {
+    int detector,
+    const c10::optional<torch::Tensor>& state_opt) {
+  const torch::Tensor state = state_opt.has_value() ? *state_opt : torch::Tensor();
 #ifdef WITH_CUDA
   if (x.is_cuda()) {
     return torchfx::compressor_forward_cuda(x, threshold_db, inv_ratio, knee_db,
                                             makeup_db, attack_coeff, release_coeff,
-                                            rms_coeff, detector);
+                                            rms_coeff, detector, state);
   }
 #else
   TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
 #endif
   return compressor_forward_cpu(x, threshold_db, inv_ratio, knee_db, makeup_db,
-                                attack_coeff, release_coeff, rms_coeff, detector);
+                                attack_coeff, release_coeff, rms_coeff, detector, state);
 }
 
 // Expander / gate dispatch. `slope` = ratio-1 (a large finite value for a gate, so the
 // kernel never does inf arithmetic); `floor_db` is the deepest attenuation; `detector`
 // is 0=peak, 1=rms. Coefficients are precomputed by the Python layer.
-torch::Tensor expander_forward(
+std::tuple<torch::Tensor, torch::Tensor> expander_forward(
     const torch::Tensor& x,
     double threshold_db,
     double slope,
@@ -167,41 +175,46 @@ torch::Tensor expander_forward(
     double attack_coeff,
     double release_coeff,
     double rms_coeff,
-    int detector) {
+    int detector,
+    const c10::optional<torch::Tensor>& state_opt) {
+  const torch::Tensor state = state_opt.has_value() ? *state_opt : torch::Tensor();
 #ifdef WITH_CUDA
   if (x.is_cuda()) {
     return torchfx::expander_forward_cuda(x, threshold_db, slope, knee_db,
                                           floor_db, attack_coeff, release_coeff,
-                                          rms_coeff, detector);
+                                          rms_coeff, detector, state);
   }
 #else
   TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
 #endif
   return expander_forward_cpu(x, threshold_db, slope, knee_db, floor_db,
-                              attack_coeff, release_coeff, rms_coeff, detector);
+                              attack_coeff, release_coeff, rms_coeff, detector, state);
 }
 
 // Look-ahead brick-wall limiter dispatch. `peak_env` is the precomputed look-ahead
 // windowed peak of |x|; `threshold_lin` is the linear ceiling.
-torch::Tensor limiter_forward(
+std::tuple<torch::Tensor, torch::Tensor> limiter_forward(
     const torch::Tensor& x,
     const torch::Tensor& peak_env,
     double threshold_lin,
     double attack_coeff,
-    double release_coeff) {
+    double release_coeff,
+    const c10::optional<torch::Tensor>& state_opt) {
+  const torch::Tensor state = state_opt.has_value() ? *state_opt : torch::Tensor();
 #ifdef WITH_CUDA
   if (x.is_cuda()) {
-    return torchfx::limiter_forward_cuda(x, peak_env, threshold_lin, attack_coeff, release_coeff);
+    return torchfx::limiter_forward_cuda(x, peak_env, threshold_lin, attack_coeff,
+                                         release_coeff, state);
   }
 #else
   TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
 #endif
-  return limiter_forward_cpu(x, peak_env, threshold_lin, attack_coeff, release_coeff);
+  return limiter_forward_cpu(x, peak_env, threshold_lin, attack_coeff, release_coeff, state);
 }
 
 // Freeverb-style reverb dispatch. Comb/all-pass tunings scale with `fs`; `feedback`,
 // `damp`, `wet`, `dry` come from the Python layer's room-size/damping/mix parameters.
-torch::Tensor reverb_forward(
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> reverb_forward(
     const torch::Tensor& x,
     int fs,
     double feedback,
@@ -209,15 +222,23 @@ torch::Tensor reverb_forward(
     double input_gain,
     double allpass_fb,
     double wet,
-    double dry) {
+    double dry,
+    const c10::optional<torch::Tensor>& scratch_opt,
+    const c10::optional<torch::Tensor>& fstore_opt,
+    const c10::optional<torch::Tensor>& idx_opt) {
+  const torch::Tensor scratch = scratch_opt.has_value() ? *scratch_opt : torch::Tensor();
+  const torch::Tensor fstore = fstore_opt.has_value() ? *fstore_opt : torch::Tensor();
+  const torch::Tensor idx = idx_opt.has_value() ? *idx_opt : torch::Tensor();
 #ifdef WITH_CUDA
   if (x.is_cuda()) {
-    return torchfx::reverb_forward_cuda(x, fs, feedback, damp, input_gain, allpass_fb, wet, dry);
+    return torchfx::reverb_forward_cuda(x, fs, feedback, damp, input_gain, allpass_fb,
+                                        wet, dry, scratch, fstore, idx);
   }
 #else
   TORCH_CHECK(!x.is_cuda(), "CUDA extension not compiled; move tensors to CPU");
 #endif
-  return reverb_forward_cpu(x, fs, feedback, damp, input_gain, allpass_fb, wet, dry);
+  return reverb_forward_cpu(x, fs, feedback, damp, input_gain, allpass_fb, wet, dry,
+                            scratch, fstore, idx);
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
@@ -234,21 +255,24 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         py::arg("x"), py::arg("delay_samples"),
         py::arg("decay"), py::arg("mix"));
   m.def("compressor_forward", &compressor_forward,
-        "Compressor forward (CUDA/CPU)",
+        "Compressor forward (CUDA/CPU); returns (y, state)",
         py::arg("x"), py::arg("threshold"), py::arg("inv_ratio"), py::arg("knee"),
         py::arg("makeup_db"), py::arg("attack_coeff"), py::arg("release_coeff"),
-        py::arg("rms_coeff"), py::arg("detector"));
+        py::arg("rms_coeff"), py::arg("detector"), py::arg("state") = py::none());
   m.def("expander_forward", &expander_forward,
-        "Expander / gate forward (CUDA/CPU)",
+        "Expander / gate forward (CUDA/CPU); returns (y, state)",
         py::arg("x"), py::arg("threshold"), py::arg("slope"), py::arg("knee"),
         py::arg("floor_db"), py::arg("attack_coeff"), py::arg("release_coeff"),
-        py::arg("rms_coeff"), py::arg("detector"));
+        py::arg("rms_coeff"), py::arg("detector"), py::arg("state") = py::none());
   m.def("limiter_forward", &limiter_forward,
-        "Look-ahead brick-wall limiter forward (CUDA/CPU)",
+        "Look-ahead brick-wall limiter forward (CUDA/CPU); returns (y, state)",
         py::arg("x"), py::arg("peak_env"), py::arg("threshold_lin"),
-        py::arg("attack_coeff"), py::arg("release_coeff"));
+        py::arg("attack_coeff"), py::arg("release_coeff"),
+        py::arg("state") = py::none());
   m.def("reverb_forward", &reverb_forward,
-        "Freeverb-style reverb forward (CUDA/CPU)",
+        "Freeverb-style reverb forward (CUDA/CPU); returns (y, scratch, fstore, idx)",
         py::arg("x"), py::arg("fs"), py::arg("feedback"), py::arg("damp"),
-        py::arg("input_gain"), py::arg("allpass_fb"), py::arg("wet"), py::arg("dry"));
+        py::arg("input_gain"), py::arg("allpass_fb"), py::arg("wet"), py::arg("dry"),
+        py::arg("scratch") = py::none(), py::arg("fstore") = py::none(),
+        py::arg("idx") = py::none());
 }

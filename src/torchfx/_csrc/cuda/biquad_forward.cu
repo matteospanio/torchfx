@@ -98,6 +98,10 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sos_forward_cuda(
   auto i32 = opts.dtype(torch::kInt32);
   torch::Tensor f, block_agg, status, aggregate, prefix, tile_counter;
   if (use_fused) {
+    // The status word packs (epoch << 2) | state into a signed 32-bit int, where
+    // epoch is the section index — the tag wraps for K >= 2^29 sections.
+    TORCH_CHECK(K < (int64_t{1} << 29),
+                "fused scan: cascade depth ", K, " exceeds the epoch-tag range (2^29)");
     status = torch::zeros({C * num_blocks}, i32);
     aggregate = torch::empty({C * num_blocks * 6}, opts);
     prefix = torch::empty({C * num_blocks * 6}, opts);

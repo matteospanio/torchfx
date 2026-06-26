@@ -639,5 +639,4 @@ def validate_q_factor(
 
     """
     validate_positive(q, parameter_name)
-    if min_q is not None or max_q is not None:
-        validate_range(q, parameter_name, min_value=min_q, max_value=max_q)
+    validate_range(q, parameter_name, min_value=min_q, max_value=max_q)
