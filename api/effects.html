@@ -27,17 +27,17 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=7f76b32a3354e82990f2"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
 
     <script src="../_static/documentation_options.js?v=6f8f3740"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
@@ -77,7 +77,9 @@
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -195,11 +197,18 @@
       
         <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
       
         <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
@@ -212,8 +221,7 @@
           
           
           
-          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">GitHub</span></a>
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
         </li>
         <li class="nav-item">
           
@@ -224,8 +232,7 @@
           
           
           
-          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">PyPI</span></a>
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i><span class="visually-hidden">PyPI</span></a>
         </li>
 </ul></div>
       
@@ -314,11 +321,18 @@
         
           <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
         
           <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
@@ -331,8 +345,7 @@
           
           
           
-          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">GitHub</span></a>
+          <a href="https://github.com/matteospanio/torchfx" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
         </li>
         <li class="nav-item">
           
@@ -343,8 +356,7 @@
           
           
           
-          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">PyPI</span></a>
+          <a href="https://pypi.org/project/torchfx/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i><span class="visually-hidden">PyPI</span></a>
         </li>
 </ul></div>
         
@@ -450,7 +462,7 @@ by limiting output values to [-1.0, 1.0].</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>gain</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The gain factor to apply to the waveform. Must be positive for
+<li><p><strong>gain</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – The gain factor to apply to the waveform. Must be positive for
 <code class="docutils literal notranslate"><span class="pre">&quot;amplitude&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;power&quot;</span></code> gain types. Can be negative for
 <code class="docutils literal notranslate"><span class="pre">&quot;db&quot;</span></code>.</p></li>
 <li><p><strong>gain_type</strong> (<em>{&quot;amplitude&quot;</em><em>, </em><em>&quot;db&quot;</em><em>, </em><em>&quot;power&quot;}</em><em>, </em><em>default=&quot;amplitude&quot;</em>) – <p>How the <code class="docutils literal notranslate"><span class="pre">gain</span></code> value is interpreted:</p>
@@ -460,12 +472,12 @@ by limiting output values to [-1.0, 1.0].</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">&quot;power&quot;</span></code>: power ratio, converted to dB internally</p></li>
 </ul>
 </p></li>
-<li><p><strong>clamp</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default=False</em>) – If True, clamp the output waveform to <code class="docutils literal notranslate"><span class="pre">[-1.0,</span> <span class="pre">1.0]</span></code> after applying
+<li><p><strong>clamp</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a><em>, </em><em>default=False</em>) – If True, clamp the output waveform to <code class="docutils literal notranslate"><span class="pre">[-1.0,</span> <span class="pre">1.0]</span></code> after applying
 the gain.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If gain is negative when gain_type is <code class="docutils literal notranslate"><span class="pre">&quot;amplitude&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;power&quot;</span></code>.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – If gain is negative when gain_type is <code class="docutils literal notranslate"><span class="pre">&quot;amplitude&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;power&quot;</span></code>.</p>
 </dd>
 </dl>
 <div class="admonition seealso">
@@ -562,8 +574,8 @@ is used by default.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>peak</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – The target peak value to normalize to. Must be positive. Default is 1.0.</p></li>
-<li><p><strong>strategy</strong> (<a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy"><em>NormalizationStrategy</em></a><em> or </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em><em>, </em><em>Tensor</em><em>] or </em><em>None</em><em>, </em><em>optional</em>) – <p>The normalization strategy to use. Can be:</p>
+<li><p><strong>peak</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><em>optional</em>) – The target peak value to normalize to. Must be positive. Default is 1.0.</p></li>
+<li><p><strong>strategy</strong> (<a class="reference internal" href="#torchfx.effect.NormalizationStrategy" title="torchfx.effect.NormalizationStrategy"><em>NormalizationStrategy</em></a><em> or </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>]</em><em>, </em><em>Tensor</em><em>] or </em><em>None</em><em>, </em><em>optional</em>) – <p>The normalization strategy to use. Can be:</p>
 <ul>
 <li><p>None (default): Uses PeakNormalizationStrategy</p></li>
 <li><p>NormalizationStrategy instance: Uses the specified strategy</p></li>
@@ -581,8 +593,8 @@ is used by default.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.14)"><strong>AssertionError</strong></a> – If peak is not positive.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If strategy is not an instance of NormalizationStrategy.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#AssertionError" title="(in Python v3.15)"><strong>AssertionError</strong></a> – If peak is not positive.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#TypeError" title="(in Python v3.15)"><strong>TypeError</strong></a> – If strategy is not an instance of NormalizationStrategy.</p></li>
 </ul>
 </dd>
 </dl>
@@ -685,10 +697,10 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>waveform</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><em>Tensor</em></a>)</p>
+<dd class="field-odd"><p><strong>waveform</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.15)"><em>Tensor</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><em>Tensor</em></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.15)"><em>Tensor</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -700,7 +712,7 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.effect.NormalizationStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">NormalizationStrategy</span></span><a class="reference internal" href="../_modules/torchfx/effect.html#NormalizationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.NormalizationStrategy" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
 <p>Abstract base class for normalization strategies.</p>
 <p>NormalizationStrategy defines the interface for all normalization algorithms
 used by the Normalize effect. Concrete implementations must implement the
@@ -710,7 +722,7 @@ Normalize effect to support multiple normalization algorithms without
 modifying its core implementation.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchfx.effect.NormalizationStrategy.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="../_modules/torchfx/effect.html#NormalizationStrategy.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.NormalizationStrategy.__call__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="../_modules/torchfx/effect.html#NormalizationStrategy.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.NormalizationStrategy.__call__" title="Link to this definition">#</a></dt>
 <dd><p>Normalize the waveform to the given peak value using the strategy’s
 specific algorithm.</p>
 </dd></dl>
@@ -828,7 +840,7 @@ strategies, see wiki page “3.5 Creating Custom Effects”.</p>
 </dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>percentile</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+<dd class="field-odd"><p><strong>percentile</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -837,7 +849,7 @@ strategies, see wiki page “3.5 Creating Custom Effects”.</p>
 <dd><p>The percentile <span class="math notranslate nohighlight">\(p\)</span> to use for normalization (<span class="math notranslate nohighlight">\(0 &lt; p \leqslant 100\)</span>). Default is 99.0.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)">float</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -875,11 +887,11 @@ with the NormalizationStrategy interface. It is automatically used when a
 callable is passed to the Normalize effect’s strategy parameter.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – Custom normalization function with signature:
+<dd class="field-odd"><p><strong>func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – Custom normalization function with signature:
 func(waveform: Tensor, peak: float) -&gt; Tensor</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.14)"><strong>AssertionError</strong></a> – If func is not callable.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#AssertionError" title="(in Python v3.15)"><strong>AssertionError</strong></a> – If func is not callable.</p>
 </dd>
 </dl>
 <div class="admonition seealso">
@@ -942,12 +954,12 @@ delay tunings scale with the sampling rate so the character is consistent across
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>room_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>default=0.5</em>) – Apparent room size in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> — sets the comb feedback (decay length). Larger
+<li><p><strong>room_size</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><em>default=0.5</em>) – Apparent room size in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> — sets the comb feedback (decay length). Larger
 values give a longer reverb tail.</p></li>
-<li><p><strong>damping</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>default=0.5</em>) – High-frequency damping in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>. Larger values absorb highs faster, for a
+<li><p><strong>damping</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><em>default=0.5</em>) – High-frequency damping in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>. Larger values absorb highs faster, for a
 warmer/darker tail.</p></li>
-<li><p><strong>mix</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>default=0.3</em>) – Wet/dry balance in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> (<code class="docutils literal notranslate"><span class="pre">0</span></code> = dry, <code class="docutils literal notranslate"><span class="pre">1</span></code> = fully wet).</p></li>
-<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Sampling rate in Hz, used to scale the delay tunings. May be left <code class="docutils literal notranslate"><span class="pre">None</span></code> and
+<li><p><strong>mix</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><em>default=0.3</em>) – Wet/dry balance in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> (<code class="docutils literal notranslate"><span class="pre">0</span></code> = dry, <code class="docutils literal notranslate"><span class="pre">1</span></code> = fully wet).</p></li>
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Sampling rate in Hz, used to scale the delay tunings. May be left <code class="docutils literal notranslate"><span class="pre">None</span></code> and
 supplied lazily by a <code class="docutils literal notranslate"><span class="pre">Wave</span></code> pipeline (<code class="docutils literal notranslate"><span class="pre">wave</span> <span class="pre">|</span> <span class="pre">reverb</span></code>).</p></li>
 </ul>
 </dd>
@@ -958,7 +970,7 @@ supplied lazily by a <code class="docutils literal notranslate"><span class="pre
 <dd class="field-odd"><p>Tensor</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">room_size</span></code>/<code class="docutils literal notranslate"><span class="pre">damping</span></code>/<code class="docutils literal notranslate"><span class="pre">mix</span></code> are outside <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>, <code class="docutils literal notranslate"><span class="pre">fs</span></code> is
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">room_size</span></code>/<code class="docutils literal notranslate"><span class="pre">damping</span></code>/<code class="docutils literal notranslate"><span class="pre">mix</span></code> are outside <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>, <code class="docutils literal notranslate"><span class="pre">fs</span></code> is
     non-positive, or <code class="docutils literal notranslate"><span class="pre">forward</span></code> is called before <code class="docutils literal notranslate"><span class="pre">fs</span></code> is known.</p>
 </dd>
 </dl>
@@ -1004,10 +1016,10 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>waveform</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><em>Tensor</em></a>)</p>
+<dd class="field-odd"><p><strong>waveform</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.15)"><em>Tensor</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><em>Tensor</em></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.15)"><em>Tensor</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1055,10 +1067,10 @@ y[n] = (1 - mix) x[n] + mix \cdot delayed[n]\]</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Delay time in samples. If provided, this is used directly.
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Delay time in samples. If provided, this is used directly.
 Default is None (requires bpm and delay_time).</p></li>
-<li><p><strong>bpm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Beats per minute for BPM-synced delay. Required if delay_samples is None.</p></li>
-<li><p><strong>delay_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Musical time division for BPM-synced delay. Should be a string in the format <code class="code docutils literal notranslate"><span class="pre">n/d[modifier]</span></code>, where:</p>
+<li><p><strong>bpm</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Beats per minute for BPM-synced delay. Required if delay_samples is None.</p></li>
+<li><p><strong>delay_time</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <p>Musical time division for BPM-synced delay. Should be a string in the format <code class="code docutils literal notranslate"><span class="pre">n/d[modifier]</span></code>, where:</p>
 <ul>
 <li><p><code class="code docutils literal notranslate"><span class="pre">n/d</span></code> represents the note division (e.g., <code class="code docutils literal notranslate"><span class="pre">1/4</span></code> for quarter note).</p></li>
 <li><p><code class="code docutils literal notranslate"><span class="pre">modifier</span></code> is optional and can be <code class="code docutils literal notranslate"><span class="pre">d</span></code> for dotted notes or <code class="code docutils literal notranslate"><span class="pre">t</span></code> for triplets.</p></li>
@@ -1074,16 +1086,16 @@ Default is None (requires bpm and delay_time).</p></li>
 </ul>
 <p>Default is <code class="code docutils literal notranslate"><span class="pre">1/8</span></code>.</p>
 </p></li>
-<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Sample frequency (sample rate) in Hz. Required if using BPM-synced delay
+<li><p><strong>fs</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>) – Sample frequency (sample rate) in Hz. Required if using BPM-synced delay
 without Wave pipeline. When None (default), fs will be automatically inferred
 from the Wave object when used with the pipeline operator (wave | delay).
 Must be positive if provided. Default is None.</p></li>
-<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Feedback amount (0-0.95). Controls amplitude of taps 2 and beyond.
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Feedback amount (0-0.95). Controls amplitude of taps 2 and beyond.
 First tap always has amplitude 1.0. Higher values create more prominent echoes.
 Default is 0.3.</p></li>
-<li><p><strong>mix</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Wet/dry mix. 0 = dry (original signal only), 1 = wet (delayed echoes only).
+<li><p><strong>mix</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Wet/dry mix. 0 = dry (original signal only), 1 = wet (delayed echoes only).
 Default is 0.2.</p></li>
-<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of delay taps (echoes). Each tap is delayed by delay_samples * tap_number.
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Number of delay taps (echoes). Each tap is delayed by delay_samples * tap_number.
 Default is 3.</p></li>
 <li><p><strong>strategy</strong> (<a class="reference internal" href="#torchfx.effect.DelayStrategy" title="torchfx.effect.DelayStrategy"><em>DelayStrategy</em></a><em> | </em><em>None</em>) – Delay processing strategy. If None, defaults to MonoDelayStrategy.
 Use PingPongDelayStrategy for stereo ping-pong effect, or provide a custom
@@ -1145,7 +1157,7 @@ The output will be longer than the input by up to <cite>delay_samples * taps</ci
 <dl class="py class">
 <dt class="sig sig-object py" id="torchfx.effect.DelayStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchfx.effect.</span></span><span class="sig-name descname"><span class="pre">DelayStrategy</span></span><a class="reference internal" href="../_modules/torchfx/effect.html#DelayStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchfx.effect.DelayStrategy" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
 <p>Abstract base class for delay processing strategies.</p>
 <p>DelayStrategy defines the interface for different delay processing behaviors
 used by the Delay effect. Concrete implementations provide specific delay
@@ -1162,14 +1174,14 @@ algorithm.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>waveform</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><em>Tensor</em></a>)</p></li>
-<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>waveform</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.15)"><em>Tensor</em></a>)</p></li>
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><em>Tensor</em></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.15)"><em>Tensor</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1230,10 +1242,10 @@ strategies, see wiki page “3.5 Creating Custom Effects”.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>waveform</strong> (<em>Tensor</em>) – Input audio tensor of shape (…, time) or (channels, time).</p></li>
-<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Delay time in samples for each tap.</p></li>
-<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of delay taps (echoes). Each tap is delayed by
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Delay time in samples for each tap.</p></li>
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Number of delay taps (echoes). Each tap is delayed by
 delay_samples * tap_number.</p></li>
-<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Feedback amount in range [0, 0.95]. Controls the amplitude of
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Feedback amount in range [0, 0.95]. Controls the amplitude of
 taps 2 and beyond. First tap always has amplitude 1.0, subsequent
 taps use feedback^(tap-1).</p></li>
 </ul>
@@ -1312,9 +1324,9 @@ and subsequent taps decay exponentially based on the feedback parameter.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>waveform</strong> (<em>Tensor</em>) – Input audio tensor of shape (time,), (channels, time), or (…, time).</p></li>
-<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Delay time in samples for each tap.</p></li>
-<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of delay taps (echoes).</p></li>
-<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Feedback amount for taps 2 and beyond.</p></li>
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Delay time in samples for each tap.</p></li>
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Number of delay taps (echoes).</p></li>
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Feedback amount for taps 2 and beyond.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1403,9 +1415,9 @@ back to MonoDelayStrategy to process the audio.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>waveform</strong> (<em>Tensor</em>) – Input audio tensor. Should be stereo with shape (2, time) or
 (…, 2, time). For non-stereo input, falls back to MonoDelayStrategy.</p></li>
-<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Delay time in samples for each tap.</p></li>
-<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of delay taps (echoes).</p></li>
-<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Feedback amount for taps 2 and beyond.</p></li>
+<li><p><strong>delay_samples</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Delay time in samples for each tap.</p></li>
+<li><p><strong>taps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Number of delay taps (echoes).</p></li>
+<li><p><strong>feedback</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Feedback amount for taps 2 and beyond.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1582,8 +1594,8 @@ extended time dimension.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1617,7 +1629,7 @@ extended time dimension.</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
 </p></div>
       
     </div>
