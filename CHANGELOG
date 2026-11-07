@@ -64,6 +64,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   realtime on any modern Linux desktop with no new dependency beyond the `realtime`
   group's `sounddevice`. Example: `examples/realtime_pipewire.py`.
 
+### Fixed
+
+- **Build against torch 2.14+.** torch 2.14's C++ headers require C++20
+  (`#error C++20 or later compatible compiler is required`), which broke every
+  source/wheel build. The extension now compiles as C++20 (CUDA included, with
+  the nvcc dialect flag supplied for CMake < 3.25); older torch builds unchanged.
+- macOS arm64 wheels now build on the `macos-15` runner (`macos-14` retired).
+
 ## [0.8.0] - 2026-06-26
 
 ### Added
