@@ -79,6 +79,10 @@ def __getattr__(name: str) -> type:
         from torchfx.realtime.sounddevice_backend import SoundDeviceBackend
 
         return SoundDeviceBackend
+    if name == "PipeWireBackend":
+        from torchfx.realtime.pipewire_backend import PipeWireBackend
+
+        return PipeWireBackend
     raise AttributeError(f"module 'torchfx.realtime' has no attribute {name!r}")
 
 
@@ -96,6 +100,7 @@ __all__ = [
     "CudaGraphRunner",
     # Optional backends
     "SoundDeviceBackend",
+    "PipeWireBackend",
     # Exceptions
     "RealtimeError",
     "BackendNotAvailableError",

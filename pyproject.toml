@@ -1,6 +1,6 @@
 [project]
 name = "torchfx"
-version = "0.8.0"
+version = "0.9.0"
 description = "A GPU accelerated library for audio DSP based on PyTorch"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -132,12 +132,17 @@ recursive = true
 blank = true
 
 [build-system]
-requires = ["scikit-build-core>=0.10", "torch>=2.6.0"]
+requires = ["scikit-build-core>=0.10", "setuptools", "torch>=2.6.0"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 wheel.packages = ["src/torchfx", "src/cli"]
 cmake.build-type = "Release"
+
+# Build the extension against the *locked* torch, not the newest one on PyPI:
+# torch's C++ ABI changes between releases, so a mismatch segfaults at runtime.
+[tool.uv.extra-build-dependencies]
+torchfx = [{ requirement = "torch", match-runtime = true }]
 
 # ---------- cibuildwheel ---------------------------------------------------
 # Cross-platform CPU-only wheel builds for PyPI. The wheel CI workflow

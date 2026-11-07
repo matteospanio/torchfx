@@ -34,6 +34,7 @@ from .iir import (
     ParametricEQ,
     Peaking,
 )
+from .sos import SOSFilter
 
 __all__ = [
     "AllPass",
@@ -69,4 +70,5 @@ __all__ = [
     "Notch",
     "ParametricEQ",
     "Peaking",
+    "SOSFilter",
 ]

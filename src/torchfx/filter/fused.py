@@ -185,3 +185,51 @@ class FusedSOSCascade(nn.Module):
         )
         self._stateful = True
         return result
+
+
+def build_fused_plan(pipeline: list[nn.Module]) -> list[nn.Module]:
+    """Group a pipeline into the executable plan, fusing contiguous SOS stages.
+
+    Contiguous ``IIR``/``Biquad`` runs are merged into a single ``FusedSOSCascade``.
+    A static linear ``Gain`` (``clamp=False``) does **not** break a run: its scalar
+    is folded into the fused cascade's numerator (a scalar commutes through a linear
+    filter), so ``IIR | Gain | IIR`` becomes one cascade instead of three stages. A
+    dynamic ``Normalize`` or a clamping ``Gain`` is non-linear and is kept as its own
+    stage.
+
+    Shared by ``Wave._build_plan`` (offline materialization) and ``FX.compile()``
+    so both lower a chain to the same fused plan.
+
+    """
+    from torchfx.effect import Gain
+    from torchfx.filter.biquad import Biquad
+
+    plan: list[nn.Module] = []
+    iir_run: list[IIR | Biquad] = []
+    pending_gain = 1.0  # product of foldable gains to apply to the current run
+
+    def flush() -> None:
+        nonlocal iir_run, pending_gain
+        if iir_run:
+            if len(iir_run) >= 2 or pending_gain != 1.0:
+                plan.append(FusedSOSCascade(*iir_run, gain=pending_gain))
+            else:
+                plan.append(iir_run[0])
+        elif pending_gain != 1.0:
+            # A foldable gain with no SOS filter to fold into — keep it as an op.
+            plan.append(Gain(pending_gain))
+        iir_run = []
+        pending_gain = 1.0
+
+    for module in pipeline:
+        if isinstance(module, (IIR, Biquad)):
+            iir_run.append(module)
+        else:
+            factor = module._linear_gain() if isinstance(module, Gain) else None
+            if factor is not None:
+                pending_gain *= factor  # fold into the current/next fused run
+            else:
+                flush()
+                plan.append(module)
+    flush()
+    return plan

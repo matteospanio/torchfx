@@ -195,12 +195,13 @@ class Biquad(AbstractFilter):
         # Recompute when coefficients are missing, were designed for a
         # different sampling rate, or a design parameter (cutoff, q, gain, ...)
         # was mutated after the last design — a reused or mutated biquad never
-        # applies stale taps.
-        if (
-            self._sos is None
-            or self.fs != self._coeff_fs
-            or self._design_fingerprint() != self._coeff_fingerprint
-        ):
+        # applies stale taps. When frozen (FX.freeze) the fs/fingerprint check is
+        # skipped, but a never-designed biquad is still designed once.
+        need_recompute = self._sos is None or (
+            not self._frozen
+            and (self.fs != self._coeff_fs or self._design_fingerprint() != self._coeff_fingerprint)
+        )
+        if need_recompute:
             self.compute_coefficients()
             self._coeff_fs = self.fs
             self._coeff_fingerprint = self._design_fingerprint()

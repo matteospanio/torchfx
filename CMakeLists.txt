@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.18)
 project(torchfx LANGUAGES CXX)
 
-# PyTorch's public C++ headers require C++17. Linux GCC 11+ defaults to it,
-# but Apple clang on the macOS runners does not, so the build of
-# `torch/extension.h` fails with cryptic template errors. Force the standard
-# explicitly here for every target the project defines below.
-set(CMAKE_CXX_STANDARD 17)
+# PyTorch's public C++ headers require C++20 since torch 2.14 (`#error C++20
+# or later compatible compiler is required`); older torch builds fine under
+# C++20 too. No compiler defaults to it, so force the standard explicitly here
+# for every target the project defines below (CUDA inherits it).
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -52,6 +52,13 @@ if(TORCHFX_USE_CUDA)
   check_language(CUDA)
   if(CMAKE_CUDA_COMPILER)
     enable_language(CUDA)
+    # CUDA inherits CMAKE_CXX_STANDARD (20): .cu files include torch headers
+    # too. Older CMake (e.g. 3.22 on Ubuntu 22.04) has no nvcc flag mapped for
+    # the CUDA20 dialect and fails at generate time, so supply it (nvcc 12+).
+    if(NOT CMAKE_CUDA20_STANDARD_COMPILE_OPTION)
+      set(CMAKE_CUDA20_STANDARD_COMPILE_OPTION "-std=c++20")
+      set(CMAKE_CUDA20_EXTENSION_COMPILE_OPTION "-std=c++20")
+    endif()
     # Target CUDA architectures (override with the TORCHFX_CUDA_ARCHITECTURES env
     # var, e.g. "86" for a single card). Default spans Turing..Ada: sm_75 (T4/2080),
     # sm_80 (A100), sm_86 (RTX 30xx / A40), sm_89 (L40S / Ada). Without an explicit
@@ -121,22 +128,21 @@ target_compile_definitions(torchfx_ext PRIVATE
 target_link_directories(torchfx_ext PRIVATE ${TORCH_LIBRARY_DIRS})
 target_link_libraries(torchfx_ext PRIVATE torch torch_python torch_cpu c10)
 
-target_compile_features(torchfx_ext PRIVATE cxx_std_17)
 
 # Compiler-specific optimisation and standard flags. We avoid `-march=native`
 # / `/arch:` so wheels stay portable across CPUs.
 #
 # - GCC / Clang / AppleClang: `-O3 -ffast-math`.
-# - MSVC: `/O2 /fp:fast`, plus an explicit `/std:c++17` because some
-#   torch headers use C++17-only constructs (nested namespaces,
-#   `std::optional`, `std::string_view`) that MSVC otherwise rejects with
-#   "language feature requires compiler flag '/std:c++17'", and
+# - MSVC: `/O2 /fp:fast`, plus an explicit `/std:c++20` because torch
+#   headers use C++20 constructs (designated initializers,
+#   `std::strong_ordering`) that MSVC otherwise rejects with
+#   "requires at least '/std:c++20'", and
 #   `/Zc:__cplusplus` so torch's feature-detection macros see the right
 #   `__cplusplus` value (MSVC defaults to reporting 199711L unless this
 #   conformance flag is set).
 target_compile_options(torchfx_ext PRIVATE
   $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:GNU,Clang,AppleClang>>:-O3 -ffast-math>
-  $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:MSVC>>:/O2 /fp:fast /std:c++17 /Zc:__cplusplus>
+  $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:MSVC>>:/O2 /fp:fast /std:c++20 /Zc:__cplusplus>
 )
 
 find_package(OpenMP QUIET)

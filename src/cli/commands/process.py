@@ -35,9 +35,22 @@ _EXAMPLE_EFFECTS = ", ".join(list_effects()[:8])
 def _resolve_effects(
     effect_specs: list[str],
     config_path: str | None,
+    compiled_path: str | None = None,
 ) -> list[FX]:
-    """Build a flat effect list from CLI ``--effect`` flags and/or config file."""
+    """Build a flat effect list from a compiled artifact, config file, and/or flags."""
     effects: list[FX] = []
+
+    # 0. A precompiled .fxg artifact (frozen coefficients, no re-design)
+    if compiled_path:
+        from typing import cast
+
+        from cli.commands.compile import load_compiled
+
+        try:
+            effects.extend(cast("list[FX]", list(load_compiled(compiled_path).children())))
+        except (FileNotFoundError, ValueError) as exc:
+            typer.echo(f"Error loading compiled artifact '{compiled_path}': {exc}", err=True)
+            raise typer.Exit(code=1) from exc
 
     # 1. Effects from config file
     if config_path:
@@ -56,7 +69,7 @@ def _resolve_effects(
             raise typer.Exit(code=1) from exc
 
     if not effects:
-        typer.echo("Error: no effects specified. Use --effect or --config.", err=True)
+        typer.echo("Error: no effects specified. Use --effect, --config, or --compiled.", err=True)
         raise typer.Exit(code=1)
 
     return effects
@@ -160,6 +173,11 @@ def process_cmd(
         "-c",
         help="TOML config file defining an effect chain.",
     ),
+    compiled: str | None = typer.Option(  # noqa: UP007
+        None,
+        "--compiled",
+        help="Precompiled .fxg artifact (frozen coefficients) to apply.",
+    ),
     chunk_size: int = typer.Option(
         65536,
         "--chunk-size",
@@ -220,7 +238,7 @@ def process_cmd(
         _ov = cfg_defaults.get("overlap", overlap)
         overlap = int(_ov) if isinstance(_ov, int | float | str) else overlap
 
-    effects = _resolve_effects(effect, cfg_path)
+    effects = _resolve_effects(effect, cfg_path, compiled)
 
     # ── Pipe mode ─────────────────────────────────────────────
     if input_path == "-":

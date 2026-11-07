@@ -252,6 +252,23 @@ class TestCompat:
         # Restore
         _compat._sounddevice_module = original
 
+    def test_check_sounddevice_false_on_portaudio_init_error(self) -> None:
+        from torchfx.realtime import _compat
+
+        class PortAudioError(Exception):  # sounddevice's: not an OSError
+            pass
+
+        original = _compat._sounddevice_module
+        _compat._sounddevice_module = None
+        try:
+            with patch.object(_compat, "importlib") as mock_importlib:
+                mock_importlib.import_module.side_effect = PortAudioError(
+                    "PulseAudio_Initialize: Can't connect to server"
+                )
+                assert _compat._check_sounddevice() is False
+        finally:
+            _compat._sounddevice_module = original
+
     def test_check_sounddevice_returns_bool(self) -> None:
         from torchfx.realtime._compat import _check_sounddevice
 
@@ -564,6 +581,42 @@ class TestRealtimeProcessor:
         assert gain.gain == 0.5
 
         processor.stop()
+
+    def test_set_parameter_ramp_is_gradual(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        gain = Gain(0.0)
+        processor = _make_processor(mock_backend, duplex_config, [gain])
+        # 50 ms at 512/48000 (~10.7 ms/block) -> ~5 blocks.
+        processor.set_parameter("0.gain", 1.0, ramp_ms=50)
+
+        values = []
+        for _ in range(6):
+            processor._apply_pending_params()
+            values.append(float(gain.gain))
+
+        assert values[0] < 1.0  # no single-block jump to target
+        assert all(b >= a for a, b in zip(values, values[1:], strict=False))  # monotonic
+        assert values[-1] == pytest.approx(1.0)  # reaches target
+        assert len(set(values)) > 2  # genuinely stepped, not instant
+
+    def test_filter_cutoff_ramp(
+        self, mock_backend: MockBackend, duplex_config: StreamConfig
+    ) -> None:
+        from torchfx.filter import BiquadLPF
+
+        filt = BiquadLPF(cutoff=500.0, q=0.707)
+        processor = _make_processor(mock_backend, duplex_config, [filt])
+        processor.set_parameter("0.cutoff", 5000.0, ramp_ms=50)
+
+        cutoffs = []
+        for _ in range(6):
+            processor._apply_pending_params()
+            cutoffs.append(float(filt.cutoff))
+
+        assert cutoffs[0] < 5000.0
+        assert all(b >= a for a, b in zip(cutoffs, cutoffs[1:], strict=False))
+        assert cutoffs[-1] == pytest.approx(5000.0)
 
     def test_latency_ms(self, mock_backend: MockBackend, duplex_config: StreamConfig) -> None:
         processor = _make_processor(mock_backend, duplex_config, [Gain(1.0)])

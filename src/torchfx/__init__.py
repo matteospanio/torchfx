@@ -1,3 +1,4 @@
+import torchfx.ddsp as ddsp
 import torchfx.effect as effect  # noqa: A001
 import torchfx.filter as filter  # noqa: A001,A004
 import torchfx.logging as logging  # noqa: A004
@@ -20,6 +21,7 @@ __all__ = [
     "validation",
     "logging",
     "realtime",
+    "ddsp",
     "is_native_available",
     "batch_process",
 ]

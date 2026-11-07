@@ -28,7 +28,10 @@ def _check_sounddevice() -> bool:
     try:
         _sounddevice_module = importlib.import_module("sounddevice")
         return True
-    except (ImportError, OSError):
+    # sounddevice runs Pa_Initialize() at import time and raises PortAudioError
+    # (a plain Exception subclass) when e.g. its PulseAudio host has no server,
+    # as on headless CI. Any import-time failure means the backend is unusable.
+    except Exception:
         return False
 
 
