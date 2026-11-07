@@ -70,6 +70,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`#error C++20 or later compatible compiler is required`), which broke every
   source/wheel build. The extension now compiles as C++20 (CUDA included, with
   the nvcc dialect flag supplied for CMake < 3.25); older torch builds unchanged.
+- **`uv sync` builds against the locked torch.** The isolated build env used to
+  pull the newest torch from PyPI while the venv got the locked one; the C++ ABI
+  mismatch segfaulted the native kernels. `match-runtime` now pins the build
+  torch to the runtime one; `setuptools` is declared as a build dependency
+  (older `torch.utils.cpp_extension` imports it).
 - macOS arm64 wheels now build on the `macos-15` runner (`macos-14` retired).
 
 ## [0.8.0] - 2026-06-26
