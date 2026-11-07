@@ -76,6 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   torch to the runtime one; `setuptools` is declared as a build dependency
   (older `torch.utils.cpp_extension` imports it).
 - macOS arm64 wheels now build on the `macos-15` runner (`macos-14` retired).
+- Realtime backends report "unavailable" instead of crashing when
+  `import sounddevice` raises `PortAudioError` (PortAudio's PulseAudio host
+  with no running server, e.g. headless CI).
 
 ## [0.8.0] - 2026-06-26
 

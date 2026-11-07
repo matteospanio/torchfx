@@ -252,6 +252,23 @@ class TestCompat:
         # Restore
         _compat._sounddevice_module = original
 
+    def test_check_sounddevice_false_on_portaudio_init_error(self) -> None:
+        from torchfx.realtime import _compat
+
+        class PortAudioError(Exception):  # sounddevice's: not an OSError
+            pass
+
+        original = _compat._sounddevice_module
+        _compat._sounddevice_module = None
+        try:
+            with patch.object(_compat, "importlib") as mock_importlib:
+                mock_importlib.import_module.side_effect = PortAudioError(
+                    "PulseAudio_Initialize: Can't connect to server"
+                )
+                assert _compat._check_sounddevice() is False
+        finally:
+            _compat._sounddevice_module = original
+
     def test_check_sounddevice_returns_bool(self) -> None:
         from torchfx.realtime._compat import _check_sounddevice
 
